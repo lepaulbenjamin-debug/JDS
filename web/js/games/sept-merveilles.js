@@ -9,6 +9,8 @@
 //
 // Barème vérifié sur la règle officielle (gamerules.com/rules/7-wonders).
 
+import { lireLigne, grillesVides } from './common.js';
+
 /** Les trois symboles scientifiques, dans l'ordre du plateau. */
 export const SYMBOLES_SCIENCE = [
   { key: 'tablette', label: 'Tablette' },
@@ -32,22 +34,10 @@ export function pointsTresor(pieces = 0) {
   return Math.floor(pieces / 3);
 }
 
-/** Cases d'un joueur dans une grille, converties en nombres. */
-function ligne(form, cle, playerId) {
-  const brut = form?.[cle]?.[playerId] ?? {};
-  return (col) => Number(brut[col]) || 0;
-}
-
-/** Vrai si le joueur n'a strictement rien de saisi. */
-function vide(form, playerId) {
-  const cases = { ...(form?.general?.[playerId] ?? {}), ...(form?.science?.[playerId] ?? {}) };
-  return Object.values(cases).every((v) => v === '' || v == null);
-}
-
 /** Décompte complet d'un joueur, catégorie par catégorie. */
 export function decompte(form, playerId) {
-  const g = ligne(form, 'general', playerId);
-  const s = ligne(form, 'science', playerId);
+  const g = lireLigne(form, 'general', playerId);
+  const s = lireLigne(form, 'science', playerId);
   const science = pointsScience(s('tablette'), s('compas'), s('roue'));
   const militaire = g('victoires') - g('defaites');
   const tresor = pointsTresor(g('pieces'));
@@ -130,7 +120,7 @@ export default {
   },
 
   validateRound(form, players) {
-    const manquants = players.filter((p) => vide(form, p.id));
+    const manquants = players.filter((p) => grillesVides(form, ['general', 'science'], p.id));
     if (manquants.length === players.length) {
       return { ok: false, level: 'warn', message: 'Saisissez le décompte de chaque joueur.' };
     }

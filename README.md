@@ -3,10 +3,10 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Neuf jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
-**Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders** et
-**Mölkky**. Un jeu = un module dans `web/js/games/`, et le moteur s'adapte à
-ses règles.
+Dix jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders**, **Mölkky**
+et **Les Aventuriers du Rail** (États-Unis, Europe, Autour du Monde). Un jeu =
+un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
 
 ## Ce que ça fait
 
@@ -59,6 +59,14 @@ ses règles.
   troisième n'élimine. Et comme un lancer dépend de tous les précédents,
   corriger un vieux lancer **rejoue la partie entière** : le dépassement qui
   n'a plus lieu d'être disparaît de lui-même.
+- **Aux Aventuriers du Rail, on saisit des routes, pas des points.** Combien de
+  routes de 3, combien de 6 : l'appli applique le barème, qui n'est pas
+  linéaire — une route de 6 vaut quinze fois une route de 1 — et montre sa
+  conversion (`3×2 + 2×10 + 1×18 + 2×21 = 86`). Les trois éditions ont chacune
+  leur décompte, et l'écran s'y adapte : les gares en Europe, les ports Autour
+  du Monde, et le bonus du plus long chemin — qui se partage entre ex æquo, et
+  qui **n'existe pas** dans l'édition Autour du Monde. La mise en place lue à
+  voix haute change elle aussi avec la boîte choisie.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -142,6 +150,7 @@ web/                     PWA statique, sans build ni dépendance
     games/barbu.js       idem + un formulaire par contrat et barèmes réglables
     games/sept-merveilles.js  idem + décompte par catégories et formule de science
     games/molkky.js      idem + un lancer par manche, retour à 25, éliminations
+    games/aventuriers-du-rail.js  idem + trois éditions, chacune son décompte
     games/common.js      le peu que plusieurs jeux partagent
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
@@ -182,7 +191,7 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
 | `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
-| `entry: 'form'` + `form(playerCount, players, rounds, form)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours : au Barbu, les champs demandés dépendent du contrat qu'on vient de choisir |
+| `entry: 'form'` + `form(playerCount, players, rounds, form, options)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours (au Barbu, les champs dépendent du contrat choisi) et le 5e les variantes de la partie (aux Aventuriers du Rail, l'édition décide des colonnes) |
 | `roundLine(round, index, match)` | `{ title, detail }` : nomme une manche par ce qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) et remplace la ligne de scores par un résumé adapté (au Mölkky, où tous les autres joueurs sont à zéro) |
 | `compactBoard` | le tableau n'affiche que les totaux, sans colonne par manche — au Mölkky elles se compteraient par dizaines |
 | `playerStatus(player, match)` | `{ text, tone }` affiché à côté d'un nom : ce que le total ne dit pas (au Mölkky, les ratés en cours et l'élimination) |
@@ -192,7 +201,8 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `tieBreak(a, b, match)` | départage deux joueurs à égalité de score par autre chose que le score (au 7 Wonders, le trésor) ; sans lui le tableau tranche au hasard |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
 | `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
-| `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration et transmises au calcul (litige à la belote, bonus au Skull King, barèmes du Barbu) |
+| `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration **et sur la fiche règles**, puis transmises au calcul, à `form()` et à `setup()` (litige à la belote, barèmes du Barbu, édition des Aventuriers du Rail) |
+| `multiple: true` sur un champ `player` | le champ accepte plusieurs joueurs, chaque appui ajoutant ou retirant — pour un bonus qui se partage entre ex æquo |
 | `finalize` → `meta` | ce que la manche laisse à la suivante ; `formDefaults(players, rounds)` peut le relire (report de litige) |
 
 Les règles reçoivent un contexte unique : `validateRound(saisie, participants,
@@ -202,7 +212,7 @@ ctx)` et `finalize(saisie, ctx, participants)`, avec
 Trois champs alimentent la fiche règles :
 
 - `pitch` — deux ou trois phrases de présentation, écrites pour être dites.
-- `setup(playerCount)` — la mise en place, sous forme d'étapes
+- `setup(playerCount, options)` — la mise en place, sous forme d'étapes
   `{ title, say }`. `say` est lu à voix haute : écrivez-le comme vous le diriez
   à la table (« Mélangez, puis distribuez… »), en une à trois phrases, et
   faites-le dépendre de `playerCount` là où les règles varient. Les étapes
@@ -232,6 +242,32 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles des Aventuriers du Rail (rappel)
+
+2 à 5 joueurs. À son tour, une seule action : prendre deux cartes, s'emparer
+d'une route en dépensant autant de cartes de sa couleur qu'elle compte de
+cases, ou piocher de nouvelles cartes Destination. Les routes rapportent tout
+de suite ; les Destinations se révèlent à la fin, et coûtent leurs points si
+elles ne sont pas réussies.
+
+| Longueur | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Points | 1 | 2 | 4 | 7 | 10 | 15 | 18 | 21 |
+
+Ce qui change d'une boîte à l'autre :
+
+| | États-Unis | Europe | Autour du Monde |
+|---|---|---|---|
+| Longueurs sur la carte | 1 à 6 | 1 à 8, ni 5 ni 7 | 1 à 8 |
+| Pions | 45 wagons | 45 wagons | 60 au choix : 25 wagons / 50 bateaux max |
+| Plus long chemin | +10 | +10 | **aucun bonus** |
+| En plus | — | 3 gares, +4 chacune si non utilisée | 3 ports : +20 / +30 / +40 selon qu'ils servent 1, 2 ou 3+ destinations réussies ; −4 par port non construit |
+
+Le bonus du plus long chemin se partage : à égalité, chacun des ex æquo le
+marque. En cas d'égalité au score final, la règle départage au nombre de cartes
+Destination réussies, puis au plus long chemin — l'appli signale l'égalité et
+vous laisse trancher, faute de compter les cartes une par une.
 
 ## Règles du Mölkky (rappel)
 

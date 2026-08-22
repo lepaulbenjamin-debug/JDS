@@ -542,7 +542,7 @@ function renderForm(match, game) {
 
   // La saisie en cours est passée au jeu : au Barbu, les champs demandés
   // dépendent du contrat qu'on vient de choisir.
-  for (const field of game.form(match.players.length, match.players, match.rounds, form)) {
+  for (const field of game.form(match.players.length, match.players, match.rounds, form, match.options ?? {})) {
     const block = el('div', { class: 'extra' }, [
       el('strong', { class: 'extra-label', text: field.label }),
       field.hint && el('span', { class: 'muted small', text: field.hint }),
@@ -617,14 +617,25 @@ function renderForm(match, game) {
         ? match.players.map((p) => ({ value: p.id, label: p.name, color: p.color }))
         : field.options;
 
+      // Un bonus peut se partager : aux Aventuriers du Rail, le plus long
+      // chemin revient à tous les ex æquo. Ces champs-là acceptent plusieurs
+      // réponses, et chaque appui ajoute ou retire.
+      const multiple = field.multiple === true;
+      const choisis = multiple ? (Array.isArray(form[field.key]) ? form[field.key] : []) : null;
+      const actif = (value) => (multiple ? choisis.includes(value) : form[field.key] === value);
+
       const chips = el('div', { class: 'chip-row' });
       for (const option of options) {
         chips.append(
           el('button', {
-            class: `chip${form[field.key] === option.value ? ' is-active' : ''}${option.color ? ' player-chip' : ''}`,
+            class: `chip${actif(option.value) ? ' is-active' : ''}${option.color ? ' player-chip' : ''}`,
             type: 'button',
             style: option.color ? { '--chip-color': option.color } : {},
-            onclick: () => setField(field.key, option.value),
+            onclick: () => (multiple
+              ? setField(field.key, choisis.includes(option.value)
+                ? choisis.filter((v) => v !== option.value)
+                : [...choisis, option.value])
+              : setField(field.key, option.value)),
           }, [
             option.color && el('span', { class: 'dot', style: { background: option.color } }),
             el('span', { text: option.label }),
@@ -1202,10 +1213,32 @@ function openRules(game = activeGame()) {
 
 function renderRules() {
   const game = getGame(rulesState.gameId);
-  const steps = game.setup(rulesState.playerCount);
+  // Les variantes ne changent pas que le calcul : aux Aventuriers du Rail,
+  // c'est toute la mise en place qui diffère d'une boîte à l'autre.
+  rulesState.options ??= {};
+  for (const option of game.options ?? []) {
+    rulesState.options[option.key] ??= option.options[0].value;
+  }
+  const steps = game.setup(rulesState.playerCount, rulesState.options);
 
   $('#rules-title').textContent = game.name;
   $('#rules-pitch').textContent = game.pitch;
+
+  const variantes = clear($('#rules-options'));
+  for (const option of game.options ?? []) {
+    const chips = el('div', { class: 'chip-row' });
+    for (const choix of option.options) {
+      chips.append(el('button', {
+        class: `chip${rulesState.options[option.key] === choix.value ? ' is-active' : ''}`,
+        type: 'button',
+        onclick: () => { stopSpeech(); rulesState.options[option.key] = choix.value; renderRules(); },
+      }, choix.label));
+    }
+    variantes.append(el('div', { class: 'field' }, [
+      el('label', { text: option.label }),
+      chips,
+    ]));
+  }
 
   // Effectif : change le nombre de cartes distribuées et la taille de l'écart.
   const counts = clear($('#setup-count'));
