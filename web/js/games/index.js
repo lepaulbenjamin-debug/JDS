@@ -6,8 +6,9 @@ import tarot from './tarot.js';
 import belote from './belote.js';
 import skullKing from './skull-king.js';
 import barbu from './barbu.js';
+import septMerveilles from './sept-merveilles.js';
 
-export const GAMES = [papayoo, skyjo, sixQuiPrend, tarot, belote, skullKing, barbu];
+export const GAMES = [papayoo, skyjo, sixQuiPrend, tarot, belote, skullKing, barbu, septMerveilles];
 
 export function getGame(id) {
   return GAMES.find((g) => g.id === id) ?? GAMES[0];

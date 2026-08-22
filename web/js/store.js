@@ -182,7 +182,13 @@ export function standings(match, game) {
   const t = totals(match);
   return match.players
     .map((p) => ({ player: p, total: t[p.id] }))
-    .sort((a, b) => (game.lowestWins ? a.total - b.total : b.total - a.total));
+    .sort((a, b) => {
+      const ecart = game.lowestWins ? a.total - b.total : b.total - a.total;
+      if (ecart !== 0) return ecart;
+      // Certains jeux départagent les ex æquo par autre chose que le score
+      // (au 7 Wonders, le trésor) : sans ça le tableau désignerait au hasard.
+      return game.tieBreak?.(a.player, b.player, match) ?? 0;
+    });
 }
 
 /**

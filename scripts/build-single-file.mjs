@@ -35,6 +35,7 @@ const MODULES = [
   ['js/games/belote.js', 'belote'],
   ['js/games/skull-king.js', 'skullKing'],
   ['js/games/barbu.js', 'barbu'],
+  ['js/games/sept-merveilles.js', 'septMerveilles'],
   ['js/games/index.js', null],
   ['js/app.js', null],
 ];

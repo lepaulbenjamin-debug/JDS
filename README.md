@@ -3,9 +3,9 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Sept jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
-**Tarot**, **Belote**, **Skull King** et **Le Barbu**. Un jeu = un module dans
-`web/js/games/`, et le moteur s'adapte à ses règles.
+Huit jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote**, **Skull King**, **Le Barbu** et **7 Wonders**. Un jeu =
+un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
 
 ## Ce que ça fait
 
@@ -42,6 +42,14 @@ Sept jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
   tous attribués, propose d'office le premier contrat encore à jouer, marque
   d'un ✓ ceux qui sont faits, et nomme chaque manche par son contrat dans
   l'historique plutôt que par un numéro.
+- **Au 7 Wonders, le décompte final n'est plus une corvée.** Sept sources de
+  points à additionner en fin de partie, dont deux que personne ne calcule juste
+  du premier coup. Pour la science, on saisit **le nombre de symboles**, pas les
+  points : l'appli fait les carrés et les groupes de trois, et montre son
+  calcul — `3² + 2² + 1² = 14, plus 1 groupe de trois à 7 points → 21`. Le
+  trésor est divisé par trois, le classement se met à jour à chaque case
+  remplie, et en cas d'égalité c'est le trésor qui départage, dans le tableau
+  comme dans la règle.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -123,6 +131,7 @@ web/                     PWA statique, sans build ni dépendance
     games/belote.js      idem + contrat, capot et report de litige
     games/skull-king.js  idem + saisie en grille (mise / plis / bonus)
     games/barbu.js       idem + un formulaire par contrat et barèmes réglables
+    games/sept-merveilles.js  idem + décompte par catégories et formule de science
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -164,6 +173,7 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
 | `entry: 'form'` + `form(playerCount, players, rounds, form)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours : au Barbu, les champs demandés dépendent du contrat qu'on vient de choisir |
 | `roundTitle(round, index)` | nomme une manche par ce qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) |
+| `tieBreak(a, b, match)` | départage deux joueurs à égalité de score par autre chose que le score (au 7 Wonders, le trésor) ; sans lui le tableau tranche au hasard |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
 | `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
 | `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration et transmises au calcul (litige à la belote, bonus au Skull King, barèmes du Barbu) |
@@ -206,6 +216,34 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles du 7 Wonders (rappel)
+
+3 à 7 joueurs, trois âges. Sept cartes en main au début de chaque âge : on en
+pose une simultanément, on passe le reste à son voisin, six fois de suite ; au
+dernier tour la carte qui reste est défaussée. On passe à gauche à l'âge I, à
+droite à l'âge II, à gauche à l'âge III.
+
+Mise en place : un plateau Merveille par joueur (face A pour découvrir), 3
+pièces chacun. Chaque paquet d'âge ne garde que les cartes marquées d'un nombre
+inférieur ou égal au nombre de joueurs, soit 7 cartes par joueur ; on ajoute à
+l'âge III un nombre de guildes égal au nombre de joueurs plus deux.
+
+Conflits, à la fin de chaque âge, contre chacun de ses deux voisins : victoire
++1 à l'âge I, +3 à l'âge II, +5 à l'âge III ; défaite −1 quel que soit l'âge ;
+égalité, rien.
+
+| Source de points | Barème |
+|---|---|
+| Jetons Conflit | victoires − défaites |
+| Trésor | 1 point pour 3 pièces, le reste est perdu |
+| Merveille | les points des étapes construites |
+| Cartes bleues, jaunes, violettes | les points imprimés |
+| Science | le carré du nombre d'exemplaires de chaque symbole, **plus 7 par groupe de trois symboles différents** |
+
+Le plus grand total gagne ; à égalité, c'est le joueur qui a le plus de pièces
+qui l'emporte. Exemple de science : 3 tablettes, 2 compas et 1 roue font
+9 + 4 + 1 = 14, plus un groupe complet à 7, soit **21 points**.
 
 ## Règles du Barbu (rappel)
 

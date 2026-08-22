@@ -429,6 +429,12 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 /* Une seule valeur par joueur (les contrats du Barbu) : le nom et le champ
    tiennent sur une ligne, et l'intitulé de colonne, déjà donné par le titre du
    bloc, disparaît. Autrement une manche de salade fait dix écrans de haut. */
+/* Beaucoup de colonnes (les sept catégories du 7 Wonders) : on resserre pour
+   en faire tenir quatre par ligne, sinon la dernière reste seule sur la sienne. */
+.player-grid.is-dense .grid-cells { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 6px; }
+.player-grid.is-dense .grid-cap { font-size: 10px; letter-spacing: 0.04em; }
+.player-grid.is-dense .grid-cell input { padding: 8px 6px; font-size: 16px; }
+
 .player-grid.is-single { gap: 6px; }
 .player-grid.is-single .player-grid-row {
   grid-template-columns: 1fr auto;

@@ -111,7 +111,7 @@ function renderHome() {
       el('button', { class: 'resume-card', type: 'button', onclick: () => show('match') }, [
         el('div', { class: 'resume-top' }, [
           el('span', { class: 'badge', text: 'Reprendre' }),
-          el('span', { class: 'muted small', text: `${match.rounds.length} manche${match.rounds.length > 1 ? 's' : ''}` }),
+          el('span', { class: 'muted small', text: roundsLabel(game, match.rounds.length) }),
         ]),
         el('strong', { text: `${game.name} — ${match.players.length} joueurs` }),
         el('span', { class: 'muted small', text: board.map((r) => `${r.player.name} ${r.total}`).join(' · ') }),
@@ -339,7 +339,7 @@ function renderSetupTail(game) {
         class: `chip${setupDraft.target === value ? ' is-active' : ''}`,
         type: 'button',
         onclick: () => { setupDraft.target = value; renderSetup(); },
-      }, parDonnes ? `${value} ${(game.roundLabel ?? 'Manche').toLowerCase()}s` : `${value} pts`),
+      }, parDonnes ? roundsLabel(game, value) : `${value} pts`),
     );
   }
 }
@@ -414,12 +414,18 @@ function renderMatch() {
   renderRoundHistory(match, game);
 }
 
+/** Intitulé de manche accordé en nombre : « 1 partie », « 3 parties ». */
+function roundsLabel(game, count) {
+  const label = (game.roundLabel ?? 'Manche').toLowerCase();
+  return `${count} ${label}${count > 1 ? 's' : ''}`;
+}
+
 function renderBanner(match, game) {
   const host = clear($('#match-banner'));
   if (!isOver(match, game)) return;
   const board = standings(match, game);
   const raison = game.endMode === 'rounds'
-    ? `${match.target} ${(game.roundLabel ?? 'Manche').toLowerCase()}s jouées.`
+    ? `${roundsLabel(game, match.target)} jouée${match.target > 1 ? 's' : ''}.`
     : `Objectif ${match.target} atteint.`;
   host.append(
     el('div', { class: 'banner' }, [
@@ -521,8 +527,11 @@ function renderForm(match, game) {
       // Une ligne par joueur, avec les mêmes colonnes numériques pour tous
       // (au Skull King : mise, plis réalisés, bonus).
       // Une colonne unique tient sur une ligne par joueur : la grille reste
-      // lisible sans faire défiler un écran entier par contrat.
-      const grille = el('div', { class: `player-grid${field.columns.length === 1 ? ' is-single' : ''}` });
+      // lisible sans faire défiler un écran entier par contrat. Au-delà de
+      // quatre colonnes, on resserre les cases pour limiter les retours.
+      const densite = field.columns.length === 1 ? ' is-single'
+        : field.columns.length > 4 ? ' is-dense' : '';
+      const grille = el('div', { class: `player-grid${densite}` });
       for (const p of match.players) {
         const cellules = field.columns.map((col) => el('label', { class: 'grid-cell' }, [
           el('span', { class: 'grid-cap', text: col.label }),
@@ -1362,8 +1371,8 @@ function renderMatchDetail() {
 
   $('#detail-title').textContent = `${game.name} — ${board[0].player.name} gagne`;
   $('#detail-sub').textContent =
-    `${formatDate(past.updatedAt)} · ${past.rounds.length} ${label.toLowerCase()}s · `
-    + (game.endMode === 'rounds' ? `partie en ${past.target} ${label.toLowerCase()}s` : `objectif ${past.target} points`);
+    `${formatDate(past.updatedAt)} · ${roundsLabel(game, past.rounds.length)} · `
+    + (game.endMode === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`);
 
   renderBoard($('#detail-board'), past, game, label);
 
