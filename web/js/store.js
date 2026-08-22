@@ -13,6 +13,9 @@ const DEFAULT_STATE = {
   v: 1,
   match: null,
   history: [],
+  // Carnet des joueurs habituels : une identité stable d'une partie à
+  // l'autre, ce qui permet de tenir des statistiques.
+  people: [],
   lastPlayers: [],
   settings: {
     ai: { mode: 'server', serverUrl: '', apiKey: '' },
@@ -32,7 +35,17 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return clone(DEFAULT_STATE);
     const parsed = JSON.parse(raw);
-    return { ...clone(DEFAULT_STATE), ...parsed, settings: { ...clone(DEFAULT_STATE.settings), ...(parsed.settings ?? {}) } };
+    const merged = {
+      ...clone(DEFAULT_STATE),
+      ...parsed,
+      settings: { ...clone(DEFAULT_STATE.settings), ...(parsed.settings ?? {}) },
+    };
+    // Reprise des versions antérieures : les derniers noms utilisés
+    // constituent le carnet de départ, plutôt que de repartir de zéro.
+    if (merged.people.length === 0 && merged.lastPlayers.length > 0) {
+      merged.people = merged.lastPlayers.map(makePerson);
+    }
+    return merged;
   } catch {
     return clone(DEFAULT_STATE);
   }
@@ -85,8 +98,35 @@ export const store = {
 
 // --- Fabriques -------------------------------------------------------------
 
-export function makePlayer(name, index) {
-  return { id: uid(), name: name.trim(), color: PLAYER_COLORS[index % PLAYER_COLORS.length] };
+export function makePlayer(name, index, personId = null) {
+  return {
+    id: uid(),
+    name: name.trim(),
+    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+    // Lien vers le carnet, quand le joueur en vient : c'est lui qui permet
+    // d'agréger les statistiques sur plusieurs parties.
+    personId,
+  };
+}
+
+/** Entrée du carnet : identité durable, avec une couleur qui lui reste. */
+export function makePerson(name, index = 0) {
+  return {
+    id: uid(),
+    name: String(name).trim(),
+    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+    createdAt: Date.now(),
+  };
+}
+
+/** Un joueur de partie construit à partir d'une entrée du carnet. */
+export function playerFromPerson(person, index) {
+  return {
+    id: uid(),
+    name: person.name,
+    color: person.color ?? PLAYER_COLORS[index % PLAYER_COLORS.length],
+    personId: person.id,
+  };
 }
 
 export function makeMatch(game, players, target, options = {}) {

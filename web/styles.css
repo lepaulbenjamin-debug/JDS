@@ -165,6 +165,44 @@ body {
 .game-card-actions { display: flex; gap: 8px; margin-top: 12px; }
 .game-card-actions .btn { flex: 1 1 0; min-width: 0; padding: 10px 12px; font-size: 14px; white-space: nowrap; }
 
+.home-nav { display: flex; gap: 8px; margin-top: 16px; }
+.home-nav .btn { flex: 1 1 0; min-width: 0; font-size: 14px; padding: 12px 10px; }
+
+/* --- Carnet de joueurs -------------------------------------------------- */
+
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; min-width: 0; }
+
+.person-row { display: flex; align-items: center; gap: 10px; }
+.person-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.person-record { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.tag-win { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, var(--border)); }
+
+/* Sélection des joueurs au démarrage d'une partie. */
+.roster { display: flex; flex-wrap: wrap; gap: 8px; }
+.roster .chip { display: inline-flex; align-items: center; gap: 6px; }
+.roster .chip.is-active { border-color: var(--chip-color, var(--accent)); background: color-mix(in srgb, var(--chip-color, var(--accent)) 18%, transparent); }
+.roster-order {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--chip-color, var(--accent));
+  color: #10131a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* --- Lignes generiques -------------------------------------------------- */
 
 .row {

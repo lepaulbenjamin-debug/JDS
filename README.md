@@ -48,10 +48,19 @@ Six jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
   c'est l'appli qui applique le barème — plus fiable que de lui demander de
   connaître la valeur de chaque carte. Les résultats sont toujours affichés pour
   relecture avant d'être appliqués.
+- **Un carnet de joueurs.** Les habitués sont enregistrés une fois : au
+  démarrage d'une partie on les touche dans l'ordre où ils sont assis, sans
+  rien retaper, et chacun garde sa couleur d'une partie à l'autre. Les jeux en
+  équipes gardent la saisie libre.
+- **Les parties restent consultables.** Une partie archivée s'ouvre sur son
+  tableau complet, manche par manche. Et comme les joueurs ont une identité
+  durable, chacun a son palmarès : victoires sur parties jouées, détaillé par
+  jeu.
 - **Hors-ligne.** Tout le comptage fonctionne sans réseau ; l'appli s'installe
   sur l'écran d'accueil du téléphone. Seule la lecture IA a besoin d'Internet.
-- **Local.** Parties et réglages restent dans le navigateur (`localStorage`).
-  Rien n'est envoyé nulle part, à part les photos que vous soumettez à l'IA.
+- **Local.** Parties, carnet et réglages restent dans le navigateur
+  (`localStorage`). Rien n'est envoyé nulle part, à part les photos que vous
+  soumettez à l'IA.
 
 ## Lancer l'appli
 
@@ -94,7 +103,7 @@ web/                     PWA statique, sans build ni dépendance
   sw.js                  service worker (fonctionnement hors-ligne)
   js/
     app.js               navigation, rendu, câblage des écrans
-    store.js             état + persistance localStorage + calculs de scores
+    store.js             état + persistance localStorage + carnet + calculs
     ui.js                helpers DOM
     ai.js                capture, redimensionnement, appel de lecture
     vision-prompt.js     prompt + schéma de sortie (partagé client/serveur)

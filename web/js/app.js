@@ -1,6 +1,6 @@
 import { GAMES, getGame } from './games/index.js';
 import {
-  store, makePlayer, makeMatch, makeDraft, makeRoundId,
+  store, makePlayer, makePerson, playerFromPerson, makeMatch, makeDraft, makeRoundId,
   totals, standings, isOver, PLAYER_COLORS,
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
@@ -16,6 +16,9 @@ const TITLES = {
   scan: 'Lecture IA',
   rules: 'Règles',
   settings: 'Réglages',
+  people: 'Les joueurs',
+  history: 'Toutes les parties',
+  'match-detail': 'Partie archivée',
 };
 
 let current = 'home';
@@ -42,6 +45,7 @@ function back() {
 let setupDraft = null;      // { gameId, names: string[], target }
 let scanState = { mode: 'scoresheet', image: null, playerId: null, busy: false, result: null };
 let rulesState = { gameId: GAMES[0].id, playerCount: 4, step: -1, speaking: false, paused: false };
+let detailId = null;      // partie archivée consultée
 
 function activeGame() {
   const match = store.state.match;
@@ -57,6 +61,41 @@ function render() {
   if (current === 'scan') renderScan();
   if (current === 'rules') renderRules();
   if (current === 'settings') renderSettings();
+  if (current === 'people') renderPeople();
+  if (current === 'history') renderHistory();
+  if (current === 'match-detail') renderMatchDetail();
+}
+
+// --- Palmarès --------------------------------------------------------------
+
+/**
+ * Agrège les parties archivées par joueur du carnet.
+ * @returns {Map<string, {games:number, wins:number, byGame:Map<string,{games:number,wins:number}>}>}
+ */
+function recordsByPerson(history) {
+  const records = new Map();
+  const touch = (personId) => {
+    if (!records.has(personId)) records.set(personId, { games: 0, wins: 0, byGame: new Map() });
+    return records.get(personId);
+  };
+
+  for (const past of history) {
+    const game = getGame(past.gameId);
+    const classement = standings(past, game);
+    const meilleur = classement[0]?.total;
+    for (const { player, total } of classement) {
+      // Les parties d'avant le carnet n'ont pas de joueur identifiable.
+      if (!player.personId) continue;
+      const rec = touch(player.personId);
+      rec.games += 1;
+      if (!rec.byGame.has(past.gameId)) rec.byGame.set(past.gameId, { games: 0, wins: 0 });
+      const parJeu = rec.byGame.get(past.gameId);
+      parJeu.games += 1;
+      // Une égalité en tête compte comme une victoire pour chacun.
+      if (total === meilleur) { rec.wins += 1; parJeu.wins += 1; }
+    }
+  }
+  return records;
 }
 
 // --- Accueil ---------------------------------------------------------------
@@ -100,50 +139,49 @@ function renderHome() {
   if (history.length === 0) {
     hist.append(el('p', { class: 'muted small', text: 'Aucune partie archivée pour le moment.' }));
   }
-  for (const past of [...history].reverse().slice(0, 12)) {
-    const game = getGame(past.gameId);
-    const board = standings(past, game);
-    const winner = board[0];
-    hist.append(
-      el('div', { class: 'row' }, [
-        el('div', { class: 'row-main' }, [
-          el('strong', { text: `${game.name} · ${winner.player.name} gagne` }),
-          el('span', { class: 'muted small', text: `${formatDate(past.updatedAt)} · ${board.map((r) => `${r.player.name} ${r.total}`).join(' · ')}` }),
-        ]),
-        el('button', {
-          class: 'icon-btn',
-          type: 'button',
-          'aria-label': 'Supprimer cette partie',
-          onclick: async () => {
-            if (await confirmDialog('Supprimer cette partie de l\'historique ?', { okLabel: 'Supprimer', danger: true })) {
-              store.update((s) => { s.history = s.history.filter((h) => h.id !== past.id); });
-            }
-          },
-        }, '×'),
-      ]),
-    );
+  for (const past of [...history].reverse().slice(0, 5)) hist.append(matchRow(past));
+  if (history.length > 5) {
+    hist.append(el('p', { class: 'muted small', text: `${history.length - 5} autre(s) partie(s) dans « Toutes les parties ».` }));
   }
 }
 
 // --- Configuration ---------------------------------------------------------
 
 function startSetup(game) {
-  const remembered = store.state.lastPlayers;
-  // Les jeux en équipes ont leurs propres intitulés : on ne recycle pas les
-  // noms de joueurs d'une partie précédente.
-  const names = game.defaultNames
-    ? [...game.defaultNames]
-    : (remembered.length >= game.minPlayers
-      ? remembered.slice(0, game.maxPlayers)
-      : Array.from({ length: game.minPlayers }, () => ''));
+  // Les jeux en équipes se saisissent à la main ; les autres piochent dans le
+  // carnet, où l'on retrouve les habitués d'une partie à l'autre.
+  const parEquipes = Boolean(game.defaultNames);
+  const derniers = store.state.lastPlayers;
+  const connus = store.state.people;
+  const preselection = connus
+    .filter((p) => derniers.includes(p.name))
+    .slice(0, game.maxPlayers)
+    .map((p) => p.id);
 
   setupDraft = {
     gameId: game.id,
-    names,
+    parEquipes,
+    names: parEquipes ? [...game.defaultNames] : [],
+    selected: parEquipes ? [] : preselection,
     target: game.defaultTarget,
     options: Object.fromEntries((game.options ?? []).map((o) => [o.key, o.options[0].value])),
   };
   show('setup');
+}
+
+/** Ajoute quelqu'un au carnet et le sélectionne pour la partie en préparation. */
+function addPerson(name, { select = false } = {}) {
+  const propre = name.trim();
+  if (!propre) return null;
+  const existe = store.state.people.find((p) => p.name.toLowerCase() === propre.toLowerCase());
+  if (existe) {
+    toast(`${existe.name} est déjà dans le carnet.`, 'warn');
+    return existe;
+  }
+  const person = makePerson(propre, store.state.people.length);
+  store.update((s) => { s.people.push(person); });
+  if (select && setupDraft) setupDraft.selected.push(person.id);
+  return person;
 }
 
 function renderSetup() {
@@ -154,13 +192,22 @@ function renderSetup() {
   const unite = game.participantLabel ?? 'Joueur';
   $('#setup-players-title').textContent = `${unite}s`;
   $('#btn-add-player').textContent = `+ Ajouter ${unite === 'Équipe' ? 'une équipe' : 'un joueur'}`;
-  const { perPlayer, removed, chien } = game.deal(Math.max(setupDraft.names.length, game.minPlayers));
+  const effectif = setupDraft.parEquipes ? setupDraft.names.length : setupDraft.selected.length;
+  const { perPlayer, removed, chien } = game.deal(Math.max(effectif, game.minPlayers));
   $('#setup-hint').textContent =
-    `${setupDraft.names.length} joueurs · ${perPlayer} cartes chacun`
+    `${effectif} ${(game.participantLabel ?? 'Joueur').toLowerCase()}s · ${perPlayer} cartes chacun`
     + (removed ? ` · ${removed} cartes retirées` : '')
     + (chien ? ` · chien de ${chien}` : '');
 
   const list = clear($('#player-list'));
+
+  if (!setupDraft.parEquipes) {
+    renderRoster(game, list);
+    $('#btn-add-player').hidden = true;
+    renderSetupTail(game);
+    return;
+  }
+
   setupDraft.names.forEach((name, index) => {
     const input = el('input', {
       type: 'text',
@@ -186,7 +233,80 @@ function renderSetup() {
   });
 
   $('#btn-add-player').hidden = setupDraft.names.length >= game.maxPlayers;
+  renderSetupTail(game);
+}
 
+/** Sélection des joueurs dans le carnet, dans l'ordre où on les touche. */
+function renderRoster(game, host) {
+  const { people } = store.state;
+  const selected = setupDraft.selected;
+
+  if (people.length === 0) {
+    host.append(el('p', { class: 'muted small', text: 'Votre carnet est vide : ajoutez les joueurs ci-dessous.' }));
+  }
+
+  const roster = el('div', { class: 'roster' });
+  for (const person of people) {
+    const rang = selected.indexOf(person.id);
+    roster.append(
+      el('button', {
+        class: `chip${rang >= 0 ? ' is-active' : ''}`,
+        type: 'button',
+        style: { '--chip-color': person.color },
+        onclick: () => {
+          if (rang >= 0) selected.splice(rang, 1);
+          else if (selected.length >= game.maxPlayers) {
+            toast(`${game.maxPlayers} joueurs au maximum à ce jeu.`, 'warn');
+          } else selected.push(person.id);
+          renderSetup();
+        },
+      }, [
+        rang >= 0
+          ? el('span', { class: 'roster-order', style: { '--chip-color': person.color }, text: String(rang + 1) })
+          : el('span', { class: 'dot', style: { background: person.color } }),
+        el('span', { text: person.name }),
+      ]),
+    );
+  }
+  host.append(roster);
+
+  const champ = el('input', {
+    type: 'text',
+    placeholder: 'Ajouter quelqu\u2019un',
+    autocomplete: 'off',
+    maxlength: '18',
+    onkeydown: (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (addPerson(e.target.value, { select: true })) e.target.value = '';
+      renderSetup();
+    },
+  });
+  host.append(
+    el('div', { class: 'add-row' }, [
+      champ,
+      el('button', {
+        class: 'btn btn-ghost',
+        type: 'button',
+        onclick: () => {
+          if (addPerson(champ.value, { select: true })) champ.value = '';
+          renderSetup();
+        },
+      }, 'Ajouter'),
+    ]),
+  );
+
+  const manque = game.minPlayers - selected.length;
+  host.append(el('p', {
+    class: 'muted small',
+    text: manque > 0
+      ? `Sélectionnez encore ${manque} joueur${manque > 1 ? 's' : ''} (${game.minPlayers} à ${game.maxPlayers}).`
+      : `${selected.length} joueurs, dans cet ordre autour de la table.`,
+  }));
+}
+
+/** Options de partie et condition de fin, communes aux deux modes de saisie. */
+function renderSetupTail(game) {
   const optionsHost = clear($('#setup-options'));
   for (const option of game.options ?? []) {
     const chips = el('div', { class: 'chip-row' });
@@ -224,18 +344,33 @@ function renderSetup() {
   }
 }
 
+
 function startMatch() {
   const game = getGame(setupDraft.gameId);
   const unite = game.participantLabel ?? 'Joueur';
-  const names = setupDraft.names.map((n, i) => (n.trim() || `${unite} ${i + 1}`));
-  if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) {
-    toast(`Deux ${unite.toLowerCase()}s portent le même nom.`, 'warn');
-    return;
+  let players;
+
+  if (setupDraft.parEquipes) {
+    const names = setupDraft.names.map((n, i) => (n.trim() || `${unite} ${i + 1}`));
+    if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) {
+      toast(`Deux ${unite.toLowerCase()}s portent le même nom.`, 'warn');
+      return;
+    }
+    players = names.map((n, i) => makePlayer(n, i));
+  } else {
+    const choisis = setupDraft.selected
+      .map((id) => store.state.people.find((p) => p.id === id))
+      .filter(Boolean);
+    if (choisis.length < game.minPlayers) {
+      toast(`Il faut au moins ${game.minPlayers} joueurs à ce jeu.`, 'warn');
+      return;
+    }
+    players = choisis.map(playerFromPerson);
   }
-  const players = names.map(makePlayer);
+
   store.update((s) => {
     s.match = makeMatch(game, players, setupDraft.target, setupDraft.options);
-    if (!game.defaultNames) s.lastPlayers = names;
+    if (!setupDraft.parEquipes) s.lastPlayers = players.map((p) => p.name);
   });
   backStack.length = 0;
   backStack.push('home');
@@ -295,15 +430,21 @@ function renderBanner(match, game) {
 }
 
 function renderScoreboard(match, game) {
-  const table = clear($('#scoreboard'));
+  renderBoard($('#scoreboard'), match, game, game.roundLabel ?? 'Manche');
+}
+
+/** Tableau des scores : partie en cours ou partie archivée, même rendu. */
+function renderBoard(table, match, game, label) {
+  clear(table);
   const board = standings(match, game);
   const t = totals(match);
+  const initiale = label[0].toUpperCase();
 
   const head = el('thead');
   head.append(el('tr', {}, [
     el('th', { text: '#' }),
-    el('th', { text: 'Joueur' }),
-    ...match.rounds.map((_, i) => el('th', { class: 'num', text: `M${i + 1}` })),
+    el('th', { text: game.participantLabel ?? 'Joueur' }),
+    ...match.rounds.map((_, i) => el('th', { class: 'num', text: `${initiale}${i + 1}` })),
     el('th', { class: 'num total-col', text: 'Total' }),
   ]));
   table.append(head);
@@ -1104,6 +1245,127 @@ function stopSpeech() {
   rulesState.step = -1;
 }
 
+// --- Carnet de joueurs -----------------------------------------------------
+
+function renderPeople() {
+  const { people, history } = store.state;
+  const records = recordsByPerson(history);
+  const host = clear($('#people-list'));
+
+  if (people.length === 0) {
+    host.append(el('p', { class: 'muted small', text: 'Personne pour le moment.' }));
+    return;
+  }
+
+  // Les plus assidus d'abord ; à égalité, par ordre alphabétique.
+  const classes = [...people].sort((a, b) => {
+    const ja = records.get(a.id)?.games ?? 0;
+    const jb = records.get(b.id)?.games ?? 0;
+    return jb - ja || a.name.localeCompare(b.name, 'fr');
+  });
+
+  for (const person of classes) {
+    const rec = records.get(person.id);
+    const parJeu = rec
+      ? [...rec.byGame.entries()].sort((a, b) => b[1].games - a[1].games)
+      : [];
+
+    host.append(
+      el('div', { class: 'row person-row' }, [
+        el('span', { class: 'dot', style: { background: person.color } }),
+        el('div', { class: 'person-main' }, [
+          el('strong', { text: person.name }),
+          rec
+            ? el('div', { class: 'person-record' }, [
+              el('span', {
+                class: `tag${rec.wins > 0 ? ' tag-win' : ''}`,
+                text: `${rec.wins} victoire${rec.wins > 1 ? 's' : ''} sur ${rec.games} partie${rec.games > 1 ? 's' : ''}`,
+              }),
+              ...parJeu.map(([gameId, stat]) => el('span', {
+                class: 'tag',
+                text: `${getGame(gameId).name} ${stat.wins}/${stat.games}`,
+              })),
+            ])
+            : el('span', { class: 'muted small', text: 'Aucune partie archivée pour le moment.' }),
+        ]),
+        el('button', {
+          class: 'icon-btn',
+          type: 'button',
+          'aria-label': `Retirer ${person.name} du carnet`,
+          onclick: async () => {
+            const ok = await confirmDialog(
+              `Retirer ${person.name} du carnet ? Les parties déjà archivées gardent son nom et son palmarès.`,
+              { okLabel: 'Retirer', danger: true },
+            );
+            if (!ok) return;
+            store.update((s) => { s.people = s.people.filter((x) => x.id !== person.id); });
+          },
+        }, '×'),
+      ]),
+    );
+  }
+}
+
+// --- Parties archivées -----------------------------------------------------
+
+/** Une ligne de la liste des parties, cliquable vers le détail. */
+function matchRow(past) {
+  const game = getGame(past.gameId);
+  const board = standings(past, game);
+  const winner = board[0];
+  return el('button', {
+    class: 'row row-button',
+    type: 'button',
+    onclick: () => { detailId = past.id; show('match-detail'); },
+  }, [
+    el('div', { class: 'row-main' }, [
+      el('strong', { text: `${game.name} · ${winner.player.name} gagne` }),
+      el('span', {
+        class: 'muted small',
+        text: `${formatDate(past.updatedAt)} · ${board.map((r) => `${r.player.name} ${r.total}`).join(' · ')}`,
+      }),
+    ]),
+  ]);
+}
+
+function renderHistory() {
+  const host = clear($('#history-full'));
+  const { history } = store.state;
+  if (history.length === 0) {
+    host.append(el('p', { class: 'muted small', text: 'Aucune partie archivée pour le moment.' }));
+    return;
+  }
+  for (const past of [...history].reverse()) host.append(matchRow(past));
+}
+
+function renderMatchDetail() {
+  const past = store.state.history.find((h) => h.id === detailId);
+  if (!past) return show('history', { push: false });
+  const game = getGame(past.gameId);
+  const board = standings(past, game);
+  const label = game.roundLabel ?? 'Manche';
+
+  $('#detail-title').textContent = `${game.name} — ${board[0].player.name} gagne`;
+  $('#detail-sub').textContent =
+    `${formatDate(past.updatedAt)} · ${past.rounds.length} ${label.toLowerCase()}s · `
+    + (game.endMode === 'rounds' ? `partie en ${past.target} ${label.toLowerCase()}s` : `objectif ${past.target} points`);
+
+  renderBoard($('#detail-board'), past, game, label);
+
+  const rounds = clear($('#detail-rounds'));
+  past.rounds.forEach((round, i) => {
+    rounds.append(el('div', { class: 'row' }, [
+      el('div', { class: 'row-main' }, [
+        el('strong', { text: `${label} ${i + 1}` }),
+        el('span', {
+          class: 'muted small',
+          text: past.players.map((p) => `${p.name} ${round.scores[p.id] ?? 0}`).join(' · '),
+        }),
+      ]),
+    ]));
+  });
+}
+
 // --- Réglages --------------------------------------------------------------
 
 function renderSettings() {
@@ -1230,6 +1492,26 @@ function wire() {
   });
 
   $('#btn-rules').addEventListener('click', () => openRules());
+
+  $('#btn-people').addEventListener('click', () => show('people'));
+  $('#btn-history').addEventListener('click', () => show('history'));
+
+  const champPerson = $('#new-person');
+  const ajouter = () => {
+    if (addPerson(champPerson.value)) champPerson.value = '';
+    renderPeople();
+  };
+  $('#btn-add-person').addEventListener('click', ajouter);
+  champPerson.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); ajouter(); }
+  });
+
+  $('#btn-delete-match').addEventListener('click', async () => {
+    const ok = await confirmDialog("Supprimer cette partie de l'historique ?", { okLabel: 'Supprimer', danger: true });
+    if (!ok) return;
+    store.update((s) => { s.history = s.history.filter((h) => h.id !== detailId); });
+    back();
+  });
 
   $('#btn-say-pitch').addEventListener('click', () => saySteps([getGame(rulesState.gameId).pitch], -1));
   $('#btn-say-setup').addEventListener('click', () => {

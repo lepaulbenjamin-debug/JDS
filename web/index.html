@@ -38,6 +38,10 @@
 
     <h3 class="section-title">Parties terminées</h3>
     <div id="history-list" class="stack"></div>
+    <div class="home-nav">
+      <button id="btn-people" class="btn btn-ghost" type="button">👥 Les joueurs</button>
+      <button id="btn-history" class="btn btn-ghost" type="button">📚 Toutes les parties</button>
+    </div>
   </section>
 
   <!-- Configuration de la partie -->
@@ -160,6 +164,39 @@
 
     <h3 class="section-title">Le détail des règles</h3>
     <div id="rules-body" class="stack"></div>
+  </section>
+
+  <!-- Carnet de joueurs et statistiques -->
+  <section class="screen" data-screen="people" hidden>
+    <h2 class="screen-title">Les joueurs</h2>
+    <p class="muted small">Les habitués sont proposés au démarrage d'une partie : plus besoin de retaper les prénoms. Leur palmarès se remplit au fur et à mesure des parties archivées.</p>
+
+    <div class="field">
+      <label for="new-person">Ajouter quelqu'un</label>
+      <div class="add-row">
+        <input id="new-person" type="text" autocomplete="off" maxlength="18" placeholder="Prénom">
+        <button id="btn-add-person" class="btn btn-primary" type="button">Ajouter</button>
+      </div>
+    </div>
+
+    <div id="people-list" class="stack"></div>
+  </section>
+
+  <!-- Toutes les parties archivées -->
+  <section class="screen" data-screen="history" hidden>
+    <h2 class="screen-title">Toutes les parties</h2>
+    <div id="history-full" class="stack"></div>
+  </section>
+
+  <!-- Détail d'une partie archivée -->
+  <section class="screen" data-screen="match-detail" hidden>
+    <h2 id="detail-title" class="screen-title"></h2>
+    <p id="detail-sub" class="muted"></p>
+    <div class="scoreboard-wrap">
+      <table id="detail-board" class="scoreboard"></table>
+    </div>
+    <div id="detail-rounds" class="stack"></div>
+    <button id="btn-delete-match" class="btn btn-ghost btn-block btn-danger-text" type="button">Supprimer cette partie</button>
   </section>
 
   <!-- Réglages -->
