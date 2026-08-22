@@ -31,19 +31,21 @@ export async function prepareImage(file) {
 
 /**
  * Envoie l'image et renvoie l'objet structuré décrit dans vision-prompt.js.
- * @param {{image:{base64:string, mediaType:string}, mode:string, players:string[], roundTotal:number, settings:object}} args
+ * Le serveur ne reçoit que l'identifiant du jeu : c'est lui qui résout les
+ * règles à injecter dans le prompt, jamais le client.
+ * @param {{image:{base64:string, mediaType:string}, mode:string, game:object, players:string[], settings:object}} args
  */
-export async function scan({ image, mode, players, roundTotal, settings }) {
+export async function scan({ image, mode, game, players, settings }) {
   const payload = {
     mode,
+    gameId: game.id,
     players,
-    roundTotal,
     imageBase64: image.base64,
     mediaType: image.mediaType,
   };
 
   if (settings.mode === 'direct') {
-    return scanDirect(payload, settings.apiKey);
+    return scanDirect({ ...payload, game }, settings.apiKey);
   }
   return scanViaServer(payload, settings.serverUrl);
 }

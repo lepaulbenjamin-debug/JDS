@@ -403,6 +403,18 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   color: var(--token-color, var(--muted));
 }
 
+.extra {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.extra-label { font-size: 15px; }
+.extra .chip-row { margin-top: 2px; }
+
 .score-row {
   display: flex;
   align-items: center;

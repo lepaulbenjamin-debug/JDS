@@ -32,9 +32,29 @@ export default {
   roundTotal: 250,
   defaultTarget: 250,
   targetChoices: [150, 200, 250, 300, 500],
+  allowsNegative: false,
   // Le mode « cartes » (attribution des Payoos ramassés) est disponible.
   supportsTokens: true,
   tokens: TOKENS,
+  // Raccourcis proposés à côté de chaque score en saisie manuelle.
+  quickAdd: [{ label: '+40', value: 40, title: 'Ajouter le Papayoo (40 points)' }],
+
+  /** Contexte donné à l'IA pour lire une photo. */
+  vision: {
+    context: `Règles du Papayoo utiles à la lecture :
+- Les Payoos sont 20 cartes jaunes numérotées de 1 à 20 ; chacune vaut sa valeur en points.
+- Le Papayoo est le 7 de la couleur désignée au dé ; il vaut 40 points.
+- Toutes les autres cartes valent 0 point.
+- Le total distribué sur une manche complète est de 250 points.`,
+    cards: {
+      label: 'Cartes ramassées',
+      hint: "Photographiez les cartes de pénalité ramassées par un joueur sur la manche.",
+      instruction: `La photo montre les cartes ramassées par UN joueur sur une manche de Papayoo.
+Liste la valeur en points de chaque carte qui compte : chaque Payoo vaut son numéro, et le Papayoo compte pour 40.
+Ne liste pas les cartes des couleurs classiques : elles valent 0.
+Un même numéro de Payoo ne peut apparaître qu'une fois.`,
+    },
+  },
 
   /** Nombre de cartes par joueur, cartes retirées et taille de l'écart. */
   deal(playerCount) {
@@ -81,7 +101,6 @@ export default {
     };
   },
 
-  /** Texte affiché dans l'écran de règles. */
   /** Présentation en deux phrases, à lire à la table avant de commencer. */
   pitch: "Papayoo, c'est un jeu de plis où on cherche à ne surtout rien gagner. On joue à la couleur demandée, et celui qui remporte le pli ramasse les cartes — donc les points. Seules les cartes jaunes, les Payoos, coûtent quelque chose, plus une carte piégée qui en vaut quarante à elle seule. À la fin, le plus petit total gagne.",
 

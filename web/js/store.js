@@ -108,7 +108,9 @@ export function makeDraft(game, players) {
     mode: game.supportsTokens ? 'tokens' : 'manual',
     scores: Object.fromEntries(players.map((p) => [p.id, ''])),
     assign: {},
-    suit: null,
+    // Informations propres au jeu, demandées avant de valider la manche
+    // (au Skyjo : qui a retourné ses douze cartes en premier).
+    extras: {},
     editingRoundId: null,
     activePlayerId: players[0]?.id ?? null,
   };

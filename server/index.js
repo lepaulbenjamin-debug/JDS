@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 
 import { buildPayload, parseResponse } from '../web/js/vision-prompt.js';
+import { GAMES } from '../web/js/games/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const PORT = Number(process.env.PORT ?? 8080);
@@ -74,6 +75,9 @@ function validateScanInput(input) {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(input.mediaType)) errors.push('format d\'image non supporté');
   if (!['scoresheet', 'cards'].includes(input.mode)) errors.push('mode inconnu');
   if (!Array.isArray(input.players)) errors.push('liste de joueurs invalide');
+  // Le jeu est résolu ici, à partir d'un identifiant connu : le client ne peut
+  // pas injecter de texte dans le prompt système.
+  if (!GAMES.some((g) => g.id === input.gameId)) errors.push('jeu inconnu');
   return errors;
 }
 
@@ -92,8 +96,8 @@ async function handleScan(req, res) {
     const message = await getClient().messages.create(
       buildPayload({
         mode: input.mode,
+        game: GAMES.find((g) => g.id === input.gameId),
         players: input.players.map(String).slice(0, 12),
-        roundTotal: Number(input.roundTotal) || 250,
         imageBase64: input.imageBase64,
         mediaType: input.mediaType,
       }),

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12141c">
-<meta name="description" content="Compteur de points pour jeux de société, avec lecture des scores par IA. Commence avec le Papayoo.">
+<meta name="description" content="Compteur de points pour jeux de société, avec règles expliquées à voix haute et lecture des scores par IA. Papayoo et Skyjo.">
 <title>Scores — compteur de jeux de société</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -28,7 +28,7 @@
     <div class="hero">
       <p class="hero-kicker">Compteur de points</p>
       <h2 class="hero-title">Une partie, zéro calcul mental.</h2>
-      <p class="hero-sub">Saisie rapide, vérification automatique du total, et lecture de la feuille de scores en photo.</p>
+      <p class="hero-sub">Saisie rapide, calculs vérifiés, règles expliquées à voix haute et lecture de la feuille de scores en photo.</p>
     </div>
 
     <div id="home-resume"></div>
@@ -77,6 +77,8 @@
 
       <p id="round-status" class="status"></p>
 
+      <div id="round-extras"></div>
+
       <div id="entry-tokens" class="entry"></div>
       <div id="entry-manual" class="entry" hidden></div>
 
@@ -106,11 +108,13 @@
 
     <div class="seg seg-block" id="scan-mode" role="group" aria-label="Type de photo">
       <button type="button" data-scan="scoresheet">Feuille de scores</button>
-      <button type="button" data-scan="cards">Cartes ramassées</button>
+      <button type="button" data-scan="cards">Cartes</button>
     </div>
 
+    <p id="scan-hint" class="muted small"></p>
+
     <div id="scan-cards-target" class="field" hidden>
-      <label for="scan-player">Cartes ramassées par</label>
+      <label for="scan-player"><span id="scan-player-label">Cartes</span> de</label>
       <select id="scan-player"></select>
     </div>
 

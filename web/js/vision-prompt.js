@@ -1,5 +1,8 @@
 // Construction de la requête de lecture d'image, partagée par le client
 // (appel direct navigateur) et par le serveur Node (SDK Anthropic).
+//
+// Le contexte de règles vient du module de jeu, jamais de la requête HTTP :
+// le serveur résout le jeu par son identifiant avant de construire le prompt.
 
 export const MODEL = 'claude-opus-5';
 
@@ -10,7 +13,7 @@ export const SCHEMA = {
     detected: {
       type: 'string',
       enum: ['scoresheet', 'cards', 'unclear'],
-      description: "Ce que montre la photo : une feuille de scores, des cartes ramassées, ou rien d'exploitable.",
+      description: "Ce que montre la photo : une feuille de scores, des cartes, ou rien d'exploitable.",
     },
     rounds: {
       type: 'array',
@@ -42,17 +45,17 @@ export const SCHEMA = {
     },
     cards: {
       type: 'object',
-      description: 'Cartes de pénalité visibles sur la photo. Utilise seulement si detected = "cards".',
+      description: 'Cartes lues sur la photo. Utilisé seulement si detected = "cards".',
       properties: {
-        payoos: {
+        values: {
           type: 'array',
-          description: 'Valeurs des Payoos visibles (cartes jaunes numérotées de 1 à 20).',
+          description: 'Valeur en points de chaque carte comptabilisée, une entrée par carte.',
           items: { type: 'integer' },
         },
-        papayoo: { type: 'boolean', description: 'true si le Papayoo (7 de la couleur désignée) est visible.' },
-        total: { type: 'integer', description: 'Somme des Payoos, +40 si le Papayoo est présent.' },
+        count: { type: 'integer', description: 'Nombre de cartes prises en compte.' },
+        detail: { type: 'string', description: 'En une phrase : ce qui a été vu sur la photo.' },
       },
-      required: ['payoos', 'papayoo', 'total'],
+      required: ['values', 'count', 'detail'],
       additionalProperties: false,
     },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
@@ -62,43 +65,44 @@ export const SCHEMA = {
   additionalProperties: false,
 };
 
-const SYSTEM = `Tu lis des photos pour une application de comptage de points de jeux de société.
+function systemPrompt(game) {
+  return `Tu lis des photos pour une application de comptage de points de jeux de société.
+La partie en cours est une partie de ${game.name}.
 Tu ne devines jamais : si un chiffre est illisible, tu le signales dans "notes" et tu baisses "confidence".
 Tu réponds uniquement avec les données demandées, en respectant le schéma.
 
-Règles du Papayoo utiles à la lecture :
-- Les Payoos sont 20 cartes jaunes numérotées de 1 à 20 ; chacune vaut sa valeur en points.
-- Le Papayoo est le 7 de la couleur désignée au dé ; il vaut 40 points.
-- Toutes les autres cartes valent 0 point.
-- Le total distribué sur une manche complète est de 250 points.`;
+${game.vision?.context ?? ''}`.trim();
+}
 
-function instructionFor(mode, players, roundTotal) {
-  const names = players.length ? players.map((p) => `"${p}"` ).join(', ') : 'inconnus';
+function instructionFor(mode, game, players) {
+  const names = players.length ? players.map((p) => `"${p}"`).join(', ') : 'inconnus';
 
   if (mode === 'cards') {
-    return `La photo montre les cartes de pénalité ramassées par UN joueur sur une manche.
-Liste chaque Payoo visible (une entrée par carte, une même valeur ne peut apparaître qu'une fois), indique si le Papayoo est présent, et calcule le total.
-Ne compte pas les cartes des couleurs classiques : elles valent 0.
+    return `${game.vision?.cards?.instruction ?? 'Liste la valeur en points de chaque carte visible sur la photo.'}
 Laisse "rounds" vide et mets detected = "cards".`;
   }
+
+  const totalLine = game.roundTotal
+    ? `Une manche complète totalise ${game.roundTotal} points : si une ligne s'en écarte, signale-le dans "notes" sans corriger les chiffres.`
+    : `Au ${game.name}, chaque joueur compte ses propres points : il n'y a pas de total de manche à vérifier.`;
 
   return `La photo montre une feuille de scores manuscrite.
 Joueurs attendus dans la partie : ${names}. Réutilise ces noms quand la correspondance est évidente, sinon recopie le nom tel qu'il est écrit.
 Rends une entrée dans "rounds" par ligne/manche lisible, dans l'ordre de la feuille.
 Si la feuille donne des totaux cumulés au lieu des points par manche, mets cumulative = true pour ces lignes sans faire la soustraction toi-même.
-Une manche complète totalise ${roundTotal} points : si une ligne s'en écarte, signale-le dans "notes" sans corriger les chiffres.
+${totalLine}
 Laisse "cards" avec des valeurs vides et mets detected = "scoresheet".`;
 }
 
 /**
  * Corps de requête pour POST /v1/messages.
- * @param {{mode:'scoresheet'|'cards', players:string[], roundTotal:number, imageBase64:string, mediaType:string}} input
+ * @param {{mode:'scoresheet'|'cards', game:object, players:string[], imageBase64:string, mediaType:string}} input
  */
-export function buildPayload({ mode, players = [], roundTotal = 250, imageBase64, mediaType = 'image/jpeg' }) {
+export function buildPayload({ mode, game, players = [], imageBase64, mediaType = 'image/jpeg' }) {
   return {
     model: MODEL,
     max_tokens: 16000,
-    system: SYSTEM,
+    system: systemPrompt(game),
     output_config: {
       effort: 'medium',
       format: { type: 'json_schema', schema: SCHEMA },
@@ -108,7 +112,7 @@ export function buildPayload({ mode, players = [], roundTotal = 250, imageBase64
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
-          { type: 'text', text: instructionFor(mode, players, roundTotal) },
+          { type: 'text', text: instructionFor(mode, game, players) },
         ],
       },
     ],
@@ -118,7 +122,7 @@ export function buildPayload({ mode, players = [], roundTotal = 250, imageBase64
 /** Extrait le JSON structuré d'une réponse Messages API. */
 export function parseResponse(message) {
   if (message?.stop_reason === 'refusal') {
-    throw new Error("L'IA a refuse de traiter cette image.");
+    throw new Error("L'IA a refusé de traiter cette image.");
   }
   const block = (message?.content ?? []).find((b) => b.type === 'text');
   if (!block) throw new Error("Réponse vide de l'IA.");

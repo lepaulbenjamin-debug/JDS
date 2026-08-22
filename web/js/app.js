@@ -283,20 +283,66 @@ function renderRoundPanel(match, game) {
   $('#round-title').textContent = editing ? `Modifier la manche ${index}` : `Manche ${index}`;
   $('#btn-validate').textContent = editing ? 'Enregistrer les modifications' : 'Valider la manche';
 
+  // La bascule Cartes/Points n'a de sens que si le jeu propose des jetons.
+  $('#mode-switch').hidden = !game.supportsTokens;
   for (const btn of $$('#mode-switch button')) {
     btn.classList.toggle('is-active', btn.dataset.mode === draft.mode);
   }
   $('#entry-tokens').hidden = draft.mode !== 'tokens';
   $('#entry-manual').hidden = draft.mode !== 'manual';
 
-  const scores = draftScores(match, game);
-  const check = game.validateRound(scores, match.players);
-  const status = $('#round-status');
-  status.textContent = check.message;
-  status.dataset.level = check.ok ? 'ok' : 'warn';
+  renderExtras(match, game);
+  refreshStatus(match, game);
 
-  if (draft.mode === 'tokens') renderTokens(match, game, scores);
-  else renderManual(match);
+  if (draft.mode === 'tokens') renderTokens(match, game, draftScores(match, game));
+  else renderManual(match, game);
+}
+
+/** Informations propres au jeu, demandées avant de valider (ex. qui a fermé). */
+function renderExtras(match, game) {
+  const host = clear($('#round-extras'));
+  for (const extra of game.extras ?? []) {
+    if (extra.type !== 'player') continue;
+    const chips = el('div', { class: 'chip-row player-chips' });
+    for (const p of match.players) {
+      chips.append(
+        el('button', {
+          class: `chip player-chip${match.draft.extras?.[extra.key] === p.id ? ' is-active' : ''}`,
+          type: 'button',
+          style: { '--chip-color': p.color },
+          onclick: () => store.update((s) => {
+            const current = s.match.draft.extras ?? (s.match.draft.extras = {});
+            // Deuxieme appui sur le meme joueur : on annule le choix.
+            current[extra.key] = current[extra.key] === p.id ? null : p.id;
+          }),
+        }, [
+          el('span', { class: 'dot', style: { background: p.color } }),
+          el('span', { text: p.name }),
+        ]),
+      );
+    }
+    host.append(
+      el('div', { class: 'extra' }, [
+        el('strong', { class: 'extra-label', text: extra.label }),
+        el('span', { class: 'muted small', text: extra.hint }),
+        chips,
+      ]),
+    );
+  }
+}
+
+/** Bandeau de controle : validation du jeu + effets calcules (doublement...). */
+function refreshStatus(match, game) {
+  const scores = draftScores(match, game);
+  const check = game.validateRound(scores, match.players, match.draft.extras);
+  const notes = check.ok && game.finalize
+    ? game.finalize(scores, match.draft.extras, match.players).notes
+    : [];
+
+  const status = $('#round-status');
+  status.textContent = [check.message, ...notes].join(' ');
+  status.dataset.level = check.ok ? 'ok' : 'warn';
+  return check;
 }
 
 function renderTokens(match, game, scores) {
@@ -357,7 +403,7 @@ function toggleToken(token, ownerId) {
   });
 }
 
-function renderManual(match) {
+function renderManual(match, game) {
   const { draft } = match;
   const host = clear($('#entry-manual'));
 
@@ -365,7 +411,7 @@ function renderManual(match) {
     const input = el('input', {
       type: 'number',
       inputmode: 'numeric',
-      min: '0',
+      min: game.allowsNegative ? null : '0',
       step: '1',
       value: draft.scores[p.id] ?? '',
       placeholder: '0',
@@ -379,21 +425,36 @@ function renderManual(match) {
       onchange: () => store.touch(),
     });
 
+    const shortcuts = (game.quickAdd ?? []).map((shortcut) =>
+      el('button', {
+        class: 'mini-btn',
+        type: 'button',
+        title: shortcut.title,
+        onclick: () => store.update((s) => {
+          const cur = Number(s.match.draft.scores[p.id] || 0);
+          s.match.draft.scores[p.id] = String(cur + shortcut.value);
+        }),
+      }, shortcut.label));
+
+    // Le pave numerique des telephones n'a pas de signe moins : on inverse
+    // d'un bouton plutot que d'esperer que le clavier coopere.
+    if (game.allowsNegative) {
+      shortcuts.push(el('button', {
+        class: 'mini-btn',
+        type: 'button',
+        title: 'Inverser le signe',
+        onclick: () => store.update((s) => {
+          const cur = Number(s.match.draft.scores[p.id] || 0);
+          s.match.draft.scores[p.id] = String(-cur);
+        }),
+      }, '\u00b1'));
+    }
+
     host.append(
       el('div', { class: 'score-row' }, [
         el('span', { class: 'dot', style: { background: p.color } }),
         el('span', { class: 'score-name', text: p.name }),
-        el('button', {
-          class: 'mini-btn',
-          type: 'button',
-          title: 'Ajouter le Papayoo (40 points)',
-          onclick: () => {
-            store.update((s) => {
-              const cur = Number(s.match.draft.scores[p.id] || 0);
-              s.match.draft.scores[p.id] = String(cur + 40);
-            });
-          },
-        }, '+40'),
+        ...shortcuts,
         input,
       ]),
     );
@@ -423,6 +484,13 @@ function refreshRemainder() {
   const game = getGame(match.gameId);
   const { draft } = match;
 
+  // Sans total de manche fixe (Skyjo), il n'y a pas de « reste » a attribuer.
+  if (!game.roundTotal) {
+    remainderTarget = null;
+    remainderBtn.hidden = true;
+    return;
+  }
+
   const filled = match.players.reduce((sum, p) => sum + (Number(draft.scores[p.id]) || 0), 0);
   const remaining = game.roundTotal - filled;
   const empty = match.players.filter((p) => draft.scores[p.id] === '' || draft.scores[p.id] == null);
@@ -437,15 +505,11 @@ function refreshRemainder() {
   }
 }
 
-/** Met à jour le bandeau de controle sans re-rendre les inputs (garde le focus). */
+/** Met à jour le bandeau de contrôle sans re-rendre les inputs (garde le focus). */
 function refreshManualStatus() {
   const match = store.state.match;
-  const game = getGame(match.gameId);
-  const check = game.validateRound(draftScores(match, game), match.players);
+  refreshStatus(match, getGame(match.gameId));
   refreshRemainder();
-  const status = $('#round-status');
-  status.textContent = check.message;
-  status.dataset.level = check.ok ? 'ok' : 'warn';
 }
 
 function renderRoundHistory(match, game) {
@@ -494,8 +558,13 @@ function editRound(roundId) {
     s.match.draft = {
       ...makeDraft(game, s.match.players),
       mode: round.mode,
-      scores: Object.fromEntries(s.match.players.map((p) => [p.id, String(round.scores[p.id] ?? 0)])),
+      // On recharge les points saisis, pas le résultat après application des
+      // règles : sinon une correction ré-appliquerait le doublement.
+      scores: Object.fromEntries(s.match.players.map(
+        (p) => [p.id, String((round.raw ?? round.scores)[p.id] ?? 0)],
+      )),
       assign: { ...(round.assign ?? {}) },
+      extras: { ...(round.extras ?? {}) },
       editingRoundId: roundId,
     };
   });
@@ -505,8 +574,9 @@ function editRound(roundId) {
 async function validateRound() {
   const match = store.state.match;
   const game = getGame(match.gameId);
+  const { draft } = match;
   const scores = draftScores(match, game);
-  const check = game.validateRound(scores, match.players);
+  const check = game.validateRound(scores, match.players, draft.extras);
 
   if (!check.ok) {
     const ok = await confirmDialog(
@@ -516,27 +586,30 @@ async function validateRound() {
     if (!ok) return;
   }
 
-  const clean = Object.fromEntries(match.players.map((p) => [p.id, Number(scores[p.id]) || 0]));
-  const { draft } = match;
+  // `raw` garde les points tels que saisis ; `scores` porte le résultat après
+  // les règles du jeu (au Skyjo, le doublement). Sans cette distinction,
+  // rouvrir une manche pour la corriger doublerait une deuxième fois.
+  const raw = Object.fromEntries(match.players.map((p) => [p.id, Number(scores[p.id]) || 0]));
+  const final = game.finalize ? game.finalize(raw, draft.extras, match.players) : { scores: raw, notes: [] };
 
   store.update((s) => {
+    const payload = {
+      mode: draft.mode,
+      scores: final.scores,
+      raw,
+      assign: { ...draft.assign },
+      extras: { ...draft.extras },
+    };
     if (draft.editingRoundId) {
-      const round = s.match.rounds.find((r) => r.id === draft.editingRoundId);
-      round.scores = clean;
-      round.mode = draft.mode;
-      round.assign = { ...draft.assign };
+      Object.assign(s.match.rounds.find((r) => r.id === draft.editingRoundId), payload);
     } else {
-      s.match.rounds.push({
-        id: makeRoundId(),
-        mode: draft.mode,
-        scores: clean,
-        assign: { ...draft.assign },
-      });
+      s.match.rounds.push({ id: makeRoundId(), ...payload });
     }
     s.match.draft = makeDraft(game, s.match.players);
   });
 
-  toast(draft.editingRoundId ? 'Manche modifiée.' : 'Manche enregistrée.', 'ok');
+  const note = final.notes?.[0];
+  toast(note ?? (draft.editingRoundId ? 'Manche modifiée.' : 'Manche enregistrée.'), 'ok');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -550,12 +623,25 @@ function openScan() {
 function renderScan() {
   const match = store.state.match;
   if (!match) return show('home', { push: false });
+  const game = getGame(match.gameId);
+  const cardsMode = game.vision?.cards;
 
+  // Le mode « cartes » dépend du jeu : au Papayoo on photographie les cartes
+  // ramassées, au Skyjo la grille de fin de manche.
+  if (!cardsMode && scanState.mode === 'cards') scanState.mode = 'scoresheet';
   for (const btn of $$('#scan-mode button')) {
+    if (btn.dataset.scan === 'cards') {
+      btn.hidden = !cardsMode;
+      btn.textContent = cardsMode?.label ?? 'Cartes';
+    }
     btn.classList.toggle('is-active', btn.dataset.scan === scanState.mode);
   }
+  $('#scan-hint').textContent = scanState.mode === 'cards'
+    ? (cardsMode?.hint ?? '')
+    : 'Photographiez la feuille de scores : une ligne par manche.';
 
   $('#scan-cards-target').hidden = scanState.mode !== 'cards';
+  $('#scan-player-label').textContent = cardsMode?.label ?? 'Cartes';
   const select = clear($('#scan-player'));
   for (const p of match.players) {
     select.append(el('option', { value: p.id, selected: p.id === scanState.playerId }, p.name));
@@ -585,21 +671,23 @@ function renderScanResult(match) {
   }));
 
   if (result.detected === 'cards') {
-    const cards = result.cards ?? { payoos: [], papayoo: false, total: 0 };
-    const total = cards.payoos.reduce((a, b) => a + b, 0) + (cards.papayoo ? 40 : 0);
+    const values = result.cards?.values ?? [];
+    // On additionne nous-mêmes plutôt que de faire confiance à un total calculé
+    // par le modèle : les valeurs lues sont vérifiables à l'œil, pas la somme.
+    const total = values.reduce((a, b) => a + b, 0);
     const player = match.players.find((p) => p.id === scanState.playerId);
     host.append(
       el('div', { class: 'result-card' }, [
-        el('strong', { text: `${player?.name ?? 'Joueur'} : ${total} points` }),
-        el('span', { class: 'muted small', text: `Payoos lus : ${cards.payoos.join(', ') || 'aucun'}${cards.papayoo ? ' + Papayoo (40)' : ''}` }),
-        total !== cards.total &&
-          el('span', { class: 'muted small', text: `Note : l'IA annonçait ${cards.total}, le total recalculé fait foi.` }),
+        el('strong', { text: `${player?.name ?? 'Joueur'} : ${total} point${Math.abs(total) > 1 ? 's' : ''}` }),
+        el('span', { class: 'muted small', text: `${values.length} carte${values.length > 1 ? 's' : ''} lue${values.length > 1 ? 's' : ''} : ${values.join(', ') || 'aucune'}` }),
+        result.cards?.detail && el('span', { class: 'muted small', text: result.cards.detail }),
       ]),
     );
     host.append(el('button', {
       class: 'btn btn-primary btn-block',
       type: 'button',
-      onclick: () => applyCards(cards),
+      disabled: values.length === 0,
+      onclick: () => applyCards(total),
     }, 'Reporter ce score dans la manche'));
     return;
   }
@@ -638,8 +726,7 @@ function renderScanResult(match) {
   }
 }
 
-function applyCards(cards) {
-  const total = cards.payoos.reduce((a, b) => a + b, 0) + (cards.papayoo ? 40 : 0);
+function applyCards(total) {
   store.update((s) => {
     s.match.draft.mode = 'manual';
     s.match.draft.scores[scanState.playerId] = String(total);
@@ -672,8 +759,8 @@ async function runScan() {
     const result = await scan({
       image: scanState.image,
       mode: scanState.mode,
+      game,
       players: match.players.map((p) => p.name),
-      roundTotal: game.roundTotal,
       settings: store.state.settings.ai,
     });
     scanState.result = result;
