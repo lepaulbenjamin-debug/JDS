@@ -353,6 +353,23 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   background: var(--surface);
 }
 .round-panel .sticky-actions { margin: 16px -14px -14px; padding-left: 14px; padding-right: 14px; }
+.round-result {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--ok) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--border));
+  color: var(--ok);
+}
+.round-result[data-level="warn"] {
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
+  color: var(--warn);
+}
+/* Formulaire de donne : beaucoup de champs, on resserre. */
+#entry-form .extra { gap: 4px; padding: 12px; margin-bottom: 10px; }
+#entry-form .chip { padding: 8px 12px; font-size: 13px; }
 .round-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .round-head .section-title { margin: 0; }
 

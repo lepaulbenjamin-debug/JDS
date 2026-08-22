@@ -3,9 +3,9 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Trois jeux sont implémentés : le **Papayoo**, le **Skyjo** et le **6 qui
-prend !**. Un jeu = un module dans `web/js/games/`, et le moteur s'adapte à ses
-règles.
+Quatre jeux sont implémentés : le **Papayoo**, le **Skyjo**, le **6 qui
+prend !** et le **Tarot**. Un jeu = un module dans `web/js/games/`, et le moteur
+s'adapte à ses règles.
 
 ## Ce que ça fait
 
@@ -22,6 +22,12 @@ règles.
   les cinq valeurs de têtes de bœuf sont des boutons : on compte son tas en
   tapotant, sans se souvenir que le 55 en vaut sept. Elle ne refuse jamais rien
   en silence : si le compte ne tombe pas juste, elle demande confirmation.
+- **Au Tarot, le score n'est plus saisi mais calculé.** On décrit la donne —
+  preneur, contrat, bouts, points réalisés, petit au bout, poignée, chelem — et
+  l'appli applique la formule officielle, répartit entre le preneur, l'appelé et
+  les défenseurs, et **montre le détail du calcul** en permanence au-dessus du
+  bouton de validation : `(25 + 8) × 2 = 66, petit au bout +20, poignée +20.
+  Ana +318, les autres −106.`
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -90,6 +96,7 @@ web/                     PWA statique, sans build ni dépendance
     games/papayoo.js     règles, mise en place orale, validation, jetons
     games/skyjo.js       idem + règle du doublement de fin de manche
     games/six-qui-prend.js  idem + barème des têtes de bœuf
+    games/tarot.js       idem + saisie par formulaire et calcul officiel FFT
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -113,6 +120,9 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `extras` | informations demandées avant de valider, ex. `{ key, type: 'player', label, hint }` |
 | `finalize(raw, extras, players)` | applique les règles de fin de manche, renvoie `{ scores, notes }` — les points saisis sont conservés à part, donc rouvrir une manche ne rejoue pas l'effet |
 | `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
+| `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
+| `lowestWins: false` | le plus grand total gagne (Tarot) |
+| `entry: 'form'` + `form(playerCount)` | la manche est décrite par un formulaire (`player`, `choice`, `number`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction |
 
 Trois champs alimentent la fiche règles :
 
@@ -147,6 +157,35 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles du Tarot (rappel)
+
+Jeu de 78 cartes : quatre couleurs de quatorze cartes et vingt et un atouts plus
+l'Excuse. Le preneur s'engage seul (ou avec un appelé à 5 joueurs) à réaliser un
+nombre de points qui dépend des **bouts** qu'il ramasse — le Petit, le 21 et
+l'Excuse : **56 points sans bout, 51 avec un, 41 avec deux, 36 avec trois**. Le
+total du jeu est de 91 points, comptés au demi-point près ; le demi-point va
+toujours au camp qui gagne la donne.
+
+Distribution : 3 joueurs, 24 cartes et chien de 6 ; 4 joueurs, 18 cartes et
+chien de 6 ; 5 joueurs, 15 cartes et chien de 3, avec appel d'un roi.
+
+**La formule** : `(25 + écart) × coefficient du contrat` — petite ×1, garde ×2,
+garde sans ×4, garde contre ×6. On ajoute ensuite le **petit au bout** (10 points
+multipliés par le contrat, au camp qui remporte la dernière levée avec le Petit,
+quel que soit le résultat de la donne), la **poignée** et le **chelem**, qui sont
+des primes fixes non multipliées. La poignée vaut 20, 30 ou 40 points selon le
+nombre d'atouts présentés (10/13/15 à 4 joueurs, 8/10/13 à 5, 13/15/18 à 3) et
+revient au camp qui gagne la donne, quel qu'en soit l'annonceur. Le chelem vaut
+400 annoncé et réussi, 200 réussi sans annonce, −200 annoncé et manqué.
+
+Répartition : chaque défenseur marque l'opposé de ce total, le preneur en marque
+autant de fois qu'il y a de défenseurs. À 5 joueurs avec un appelé distinct, le
+preneur en prend deux parts et l'appelé une. Le total d'une donne fait toujours
+zéro. On joue un nombre de donnes convenu, et le plus grand total gagne.
+
+*Limite connue* : le chelem réalisé par la défense contre le preneur, cas rare,
+n'est pas proposé dans la saisie.
 
 ## Règles du 6 qui prend ! (rappel)
 

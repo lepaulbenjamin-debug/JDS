@@ -141,10 +141,11 @@ function renderSetup() {
   const game = getGame(setupDraft.gameId);
 
   $('#setup-game').textContent = game.name;
-  const { perPlayer, removed } = game.deal(Math.max(setupDraft.names.length, game.minPlayers));
+  const { perPlayer, removed, chien } = game.deal(Math.max(setupDraft.names.length, game.minPlayers));
   $('#setup-hint').textContent =
-    `${setupDraft.names.length} joueurs · ${perPlayer} cartes chacun` +
-    (removed ? ` · ${removed} cartes retirées` : '');
+    `${setupDraft.names.length} joueurs · ${perPlayer} cartes chacun`
+    + (removed ? ` · ${removed} cartes retirées` : '')
+    + (chien ? ` · chien de ${chien}` : '');
 
   const list = clear($('#player-list'));
   setupDraft.names.forEach((name, index) => {
@@ -173,6 +174,12 @@ function renderSetup() {
 
   $('#btn-add-player').hidden = setupDraft.names.length >= game.maxPlayers;
 
+  // Certains jeux s'arrêtent à un score, d'autres après un nombre de donnes.
+  const parDonnes = game.endMode === 'rounds';
+  $('#setup-end-label').textContent = parDonnes
+    ? 'La partie dure :'
+    : "La partie s'arrête dès qu'un joueur atteint :";
+
   const choices = clear($('#target-choices'));
   for (const value of game.targetChoices) {
     choices.append(
@@ -180,7 +187,7 @@ function renderSetup() {
         class: `chip${setupDraft.target === value ? ' is-active' : ''}`,
         type: 'button',
         onclick: () => { setupDraft.target = value; renderSetup(); },
-      }, `${value} pts`),
+      }, parDonnes ? `${value} donnes` : `${value} pts`),
     );
   }
 }
@@ -203,6 +210,14 @@ function startMatch() {
 }
 
 // --- Partie ----------------------------------------------------------------
+
+/**
+ * Ce que le jeu reçoit pour valider et calculer : les scores saisis, ou la
+ * description de la donne pour les jeux à formulaire (Tarot).
+ */
+function roundInput(match, game) {
+  return game.entry === 'form' ? match.draft.form : draftScores(match, game);
+}
 
 /** Scores effectifs du brouillon, selon le mode de saisie. */
 function draftScores(match, game) {
@@ -235,10 +250,13 @@ function renderBanner(match, game) {
   const host = clear($('#match-banner'));
   if (!isOver(match, game)) return;
   const board = standings(match, game);
+  const raison = game.endMode === 'rounds'
+    ? `${match.target} donnes jouées.`
+    : `Objectif ${match.target} atteint.`;
   host.append(
     el('div', { class: 'banner' }, [
       el('strong', { text: `🏆 ${board[0].player.name} gagne avec ${board[0].total} points` }),
-      el('span', { class: 'small', text: `Objectif ${match.target} atteint. Vous pouvez archiver la partie en bas de l'écran.` }),
+      el('span', { class: 'small', text: `${raison} Vous pouvez archiver la partie en bas de l'écran.` }),
     ]),
   );
 }
@@ -280,22 +298,88 @@ function renderRoundPanel(match, game) {
     ? match.rounds.findIndex((r) => r.id === draft.editingRoundId) + 1
     : match.rounds.length + 1;
 
-  $('#round-title').textContent = editing ? `Modifier la manche ${index}` : `Manche ${index}`;
-  $('#btn-validate').textContent = editing ? 'Enregistrer les modifications' : 'Valider la manche';
+  const label = game.entry === 'form' ? 'Donne' : 'Manche';
+  $('#round-title').textContent = editing ? `Modifier la ${label.toLowerCase()} ${index}` : `${label} ${index}`;
+  $('#btn-validate').textContent = editing
+    ? 'Enregistrer les modifications'
+    : `Valider la ${label.toLowerCase()}`;
 
   // La bascule Cartes/Points n'a de sens que si le jeu propose des jetons.
   $('#mode-switch').hidden = !game.supportsTokens;
+  // La lecture photo suppose des scores à recopier : sans objet sur un formulaire.
+  $('#btn-scan').hidden = game.entry === 'form';
   for (const btn of $$('#mode-switch button')) {
     btn.classList.toggle('is-active', btn.dataset.mode === draft.mode);
   }
-  $('#entry-tokens').hidden = draft.mode !== 'tokens';
-  $('#entry-manual').hidden = draft.mode !== 'manual';
+  const form = game.entry === 'form';
+  $('#entry-form').hidden = !form;
+  $('#entry-tokens').hidden = form || draft.mode !== 'tokens';
+  $('#entry-manual').hidden = form || draft.mode !== 'manual';
 
   renderExtras(match, game);
   refreshStatus(match, game);
 
-  if (draft.mode === 'tokens') renderTokens(match, game, draftScores(match, game));
+  if (form) renderForm(match, game);
+  else if (draft.mode === 'tokens') renderTokens(match, game, draftScores(match, game));
   else renderManual(match, game);
+}
+
+/**
+ * Saisie d'une donne décrite par le jeu (Tarot) : le score n'est pas tapé,
+ * il est calculé à partir de ces champs.
+ */
+function renderForm(match, game) {
+  const host = clear($('#entry-form'));
+  const { form } = match.draft;
+
+  const setField = (key, value) => store.update((s) => { s.match.draft.form[key] = value; });
+
+  for (const field of game.form(match.players.length)) {
+    const block = el('div', { class: 'extra' }, [
+      el('strong', { class: 'extra-label', text: field.label }),
+      field.hint && el('span', { class: 'muted small', text: field.hint }),
+    ]);
+
+    if (field.type === 'number') {
+      block.append(el('input', {
+        type: 'number',
+        inputmode: 'decimal',
+        min: field.min,
+        max: field.max,
+        step: field.step ?? 1,
+        value: form[field.key] ?? '',
+        placeholder: '0',
+        // Comme la saisie manuelle : on écrit dans l'état sans re-rendre le
+        // champ, sinon le clavier se referme à chaque touche.
+        oninput: (e) => {
+          store.state.match.draft.form[field.key] = e.target.value;
+          refreshStatus(store.state.match, game);
+        },
+        onchange: () => store.touch(),
+      }));
+    } else {
+      const options = field.type === 'player'
+        ? match.players.map((p) => ({ value: p.id, label: p.name, color: p.color }))
+        : field.options;
+
+      const chips = el('div', { class: 'chip-row' });
+      for (const option of options) {
+        chips.append(
+          el('button', {
+            class: `chip${form[field.key] === option.value ? ' is-active' : ''}${option.color ? ' player-chip' : ''}`,
+            type: 'button',
+            style: option.color ? { '--chip-color': option.color } : {},
+            onclick: () => setField(field.key, option.value),
+          }, [
+            option.color && el('span', { class: 'dot', style: { background: option.color } }),
+            el('span', { text: option.label }),
+          ].filter(Boolean)),
+        );
+      }
+      block.append(chips);
+    }
+    host.append(block);
+  }
 }
 
 /** Informations propres au jeu, demandées avant de valider (ex. qui a fermé). */
@@ -333,15 +417,23 @@ function renderExtras(match, game) {
 
 /** Bandeau de controle : validation du jeu + effets calcules (doublement...). */
 function refreshStatus(match, game) {
-  const scores = draftScores(match, game);
-  const check = game.validateRound(scores, match.players, match.draft.extras);
+  const input = roundInput(match, game);
+  const check = game.validateRound(input, match.players, match.draft.extras);
   const notes = check.ok && game.finalize
-    ? game.finalize(scores, match.draft.extras, match.players).notes
+    ? game.finalize(input, match.draft.extras, match.players).notes
     : [];
 
+  const texte = [check.message, ...notes].filter(Boolean).join(' ');
   const status = $('#round-status');
-  status.textContent = [check.message, ...notes].join(' ');
+  status.textContent = texte;
   status.dataset.level = check.ok ? 'ok' : 'warn';
+
+  // Sur un formulaire long (Tarot), le bandeau du haut sort de l'écran alors
+  // que c'est justement le résultat qu'on veut voir : on le répète en bas.
+  const resume = $('#round-result');
+  resume.hidden = game.entry !== 'form' || !texte;
+  resume.textContent = texte;
+  resume.dataset.level = check.ok ? 'ok' : 'warn';
   return check;
 }
 
@@ -569,11 +661,15 @@ function editRound(roundId) {
     s.match.draft = {
       ...makeDraft(game, s.match.players),
       mode: round.mode,
-      // On recharge les points saisis, pas le résultat après application des
+      // On recharge la saisie d'origine, pas le résultat après application des
       // règles : sinon une correction ré-appliquerait le doublement.
-      scores: Object.fromEntries(s.match.players.map(
-        (p) => [p.id, String((round.raw ?? round.scores)[p.id] ?? 0)],
-      )),
+      ...(game.entry === 'form'
+        ? { form: { ...(round.raw ?? {}) } }
+        : {
+          scores: Object.fromEntries(s.match.players.map(
+            (p) => [p.id, String((round.raw ?? round.scores)[p.id] ?? 0)],
+          )),
+        }),
       assign: { ...(round.assign ?? {}) },
       extras: { ...(round.extras ?? {}) },
       editingRoundId: roundId,
@@ -586,8 +682,8 @@ async function validateRound() {
   const match = store.state.match;
   const game = getGame(match.gameId);
   const { draft } = match;
-  const scores = draftScores(match, game);
-  const check = game.validateRound(scores, match.players, draft.extras);
+  const input = roundInput(match, game);
+  const check = game.validateRound(input, match.players, draft.extras);
 
   if (!check.ok) {
     const ok = await confirmDialog(
@@ -597,11 +693,16 @@ async function validateRound() {
     if (!ok) return;
   }
 
-  // `raw` garde les points tels que saisis ; `scores` porte le résultat après
-  // les règles du jeu (au Skyjo, le doublement). Sans cette distinction,
-  // rouvrir une manche pour la corriger doublerait une deuxième fois.
-  const raw = Object.fromEntries(match.players.map((p) => [p.id, Number(scores[p.id]) || 0]));
-  const final = game.finalize ? game.finalize(raw, draft.extras, match.players) : { scores: raw, notes: [] };
+  // `raw` garde la saisie telle quelle — points tapés, ou description de la
+  // donne au Tarot ; `scores` porte le résultat après application des règles
+  // du jeu. Sans cette distinction, rouvrir une manche pour la corriger
+  // rejouerait l'effet (le doublement du Skyjo, par exemple).
+  const raw = game.entry === 'form'
+    ? { ...input }
+    : Object.fromEntries(match.players.map((p) => [p.id, Number(input[p.id]) || 0]));
+  const final = game.finalize
+    ? game.finalize(raw, draft.extras, match.players)
+    : { scores: raw, notes: [] };
 
   store.update((s) => {
     const payload = {

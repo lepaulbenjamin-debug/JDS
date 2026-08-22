@@ -111,6 +111,9 @@ export function makeDraft(game, players) {
     // Informations propres au jeu, demandées avant de valider la manche
     // (au Skyjo : qui a retourné ses douze cartes en premier).
     extras: {},
+    // Jeux à saisie par formulaire (Tarot) : description de la donne, à
+    // partir de laquelle le jeu calcule le score de chacun.
+    form: game.formDefaults?.() ?? {},
     editingRoundId: null,
     activePlayerId: players[0]?.id ?? null,
   };
@@ -139,12 +142,12 @@ export function standings(match, game) {
     .sort((a, b) => (game.lowestWins ? a.total - b.total : b.total - a.total));
 }
 
-/** La partie est-elle arrivée à son terme ? */
+/**
+ * La partie est-elle arrivée à son terme ?
+ * Selon le jeu, on s'arrête à un score cible ou après un nombre de donnes.
+ */
 export function isOver(match, game) {
-  const t = totals(match);
   if (match.rounds.length === 0) return false;
-  const values = Object.values(t);
-  return game.lowestWins
-    ? values.some((v) => v >= match.target)
-    : values.some((v) => v >= match.target);
+  if (game.endMode === 'rounds') return match.rounds.length >= match.target;
+  return Object.values(totals(match)).some((v) => v >= match.target);
 }

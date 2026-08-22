@@ -1,7 +1,7 @@
 // Service worker : le comptage des points doit fonctionner sans réseau.
 // Coquille applicative en cache-first, tout le reste en réseau d'abord.
 
-const CACHE = 'jds-shell-v4';
+const CACHE = 'jds-shell-v5';
 const SHELL = [
   './',
   'index.html',
@@ -18,6 +18,7 @@ const SHELL = [
   'js/games/papayoo.js',
   'js/games/skyjo.js',
   'js/games/six-qui-prend.js',
+  'js/games/tarot.js',
 ];
 
 self.addEventListener('install', (event) => {
