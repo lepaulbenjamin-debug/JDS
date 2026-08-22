@@ -105,8 +105,8 @@ export default {
 - Les cartes vont de -2 à 12 ; le score du joueur est la somme des cartes de sa grille.
 - Une colonne dont les trois cartes étaient identiques est retirée du jeu : il manque alors des cartes dans la grille, et ces emplacements ne comptent pas.`,
     cards: {
-      label: 'Grille de fin de manche',
-      hint: "Photographiez la grille d'un joueur à la fin de la manche, cartes retournées.",
+      label: 'Les 12 cartes d\u2019un joueur',
+      hint: "En fin de manche, photographiez la grille de {joueur}, toutes cartes retournées : l'appli additionne les douze valeurs, signes moins compris.",
       instruction: `La photo montre la grille de fin de manche d'UN joueur au Skyjo.
 Liste la valeur de chaque carte visible de la grille, une entrée par carte (les valeurs vont de -2 à 12, et une même valeur peut revenir plusieurs fois).
 Ne compte pas les emplacements vides : ce sont des colonnes retirées, elles ne rapportent rien.

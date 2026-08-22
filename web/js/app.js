@@ -13,7 +13,7 @@ const TITLES = {
   home: 'Marque-points',
   setup: 'Nouvelle partie',
   match: 'Partie en cours',
-  scan: 'Lecture IA',
+  scan: 'Compter en photo',
   rules: 'Règles',
   settings: 'Réglages',
   people: 'Les joueurs',
@@ -973,12 +973,13 @@ function renderScan() {
     }
     btn.classList.toggle('is-active', btn.dataset.scan === scanState.mode);
   }
+  // L'indice doit dire ce qui va se passer, et pour qui.
+  const cible = match.players.find((p) => p.id === scanState.playerId);
   $('#scan-hint').textContent = scanState.mode === 'cards'
-    ? (cardsMode?.hint ?? '')
-    : 'Photographiez la feuille de scores : une ligne par manche.';
+    ? (cardsMode?.hint ?? '').replace('{joueur}', cible?.name ?? 'ce joueur')
+    : 'Photographiez la feuille de scores manuscrite : chaque ligne lue vous sera proposée avant report.';
 
   $('#scan-cards-target').hidden = scanState.mode !== 'cards';
-  $('#scan-player-label').textContent = cardsMode?.label ?? 'Cartes';
   const select = clear($('#scan-player'));
   for (const p of match.players) {
     select.append(el('option', { value: p.id, selected: p.id === scanState.playerId }, p.name));
@@ -987,11 +988,11 @@ function renderScan() {
   const preview = $('#scan-preview');
   preview.hidden = !scanState.image;
   if (scanState.image) preview.src = scanState.image.dataUrl;
-  $('#scan-label').textContent = scanState.image ? 'Changer de photo' : 'Prendre ou choisir une photo';
+  $('#scan-label').textContent = scanState.image ? 'Changer de photo' : 'Prendre la photo';
 
   const run = $('#btn-run-scan');
   run.disabled = !scanState.image || scanState.busy;
-  run.textContent = scanState.busy ? 'Analyse en cours…' : 'Analyser';
+  run.textContent = scanState.busy ? 'Lecture en cours…' : 'Lire les cartes et calculer';
 
   renderScanResult(match);
 }
@@ -1030,12 +1031,12 @@ function renderScanResult(match) {
       type: 'button',
       disabled: values.length === 0,
       onclick: () => applyCards(total),
-    }, 'Reporter ce score dans la manche'));
+    }, `Reporter ${total} pour ${player?.name ?? 'ce joueur'}`));
     return;
   }
 
   if (result.detected !== 'scoresheet' || result.rounds.length === 0) {
-    host.append(el('p', { class: 'muted small', text: "Rien d'exploitable sur cette photo. Réessayez avec un cadrage plus net." }));
+    host.append(el('p', { class: 'muted small', text: "Aucune carte reconnue sur cette photo. Réessayez avec un cadrage plus net, ou saisissez le score à la main." }));
     return;
   }
 
@@ -1444,7 +1445,10 @@ function wire() {
     renderScan();
   });
 
-  $('#scan-player').addEventListener('change', (e) => { scanState.playerId = e.target.value; });
+  $('#scan-player').addEventListener('change', (e) => {
+    scanState.playerId = e.target.value;
+    renderScan();   // l'indice nomme le joueur : il doit suivre
+  });
 
   $('#scan-input').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];

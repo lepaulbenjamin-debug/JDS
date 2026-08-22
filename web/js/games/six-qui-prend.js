@@ -84,8 +84,8 @@ export default {
 - Les cartes sont numérotées de 1 à 104 ; c'est le grand numéro imprimé sur la carte.
 - Le nombre de têtes de bœuf est aussi dessiné sur la carte, mais c'est le NUMÉRO qui est demandé ici.`,
     cards: {
-      label: 'Cartes ramassées',
-      hint: "Étalez les cartes ramassées par un joueur de façon à voir tous les numéros, puis photographiez-les.",
+      label: 'Les cartes d\u2019un joueur',
+      hint: "Étalez le tas de {joueur} de façon à voir tous les numéros : l'appli lit les cartes et applique le barème des têtes de bœuf.",
       instruction: `La photo montre les cartes ramassées par UN joueur sur une manche de 6 qui prend.
 Liste le NUMÉRO de chaque carte visible (un entier de 1 à 104), une entrée par carte.
 Ne calcule pas les têtes de bœuf : l'application s'en charge à partir des numéros.

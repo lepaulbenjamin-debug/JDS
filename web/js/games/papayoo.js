@@ -47,8 +47,8 @@ export default {
 - Toutes les autres cartes valent 0 point.
 - Le total distribué sur une manche complète est de 250 points.`,
     cards: {
-      label: 'Cartes ramassées',
-      hint: "Photographiez les cartes de pénalité ramassées par un joueur sur la manche.",
+      label: 'Les cartes d\u2019un joueur',
+      hint: "Étalez les cartes ramassées par {joueur} et photographiez-les : l'appli additionne les Payoos et le Papayoo.",
       instruction: `La photo montre les cartes ramassées par UN joueur sur une manche de Papayoo.
 Liste la valeur en points de chaque carte qui compte : chaque Payoo vaut son numéro, et le Papayoo compte pour 40.
 Ne liste pas les cartes des couleurs classiques : elles valent 0.

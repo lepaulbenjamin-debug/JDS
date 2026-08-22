@@ -41,7 +41,7 @@ Six jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
   jeu — avec pause et reprise, et une étape à la fois si besoin. Le texte
   s'adapte à l'effectif : à 4 joueurs elle dit « 15 cartes chacun, écart de 5 »,
   à 7 elle dit de retirer les quatre 1 d'abord.
-- **Lecture par IA.** Photo d'une feuille de scores manuscrite → les manches
+- **Compter en photo.** Photo d'une feuille de scores manuscrite → les manches
   sont proposées, joueur par joueur. Photo des cartes d'un joueur → le total est
   calculé : les Payoos ramassés au Papayoo, la grille de fin de manche au Skyjo,
   le tas ramassé au 6 qui prend. Là, l'IA ne lit que les numéros des cartes et
