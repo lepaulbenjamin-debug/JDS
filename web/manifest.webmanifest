@@ -1,6 +1,6 @@
 {
-  "name": "Scores — compteur de jeux de société",
-  "short_name": "Scores",
+  "name": "Marque-points",
+  "short_name": "Marque-points",
   "description": "Compteur de points pour jeux de société, avec lecture des scores par IA.",
   "lang": "fr",
   "start_url": ".",

@@ -10,7 +10,7 @@ import { speech } from './speech.js';
 // --- Navigation ------------------------------------------------------------
 
 const TITLES = {
-  home: 'Scores',
+  home: 'Marque-points',
   setup: 'Nouvelle partie',
   match: 'Partie en cours',
   scan: 'Lecture IA',
@@ -26,7 +26,7 @@ function show(name, { push = true } = {}) {
   if (push && name !== current) backStack.push(current);
   current = name;
   for (const section of $$('.screen')) section.hidden = section.dataset.screen !== name;
-  $('#topbar-title').textContent = TITLES[name] ?? 'Scores';
+  $('#topbar-title').textContent = TITLES[name] ?? 'Marque-points';
   $('#btn-back').hidden = backStack.length === 0;
   window.scrollTo(0, 0);
   render();
@@ -1172,6 +1172,10 @@ show(store.state.match ? 'match' : 'home', { push: false });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* hors-ligne indisponible */ });
+    // Certains contextes (page servie en bac à sable, fichier unique) refusent
+    // l'enregistrement de façon synchrone : l'appli doit continuer sans.
+    try {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* hors-ligne indisponible */ });
+    } catch { /* hors-ligne indisponible */ }
   });
 }

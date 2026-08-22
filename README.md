@@ -100,7 +100,21 @@ web/                     PWA statique, sans build ni dépendance
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
+scripts/build-single-file.mjs  assemble tout en un seul fichier HTML
 ```
+
+## Tester sans rien installer
+
+```bash
+node scripts/build-single-file.mjs
+# → dist/scores-app.html, un fichier autonome à ouvrir ou à héberger n'importe où
+```
+
+Le fichier est dérivé des sources : on le régénère, on ne le modifie pas. Il
+comporte deux limites par rapport au dossier `web/` : pas de service worker,
+donc ni installation ni fonctionnement hors-ligne ; et la lecture par IA
+suppose que la page puisse joindre `api.anthropic.com`, ce que certains
+hébergeurs bloquent.
 
 ## Ajouter un jeu
 
