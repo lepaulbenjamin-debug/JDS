@@ -44,7 +44,7 @@ body {
   gap: 8px;
   padding: 10px var(--pad);
   padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  background: color-mix(in srgb, var(--bg) 97%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -144,7 +144,8 @@ body {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  /* Assez large pour que les deux boutons de la carte tiennent sur une ligne. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
   gap: 10px;
 }
 .game-card {
@@ -161,6 +162,8 @@ body {
 }
 .game-card:active { background: var(--surface-2); }
 .game-emoji { font-size: 26px; }
+.game-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+.game-card-actions .btn { flex: 1 1 0; min-width: 0; padding: 10px 12px; font-size: 14px; white-space: nowrap; }
 
 /* --- Lignes generiques -------------------------------------------------- */
 
@@ -413,6 +416,56 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .round-actions .btn { flex: 1 1 0; min-width: 96px; white-space: nowrap; font-size: 14px; padding: 11px 10px; }
 
 .danger-zone { margin-top: 30px; display: grid; gap: 8px; }
+
+/* --- Règles et mise en place -------------------------------------------- */
+
+.pitch {
+  margin: 0 0 12px;
+  padding: 16px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  font-size: 15px;
+}
+
+.count-field { margin-bottom: 14px; }
+
+.speech-bar { display: flex; gap: 8px; }
+.speech-bar .btn { flex: 1; }
+
+.steps { margin: 16px 0 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 8px; }
+.step {
+  position: relative;
+  padding: 14px 14px 14px 46px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: grid;
+  gap: 4px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 12px;
+  top: 14px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.step.is-speaking { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+.step.is-speaking::before { background: var(--gold); color: #1a1500; }
+.step-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+/* Texte lu à voix haute : il doit rester lisible à bout de bras. */
+.step-body { font-size: 15px; color: #c3c9d8; }
+.step.is-speaking .step-body { color: var(--text); }
 
 /* --- Scan --------------------------------------------------------------- */
 

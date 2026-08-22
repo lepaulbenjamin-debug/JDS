@@ -130,6 +130,27 @@
   <!-- Règles -->
   <section class="screen" data-screen="rules" hidden>
     <h2 id="rules-title" class="screen-title"></h2>
+
+    <p id="rules-pitch" class="pitch"></p>
+    <button id="btn-say-pitch" class="btn btn-ghost btn-block" type="button">🔊 Présenter le jeu à la table</button>
+
+    <h3 class="section-title">Mise en place</h3>
+    <p class="muted small">Lancez la lecture et posez le téléphone au milieu de la table&nbsp;: chaque étape est annoncée à voix haute pendant que vous préparez le jeu.</p>
+
+    <div class="field count-field">
+      <label for="setup-count">Nombre de joueurs</label>
+      <div id="setup-count" class="chip-row"></div>
+    </div>
+
+    <div class="speech-bar">
+      <button id="btn-say-setup" class="btn btn-primary" type="button">▶️ Écouter la mise en place</button>
+      <button id="btn-say-stop" class="btn btn-ghost" type="button" hidden>⏹️ Arrêter</button>
+    </div>
+    <p id="speech-note" class="muted small" hidden></p>
+
+    <ol id="setup-steps" class="steps"></ol>
+
+    <h3 class="section-title">Le détail des règles</h3>
     <div id="rules-body" class="stack"></div>
   </section>
 

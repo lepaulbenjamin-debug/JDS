@@ -5,6 +5,7 @@ import {
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
+import { speech } from './speech.js';
 
 // --- Navigation ------------------------------------------------------------
 
@@ -21,6 +22,7 @@ let current = 'home';
 const backStack = [];
 
 function show(name, { push = true } = {}) {
+  if (current === 'rules' && name !== 'rules') stopSpeech();
   if (push && name !== current) backStack.push(current);
   current = name;
   for (const section of $$('.screen')) section.hidden = section.dataset.screen !== name;
@@ -39,6 +41,7 @@ function back() {
 
 let setupDraft = null;      // { gameId, names: string[], target }
 let scanState = { mode: 'scoresheet', image: null, playerId: null, busy: false, result: null };
+let rulesState = { gameId: GAMES[0].id, playerCount: 4, step: -1, speaking: false, paused: false };
 
 function activeGame() {
   const match = store.state.match;
@@ -80,11 +83,15 @@ function renderHome() {
   const list = clear($('#game-list'));
   for (const game of GAMES) {
     list.append(
-      el('button', { class: 'game-card', type: 'button', onclick: () => startSetup(game) }, [
+      el('div', { class: 'game-card' }, [
         el('span', { class: 'game-emoji', text: '🃏' }),
         el('strong', { text: game.name }),
         el('span', { class: 'muted small', text: game.tagline }),
         el('span', { class: 'muted small', text: `${game.minPlayers} à ${game.maxPlayers} joueurs` }),
+        el('div', { class: 'game-card-actions' }, [
+          el('button', { class: 'btn btn-primary', type: 'button', onclick: () => startSetup(game) }, 'Jouer'),
+          el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => openRules(game) }, '📖 Règles'),
+        ]),
       ]),
     );
   }
@@ -680,9 +687,76 @@ async function runScan() {
 
 // --- Règles ----------------------------------------------------------------
 
+/** Ouvre l'écran règles pour un jeu, en reprenant l'effectif du contexte. */
+function openRules(game = activeGame()) {
+  const match = store.state.match;
+  const count = match && match.gameId === game.id ? match.players.length : rulesState.playerCount;
+  rulesState = {
+    gameId: game.id,
+    playerCount: Math.min(Math.max(count, game.minPlayers), game.maxPlayers),
+    step: -1,
+    speaking: false,
+    paused: false,
+  };
+  show('rules');
+}
+
 function renderRules() {
-  const game = activeGame();
-  $('#rules-title').textContent = `${game.name} — règles essentielles`;
+  const game = getGame(rulesState.gameId);
+  const steps = game.setup(rulesState.playerCount);
+
+  $('#rules-title').textContent = game.name;
+  $('#rules-pitch').textContent = game.pitch;
+
+  // Effectif : change le nombre de cartes distribuées et la taille de l'écart.
+  const counts = clear($('#setup-count'));
+  for (let n = game.minPlayers; n <= game.maxPlayers; n += 1) {
+    counts.append(
+      el('button', {
+        class: `chip${rulesState.playerCount === n ? ' is-active' : ''}`,
+        type: 'button',
+        onclick: () => {
+          stopSpeech();
+          rulesState.playerCount = n;
+          renderRules();
+        },
+      }, String(n)),
+    );
+  }
+
+  // Commandes de lecture : masquées si le navigateur ne sait pas parler.
+  const available = speech.supported;
+  $('#btn-say-pitch').hidden = !available;
+  $('#btn-say-setup').hidden = !available;
+  $('#btn-say-stop').hidden = !available || !rulesState.speaking;
+  $('#btn-say-setup').textContent = !rulesState.speaking
+    ? '▶️ Écouter la mise en place'
+    : rulesState.paused
+      ? '▶️ Reprendre'
+      : '⏸️ Pause';
+
+  const note = $('#speech-note');
+  note.hidden = available;
+  if (!available) note.textContent = "La lecture à voix haute n'est pas disponible sur ce navigateur. Les étapes restent lisibles ci-dessous.";
+
+  const list = clear($('#setup-steps'));
+  steps.forEach((step, i) => {
+    list.append(
+      el('li', { class: `step${rulesState.step === i ? ' is-speaking' : ''}` }, [
+        el('div', { class: 'step-head' }, [
+          el('strong', { text: step.title }),
+          available && el('button', {
+            class: 'mini-btn',
+            type: 'button',
+            'aria-label': `Écouter l'étape : ${step.title}`,
+            onclick: () => saySteps([step.say], i),
+          }, '🔊'),
+        ]),
+        el('span', { class: 'step-body', text: step.say }),
+      ]),
+    );
+  });
+
   const host = clear($('#rules-body'));
   for (const section of game.rules) {
     host.append(el('div', { class: 'result-card' }, [
@@ -690,6 +764,56 @@ function renderRules() {
       el('span', { class: 'muted small', text: section.body }),
     ]));
   }
+}
+
+// Jeton de lecture : démarrer ou arrêter une lecture invalide les callbacks
+// de la précédente, qui arrivent en différé.
+let sayRun = 0;
+
+/**
+ * Lit une liste de textes à voix haute.
+ * @param {string[]} texts
+ * @param {number} offset index de la première étape mise en surbrillance (-1 = aucune)
+ */
+function saySteps(texts, offset = 0) {
+  const run = (sayRun += 1);
+  const finish = (message) => {
+    if (run !== sayRun) return;
+    rulesState.speaking = false;
+    rulesState.paused = false;
+    rulesState.step = -1;
+    if (message) toast(message, 'warn');
+    if (current === 'rules') renderRules();
+  };
+
+  speech.speak(texts, {
+    onStep: (i) => {
+      if (run !== sayRun) return;
+      rulesState.speaking = true;
+      rulesState.paused = false;
+      rulesState.step = offset < 0 ? -1 : offset + i;
+      renderRules();
+      // On ne fait défiler que si l'étape lue est sortie de l'écran : sinon la
+      // page bougerait sous les doigts à chaque phrase.
+      const node = rulesState.step >= 0 ? $('#setup-steps')?.children[rulesState.step] : null;
+      if (node) {
+        const box = node.getBoundingClientRect();
+        const hidden = box.top < 70 || box.bottom > window.innerHeight - 20;
+        if (hidden) node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    },
+    onEnd: () => finish(),
+    onError: () => finish("La lecture à voix haute a échoué sur ce navigateur."),
+  });
+}
+
+function stopSpeech() {
+  if (!speech.supported) return;
+  sayRun += 1;
+  speech.stop();
+  rulesState.speaking = false;
+  rulesState.paused = false;
+  rulesState.step = -1;
 }
 
 // --- Réglages --------------------------------------------------------------
@@ -817,7 +941,22 @@ function wire() {
     show('home', { push: false });
   });
 
-  $('#btn-rules').addEventListener('click', () => show('rules'));
+  $('#btn-rules').addEventListener('click', () => openRules());
+
+  $('#btn-say-pitch').addEventListener('click', () => saySteps([getGame(rulesState.gameId).pitch], -1));
+  $('#btn-say-setup').addEventListener('click', () => {
+    if (rulesState.speaking) {
+      // On met en pause le temps de mélanger, puis on reprend où on en était.
+      if (rulesState.paused) speech.resume();
+      else speech.pause();
+      rulesState.paused = !rulesState.paused;
+      renderRules();
+      return;
+    }
+    const game = getGame(rulesState.gameId);
+    saySteps(game.setup(rulesState.playerCount).map((step) => `${step.title}. ${step.say}`), 0);
+  });
+  $('#btn-say-stop').addEventListener('click', () => { stopSpeech(); renderRules(); });
 
   store.subscribe(() => render());
 }

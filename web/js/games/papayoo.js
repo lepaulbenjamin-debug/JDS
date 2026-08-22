@@ -36,13 +36,12 @@ export default {
   supportsTokens: true,
   tokens: TOKENS,
 
-  /** Nombre de cartes par joueur + cartes retirées, selon l'effectif. */
+  /** Nombre de cartes par joueur, cartes retirées et taille de l'écart. */
   deal(playerCount) {
-    if (playerCount >= 7) {
-      const removed = 4; // on retire 4 cartes basses des couleurs classiques
-      return { removed, perPlayer: (60 - removed) / playerCount };
-    }
-    return { removed: 0, perPlayer: 60 / playerCount };
+    // À 7 et 8 joueurs on retire les 1 des quatre couleurs classiques.
+    const removed = playerCount >= 7 ? 4 : 0;
+    const pass = playerCount <= 4 ? 5 : playerCount === 5 ? 4 : 3;
+    return { removed, pass, perPlayer: (60 - removed) / playerCount };
   },
 
   /**
@@ -83,6 +82,55 @@ export default {
   },
 
   /** Texte affiché dans l'écran de règles. */
+  /** Présentation en deux phrases, à lire à la table avant de commencer. */
+  pitch: "Papayoo, c'est un jeu de plis où on cherche à ne surtout rien gagner. On joue à la couleur demandée, et celui qui remporte le pli ramasse les cartes — donc les points. Seules les cartes jaunes, les Payoos, coûtent quelque chose, plus une carte piégée qui en vaut quarante à elle seule. À la fin, le plus petit total gagne.",
+
+  /**
+   * Script de mise en place, écrit pour être lu à voix haute.
+   * Chaque étape reste courte : c'est ce qu'on dit en préparant la table.
+   */
+  setup(playerCount = 4) {
+    const n = Math.min(Math.max(playerCount, this.minPlayers), this.maxPlayers);
+    const { perPlayer, removed, pass } = this.deal(n);
+
+    return [
+      {
+        title: 'Le matériel',
+        say: "Papayoo se joue avec soixante cartes et un dé. Quarante cartes classiques, de 1 à 10 dans les quatre couleurs habituelles, et vingt cartes jaunes numérotées de 1 à 20 : ce sont les Payoos.",
+      },
+      {
+        title: 'Préparer le paquet',
+        say: removed
+          ? `À ${n} joueurs, on retire d'abord les quatre 1 des couleurs classiques : le 1 de pique, de cœur, de carreau et de trèfle. On garde tous les Payoos.`
+          : `À ${n} joueurs, on joue avec les soixante cartes : on ne retire rien.`,
+      },
+      {
+        title: 'Distribuer',
+        say: `Mélangez, puis distribuez toutes les cartes une par une. Chacun reçoit ${perPlayer} cartes, et il ne doit rien rester au milieu.`,
+      },
+      {
+        title: "L'écart",
+        say: `Regardez votre main et choisissez ${pass} cartes dont vous voulez vous débarrasser. Vous les passez face cachée à votre voisin de gauche. On ne regarde les cartes reçues de son voisin de droite qu'une fois les siennes données.`,
+      },
+      {
+        title: 'Désigner le Papayoo',
+        say: "Quand tout le monde a fait son écart, le donneur lance le dé : il désigne une couleur. Le 7 de cette couleur devient le Papayoo, et il vaut à lui seul quarante points de pénalité. Posez-le au milieu de la table pour que personne ne l'oublie.",
+      },
+      {
+        title: 'Ce qui coûte des points',
+        say: `Seules deux choses comptent : chaque Payoo vaut sa valeur, de 1 à 20, et le Papayoo vaut quarante. Toutes les autres cartes valent zéro. Ça fait ${this.roundTotal} points à se répartir sur la manche, et l'appli vérifiera le compte.`,
+      },
+      {
+        title: 'Jouer les plis',
+        say: "Le donneur entame avec la carte de son choix. Chacun doit fournir la couleur demandée s'il en a une, sinon il se défausse de ce qu'il veut. Attention : les Payoos sont une couleur comme une autre. Celui qui a posé la plus forte carte de la couleur demandée remporte le pli, ramasse les cartes, et entame le pli suivant.",
+      },
+      {
+        title: 'Compter et enchaîner',
+        say: "Quand toutes les cartes sont jouées, chacun compte les points des Payoos qu'il a ramassés. Vous les saisissez ici, et on redistribue pour une nouvelle manche. La partie s'arrête dès qu'un joueur atteint le score cible : le plus petit total gagne.",
+      },
+    ];
+  },
+
   rules: [
     {
       title: 'But du jeu',
@@ -101,8 +149,12 @@ export default {
       body: '210 points de Payoos + 40 points de Papayoo = 250 points répartis à chaque manche. L\'appli le vérifie pour vous.',
     },
     {
-      title: 'Distribution',
-      body: "3 joueurs : 20 cartes chacun. 4 : 15. 5 : 12. 6 : 10. À 7 ou 8 joueurs, on retire 4 cartes basses des couleurs classiques (8 ou 7 cartes chacun).",
+      title: 'Distribution et écart',
+      body: "3 joueurs : 20 cartes chacun, écart de 5. 4 : 15 cartes, écart de 5. 5 : 12 cartes, écart de 4. 6 : 10 cartes, écart de 3. 7 et 8 joueurs : on retire les quatre 1 des couleurs classiques (8 puis 7 cartes chacun), écart de 3. L'écart se passe toujours au voisin de gauche.",
+    },
+    {
+      title: 'Les plis',
+      body: "Le donneur entame. On doit fournir la couleur demandée si on en a une, sinon on se défausse librement — il n'y a pas d'atout. La plus forte carte de la couleur demandée remporte le pli et entame le suivant.",
     },
   ],
 };
