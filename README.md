@@ -3,8 +3,9 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Deux jeux sont implémentés : le **Papayoo** et le **Skyjo**. Un jeu = un module
-dans `web/js/games/`, et le moteur s'adapte à ses règles.
+Trois jeux sont implémentés : le **Papayoo**, le **Skyjo** et le **6 qui
+prend !**. Un jeu = un module dans `web/js/games/`, et le moteur s'adapte à ses
+règles.
 
 ## Ce que ça fait
 
@@ -17,9 +18,10 @@ dans `web/js/games/`, et le moteur s'adapte à ses règles.
 - **Les calculs pénibles, faits par l'appli.** Une manche de Papayoo distribue
   exactement 250 points : l'appli affiche en continu ce qu'il reste à répartir.
   Au Skyjo, elle applique la règle du doublement — vous désignez qui a fermé la
-  manche, elle décide si son score double, et vous dit pourquoi. Elle ne refuse
-  jamais rien en silence : si le compte ne tombe pas juste, elle demande
-  confirmation.
+  manche, elle décide si son score double, et vous dit pourquoi. Au 6 qui prend,
+  les cinq valeurs de têtes de bœuf sont des boutons : on compte son tas en
+  tapotant, sans se souvenir que le 55 en vaut sept. Elle ne refuse jamais rien
+  en silence : si le compte ne tombe pas juste, elle demande confirmation.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -29,8 +31,11 @@ dans `web/js/games/`, et le moteur s'adapte à ses règles.
   à 7 elle dit de retirer les quatre 1 d'abord.
 - **Lecture par IA.** Photo d'une feuille de scores manuscrite → les manches
   sont proposées, joueur par joueur. Photo des cartes d'un joueur → le total est
-  calculé : les Payoos ramassés au Papayoo, la grille de fin de manche au Skyjo.
-  Les résultats sont toujours affichés pour relecture avant d'être appliqués.
+  calculé : les Payoos ramassés au Papayoo, la grille de fin de manche au Skyjo,
+  le tas ramassé au 6 qui prend. Là, l'IA ne lit que les numéros des cartes et
+  c'est l'appli qui applique le barème — plus fiable que de lui demander de
+  connaître la valeur de chaque carte. Les résultats sont toujours affichés pour
+  relecture avant d'être appliqués.
 - **Hors-ligne.** Tout le comptage fonctionne sans réseau ; l'appli s'installe
   sur l'écran d'accueil du téléphone. Seule la lecture IA a besoin d'Internet.
 - **Local.** Parties et réglages restent dans le navigateur (`localStorage`).
@@ -84,6 +89,7 @@ web/                     PWA statique, sans build ni dépendance
     speech.js            lecture à voix haute (SpeechSynthesis du navigateur)
     games/papayoo.js     règles, mise en place orale, validation, jetons
     games/skyjo.js       idem + règle du doublement de fin de manche
+    games/six-qui-prend.js  idem + barème des têtes de bœuf
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -106,7 +112,7 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `supportsTokens` + `tokens` | mode « Cartes » : attribution de jetons `{ id, value, label, kind }` |
 | `extras` | informations demandées avant de valider, ex. `{ key, type: 'player', label, hint }` |
 | `finalize(raw, extras, players)` | applique les règles de fin de manche, renvoie `{ scores, notes }` — les points saisis sont conservés à part, donc rouvrir une manche ne rejoue pas l'effet |
-| `vision` | contexte de règles et mode « cartes » pour la lecture par IA |
+| `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
 
 Trois champs alimentent la fiche règles :
 
@@ -141,6 +147,23 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles du 6 qui prend ! (rappel)
+
+104 cartes numérotées de 1 à 104. Chacun reçoit 10 cartes, puis on retourne
+4 cartes au centre pour ouvrir 4 rangées de 5 places maximum. À chaque tour,
+tout le monde choisit une carte simultanément ; on les résout de la plus petite
+à la plus grande, chacune au bout de la rangée dont la dernière carte est la
+plus proche en dessous d'elle. Poser la 6e carte d'une rangée fait ramasser les
+5 précédentes ; une carte plus petite que toutes les fins de rangées fait
+ramasser une rangée au choix. On joue avec les 104 cartes quel que soit
+l'effectif (2 à 10 joueurs).
+
+**Le barème qu'on oublie** : 1 tête de bœuf par carte ordinaire, 2 pour les
+cartes se terminant par 5, 3 pour les dizaines, 5 pour les doublets (11, 22,
+33…), et 7 pour le 55. Une seule règle s'applique, la plus généreuse — le 55
+vaut 7 et non 2. Le paquet complet contient 171 têtes de bœuf. Fin de partie à
+66 points, plus petit total gagnant.
 
 ## Règles du Skyjo (rappel)
 

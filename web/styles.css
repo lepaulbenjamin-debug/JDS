@@ -417,10 +417,15 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 
 .score-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   padding: 8px 0;
 }
+.score-shortcuts { display: flex; gap: 6px; }
+.mini-btn-quiet { color: var(--muted); }
+/* Beaucoup de raccourcis (6 qui prend) : ils prennent leur propre ligne. */
+.score-shortcuts.is-wide { order: 1; flex-basis: 100%; flex-wrap: wrap; }
 .score-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .score-row input { width: 96px; text-align: right; font-size: 18px; font-weight: 600; }
 

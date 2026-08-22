@@ -49,7 +49,7 @@ export const SCHEMA = {
       properties: {
         values: {
           type: 'array',
-          description: 'Valeur en points de chaque carte comptabilisée, une entrée par carte.',
+          description: "Nombre lu sur chaque carte prise en compte, une entrée par carte. L'instruction précise s'il s'agit de points ou du numéro imprimé sur la carte.",
           items: { type: 'integer' },
         },
         count: { type: 'integer', description: 'Nombre de cartes prises en compte.' },

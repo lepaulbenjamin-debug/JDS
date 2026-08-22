@@ -436,6 +436,16 @@ function renderManual(match, game) {
         }),
       }, shortcut.label));
 
+    // Compter en tapotant suppose de pouvoir se corriger : remise a zero.
+    if (shortcuts.length > 0) {
+      shortcuts.push(el('button', {
+        class: 'mini-btn mini-btn-quiet',
+        type: 'button',
+        title: 'Remettre ce score a zero',
+        onclick: () => store.update((s) => { s.match.draft.scores[p.id] = '0'; }),
+      }, '\u21ba'));
+    }
+
     // Le pave numerique des telephones n'a pas de signe moins : on inverse
     // d'un bouton plutot que d'esperer que le clavier coopere.
     if (game.allowsNegative) {
@@ -454,7 +464,8 @@ function renderManual(match, game) {
       el('div', { class: 'score-row' }, [
         el('span', { class: 'dot', style: { background: p.color } }),
         el('span', { class: 'score-name', text: p.name }),
-        ...shortcuts,
+        shortcuts.length > 0 &&
+          el('div', { class: `score-shortcuts${shortcuts.length > 2 ? ' is-wide' : ''}` }, shortcuts),
         input,
       ]),
     );
@@ -671,15 +682,20 @@ function renderScanResult(match) {
   }));
 
   if (result.detected === 'cards') {
+    const cardsMode = getGame(match.gameId).vision?.cards ?? {};
     const values = result.cards?.values ?? [];
+    // Le modèle lit ce qui est écrit sur la carte ; c'est le jeu qui sait le
+    // convertir en points (au 6 qui prend, un numéro vaut 1 à 7 têtes de bœuf).
+    const toPoints = cardsMode.mapValue ?? ((v) => v);
+    const label = cardsMode.mapLabel ?? ((v) => String(v));
     // On additionne nous-mêmes plutôt que de faire confiance à un total calculé
     // par le modèle : les valeurs lues sont vérifiables à l'œil, pas la somme.
-    const total = values.reduce((a, b) => a + b, 0);
+    const total = values.reduce((sum, v) => sum + toPoints(v), 0);
     const player = match.players.find((p) => p.id === scanState.playerId);
     host.append(
       el('div', { class: 'result-card' }, [
         el('strong', { text: `${player?.name ?? 'Joueur'} : ${total} point${Math.abs(total) > 1 ? 's' : ''}` }),
-        el('span', { class: 'muted small', text: `${values.length} carte${values.length > 1 ? 's' : ''} lue${values.length > 1 ? 's' : ''} : ${values.join(', ') || 'aucune'}` }),
+        el('span', { class: 'muted small', text: `${values.length} carte${values.length > 1 ? 's' : ''} lue${values.length > 1 ? 's' : ''} : ${values.map(label).join(', ') || 'aucune'}` }),
         result.cards?.detail && el('span', { class: 'muted small', text: result.cards.detail }),
       ]),
     );
