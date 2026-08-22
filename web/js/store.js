@@ -1,0 +1,148 @@
+// État de l'application + persistance locale (localStorage).
+// Aucune donnée ne quitte l'appareil, sauf les photos envoyées explicitement
+// à l'IA depuis l'écran de scan.
+
+const KEY = 'jds.state.v1';
+
+export const PLAYER_COLORS = [
+  '#f5c518', '#60a5fa', '#f472b6', '#34d399',
+  '#fb923c', '#a78bfa', '#22d3ee', '#f87171',
+];
+
+const DEFAULT_STATE = {
+  v: 1,
+  match: null,
+  history: [],
+  lastPlayers: [],
+  settings: {
+    ai: { mode: 'server', serverUrl: '', apiKey: '' },
+  },
+};
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return clone(DEFAULT_STATE);
+    const parsed = JSON.parse(raw);
+    return { ...clone(DEFAULT_STATE), ...parsed, settings: { ...clone(DEFAULT_STATE.settings), ...(parsed.settings ?? {}) } };
+  } catch {
+    return clone(DEFAULT_STATE);
+  }
+}
+
+let state = load();
+const listeners = new Set();
+
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch {
+    /* quota plein ou mode privé : on continue en mémoire */
+  }
+}
+
+function emit() {
+  for (const fn of listeners) fn(state);
+}
+
+export const store = {
+  get state() {
+    return state;
+  },
+  subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  },
+  /** Applique une mutation sur l'état, persiste, notifie. */
+  update(mutator) {
+    mutator(state);
+    if (state.match) state.match.updatedAt = Date.now();
+    persist();
+    emit();
+  },
+  /**
+   * Enregistre l'état sans notifier : pour les champs de saisie, qui écrivent
+   * directement dans l'état et ne doivent pas être re-rendus pendant la frappe.
+   */
+  touch() {
+    if (state.match) state.match.updatedAt = Date.now();
+    persist();
+  },
+  reset() {
+    state = clone(DEFAULT_STATE);
+    persist();
+    emit();
+  },
+};
+
+// --- Fabriques -------------------------------------------------------------
+
+export function makePlayer(name, index) {
+  return { id: uid(), name: name.trim(), color: PLAYER_COLORS[index % PLAYER_COLORS.length] };
+}
+
+export function makeMatch(game, players, target) {
+  return {
+    id: uid(),
+    gameId: game.id,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    players,
+    target,
+    rounds: [],
+    draft: makeDraft(game, players),
+    finished: false,
+  };
+}
+
+export function makeDraft(game, players) {
+  return {
+    mode: game.supportsTokens ? 'tokens' : 'manual',
+    scores: Object.fromEntries(players.map((p) => [p.id, ''])),
+    assign: {},
+    suit: null,
+    editingRoundId: null,
+    activePlayerId: players[0]?.id ?? null,
+  };
+}
+
+export function makeRoundId() {
+  return uid();
+}
+
+// --- Calculs ---------------------------------------------------------------
+
+/** Totaux cumulés par joueur. */
+export function totals(match) {
+  const out = Object.fromEntries(match.players.map((p) => [p.id, 0]));
+  for (const round of match.rounds) {
+    for (const p of match.players) out[p.id] += Number(round.scores[p.id] ?? 0);
+  }
+  return out;
+}
+
+/** Classement (meilleur en premier) selon le sens du jeu. */
+export function standings(match, game) {
+  const t = totals(match);
+  return match.players
+    .map((p) => ({ player: p, total: t[p.id] }))
+    .sort((a, b) => (game.lowestWins ? a.total - b.total : b.total - a.total));
+}
+
+/** La partie est-elle arrivée à son terme ? */
+export function isOver(match, game) {
+  const t = totals(match);
+  if (match.rounds.length === 0) return false;
+  const values = Object.values(t);
+  return game.lowestWins
+    ? values.some((v) => v >= match.target)
+    : values.some((v) => v >= match.target);
+}

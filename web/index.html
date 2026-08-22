@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12141c">
+<meta name="description" content="Compteur de points pour jeux de société, avec lecture des scores par IA. Commence avec le Papayoo.">
+<title>Scores — compteur de jeux de société</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button id="btn-back" class="icon-btn" type="button" hidden aria-label="Retour">←</button>
+  <h1 id="topbar-title">Scores</h1>
+  <button id="btn-settings" class="icon-btn" type="button" aria-label="Réglages">⚙</button>
+</header>
+
+<main id="app">
+
+  <!-- Accueil -->
+  <section class="screen" data-screen="home">
+    <div class="hero">
+      <p class="hero-kicker">Compteur de points</p>
+      <h2 class="hero-title">Une partie, zéro calcul mental.</h2>
+      <p class="hero-sub">Saisie rapide, vérification automatique du total, et lecture de la feuille de scores en photo.</p>
+    </div>
+
+    <div id="home-resume"></div>
+
+    <h3 class="section-title">Choisir un jeu</h3>
+    <div id="game-list" class="card-grid"></div>
+
+    <h3 class="section-title">Parties terminées</h3>
+    <div id="history-list" class="stack"></div>
+  </section>
+
+  <!-- Configuration de la partie -->
+  <section class="screen" data-screen="setup" hidden>
+    <h2 id="setup-game" class="screen-title"></h2>
+    <p id="setup-hint" class="muted"></p>
+
+    <h3 class="section-title">Joueurs</h3>
+    <div id="player-list" class="stack"></div>
+    <button id="btn-add-player" class="btn btn-ghost btn-block" type="button">+ Ajouter un joueur</button>
+
+    <h3 class="section-title">Fin de partie</h3>
+    <p class="muted">La partie s'arrête dès qu'un joueur atteint&nbsp;:</p>
+    <div id="target-choices" class="chip-row"></div>
+
+    <div class="sticky-actions">
+      <button id="btn-start" class="btn btn-primary btn-block" type="button">Commencer la partie</button>
+    </div>
+  </section>
+
+  <!-- Partie en cours -->
+  <section class="screen" data-screen="match" hidden>
+    <div id="match-banner"></div>
+
+    <div class="scoreboard-wrap">
+      <table id="scoreboard" class="scoreboard"></table>
+    </div>
+
+    <div class="round-panel">
+      <div class="round-head">
+        <h3 id="round-title" class="section-title">Manche</h3>
+        <div class="seg" id="mode-switch" role="group" aria-label="Mode de saisie">
+          <button type="button" data-mode="tokens">Cartes</button>
+          <button type="button" data-mode="manual">Points</button>
+        </div>
+      </div>
+
+      <p id="round-status" class="status"></p>
+
+      <div id="entry-tokens" class="entry"></div>
+      <div id="entry-manual" class="entry" hidden></div>
+
+      <div class="round-actions">
+        <button id="btn-scan" class="btn btn-ghost" type="button">📷 Photo IA</button>
+        <button id="btn-clear-round" class="btn btn-ghost" type="button">Effacer</button>
+        <button id="btn-rules" class="btn btn-ghost" type="button">📖 Règles</button>
+      </div>
+
+      <div class="sticky-actions">
+        <button id="btn-validate" class="btn btn-primary btn-block" type="button">Valider la manche</button>
+      </div>
+    </div>
+
+    <h3 class="section-title">Manches jouées</h3>
+    <div id="round-history" class="stack"></div>
+
+    <div class="danger-zone">
+      <button id="btn-finish" class="btn btn-ghost btn-block" type="button">Terminer et archiver la partie</button>
+      <button id="btn-abandon" class="btn btn-ghost btn-block btn-danger-text" type="button">Abandonner la partie</button>
+    </div>
+  </section>
+
+  <!-- Lecture IA -->
+  <section class="screen" data-screen="scan" hidden>
+    <p class="muted">Prenez la photo bien à plat, en lumière correcte. Les résultats sont toujours affichés pour relecture avant d'être appliqués.</p>
+
+    <div class="seg seg-block" id="scan-mode" role="group" aria-label="Type de photo">
+      <button type="button" data-scan="scoresheet">Feuille de scores</button>
+      <button type="button" data-scan="cards">Cartes ramassées</button>
+    </div>
+
+    <div id="scan-cards-target" class="field" hidden>
+      <label for="scan-player">Cartes ramassées par</label>
+      <select id="scan-player"></select>
+    </div>
+
+    <label class="dropzone" for="scan-input">
+      <input id="scan-input" type="file" accept="image/*" capture="environment" hidden>
+      <span class="dropzone-icon">📷</span>
+      <span id="scan-label">Prendre ou choisir une photo</span>
+    </label>
+
+    <img id="scan-preview" class="preview" alt="Aperçu de la photo" hidden>
+
+    <button id="btn-run-scan" class="btn btn-primary btn-block" type="button" disabled>Analyser</button>
+
+    <div id="scan-result" class="stack"></div>
+  </section>
+
+  <!-- Règles -->
+  <section class="screen" data-screen="rules" hidden>
+    <h2 id="rules-title" class="screen-title"></h2>
+    <div id="rules-body" class="stack"></div>
+  </section>
+
+  <!-- Réglages -->
+  <section class="screen" data-screen="settings" hidden>
+    <h2 class="screen-title">Réglages</h2>
+
+    <h3 class="section-title">Lecture IA</h3>
+    <div class="seg seg-block" id="ai-mode" role="group" aria-label="Mode d'appel à l'IA">
+      <button type="button" data-ai="server">Via un serveur</button>
+      <button type="button" data-ai="direct">Clé directe</button>
+    </div>
+
+    <div id="ai-server-fields" class="stack">
+      <div class="field">
+        <label for="ai-server-url">Adresse du serveur</label>
+        <input id="ai-server-url" type="url" inputmode="url" placeholder="Vide = même origine que l'appli">
+        <p class="muted small">Le serveur garde la clé API. Voir <code>server/</code> dans le dépôt.</p>
+      </div>
+    </div>
+
+    <div id="ai-direct-fields" class="stack" hidden>
+      <div class="field">
+        <label for="ai-key">Clé API Anthropic</label>
+        <input id="ai-key" type="password" autocomplete="off" placeholder="sk-ant-...">
+        <p class="muted small">Stockée uniquement dans ce navigateur. Appel direct depuis l'appareil : pratique en usage perso, à éviter sur un poste partagé.</p>
+      </div>
+    </div>
+
+    <h3 class="section-title">Données</h3>
+    <button id="btn-export" class="btn btn-ghost btn-block" type="button">Exporter mes parties (JSON)</button>
+    <button id="btn-wipe" class="btn btn-ghost btn-block btn-danger-text" type="button">Tout effacer</button>
+
+    <p class="muted small footer-note">Les parties sont enregistrées sur cet appareil uniquement.</p>
+  </section>
+
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="confirm-dialog" class="dialog">
+  <form method="dialog">
+    <p id="confirm-message"></p>
+    <div class="dialog-actions">
+      <button value="cancel" class="btn btn-ghost" type="submit">Annuler</button>
+      <button id="confirm-ok" value="ok" class="btn btn-primary" type="submit">Confirmer</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
