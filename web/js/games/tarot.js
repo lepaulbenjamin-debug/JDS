@@ -58,6 +58,7 @@ export default {
   targetChoices: [4, 8, 12, 16, 20, 24],
   // Saisie par formulaire : l'application calcule les scores.
   entry: 'form',
+  roundLabel: 'Donne',
 
   deal(playerCount) {
     if (playerCount === 5) return { perPlayer: 15, chien: 3, removed: 0 };
@@ -215,7 +216,7 @@ export default {
   },
 
   /** Répartit l'unité de marque entre les joueurs. Le total fait toujours 0. */
-  finalize(form, extras, players) {
+  finalize(form, ctx, players) {
     const scores = Object.fromEntries(players.map((p) => [p.id, 0]));
     const preneur = players.find((p) => p.id === form.preneur);
     if (!preneur) return { scores, notes: [] };

@@ -3,9 +3,9 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Quatre jeux sont implémentés : le **Papayoo**, le **Skyjo**, le **6 qui
-prend !** et le **Tarot**. Un jeu = un module dans `web/js/games/`, et le moteur
-s'adapte à ses règles.
+Six jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote** et **Skull King**. Un jeu = un module dans
+`web/js/games/`, et le moteur s'adapte à ses règles.
 
 ## Ce que ça fait
 
@@ -28,6 +28,12 @@ s'adapte à ses règles.
   les défenseurs, et **montre le détail du calcul** en permanence au-dessus du
   bouton de validation : `(25 + 8) × 2 = 66, petit au bout +20, poignée +20.
   Ana +318, les autres −106.`
+- **À la Belote, le litige traverse les donnes.** L'appli juge le contrat belote
+  comprise, applique le capot à 252, et sur une égalité 81-81 met les points du
+  preneur de côté — puis préremplit toute seule le champ de report sur la donne
+  suivante. Au Skull King, une ligne par joueur : mise, plis réalisés, bonus ; et
+  un garde-fou qui refuse une manche dont le total des plis ne colle pas au
+  nombre de cartes distribuées.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -97,6 +103,8 @@ web/                     PWA statique, sans build ni dépendance
     games/skyjo.js       idem + règle du doublement de fin de manche
     games/six-qui-prend.js  idem + barème des têtes de bœuf
     games/tarot.js       idem + saisie par formulaire et calcul officiel FFT
+    games/belote.js      idem + contrat, capot et report de litige
+    games/skull-king.js  idem + saisie en grille (mise / plis / bonus)
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -136,7 +144,15 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
 | `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
-| `entry: 'form'` + `form(playerCount)` | la manche est décrite par un formulaire (`player`, `choice`, `number`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction |
+| `entry: 'form'` + `form(playerCount, players, rounds)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction |
+| `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
+| `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
+| `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration et transmises au calcul (litige à la belote, bonus au Skull King) |
+| `finalize` → `meta` | ce que la manche laisse à la suivante ; `formDefaults(players, rounds)` peut le relire (report de litige) |
+
+Les règles reçoivent un contexte unique : `validateRound(saisie, participants,
+ctx)` et `finalize(saisie, ctx, participants)`, avec
+`ctx = { extras, options, rounds }`.
 
 Trois champs alimentent la fiche règles :
 
@@ -171,6 +187,39 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles de la Belote (rappel)
+
+Deux équipes de deux, 32 cartes, un atout choisi par un camp qui s'engage à
+faire mieux que l'autre. À l'atout : Valet 20, Neuf 14, As 11, Dix 10, Roi 4,
+Dame 3 ; ailleurs : As 11, Dix 10, Roi 4, Dame 3, Valet 2. Les cartes totalisent
+152 points, plus 10 pour le dernier pli — le « dix de der » — soit **162 points
+par donne**. En cas de capot (les 8 plis), le dix de der vaut 100 et la donne
+monte à **252**. La belote-rebelote (Roi et Dame d'atout annoncés) vaut 20
+points, **imprenables même en cas de chute**.
+
+Le contrat est réussi si le camp preneur totalise **strictement plus** que
+l'adversaire, belote comprise ; s'il chute, il ne garde que sa belote et
+l'adversaire marque toute la donne. En cas d'égalité parfaite, la Fédération
+prévoit le **litige** : les points du preneur sont remis en jeu pour la donne
+suivante — mais elle laisse chaque table libre de l'appliquer ou non, comme
+l'arrondi à la dizaine. Ce sont deux réglages au démarrage de la partie.
+
+## Règles du Skull King (rappel)
+
+Dix manches : une carte à la première, dix à la dixième. Chacun annonce le
+nombre exact de plis qu'il compte remporter. **Mise d'au moins 1** tenue
+exactement : 20 points par pli ; ratée : −10 par pli d'écart, et rien pour les
+plis réalisés. **Mise à zéro** tenue : +10 × le nombre de cartes de la manche ;
+ratée : −10 × ce même nombre.
+
+Bonus : 10 points par carte 14 de couleur possédée en fin de manche, 20 pour la
+14 noire, 20 par sirène capturée par un pirate, 30 par pirate capturé par le
+Skull King, 40 si votre sirène capture le Skull King.
+
+*Attention* : l'édition 2022 accorde ces bonus **quelle que soit la réussite de
+la mise**, contrairement à la règle plus ancienne — et plus répandue — qui les
+réserve à ceux qui ont tenu leur mise. Le choix se fait au démarrage.
 
 ## Règles du Tarot (rappel)
 

@@ -367,6 +367,27 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
   color: var(--warn);
 }
+/* Une ligne par joueur : nom au-dessus, colonnes numériques en dessous. */
+.player-grid { display: grid; gap: 10px; margin-top: 4px; }
+.player-grid-row {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.grid-name { display: flex; align-items: center; font-weight: 600; }
+.grid-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; }
+.grid-cell { display: grid; gap: 3px; }
+.grid-cap {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.grid-cell input { padding: 9px 10px; text-align: center; font-size: 17px; font-weight: 600; }
+
 /* Formulaire de donne : beaucoup de champs, on resserre. */
 #entry-form .extra { gap: 4px; padding: 12px; margin-bottom: 10px; }
 #entry-form .chip { padding: 8px 12px; font-size: 13px; }

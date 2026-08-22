@@ -89,7 +89,7 @@ export function makePlayer(name, index) {
   return { id: uid(), name: name.trim(), color: PLAYER_COLORS[index % PLAYER_COLORS.length] };
 }
 
-export function makeMatch(game, players, target) {
+export function makeMatch(game, players, target, options = {}) {
   return {
     id: uid(),
     gameId: game.id,
@@ -97,13 +97,16 @@ export function makeMatch(game, players, target) {
     updatedAt: Date.now(),
     players,
     target,
+    // Variantes choisies avant de commencer (litige à la belote, bonus au
+    // Skull King) : elles changent le calcul, pas la saisie.
+    options,
     rounds: [],
     draft: makeDraft(game, players),
     finished: false,
   };
 }
 
-export function makeDraft(game, players) {
+export function makeDraft(game, players, rounds = []) {
   return {
     mode: game.supportsTokens ? 'tokens' : 'manual',
     scores: Object.fromEntries(players.map((p) => [p.id, ''])),
@@ -113,7 +116,7 @@ export function makeDraft(game, players) {
     extras: {},
     // Jeux à saisie par formulaire (Tarot) : description de la donne, à
     // partir de laquelle le jeu calcule le score de chacun.
-    form: game.formDefaults?.() ?? {},
+    form: game.formDefaults?.(players, rounds) ?? {},
     editingRoundId: null,
     activePlayerId: players[0]?.id ?? null,
   };

@@ -43,9 +43,9 @@ export default {
    * Applique la règle du doublement. Renvoie les scores à enregistrer et
    * ce qu'il faut expliquer à la table.
    */
-  finalize(raw, extras, players) {
+  finalize(raw, ctx, players) {
     const scores = Object.fromEntries(players.map((p) => [p.id, Number(raw[p.id]) || 0]));
-    const enderId = extras?.ender;
+    const enderId = ctx?.extras?.ender;
     const ender = players.find((p) => p.id === enderId);
     if (!ender) return { scores, notes: [] };
 
@@ -70,7 +70,7 @@ export default {
    * Vérifie la cohérence d'une manche.
    * @returns {{ok: boolean, level: 'ok'|'warn', message: string}}
    */
-  validateRound(scores, players, extras) {
+  validateRound(scores, players, ctx) {
     const missing = players.filter((p) => scores[p.id] === '' || scores[p.id] == null);
     const values = players.map((p) => Number(scores[p.id]));
 
@@ -92,7 +92,7 @@ export default {
         message: `Score improbable pour ${outOfRange.map((p) => p.name).join(', ')} : une grille va de ${MIN_SCORE} à ${MAX_SCORE}.`,
       };
     }
-    if (!extras?.ender || !players.some((p) => p.id === extras.ender)) {
+    if (!ctx?.extras?.ender || !players.some((p) => p.id === ctx.extras.ender)) {
       return { ok: false, level: 'warn', message: 'Indiquez qui a terminé la manche : sa pénalité en dépend.' };
     }
     return { ok: true, level: 'ok', message: 'Manche complète.' };

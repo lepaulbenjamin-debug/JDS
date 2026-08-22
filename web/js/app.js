@@ -129,10 +129,20 @@ function renderHome() {
 
 function startSetup(game) {
   const remembered = store.state.lastPlayers;
-  const names = remembered.length >= game.minPlayers
-    ? remembered.slice(0, game.maxPlayers)
-    : ['', '', ''].slice(0, game.minPlayers);
-  setupDraft = { gameId: game.id, names, target: game.defaultTarget };
+  // Les jeux en équipes ont leurs propres intitulés : on ne recycle pas les
+  // noms de joueurs d'une partie précédente.
+  const names = game.defaultNames
+    ? [...game.defaultNames]
+    : (remembered.length >= game.minPlayers
+      ? remembered.slice(0, game.maxPlayers)
+      : Array.from({ length: game.minPlayers }, () => ''));
+
+  setupDraft = {
+    gameId: game.id,
+    names,
+    target: game.defaultTarget,
+    options: Object.fromEntries((game.options ?? []).map((o) => [o.key, o.options[0].value])),
+  };
   show('setup');
 }
 
@@ -141,6 +151,9 @@ function renderSetup() {
   const game = getGame(setupDraft.gameId);
 
   $('#setup-game').textContent = game.name;
+  const unite = game.participantLabel ?? 'Joueur';
+  $('#setup-players-title').textContent = `${unite}s`;
+  $('#btn-add-player').textContent = `+ Ajouter ${unite === 'Équipe' ? 'une équipe' : 'un joueur'}`;
   const { perPlayer, removed, chien } = game.deal(Math.max(setupDraft.names.length, game.minPlayers));
   $('#setup-hint').textContent =
     `${setupDraft.names.length} joueurs · ${perPlayer} cartes chacun`
@@ -152,7 +165,7 @@ function renderSetup() {
     const input = el('input', {
       type: 'text',
       value: name,
-      placeholder: `Joueur ${index + 1}`,
+      placeholder: `${unite} ${index + 1}`,
       autocomplete: 'off',
       maxlength: '18',
       oninput: (e) => { setupDraft.names[index] = e.target.value; },
@@ -165,7 +178,7 @@ function renderSetup() {
           el('button', {
             class: 'icon-btn',
             type: 'button',
-            'aria-label': `Retirer le joueur ${index + 1}`,
+            'aria-label': `Retirer : ${unite} ${index + 1}`,
             onclick: () => { setupDraft.names.splice(index, 1); renderSetup(); },
           }, '×'),
       ]),
@@ -173,6 +186,25 @@ function renderSetup() {
   });
 
   $('#btn-add-player').hidden = setupDraft.names.length >= game.maxPlayers;
+
+  const optionsHost = clear($('#setup-options'));
+  for (const option of game.options ?? []) {
+    const chips = el('div', { class: 'chip-row' });
+    for (const choix of option.options) {
+      chips.append(el('button', {
+        class: `chip${setupDraft.options[option.key] === choix.value ? ' is-active' : ''}`,
+        type: 'button',
+        onclick: () => { setupDraft.options[option.key] = choix.value; renderSetup(); },
+      }, choix.label));
+    }
+    optionsHost.append(
+      el('div', {}, [
+        el('h3', { class: 'section-title', text: option.label }),
+        option.hint && el('p', { class: 'muted small', text: option.hint }),
+        chips,
+      ]),
+    );
+  }
 
   // Certains jeux s'arrêtent à un score, d'autres après un nombre de donnes.
   const parDonnes = game.endMode === 'rounds';
@@ -187,22 +219,23 @@ function renderSetup() {
         class: `chip${setupDraft.target === value ? ' is-active' : ''}`,
         type: 'button',
         onclick: () => { setupDraft.target = value; renderSetup(); },
-      }, parDonnes ? `${value} donnes` : `${value} pts`),
+      }, parDonnes ? `${value} ${(game.roundLabel ?? 'Manche').toLowerCase()}s` : `${value} pts`),
     );
   }
 }
 
 function startMatch() {
   const game = getGame(setupDraft.gameId);
-  const names = setupDraft.names.map((n, i) => (n.trim() || `Joueur ${i + 1}`));
+  const unite = game.participantLabel ?? 'Joueur';
+  const names = setupDraft.names.map((n, i) => (n.trim() || `${unite} ${i + 1}`));
   if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) {
-    toast('Deux joueurs portent le même nom.', 'warn');
+    toast(`Deux ${unite.toLowerCase()}s portent le même nom.`, 'warn');
     return;
   }
   const players = names.map(makePlayer);
   store.update((s) => {
-    s.match = makeMatch(game, players, setupDraft.target);
-    s.lastPlayers = names;
+    s.match = makeMatch(game, players, setupDraft.target, setupDraft.options);
+    if (!game.defaultNames) s.lastPlayers = names;
   });
   backStack.length = 0;
   backStack.push('home');
@@ -251,7 +284,7 @@ function renderBanner(match, game) {
   if (!isOver(match, game)) return;
   const board = standings(match, game);
   const raison = game.endMode === 'rounds'
-    ? `${match.target} donnes jouées.`
+    ? `${match.target} ${(game.roundLabel ?? 'Manche').toLowerCase()}s jouées.`
     : `Objectif ${match.target} atteint.`;
   host.append(
     el('div', { class: 'banner' }, [
@@ -298,11 +331,12 @@ function renderRoundPanel(match, game) {
     ? match.rounds.findIndex((r) => r.id === draft.editingRoundId) + 1
     : match.rounds.length + 1;
 
-  const label = game.entry === 'form' ? 'Donne' : 'Manche';
+  const label = game.roundLabel ?? 'Manche';
   $('#round-title').textContent = editing ? `Modifier la ${label.toLowerCase()} ${index}` : `${label} ${index}`;
   $('#btn-validate').textContent = editing
     ? 'Enregistrer les modifications'
     : `Valider la ${label.toLowerCase()}`;
+  $('#round-history-title').textContent = `${label}s jouées`;
 
   // La bascule Cartes/Points n'a de sens que si le jeu propose des jetons.
   $('#mode-switch').hidden = !game.supportsTokens;
@@ -334,13 +368,49 @@ function renderForm(match, game) {
 
   const setField = (key, value) => store.update((s) => { s.match.draft.form[key] = value; });
 
-  for (const field of game.form(match.players.length)) {
+  for (const field of game.form(match.players.length, match.players, match.rounds)) {
     const block = el('div', { class: 'extra' }, [
       el('strong', { class: 'extra-label', text: field.label }),
       field.hint && el('span', { class: 'muted small', text: field.hint }),
     ]);
 
-    if (field.type === 'number') {
+    if (field.type === 'players') {
+      // Une ligne par joueur, avec les mêmes colonnes numériques pour tous
+      // (au Skull King : mise, plis réalisés, bonus).
+      const grille = el('div', { class: 'player-grid' });
+      for (const p of match.players) {
+        const cellules = field.columns.map((col) => el('label', { class: 'grid-cell' }, [
+          el('span', { class: 'grid-cap', text: col.label }),
+          el('input', {
+            type: 'number',
+            inputmode: 'numeric',
+            min: col.min,
+            max: typeof col.max === 'function' ? col.max(match, form) : col.max,
+            step: '1',
+            value: form[field.key]?.[p.id]?.[col.key] ?? '',
+            placeholder: col.placeholder ?? '0',
+            oninput: (e) => {
+              const cible = store.state.match.draft.form;
+              cible[field.key] ??= {};
+              cible[field.key][p.id] ??= {};
+              cible[field.key][p.id][col.key] = e.target.value;
+              refreshStatus(store.state.match, game);
+            },
+            onchange: () => store.touch(),
+          }),
+        ]));
+        grille.append(
+          el('div', { class: 'player-grid-row' }, [
+            el('div', { class: 'grid-name' }, [
+              el('span', { class: 'dot', style: { background: p.color } }),
+              el('span', { text: p.name }),
+            ]),
+            el('div', { class: 'grid-cells' }, cellules),
+          ]),
+        );
+      }
+      block.append(grille);
+    } else if (field.type === 'number') {
       block.append(el('input', {
         type: 'number',
         inputmode: 'decimal',
@@ -416,22 +486,29 @@ function renderExtras(match, game) {
 }
 
 /** Bandeau de controle : validation du jeu + effets calcules (doublement...). */
+/** Contexte transmis aux règles du jeu : saisies annexes, variantes, historique. */
+function roundContext(match) {
+  return { extras: match.draft.extras, options: match.options ?? {}, rounds: match.rounds };
+}
+
 function refreshStatus(match, game) {
   const input = roundInput(match, game);
-  const check = game.validateRound(input, match.players, match.draft.extras);
-  const notes = check.ok && game.finalize
-    ? game.finalize(input, match.draft.extras, match.players).notes
-    : [];
+  const ctx = roundContext(match);
+  const check = game.validateRound(input, match.players, ctx);
+  const notes = check.ok && game.finalize ? game.finalize(input, ctx, match.players).notes : [];
 
   const texte = [check.message, ...notes].filter(Boolean).join(' ');
+  const surFormulaire = game.entry === 'form';
+
+  // Sur un formulaire long, le bandeau du haut sort de l'écran pendant la
+  // saisie : on n'affiche alors que celui de la barre collante, toujours visible.
   const status = $('#round-status');
+  status.hidden = surFormulaire;
   status.textContent = texte;
   status.dataset.level = check.ok ? 'ok' : 'warn';
 
-  // Sur un formulaire long (Tarot), le bandeau du haut sort de l'écran alors
-  // que c'est justement le résultat qu'on veut voir : on le répète en bas.
   const resume = $('#round-result');
-  resume.hidden = game.entry !== 'form' || !texte;
+  resume.hidden = !surFormulaire || !texte;
   resume.textContent = texte;
   resume.dataset.level = check.ok ? 'ok' : 'warn';
   return check;
@@ -617,8 +694,9 @@ function refreshManualStatus() {
 
 function renderRoundHistory(match, game) {
   const host = clear($('#round-history'));
+  const label = game.roundLabel ?? 'Manche';
   if (match.rounds.length === 0) {
-    host.append(el('p', { class: 'muted small', text: 'Aucune manche enregistrée.' }));
+    host.append(el('p', { class: 'muted small', text: `Aucune ${label.toLowerCase()} enregistrée.` }));
     return;
   }
   match.rounds.forEach((round, i) => {
@@ -630,18 +708,18 @@ function renderRoundHistory(match, game) {
           type: 'button',
           onclick: () => editRound(round.id),
         }, [
-          el('strong', { text: `Manche ${i + 1}` }),
+          el('strong', { text: `${label} ${i + 1}` }),
           el('span', { class: 'muted small', text: detail }),
         ]),
         el('button', {
           class: 'icon-btn',
           type: 'button',
-          'aria-label': `Supprimer la manche ${i + 1}`,
+          'aria-label': `Supprimer : ${label} ${i + 1}`,
           onclick: async () => {
-            if (await confirmDialog(`Supprimer la manche ${i + 1} ?`, { okLabel: 'Supprimer', danger: true })) {
+            if (await confirmDialog(`Supprimer la ${label.toLowerCase()} ${i + 1} ?`, { okLabel: 'Supprimer', danger: true })) {
               store.update((s) => {
                 s.match.rounds = s.match.rounds.filter((r) => r.id !== round.id);
-                if (s.match.draft.editingRoundId === round.id) s.match.draft = makeDraft(game, s.match.players);
+                if (s.match.draft.editingRoundId === round.id) s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
               });
               toast('Manche supprimée.');
             }
@@ -659,7 +737,7 @@ function editRound(roundId) {
   if (!round) return;
   store.update((s) => {
     s.match.draft = {
-      ...makeDraft(game, s.match.players),
+      ...makeDraft(game, s.match.players, s.match.rounds),
       mode: round.mode,
       // On recharge la saisie d'origine, pas le résultat après application des
       // règles : sinon une correction ré-appliquerait le doublement.
@@ -682,8 +760,10 @@ async function validateRound() {
   const match = store.state.match;
   const game = getGame(match.gameId);
   const { draft } = match;
+  const label = game.roundLabel ?? 'Manche';
   const input = roundInput(match, game);
-  const check = game.validateRound(input, match.players, draft.extras);
+  const ctx = roundContext(match);
+  const check = game.validateRound(input, match.players, ctx);
 
   if (!check.ok) {
     const ok = await confirmDialog(
@@ -700,15 +780,16 @@ async function validateRound() {
   const raw = game.entry === 'form'
     ? { ...input }
     : Object.fromEntries(match.players.map((p) => [p.id, Number(input[p.id]) || 0]));
-  const final = game.finalize
-    ? game.finalize(raw, draft.extras, match.players)
-    : { scores: raw, notes: [] };
+  const final = game.finalize ? game.finalize(raw, ctx, match.players) : { scores: raw, notes: [] };
 
   store.update((s) => {
     const payload = {
       mode: draft.mode,
       scores: final.scores,
       raw,
+      // Ce que le jeu veut retenir de cette manche pour la suivante
+      // (à la belote : les points laissés en litige).
+      meta: final.meta ?? null,
       assign: { ...draft.assign },
       extras: { ...draft.extras },
     };
@@ -717,11 +798,14 @@ async function validateRound() {
     } else {
       s.match.rounds.push({ id: makeRoundId(), ...payload });
     }
-    s.match.draft = makeDraft(game, s.match.players);
+    s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
   });
 
+  // Une notification doit se lire d'un coup d'œil : les explications longues
+  // restent dans le panneau et dans l'historique.
   const note = final.notes?.[0];
-  toast(note ?? (draft.editingRoundId ? 'Manche modifiée.' : 'Manche enregistrée.'), 'ok');
+  const defaut = `${label} ${draft.editingRoundId ? 'modifiée' : 'enregistrée'}.`;
+  toast(note && note.length <= 90 ? note : defaut, 'ok');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1066,7 +1150,7 @@ function wire() {
   $('#btn-clear-round').addEventListener('click', async () => {
     if (!(await confirmDialog('Effacer la saisie en cours ?', { okLabel: 'Effacer' }))) return;
     const match = store.state.match;
-    store.update((s) => { s.match.draft = makeDraft(getGame(match.gameId), s.match.players); });
+    store.update((s) => { s.match.draft = makeDraft(getGame(match.gameId), s.match.players, s.match.rounds); });
   });
 
   $('#btn-finish').addEventListener('click', async () => {
