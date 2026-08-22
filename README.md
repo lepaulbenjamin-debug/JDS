@@ -3,8 +3,8 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Six jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
-**Tarot**, **Belote** et **Skull King**. Un jeu = un module dans
+Sept jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote**, **Skull King** et **Le Barbu**. Un jeu = un module dans
 `web/js/games/`, et le moteur s'adapte à ses règles.
 
 ## Ce que ça fait
@@ -34,6 +34,14 @@ Six jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
   suivante. Au Skull King, une ligne par joueur : mise, plis réalisés, bonus ; et
   un garde-fou qui refuse une manche dont le total des plis ne colle pas au
   nombre de cartes distribuées.
+- **Au Barbu, chaque manche a son contrat, donc son formulaire.** On annonce ce
+  qu'il fallait éviter — les plis, les cœurs, les dames, le roi de cœur, les
+  derniers plis, tout à la fois, ou la réussite — et l'appli ne demande que ce
+  qui compte pour ce contrat-là : une grille de plis, ou simplement qui a
+  ramassé le Barbu. Elle vérifie que les treize cœurs et les quatre dames sont
+  tous attribués, propose d'office le premier contrat encore à jouer, marque
+  d'un ✓ ceux qui sont faits, et nomme chaque manche par son contrat dans
+  l'historique plutôt que par un numéro.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -114,6 +122,7 @@ web/                     PWA statique, sans build ni dépendance
     games/tarot.js       idem + saisie par formulaire et calcul officiel FFT
     games/belote.js      idem + contrat, capot et report de litige
     games/skull-king.js  idem + saisie en grille (mise / plis / bonus)
+    games/barbu.js       idem + un formulaire par contrat et barèmes réglables
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -153,10 +162,11 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
 | `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
-| `entry: 'form'` + `form(playerCount, players, rounds)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction |
+| `entry: 'form'` + `form(playerCount, players, rounds, form)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours : au Barbu, les champs demandés dépendent du contrat qu'on vient de choisir |
+| `roundTitle(round, index)` | nomme une manche par ce qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
 | `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
-| `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration et transmises au calcul (litige à la belote, bonus au Skull King) |
+| `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration et transmises au calcul (litige à la belote, bonus au Skull King, barèmes du Barbu) |
 | `finalize` → `meta` | ce que la manche laisse à la suivante ; `formDefaults(players, rounds)` peut le relire (report de litige) |
 
 Les règles reçoivent un contexte unique : `validateRound(saisie, participants,
@@ -196,6 +206,36 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles du Barbu (rappel)
+
+3 à 6 joueurs, 52 cartes, tout le paquet distribué. À 3, 5 ou 6 joueurs le
+compte ne tombe pas juste : on retire 1, 2 ou 4 petites cartes noires ou
+carreau — jamais un cœur ni une dame, sinon les contrats perdent leur valeur.
+
+Sept manches, sept contrats, annoncés à tour de rôle par celui qui a la main.
+On doit fournir la couleur demandée si on en a une, sans obligation de monter ;
+il n'y a pas d'atout.
+
+| Contrat | Barème |
+|---|---|
+| Les plis | −10 par pli ramassé |
+| Les cœurs | −10 par cœur (−130 en tout) |
+| Les dames | −20 par dame (−80 en tout) |
+| Le Barbu | −50 pour le roi de cœur |
+| Les derniers plis | −50 pour le dernier, −30 pour l'avant-dernier |
+| La salade | les cinq précédents cumulés sur une seule manche |
+| La réussite | +100 au premier à vider sa main, +50 au deuxième |
+
+Les points sont surtout des pénalités : le gagnant est celui dont le total est
+le plus élevé, c'est-à-dire celui qui a le moins ramassé.
+
+**Les barèmes varient d'une famille à l'autre.** Le Barbu se transmet de bouche
+à oreille, et les sources consultées ne s'accordent pas : le roi de cœur vaut
+−50 ou −80, certaines tables ne comptent que le dernier pli, et la réussite se
+joue en +100/+50 ou en +45/+20/+10 avec −10 au dernier. Les valeurs du tableau
+sont celles qui reviennent le plus souvent ; les trois écarts sont réglables au
+moment de créer la partie plutôt que tranchés dans le code.
 
 ## Règles de la Belote (rappel)
 

@@ -509,7 +509,9 @@ function renderForm(match, game) {
 
   const setField = (key, value) => store.update((s) => { s.match.draft.form[key] = value; });
 
-  for (const field of game.form(match.players.length, match.players, match.rounds)) {
+  // La saisie en cours est passée au jeu : au Barbu, les champs demandés
+  // dépendent du contrat qu'on vient de choisir.
+  for (const field of game.form(match.players.length, match.players, match.rounds, form)) {
     const block = el('div', { class: 'extra' }, [
       el('strong', { class: 'extra-label', text: field.label }),
       field.hint && el('span', { class: 'muted small', text: field.hint }),
@@ -518,7 +520,9 @@ function renderForm(match, game) {
     if (field.type === 'players') {
       // Une ligne par joueur, avec les mêmes colonnes numériques pour tous
       // (au Skull King : mise, plis réalisés, bonus).
-      const grille = el('div', { class: 'player-grid' });
+      // Une colonne unique tient sur une ligne par joueur : la grille reste
+      // lisible sans faire défiler un écran entier par contrat.
+      const grille = el('div', { class: `player-grid${field.columns.length === 1 ? ' is-single' : ''}` });
       for (const p of match.players) {
         const cellules = field.columns.map((col) => el('label', { class: 'grid-cell' }, [
           el('span', { class: 'grid-cap', text: col.label }),
@@ -833,6 +837,16 @@ function refreshManualStatus() {
   refreshRemainder();
 }
 
+/**
+ * Intitulé d'une manche dans les listes. Un jeu peut la nommer par ce qui s'y
+ * est joué plutôt que par son rang — au Barbu, le contrat annoncé.
+ */
+function roundTitle(game, round, index) {
+  const label = game.roundLabel ?? 'Manche';
+  const propre = game.roundTitle?.(round, index);
+  return propre ? `${index + 1}. ${propre}` : `${label} ${index + 1}`;
+}
+
 function renderRoundHistory(match, game) {
   const host = clear($('#round-history'));
   const label = game.roundLabel ?? 'Manche';
@@ -849,7 +863,7 @@ function renderRoundHistory(match, game) {
           type: 'button',
           onclick: () => editRound(round.id),
         }, [
-          el('strong', { text: `${label} ${i + 1}` }),
+          el('strong', { text: roundTitle(game, round, i) }),
           el('span', { class: 'muted small', text: detail }),
         ]),
         el('button', {
@@ -1357,7 +1371,7 @@ function renderMatchDetail() {
   past.rounds.forEach((round, i) => {
     rounds.append(el('div', { class: 'row' }, [
       el('div', { class: 'row-main' }, [
-        el('strong', { text: `${label} ${i + 1}` }),
+        el('strong', { text: roundTitle(game, round, i) }),
         el('span', {
           class: 'muted small',
           text: past.players.map((p) => `${p.name} ${round.scores[p.id] ?? 0}`).join(' · '),

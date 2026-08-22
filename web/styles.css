@@ -426,6 +426,18 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 }
 .grid-cell input { padding: 9px 10px; text-align: center; font-size: 17px; font-weight: 600; }
 
+/* Une seule valeur par joueur (les contrats du Barbu) : le nom et le champ
+   tiennent sur une ligne, et l'intitulé de colonne, déjà donné par le titre du
+   bloc, disparaît. Autrement une manche de salade fait dix écrans de haut. */
+.player-grid.is-single { gap: 6px; }
+.player-grid.is-single .player-grid-row {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 6px 10px;
+}
+.player-grid.is-single .grid-cap { display: none; }
+.player-grid.is-single .grid-cell input { width: 84px; }
+
 /* Formulaire de donne : beaucoup de champs, on resserre. */
 #entry-form .extra { gap: 4px; padding: 12px; margin-bottom: 10px; }
 #entry-form .chip { padding: 8px 12px; font-size: 13px; }

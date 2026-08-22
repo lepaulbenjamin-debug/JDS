@@ -34,6 +34,7 @@ const MODULES = [
   ['js/games/tarot.js', 'tarot'],
   ['js/games/belote.js', 'belote'],
   ['js/games/skull-king.js', 'skullKing'],
+  ['js/games/barbu.js', 'barbu'],
   ['js/games/index.js', null],
   ['js/app.js', null],
 ];
@@ -70,11 +71,34 @@ function dropServiceWorker(code) {
   return code.replace(bloc, '');
 }
 
+/**
+ * Noms déclarés au premier niveau d'un module.
+ * Isolés dans leurs fichiers, deux modules peuvent employer le même nom sans
+ * se gêner ; concaténés, ils s'écrasent. Le navigateur le signale par un
+ * « Identifier … has already been declared » qui ne dit pas d'où il vient.
+ */
+function topLevelNames(code) {
+  return [...code.matchAll(/^(?:const|let|var|function|async function|class)\s+([A-Za-z_$][\w$]*)/gm)]
+    .map((m) => m[1]);
+}
+
+const vus = new Map();
 const bundle = MODULES
   .map(([file, name]) => {
     let code = readFileSync(join(WEB, file), 'utf8');
     if (file === 'js/app.js') code = dropServiceWorker(code);
-    return flatten(code, name, file);
+    const plat = flatten(code, name, file);
+
+    for (const nom of topLevelNames(plat)) {
+      if (vus.has(nom)) {
+        throw new Error(
+          `Collision de noms : « ${nom} » est déclaré dans ${vus.get(nom)} et dans ${file}.\n`
+          + 'Les modules sont concaténés dans un seul script : renommez-en un.',
+        );
+      }
+      vus.set(nom, file);
+    }
+    return plat;
   })
   .join('\n');
 
