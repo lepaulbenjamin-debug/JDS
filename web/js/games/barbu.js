@@ -10,6 +10,8 @@
 // orale, les points varient d'une famille à l'autre : les écarts constatés
 // entre ces sources sont exposés en options de partie plutôt que tranchés ici.
 
+import { nomDe } from './common.js';
+
 export const CONTRATS_BARBU = [
   { value: 'plis', label: 'Les plis' },
   { value: 'coeurs', label: 'Les cœurs' },
@@ -78,8 +80,6 @@ function place(form, playerId) {
 function somme(form, cle, players) {
   return players.reduce((total, p) => total + cellule(form, cle, p.id), 0);
 }
-
-const nomDe = (players, id) => players.find((p) => p.id === id)?.name ?? '—';
 
 export default {
   id: 'barbu',
@@ -215,8 +215,9 @@ export default {
   },
 
   /** Intitulé de la manche dans l'historique : le contrat, pas un numéro. */
-  roundTitle(round) {
-    return CONTRATS_BARBU.find((c) => c.value === round.raw?.contrat)?.label ?? null;
+  roundLine(round, index) {
+    const contrat = CONTRATS_BARBU.find((c) => c.value === round.raw?.contrat);
+    return contrat ? { title: `${index + 1}. ${contrat.label}` } : {};
   },
 
   validateRound(form, players, ctx) {

@@ -1,7 +1,7 @@
 // Service worker : le comptage des points doit fonctionner sans réseau.
 // Coquille applicative en cache-first, tout le reste en réseau d'abord.
 
-const CACHE = 'jds-shell-v8';
+const CACHE = 'jds-shell-v9';
 const SHELL = [
   './',
   'index.html',
@@ -15,6 +15,7 @@ const SHELL = [
   'js/speech.js',
   'js/vision-prompt.js',
   'js/games/index.js',
+  'js/games/common.js',
   'js/games/papayoo.js',
   'js/games/skyjo.js',
   'js/games/six-qui-prend.js',
@@ -23,6 +24,7 @@ const SHELL = [
   'js/games/skull-king.js',
   'js/games/barbu.js',
   'js/games/sept-merveilles.js',
+  'js/games/molkky.js',
 ];
 
 self.addEventListener('install', (event) => {

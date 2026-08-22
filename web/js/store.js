@@ -192,11 +192,37 @@ export function standings(match, game) {
 }
 
 /**
+ * Recalcule toutes les manches dans l'ordre, chacune à partir des seules
+ * manches qui la précèdent.
+ *
+ * Nécessaire aux jeux dont une manche dépend de l'état laissé par les
+ * précédentes : au Mölkky, ce que rapporte un lancer dépend du total déjà
+ * acquis. Sans ça, corriger ou supprimer un lancer laisserait tous les
+ * suivants avec un calcul périmé.
+ */
+export function replay(match, game) {
+  if (!game.replays || !game.finalize) return;
+  match.rounds.forEach((round, i) => {
+    const ctx = {
+      extras: round.extras,
+      options: match.options ?? {},
+      rounds: match.rounds.slice(0, i),
+    };
+    const res = game.finalize(round.raw ?? {}, ctx, match.players);
+    round.scores = res.scores;
+    round.meta = res.meta ?? null;
+  });
+}
+
+/**
  * La partie est-elle arrivée à son terme ?
  * Selon le jeu, on s'arrête à un score cible ou après un nombre de donnes.
  */
 export function isOver(match, game) {
   if (match.rounds.length === 0) return false;
+  // Certains jeux ont leur propre fin de partie (au Mölkky : il ne reste
+  // qu'un joueur non éliminé).
+  if (game.finished?.(match)) return true;
   if (game.endMode === 'rounds') return match.rounds.length >= match.target;
   return Object.values(totals(match)).some((v) => v >= match.target);
 }

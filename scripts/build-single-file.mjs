@@ -28,6 +28,7 @@ const MODULES = [
   ['js/speech.js', null],
   ['js/vision-prompt.js', null],
   ['js/ai.js', null],
+  ['js/games/common.js', null],
   ['js/games/papayoo.js', 'papayoo'],
   ['js/games/skyjo.js', 'skyjo'],
   ['js/games/six-qui-prend.js', 'sixQuiPrend'],
@@ -36,6 +37,7 @@ const MODULES = [
   ['js/games/skull-king.js', 'skullKing'],
   ['js/games/barbu.js', 'barbu'],
   ['js/games/sept-merveilles.js', 'septMerveilles'],
+  ['js/games/molkky.js', 'molkky'],
   ['js/games/index.js', null],
   ['js/app.js', null],
 ];

@@ -3,9 +3,10 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Huit jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
-**Tarot**, **Belote**, **Skull King**, **Le Barbu** et **7 Wonders**. Un jeu =
-un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
+Neuf jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders** et
+**Mölkky**. Un jeu = un module dans `web/js/games/`, et le moteur s'adapte à
+ses règles.
 
 ## Ce que ça fait
 
@@ -50,6 +51,14 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
   trésor est divisé par trois, le classement se met à jour à chaque case
   remplie, et en cas d'égalité c'est le trésor qui départage, dans le tableau
   comme dans la règle.
+- **Au Mölkky, une manche est un seul lancer.** L'appli sait qui doit lancer,
+  saute ceux qui sont éliminés, et il n'y a que deux gestes à faire : toucher
+  ce qui est tombé, valider. Elle applique le retour à 25 — et le dit **avant**
+  que vous validiez : « 48 + 5 dépasserait 50 : Alice redescend à 25 ». Elle
+  compte les lancers nuls et affiche « 2 ratés » à côté du nom avant que le
+  troisième n'élimine. Et comme un lancer dépend de tous les précédents,
+  corriger un vieux lancer **rejoue la partie entière** : le dépassement qui
+  n'a plus lieu d'être disparaît de lui-même.
 - **Règles et mise en place expliquées à voix haute.** Chaque jeu a sa fiche :
   une présentation en deux phrases à lire à la table, puis la mise en place
   découpée en étapes courtes. On lance la lecture, on pose le téléphone au
@@ -132,6 +141,8 @@ web/                     PWA statique, sans build ni dépendance
     games/skull-king.js  idem + saisie en grille (mise / plis / bonus)
     games/barbu.js       idem + un formulaire par contrat et barèmes réglables
     games/sept-merveilles.js  idem + décompte par catégories et formule de science
+    games/molkky.js      idem + un lancer par manche, retour à 25, éliminations
+    games/common.js      le peu que plusieurs jeux partagent
     games/index.js       registre des jeux
 server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
@@ -172,7 +183,12 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
 | `entry: 'form'` + `form(playerCount, players, rounds, form)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours : au Barbu, les champs demandés dépendent du contrat qu'on vient de choisir |
-| `roundTitle(round, index)` | nomme une manche par ce qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) |
+| `roundLine(round, index, match)` | `{ title, detail }` : nomme une manche par ce qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) et remplace la ligne de scores par un résumé adapté (au Mölkky, où tous les autres joueurs sont à zéro) |
+| `compactBoard` | le tableau n'affiche que les totaux, sans colonne par manche — au Mölkky elles se compteraient par dizaines |
+| `playerStatus(player, match)` | `{ text, tone }` affiché à côté d'un nom : ce que le total ne dit pas (au Mölkky, les ratés en cours et l'élimination) |
+| `finished(match)` | fin de partie propre au jeu, en plus du score cible ou du nombre de manches (au Mölkky : il ne reste qu'un joueur non éliminé) |
+| `replays` | après un ajout, une correction ou une suppression, toutes les manches sont recalculées dans l'ordre, chacune à partir des seules manches qui la précèdent. Indispensable dès qu'une manche dépend de l'état laissé par les précédentes |
+| `roundLabelGender: 'm'` | le mot employé pour une manche est masculin (« le lancer ») ; féminin par défaut (« la manche », « la donne », « la partie ») |
 | `tieBreak(a, b, match)` | départage deux joueurs à égalité de score par autre chose que le score (au 7 Wonders, le trésor) ; sans lui le tableau tranche au hasard |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
 | `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
@@ -216,6 +232,28 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles du Mölkky (rappel)
+
+12 quilles numérotées de 1 à 12, un bâton de lancer. Les quilles sont serrées
+en quatre rangées, de la plus proche du lanceur à la plus lointaine :
+**1-2**, puis **3-10-4**, puis **5-11-12-6**, puis **7-9-8** — les gros numéros
+sont au centre, protégés. Le repère de lancer, le *mölkkaari*, se pose à
+**3,50 m** ; on ne le franchit pas.
+
+| Situation | Points |
+|---|---|
+| Une seule quille tombée | son numéro (la 12 seule vaut 12) |
+| Plusieurs quilles tombées | leur nombre (5 quilles au sol valent 5) |
+| Aucune quille | 0 — et c'est un lancer nul |
+
+Une quille ne compte que si elle est entièrement couchée. Après chaque lancer,
+les quilles tombées se relèvent à l'endroit exact où elles se sont arrêtées,
+sans être soulevées : la formation se disperse au fil de la partie.
+
+**Il faut marquer exactement 50.** Un lancer qui ferait dépasser ne dépasse
+pas : le score redescend à 25. **Trois lancers nuls consécutifs éliminent** ;
+le moindre point remet la série à zéro.
 
 ## Règles du 7 Wonders (rappel)
 

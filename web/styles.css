@@ -187,6 +187,23 @@ body {
 }
 .tag-win { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, var(--border)); }
 
+/* Etat d'un joueur a cote de son nom dans le tableau : au Molkky, ses lancers
+   nuls en cours et son elimination, qui ne se lisent pas dans le total. */
+.pill {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pill-ok { color: var(--ok); }
+.pill-warn { color: var(--warn); }
+.pill-danger { color: var(--danger); }
+.pill-muted { color: var(--muted); }
+.scoreboard tr.is-out td { opacity: 0.55; }
+
 /* Sélection des joueurs au démarrage d'une partie. */
 .roster { display: flex; flex-wrap: wrap; gap: 8px; }
 .roster .chip { display: inline-flex; align-items: center; gap: 6px; }

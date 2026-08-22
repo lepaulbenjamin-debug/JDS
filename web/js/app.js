@@ -1,7 +1,7 @@
 import { GAMES, getGame } from './games/index.js';
 import {
   store, makePlayer, makePerson, playerFromPerson, makeMatch, makeDraft, makeRoundId,
-  totals, standings, isOver, PLAYER_COLORS,
+  totals, standings, isOver, replay, PLAYER_COLORS,
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
@@ -416,8 +416,25 @@ function renderMatch() {
 
 /** Intitulé de manche accordé en nombre : « 1 partie », « 3 parties ». */
 function roundsLabel(game, count) {
-  const label = (game.roundLabel ?? 'Manche').toLowerCase();
+  const { label } = roundWords(game);
   return `${count} ${label}${count > 1 ? 's' : ''}`;
+}
+
+/**
+ * Accords du mot qu'un jeu emploie pour une manche. Ils sont féminins par
+ * défaut — manche, donne, partie — mais le Mölkky compte des lancers.
+ */
+function roundWords(game) {
+  const label = (game.roundLabel ?? 'Manche').toLowerCase();
+  const masculin = game.roundLabelGender === 'm';
+  return {
+    label,
+    la: masculin ? 'le' : 'la',
+    ce: masculin ? 'ce' : 'cette',
+    jouee: masculin ? 'joué' : 'jouée',
+    enregistree: masculin ? 'enregistré' : 'enregistrée',
+    modifiee: masculin ? 'modifié' : 'modifiée',
+  };
 }
 
 function renderBanner(match, game) {
@@ -425,7 +442,7 @@ function renderBanner(match, game) {
   if (!isOver(match, game)) return;
   const board = standings(match, game);
   const raison = game.endMode === 'rounds'
-    ? `${roundsLabel(game, match.target)} jouée${match.target > 1 ? 's' : ''}.`
+    ? `${roundsLabel(game, match.target)} ${roundWords(game).jouee}${match.target > 1 ? 's' : ''}.`
     : `Objectif ${match.target} atteint.`;
   host.append(
     el('div', { class: 'banner' }, [
@@ -445,12 +462,15 @@ function renderBoard(table, match, game, label) {
   const board = standings(match, game);
   const t = totals(match);
   const initiale = label[0].toUpperCase();
+  // Un lancer par manche au Mölkky : une colonne par manche ferait quarante
+  // colonnes. Ces jeux-là n'affichent que les totaux.
+  const parManche = game.compactBoard !== true;
 
   const head = el('thead');
   head.append(el('tr', {}, [
     el('th', { text: '#' }),
     el('th', { text: game.participantLabel ?? 'Joueur' }),
-    ...match.rounds.map((_, i) => el('th', { class: 'num', text: `${initiale}${i + 1}` })),
+    ...(parManche ? match.rounds.map((_, i) => el('th', { class: 'num', text: `${initiale}${i + 1}` })) : []),
     el('th', { class: 'num total-col', text: 'Total' }),
   ]));
   table.append(head);
@@ -458,13 +478,17 @@ function renderBoard(table, match, game, label) {
   const body = el('tbody');
   board.forEach((entry, rank) => {
     const p = entry.player;
-    body.append(el('tr', {}, [
+    // Le jeu peut qualifier un joueur d'un mot : au Mölkky, ses ratés en
+    // cours et son élimination, qui ne se lisent pas dans le total.
+    const statut = game.playerStatus?.(p, match);
+    body.append(el('tr', { class: statut?.tone === 'danger' ? 'is-out' : '' }, [
       el('td', { class: 'rank', text: String(rank + 1) }),
       el('td', {}, [
         el('span', { class: 'dot', style: { background: p.color } }),
         el('span', { text: p.name }),
-      ]),
-      ...match.rounds.map((r) => el('td', { class: 'num muted', text: String(r.scores[p.id] ?? 0) })),
+        statut && el('span', { class: `pill pill-${statut.tone ?? 'muted'}`, text: statut.text }),
+      ].filter(Boolean)),
+      ...(parManche ? match.rounds.map((r) => el('td', { class: 'num muted', text: String(r.scores[p.id] ?? 0) })) : []),
       el('td', { class: 'num total-col', text: String(t[p.id]) }),
     ]));
   });
@@ -479,11 +503,12 @@ function renderRoundPanel(match, game) {
     : match.rounds.length + 1;
 
   const label = game.roundLabel ?? 'Manche';
-  $('#round-title').textContent = editing ? `Modifier la ${label.toLowerCase()} ${index}` : `${label} ${index}`;
+  const mots = roundWords(game);
+  $('#round-title').textContent = editing ? `Modifier ${mots.la} ${mots.label} ${index}` : `${label} ${index}`;
   $('#btn-validate').textContent = editing
     ? 'Enregistrer les modifications'
-    : `Valider la ${label.toLowerCase()}`;
-  $('#round-history-title').textContent = `${label}s jouées`;
+    : `Valider ${mots.la} ${mots.label}`;
+  $('#round-history-title').textContent = `Les ${mots.label}s`;
 
   // La bascule Cartes/Points n'a de sens que si le jeu propose des jetons.
   $('#mode-switch').hidden = !game.supportsTokens;
@@ -522,6 +547,12 @@ function renderForm(match, game) {
       el('strong', { class: 'extra-label', text: field.label }),
       field.hint && el('span', { class: 'muted small', text: field.hint }),
     ]);
+
+    if (field.type === 'note') {
+      // Champ purement informatif : le bloc porte déjà le titre et le texte.
+      host.append(block);
+      continue;
+    }
 
     if (field.type === 'players') {
       // Une ligne par joueur, avec les mêmes colonnes numériques pour tous
@@ -847,24 +878,34 @@ function refreshManualStatus() {
 }
 
 /**
- * Intitulé d'une manche dans les listes. Un jeu peut la nommer par ce qui s'y
- * est joué plutôt que par son rang — au Barbu, le contrat annoncé.
+ * Comment une manche se présente dans les listes. Un jeu peut la nommer par ce
+ * qui s'y est joué plutôt que par son rang (au Barbu, le contrat annoncé) et
+ * remplacer la ligne de scores par un résumé qui lui convient mieux (au
+ * Mölkky, où tous les autres joueurs sont à zéro).
  */
-function roundTitle(game, round, index) {
+function roundLine(game, round, index, match) {
   const label = game.roundLabel ?? 'Manche';
-  const propre = game.roundTitle?.(round, index);
-  return propre ? `${index + 1}. ${propre}` : `${label} ${index + 1}`;
+  const propre = game.roundLine?.(round, index, match) ?? {};
+  return {
+    title: propre.title ?? `${label} ${index + 1}`,
+    detail: propre.detail
+      ?? match.players.map((p) => `${p.name} ${round.scores[p.id] ?? 0}`).join(' · '),
+  };
 }
 
 function renderRoundHistory(match, game) {
   const host = clear($('#round-history'));
   const label = game.roundLabel ?? 'Manche';
   if (match.rounds.length === 0) {
-    host.append(el('p', { class: 'muted small', text: `Aucune ${label.toLowerCase()} enregistrée.` }));
+    const mots = roundWords(game);
+    host.append(el('p', {
+      class: 'muted small',
+      text: `Aucun${mots.la === 'la' ? 'e' : ''} ${mots.label} pour le moment.`,
+    }));
     return;
   }
   match.rounds.forEach((round, i) => {
-    const detail = match.players.map((p) => `${p.name} ${round.scores[p.id] ?? 0}`).join(' · ');
+    const ligne = roundLine(game, round, i, match);
     host.append(
       el('div', { class: 'row' }, [
         el('button', {
@@ -872,20 +913,22 @@ function renderRoundHistory(match, game) {
           type: 'button',
           onclick: () => editRound(round.id),
         }, [
-          el('strong', { text: roundTitle(game, round, i) }),
-          el('span', { class: 'muted small', text: detail }),
+          el('strong', { text: ligne.title }),
+          el('span', { class: 'muted small', text: ligne.detail }),
         ]),
         el('button', {
           class: 'icon-btn',
           type: 'button',
           'aria-label': `Supprimer : ${label} ${i + 1}`,
           onclick: async () => {
-            if (await confirmDialog(`Supprimer la ${label.toLowerCase()} ${i + 1} ?`, { okLabel: 'Supprimer', danger: true })) {
+            const mots = roundWords(game);
+            if (await confirmDialog(`Supprimer ${mots.ce} ${mots.label} (${i + 1}) ?`, { okLabel: 'Supprimer', danger: true })) {
               store.update((s) => {
                 s.match.rounds = s.match.rounds.filter((r) => r.id !== round.id);
+                replay(s.match, game);
                 if (s.match.draft.editingRoundId === round.id) s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
               });
-              toast('Manche supprimée.');
+              toast(`${label} supprimé${roundWords(game).la === 'la' ? 'e' : ''}.`);
             }
           },
         }, '×'),
@@ -962,13 +1005,16 @@ async function validateRound() {
     } else {
       s.match.rounds.push({ id: makeRoundId(), ...payload });
     }
+    // Au Mölkky, corriger un lancer change tous les suivants : on rejoue.
+    replay(s.match, game);
     s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
   });
 
   // Une notification doit se lire d'un coup d'œil : les explications longues
   // restent dans le panneau et dans l'historique.
   const note = final.notes?.[0];
-  const defaut = `${label} ${draft.editingRoundId ? 'modifiée' : 'enregistrée'}.`;
+  const mots = roundWords(game);
+  const defaut = `${label} ${draft.editingRoundId ? mots.modifiee : mots.enregistree}.`;
   toast(note && note.length <= 90 ? note : defaut, 'ok');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1378,13 +1424,11 @@ function renderMatchDetail() {
 
   const rounds = clear($('#detail-rounds'));
   past.rounds.forEach((round, i) => {
+    const ligne = roundLine(game, round, i, past);
     rounds.append(el('div', { class: 'row' }, [
       el('div', { class: 'row-main' }, [
-        el('strong', { text: roundTitle(game, round, i) }),
-        el('span', {
-          class: 'muted small',
-          text: past.players.map((p) => `${p.name} ${round.scores[p.id] ?? 0}`).join(' · '),
-        }),
+        el('strong', { text: ligne.title }),
+        el('span', { class: 'muted small', text: ligne.detail }),
       ]),
     ]));
   });
