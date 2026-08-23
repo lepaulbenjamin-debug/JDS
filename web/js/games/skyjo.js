@@ -16,6 +16,19 @@ export default {
   id: 'skyjo',
   name: 'Skyjo',
   tagline: 'Le plus petit total gagne',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#22d3ee',
+    // La grille de douze cartes, trois rangées de quatre.
+    svg: `<g>
+            <rect x="0.5"  y="6"  width="5.5" height="6" rx="1"/><rect x="9" y="6"  width="5.5" height="6" rx="1" opacity=".45"/>
+            <rect x="17.5" y="6"  width="5.5" height="6" rx="1"/><rect x="26.5" y="6"  width="5.5" height="6" rx="1" opacity=".45"/>
+            <rect x="0.5"  y="13" width="5.5" height="6" rx="1" opacity=".45"/><rect x="9" y="13" width="5.5" height="6" rx="1"/>
+            <rect x="17.5" y="13" width="5.5" height="6" rx="1" opacity=".45"/><rect x="26.5" y="13" width="5.5" height="6" rx="1"/>
+            <rect x="0.5"  y="20" width="5.5" height="6" rx="1"/><rect x="9" y="20" width="5.5" height="6" rx="1" opacity=".45"/>
+            <rect x="17.5" y="20" width="5.5" height="6" rx="1"/><rect x="26.5" y="20" width="5.5" height="6" rx="1" opacity=".45"/>
+          </g>`,
+  },
   minPlayers: 2,
   maxPlayers: 8,
   lowestWins: true,

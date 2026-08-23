@@ -102,6 +102,17 @@ export default {
   id: 'aventuriers-du-rail',
   name: 'Les Aventuriers du Rail',
   tagline: 'Le décompte des routes, fait pour vous',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#60a5fa',
+    // Trois wagons posés bout à bout : une route prise sur la carte, ce qu'on
+    // passe la partie à faire. Une locomotive se confondrait avec un camion.
+    svg: `<g transform="rotate(-14 16 16)">
+            <path d="M2.5 12.5h7.4l1.6 3.5-1.6 3.5H2.5L4 16z" opacity=".55"/>
+            <path d="M12.3 12.5h7.4l1.6 3.5-1.6 3.5h-7.4l1.5-3.5z"/>
+            <path d="M22.1 12.5h7.4L31 16l-1.5 3.5h-7.4l1.6-3.5z" opacity=".55"/>
+          </g>`,
+  },
   minPlayers: 2,
   maxPlayers: 5,
   lowestWins: false,

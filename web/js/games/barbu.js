@@ -85,6 +85,14 @@ export default {
   id: 'barbu',
   name: 'Le Barbu',
   tagline: 'Sept contrats, sept façons de perdre',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#f472b6',
+    // La couronne du roi de cœur, celui qu'il ne faut pas ramasser.
+    svg: `<path d="M5 11l4.5 4 4-7 4 7 4.5-4 2 13H3z" transform="translate(1.5 0)"/>
+          <rect x="5.5" y="25" width="21" height="3.4" rx="1.4"/>
+          <path d="M16 13.6c1.7-2.3 5.6-1.4 5.6 1.5 0 2.4-3 4.5-5.6 6.5-2.6-2-5.6-4.1-5.6-6.5 0-2.9 3.9-3.8 5.6-1.5z" fill="#12141c" opacity=".75"/>`,
+  },
   minPlayers: 3,
   maxPlayers: 6,
   // Les points sont surtout des pénalités : le meilleur total est le plus haut.

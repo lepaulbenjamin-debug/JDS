@@ -24,6 +24,15 @@ export default {
   id: 'belote',
   name: 'Belote',
   tagline: 'Deux camps, 162 points',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#34d399',
+    // Les quatre couleurs : le jeu de 32 cartes.
+    svg: `<path d="M9 4c2.2 2.6 4 4 4 5.8A2.6 2.6 0 0 1 9 12a2.6 2.6 0 0 1-4-2.2C5 8 6.8 6.6 9 4z"/>
+          <path d="M23 12c-2.2-2.6-4-4-4-5.8A2.6 2.6 0 0 1 23 4a2.6 2.6 0 0 1 4 2.2c0 1.8-1.8 3.2-4 5.8z"/>
+          <path d="M9 19l4 5.5-4 5.5-4-5.5z"/>
+          <path d="M23 19.5c1.5 0 2.6 1.1 2.6 2.5 0 .6-.2 1.1-.5 1.5.8.4 1.4 1.3 1.4 2.3 0 1.5-1.2 2.7-2.7 2.7-.7 0-1.3-.3-1.8-.7l.5 2.2h-3l.5-2.2c-.5.4-1.1.7-1.8.7A2.7 2.7 0 0 1 15.5 25.8c0-1 .6-1.9 1.4-2.3-.3-.4-.5-.9-.5-1.5 0-1.4 1.1-2.5 2.6-2.5.9 0 1.7.5 2.1 1.2.4-.7 1.2-1.2 2.1-1.2z" opacity=".75"/>`,
+  },
   // Les participants sont des équipes, pas des joueurs.
   participantLabel: 'Équipe',
   defaultNames: ['Nous', 'Eux'],

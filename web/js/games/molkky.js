@@ -78,6 +78,16 @@ export default {
   id: 'molkky',
   name: 'Mölkky',
   tagline: 'Cinquante pile, ni plus ni moins',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#fb923c',
+    // Trois quilles de bois, reconnaissables au sommet coupé en biseau,
+    // et le bâton de lancer posé devant.
+    svg: `<path d="M4.5 13 10 9.5v13H4.5z" opacity=".5"/>
+          <path d="M13 10.5 19 6.5v16h-6z"/>
+          <path d="M22 13l5.5-3.5v13H22z" opacity=".5"/>
+          <rect x="3" y="25" width="26" height="3.4" rx="1.7"/>`,
+  },
   minPlayers: 2,
   maxPlayers: 8,
   lowestWins: false,

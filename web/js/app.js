@@ -98,6 +98,17 @@ function recordsByPerson(history) {
   return records;
 }
 
+/**
+ * Vignette d'un jeu : un dessin original évoquant son matériel, posé sur une
+ * pastille de sa teinte. Repérer un jeu par sa couleur et sa forme va plus
+ * vite que le lire.
+ */
+function gameArt(game) {
+  const tuile = el('span', { class: 'game-art', style: { '--teinte': game.art?.teinte ?? 'var(--muted)' } });
+  tuile.innerHTML = `<svg viewBox="0 0 32 32" width="26" height="26" fill="currentColor" aria-hidden="true">${game.art?.svg ?? ''}</svg>`;
+  return tuile;
+}
+
 // --- Accueil ---------------------------------------------------------------
 
 function renderHome() {
@@ -123,7 +134,7 @@ function renderHome() {
   for (const game of GAMES) {
     list.append(
       el('div', { class: 'game-card' }, [
-        el('span', { class: 'game-emoji', text: '🃏' }),
+        gameArt(game),
         el('strong', { text: game.name }),
         el('span', { class: 'muted small', text: game.tagline }),
         el('span', { class: 'muted small', text: `${game.minPlayers} à ${game.maxPlayers} joueurs` }),

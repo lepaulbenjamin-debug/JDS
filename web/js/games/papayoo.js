@@ -26,6 +26,15 @@ export default {
   id: 'papayoo',
   name: 'Papayoo',
   tagline: 'Le moins de points possible',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#f5c518',
+    // Une carte jaune : le Payoo, seule chose qui compte au Papayoo.
+    svg: `<rect x="7" y="5" width="13" height="19" rx="2" opacity=".4"/>
+          <rect x="12" y="8" width="14" height="20" rx="2"/>
+          <text x="19" y="22" text-anchor="middle" font-size="11" font-weight="700"
+                font-family="system-ui, sans-serif" fill="#12141c">20</text>`,
+  },
   minPlayers: 3,
   maxPlayers: 8,
   lowestWins: true,

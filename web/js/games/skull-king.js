@@ -17,6 +17,15 @@ export default {
   id: 'skull-king',
   name: 'Skull King',
   tagline: 'Annoncer juste, ou payer',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#e9ebf2',
+    // Le crâne couronné.
+    svg: `<path d="M8 9l2.5 3 3-4 2.5 3.5L18.5 8l3 4L24 9l-1 5H9z" opacity=".85"/>
+          <path d="M16 13c-5 0-8.5 3.4-8.5 7.7 0 2.6 1.4 4.4 3.2 5.3v2.3c0 .9.7 1.7 1.6 1.7h7.4c.9 0 1.6-.8 1.6-1.7V26c1.8-.9 3.2-2.7 3.2-5.3C24.5 16.4 21 13 16 13z"/>
+          <circle cx="12.4" cy="20.2" r="2.1" fill="#12141c"/><circle cx="19.6" cy="20.2" r="2.1" fill="#12141c"/>
+          <path d="M14.6 25h1.4v3h-1.4zM17.4 25h1.4v3h-1.4z" fill="#12141c" opacity=".7"/>`,
+  },
   minPlayers: 2,
   maxPlayers: 8,
   lowestWins: false,

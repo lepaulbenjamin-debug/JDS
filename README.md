@@ -255,6 +255,7 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `playerStatus(player, match)` | `{ text, tone }` affiché à côté d'un nom : ce que le total ne dit pas (au Mölkky, les ratés en cours et l'élimination) |
 | `finished(match)` | fin de partie propre au jeu, en plus du score cible ou du nombre de manches (au Mölkky : il ne reste qu'un joueur non éliminé) |
 | `replays` | après un ajout, une correction ou une suppression, toutes les manches sont recalculées dans l'ordre, chacune à partir des seules manches qui la précèdent. Indispensable dès qu'une manche dépend de l'état laissé par les précédentes |
+| `art` | `{ teinte, svg }` : la vignette du jeu sur l'écran d'accueil. Un dessin **original** dans une boîte 32×32, en `currentColor`, évoquant le matériel du jeu — pas le visuel de la boîte, qui est une œuvre protégée |
 | `roundLabelGender: 'm'` | le mot employé pour une manche est masculin (« le lancer ») ; féminin par défaut (« la manche », « la donne », « la partie ») |
 | `tieBreak(a, b, match)` | départage deux joueurs à égalité de score par autre chose que le score (au 7 Wonders, le trésor) ; sans lui le tableau tranche au hasard |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |

@@ -46,6 +46,16 @@ export default {
   id: 'tarot',
   name: 'Tarot',
   tagline: 'Le calcul fait pour vous',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#a78bfa',
+    // L'éventail : au Tarot on tient beaucoup de cartes.
+    svg: `<g>
+            <rect x="13" y="7" width="11" height="17" rx="1.6" transform="rotate(-24 18 22)" opacity=".4"/>
+            <rect x="13" y="7" width="11" height="17" rx="1.6" transform="rotate(-8 18 22)" opacity=".7"/>
+            <rect x="13" y="7" width="11" height="17" rx="1.6" transform="rotate(8 18 22)"/>
+          </g>`,
+  },
   minPlayers: 3,
   maxPlayers: 5,
   // Au Tarot on cumule des scores positifs et négatifs : le meilleur total gagne.

@@ -25,6 +25,17 @@ export default {
   id: 'six-qui-prend',
   name: '6 qui prend !',
   tagline: 'Éviter les têtes de bœuf',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#f87171',
+    // Une tête de bœuf : cornes larges et museau carré, pour ne pas la
+    // confondre avec un animal de peluche.
+    svg: `<path d="M15.5 12C13 8.5 8 7 4 8.5c1 1 1.5 2 1.5 3.2 0 1.4-.8 2.4-2 3 2.5 1.6 6.5 1.6 9-.2M16.5 12c2.5-3.5 7.5-5 11.5-3.5-1 1-1.5 2-1.5 3.2 0 1.4.8 2.4 2 3-2.5 1.6-6.5 1.6-9-.2"
+                stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+          <path d="M10 12h12l-1 8.5c-.3 2.6-2.4 4.5-5 4.5s-4.7-1.9-5-4.5z"/>
+          <circle cx="13.2" cy="16.5" r="1.4" fill="#12141c"/><circle cx="18.8" cy="16.5" r="1.4" fill="#12141c"/>
+          <rect x="12.6" y="20.5" width="6.8" height="3.6" rx="1.8" fill="#12141c" opacity=".6"/>`,
+  },
   minPlayers: 2,
   maxPlayers: 10,
   lowestWins: true,

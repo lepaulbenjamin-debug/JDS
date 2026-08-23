@@ -60,6 +60,16 @@ export default {
   id: 'sept-merveilles',
   name: '7 Wonders',
   tagline: 'Sept sources de points à additionner',
+  /** Vignette du jeu : dessin original, voir `art` dans le README. */
+  art: {
+    teinte: '#fbbf24',
+    // Le monument à degrés : on bâtit sa merveille par étapes.
+    svg: `<path d="M13 5h6v4h-6z"/>
+          <path d="M9.5 10h13v4.5h-13z" opacity=".85"/>
+          <path d="M6 15.5h20V21H6z" opacity=".7"/>
+          <path d="M3 22h26v6H3z"/>
+          <rect x="14.4" y="23.4" width="3.2" height="4.6" rx=".6" fill="#12141c" opacity=".6"/>`,
+  },
   minPlayers: 3,
   maxPlayers: 7,
   lowestWins: false,
