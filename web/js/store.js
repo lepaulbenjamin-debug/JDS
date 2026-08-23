@@ -129,7 +129,7 @@ export function playerFromPerson(person, index) {
   };
 }
 
-export function makeMatch(game, players, target, options = {}) {
+export function makeMatch(game, players, target, options = {}, endMode = null) {
   return {
     id: uid(),
     gameId: game.id,
@@ -137,6 +137,10 @@ export function makeMatch(game, players, target, options = {}) {
     updatedAt: Date.now(),
     players,
     target,
+    // Comment cette partie-là s'arrête : au score, ou après N manches. Certains
+    // jeux laissent le choix ; les autres n'ont qu'une façon de finir, et les
+    // parties d'avant ce réglage retombent sur celle du jeu.
+    endMode: endMode ?? game.endMode ?? 'score',
     // Variantes choisies avant de commencer (litige à la belote, bonus au
     // Skull King) : elles changent le calcul, pas la saisie.
     options,
@@ -146,9 +150,14 @@ export function makeMatch(game, players, target, options = {}) {
   };
 }
 
-export function makeDraft(game, players, rounds = []) {
+/**
+ * @param {string|null} mode Mode de saisie à conserver. Sans lui, une partie
+ *   au Papayoo renverrait aux « Cartes » après chaque manche validée : celui
+ *   qui préfère taper ses points devrait rebasculer à chaque fois.
+ */
+export function makeDraft(game, players, rounds = [], mode = null) {
   return {
-    mode: game.supportsTokens ? 'tokens' : 'manual',
+    mode: mode ?? (game.supportsTokens ? 'tokens' : 'manual'),
     scores: Object.fromEntries(players.map((p) => [p.id, ''])),
     assign: {},
     // Informations propres au jeu, demandées avant de valider la manche
@@ -223,6 +232,6 @@ export function isOver(match, game) {
   // Certains jeux ont leur propre fin de partie (au Mölkky : il ne reste
   // qu'un joueur non éliminé).
   if (game.finished?.(match)) return true;
-  if (game.endMode === 'rounds') return match.rounds.length >= match.target;
+  if ((match.endMode ?? game.endMode) === 'rounds') return match.rounds.length >= match.target;
   return Object.values(totals(match)).some((v) => v >= match.target);
 }

@@ -41,6 +41,25 @@ export default {
   roundTotal: 250,
   defaultTarget: 250,
   targetChoices: [150, 200, 250, 300, 500],
+  // Deux façons de finir, également répandues : on joue jusqu'à ce que
+  // quelqu'un craque, ou on convient d'un nombre de manches pour tenir
+  // dans le temps qu'on a.
+  endModes: [
+    {
+      id: 'score',
+      label: 'Au score',
+      hint: "La partie s'arrête dès qu'un joueur atteint :",
+      choices: [150, 200, 250, 300, 500],
+      defaut: 250,
+    },
+    {
+      id: 'rounds',
+      label: 'En manches',
+      hint: 'La partie dure :',
+      choices: [3, 5, 8, 10],
+      defaut: 5,
+    },
+  ],
   allowsNegative: false,
   // Le mode « cartes » (attribution des Payoos ramassés) est disponible.
   supportsTokens: true,

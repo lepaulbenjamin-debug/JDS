@@ -174,7 +174,8 @@ function startSetup(game) {
     parEquipes,
     names: parEquipes ? [...game.defaultNames] : [],
     selected: parEquipes ? [] : preselection,
-    target: game.defaultTarget,
+    endMode: endModesOf(game)[0].id,
+    target: endModesOf(game)[0].defaut,
     options: Object.fromEntries((game.options ?? []).map((o) => [o.key, o.options[0].value])),
   };
   show('setup');
@@ -316,6 +317,28 @@ function renderRoster(game, host) {
   }));
 }
 
+/**
+ * Les façons dont une partie peut s'arrêter, pour un jeu donné.
+ * Un jeu peut en proposer plusieurs (`endModes`) : au Papayoo, on joue au
+ * score ou en un nombre de manches convenu. Les autres n'en ont qu'une, et
+ * elle se déduit de leurs champs existants.
+ */
+function endModesOf(game) {
+  if (game.endModes?.length) return game.endModes;
+  return [{
+    id: game.endMode === 'rounds' ? 'rounds' : 'score',
+    label: game.endMode === 'rounds' ? 'En manches' : 'Au score',
+    choices: game.targetChoices,
+    defaut: game.defaultTarget,
+  }];
+}
+
+/** La fin de partie retenue pour une partie donnée. */
+function endModeOf(match, game) {
+  const modes = endModesOf(game);
+  return modes.find((m) => m.id === (match.endMode ?? game.endMode)) ?? modes[0];
+}
+
 /** Options de partie et condition de fin, communes aux deux modes de saisie. */
 function renderSetupTail(game) {
   const optionsHost = clear($('#setup-options'));
@@ -337,14 +360,34 @@ function renderSetupTail(game) {
     );
   }
 
-  // Certains jeux s'arrêtent à un score, d'autres après un nombre de donnes.
-  const parDonnes = game.endMode === 'rounds';
-  $('#setup-end-label').textContent = parDonnes
+  // Certains jeux s'arrêtent à un score, d'autres après un nombre de donnes,
+  // d'autres encore laissent la table décider.
+  const modes = endModesOf(game);
+  const mode = modes.find((m) => m.id === setupDraft.endMode) ?? modes[0];
+
+  const bascule = clear($('#end-mode'));
+  bascule.hidden = modes.length < 2;
+  for (const m of modes) {
+    bascule.append(el('button', {
+      class: `chip${m.id === mode.id ? ' is-active' : ''}`,
+      type: 'button',
+      onclick: () => {
+        setupDraft.endMode = m.id;
+        // Chaque façon de finir a ses propres valeurs : 250 points n'a aucun
+        // sens comme nombre de manches.
+        setupDraft.target = m.defaut;
+        renderSetup();
+      },
+    }, m.label));
+  }
+
+  const parDonnes = mode.id === 'rounds';
+  $('#setup-end-label').textContent = mode.hint ?? (parDonnes
     ? 'La partie dure :'
-    : "La partie s'arrête dès qu'un joueur atteint :";
+    : "La partie s'arrête dès qu'un joueur atteint :");
 
   const choices = clear($('#target-choices'));
-  for (const value of game.targetChoices) {
+  for (const value of mode.choices) {
     choices.append(
       el('button', {
         class: `chip${setupDraft.target === value ? ' is-active' : ''}`,
@@ -380,7 +423,7 @@ function startMatch() {
   }
 
   store.update((s) => {
-    s.match = makeMatch(game, players, setupDraft.target, setupDraft.options);
+    s.match = makeMatch(game, players, setupDraft.target, setupDraft.options, setupDraft.endMode);
     if (!setupDraft.parEquipes) s.lastPlayers = players.map((p) => p.name);
   });
   backStack.length = 0;
@@ -452,7 +495,7 @@ function renderBanner(match, game) {
   const host = clear($('#match-banner'));
   if (!isOver(match, game)) return;
   const board = standings(match, game);
-  const raison = game.endMode === 'rounds'
+  const raison = endModeOf(match, game).id === 'rounds'
     ? `${roundsLabel(game, match.target)} ${roundWords(game).jouee}${match.target > 1 ? 's' : ''}.`
     : `Objectif ${match.target} atteint.`;
   host.append(
@@ -948,7 +991,9 @@ function renderRoundHistory(match, game) {
               store.update((s) => {
                 s.match.rounds = s.match.rounds.filter((r) => r.id !== round.id);
                 replay(s.match, game);
-                if (s.match.draft.editingRoundId === round.id) s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
+                if (s.match.draft.editingRoundId === round.id) {
+                  s.match.draft = makeDraft(game, s.match.players, s.match.rounds, s.match.draft.mode);
+                }
               });
               toast(`${label} supprimé${roundWords(game).la === 'la' ? 'e' : ''}.`);
             }
@@ -1029,7 +1074,7 @@ async function validateRound() {
     }
     // Au Mölkky, corriger un lancer change tous les suivants : on rejoue.
     replay(s.match, game);
-    s.match.draft = makeDraft(game, s.match.players, s.match.rounds);
+    s.match.draft = makeDraft(game, s.match.players, s.match.rounds, draft.mode);
   });
 
   // Une notification doit se lire d'un coup d'œil : les explications longues
@@ -1462,7 +1507,7 @@ function renderMatchDetail() {
   $('#detail-title').textContent = `${game.name} — ${board[0].player.name} gagne`;
   $('#detail-sub').textContent =
     `${formatDate(past.updatedAt)} · ${roundsLabel(game, past.rounds.length)} · `
-    + (game.endMode === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`);
+    + (endModeOf(past, game).id === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`);
 
   renderBoard($('#detail-board'), past, game, label);
 
