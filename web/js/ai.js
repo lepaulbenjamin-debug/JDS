@@ -2,7 +2,7 @@
 // soit au serveur (clé API côté serveur), soit directement à l'API Anthropic
 // avec la clé saisie par l'utilisateur (stockée sur l'appareil uniquement).
 
-import { buildPayload, parseResponse } from './vision-prompt.js';
+import { buildPayload, parseResponse, BETA_REPLI } from './vision-prompt.js';
 
 const MAX_EDGE = 1568; // au-dela, l'API redimensionne de toute façon
 
@@ -74,6 +74,7 @@ async function scanDirect(payload, apiKey) {
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
+      'anthropic-beta': BETA_REPLI,
     },
     body: JSON.stringify(buildPayload(payload)),
   });

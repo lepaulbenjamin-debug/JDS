@@ -6,7 +6,8 @@
   "description": "Serveur optionnel : sert la PWA et garde la cle API Anthropic cote serveur.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "check": "node check.mjs"
   },
   "engines": {
     "node": ">=20"

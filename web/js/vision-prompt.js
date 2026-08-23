@@ -6,6 +6,15 @@
 
 export const MODEL = 'claude-opus-5';
 
+/**
+ * Repli côté serveur en cas de refus.
+ * Les classificateurs de sécurité peuvent décliner une requête ; sans ce
+ * paramètre l'appel s'arrête là et l'utilisateur voit une erreur sèche. En
+ * mode « default », l'API rejoue elle-même la demande sur un autre modèle,
+ * choisi selon le motif du refus.
+ */
+export const BETA_REPLI = 'server-side-fallback-2026-07-01';
+
 /** Schéma de sortie structurée : la réponse est garantie conforme. */
 export const SCHEMA = {
   type: 'object',
@@ -102,6 +111,7 @@ export function buildPayload({ mode, game, players = [], imageBase64, mediaType 
   return {
     model: MODEL,
     max_tokens: 16000,
+    fallbacks: 'default',
     system: systemPrompt(game),
     output_config: {
       effort: 'medium',

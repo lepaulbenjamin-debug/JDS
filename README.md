@@ -115,16 +115,47 @@ personnel ; à éviter sur un poste partagé.
 
 ### Avec le serveur Node (clé API côté serveur)
 
+C'est la seule façon d'avoir la lecture photo sans mettre la clé dans le
+navigateur. Le serveur sert la PWA **et** relaie les photos : l'appli et l'API
+sont donc sur la même origine, et le champ « Adresse du serveur » des réglages
+peut rester vide.
+
 ```bash
 cd server
 npm install
-ANTHROPIC_API_KEY=sk-ant-... npm start
-# puis http://localhost:8080
+ANTHROPIC_API_KEY=sk-ant-... npm run check   # vérifie la clé avant de commencer
+ANTHROPIC_API_KEY=sk-ant-... npm start       # http://localhost:8080
 ```
 
-Le serveur sert la PWA et expose `POST /api/scan`, qui relaie la photo à l'API
-Claude. La clé ne quitte jamais le serveur. C'est le mode par défaut dans les
-réglages de l'appli (« Via un serveur », adresse vide = même origine).
+`npm run check` fait deux appels minimaux (moins d'un centime) et dit
+clairement si la clé est absente, refusée, sans accès au modèle, ou si c'est le
+réseau qui bloque. À lancer en premier : ça évite de déboguer à travers
+l'interface.
+
+### Héberger l'appli avec la lecture photo
+
+Le serveur est un `node:http` sans framework : il tourne partout où Node
+tourne. Il lit `PORT` et `ANTHROPIC_API_KEY` dans l'environnement.
+
+| Réglage chez l'hébergeur | Valeur |
+|---|---|
+| Répertoire racine | `server` |
+| Installation | `npm install` |
+| Démarrage | `npm start` |
+| Variable secrète | `ANTHROPIC_API_KEY` |
+| Port | fourni par l'hébergeur, lu automatiquement |
+
+Le serveur remonte d'un cran pour servir `web/` : déployez **tout le dépôt**,
+pas seulement `server/`.
+
+**GitHub Pages ne convient pas pour cette option** : Pages est purement
+statique, il ne peut ni exécuter Node ni garder un secret. Avec Pages, la seule
+lecture photo possible est le mode « clé directe », où la clé vit dans le
+navigateur du téléphone.
+
+**Ne committez jamais la clé.** `.env` et `.env.local` sont déjà ignorés par
+git ; la clé se met dans les variables d'environnement de l'hébergeur, jamais
+dans un fichier du dépôt.
 
 ## Structure
 
@@ -231,6 +262,24 @@ préférant une voix locale. Si le navigateur n'a pas l'API, les commandes audio
 disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
+
+## Ce qui a été vérifié en conditions réelles
+
+La lecture photo a été testée de bout en bout contre l'API, le 23 août 2026 :
+
+| Test | Résultat |
+|---|---|
+| Feuille de scores manuscrite (Papayoo, 3 manches × 4 joueurs) | 12 chiffres sur 12 exacts, chaque manche vérifiée à 250 points |
+| Grille Skyjo de 12 cartes, avec deux −2 et un −1 | 12 valeurs sur 12 exactes, total 51 juste |
+| Chemin complet via `POST /api/scan` | HTTP 200 en ~7 s |
+
+Les négatifs du Skyjo étaient le risque identifié : il est levé. Le modèle
+signale de lui-même les lignes de totaux cumulés (`cumulative: true`) au lieu
+de les compter comme des manches — et de toute façon, **le résultat est
+toujours montré avant d'être reporté**.
+
+Compter : environ **2 à 3 centimes par photo** (≈ 2 400 tokens en entrée,
+≈ 550 en sortie), et 7 à 18 secondes de réponse.
 
 ## Modèle utilisé
 

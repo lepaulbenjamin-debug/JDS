@@ -15,7 +15,7 @@ import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 
-import { buildPayload, parseResponse } from '../web/js/vision-prompt.js';
+import { buildPayload, parseResponse, BETA_REPLI } from '../web/js/vision-prompt.js';
 import { GAMES } from '../web/js/games/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
@@ -93,15 +93,16 @@ async function handleScan(req, res) {
   if (errors.length) return sendJson(res, 400, { error: `Requête invalide : ${errors.join(', ')}.` });
 
   try {
-    const message = await getClient().messages.create(
-      buildPayload({
+    const message = await getClient().beta.messages.create({
+      betas: [BETA_REPLI],
+      ...buildPayload({
         mode: input.mode,
         game: GAMES.find((g) => g.id === input.gameId),
         players: input.players.map(String).slice(0, 12),
         imageBase64: input.imageBase64,
         mediaType: input.mediaType,
       }),
-    );
+    });
     return sendJson(res, 200, parseResponse(message));
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
