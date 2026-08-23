@@ -144,6 +144,9 @@ export function makeMatch(game, players, target, options = {}, endMode = null) {
     // Variantes choisies avant de commencer (litige à la belote, bonus au
     // Skull King) : elles changent le calcul, pas la saisie.
     options,
+    // La table a décidé de jouer au-delà de ce qui était convenu : la partie
+    // ne s'arrête plus d'elle-même, elle s'arrête quand on l'archive.
+    prolonge: false,
     rounds: [],
     draft: makeDraft(game, players),
     finished: false,

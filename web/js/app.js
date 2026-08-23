@@ -491,6 +491,45 @@ function roundWords(game) {
   };
 }
 
+/** Range la partie en cours dans l'historique. Depuis le bandeau ou depuis le
+ *  bas de l'écran : c'est le même geste. */
+async function archiverPartie() {
+  const match = store.state.match;
+  if (!match) return;
+  if (match.rounds.length === 0) return toast('Aucune manche à archiver.', 'warn');
+  const game = getGame(match.gameId);
+  const winner = standings(match, game)[0];
+  if (!(await confirmDialog(`Archiver la partie ? ${winner.player.name} gagne avec ${winner.total} points.`, { okLabel: 'Archiver' }))) return;
+  store.update((s) => {
+    s.history.push({ ...s.match, finished: true, draft: null });
+    s.match = null;
+  });
+  backStack.length = 0;
+  show('home', { push: false });
+}
+
+/**
+ * Le seuil de fin est-il une convention de table, qu'on peut repousser ?
+ *
+ * Il l'est dès que le jeu propose plusieurs valeurs : 250 points au Papayoo,
+ * 1000 à la belote, on les choisit avant de commencer et rien n'empêche de
+ * jouer au-delà. Quand le jeu n'en propose qu'une, c'est une règle et non un
+ * accord : les 50 points du Mölkky se font pile, les dépasser renvoie à 25.
+ */
+function prolongeable(match, game) {
+  if (game.finished?.(match)) return false;
+  return (endModeOf(match, game).choices ?? []).length > 1;
+}
+
+/**
+ * Une correction ou une suppression peut ramener la partie en deçà de ce qui
+ * était convenu. Elle redevient alors une partie ordinaire : le jour où la
+ * barre sera franchie à nouveau, la question sera reposée.
+ */
+function oublierProlongation(match, game) {
+  if (match.prolonge && !isOver(match, game)) match.prolonge = false;
+}
+
 function renderBanner(match, game) {
   const host = clear($('#match-banner'));
   if (!isOver(match, game)) return;
@@ -498,11 +537,45 @@ function renderBanner(match, game) {
   const raison = endModeOf(match, game).id === 'rounds'
     ? `${roundsLabel(game, match.target)} ${roundWords(game).jouee}${match.target > 1 ? 's' : ''}.`
     : `Objectif ${match.target} atteint.`;
+
+  // La partie continue au-delà de ce qui était convenu : on ne proclame pas un
+  // vainqueur à chaque manche, on rappelle qui mène et pourquoi ça dure.
+  if (match.prolonge) {
+    host.append(
+      el('div', { class: 'banner banner-soft' }, [
+        el('strong', { text: `${board[0].player.name} mène avec ${board[0].total} points` }),
+        el('span', {
+          class: 'small',
+          text: `${raison} Vous avez choisi de continuer : la partie s'arrêtera quand vous l'archiverez.`,
+        }),
+      ]),
+    );
+    return;
+  }
+
+  const peutContinuer = prolongeable(match, game);
   host.append(
     el('div', { class: 'banner' }, [
       el('strong', { text: `🏆 ${board[0].player.name} gagne avec ${board[0].total} points` }),
-      el('span', { class: 'small', text: `${raison} Vous pouvez archiver la partie en bas de l'écran.` }),
-    ]),
+      el('span', {
+        class: 'small',
+        text: peutContinuer
+          ? `${raison} À vous de voir si la partie s'arrête là.`
+          : `${raison} Vous pouvez archiver la partie en bas de l'écran.`,
+      }),
+      peutContinuer && el('div', { class: 'banner-actions' }, [
+        el('button', {
+          class: 'btn btn-primary',
+          type: 'button',
+          onclick: archiverPartie,
+        }, 'Terminer la partie'),
+        el('button', {
+          class: 'btn btn-ghost',
+          type: 'button',
+          onclick: () => store.update((s) => { s.match.prolonge = true; }),
+        }, 'Continuer à jouer'),
+      ]),
+    ].filter(Boolean)),
   );
 }
 
@@ -991,6 +1064,7 @@ function renderRoundHistory(match, game) {
               store.update((s) => {
                 s.match.rounds = s.match.rounds.filter((r) => r.id !== round.id);
                 replay(s.match, game);
+                oublierProlongation(s.match, game);
                 if (s.match.draft.editingRoundId === round.id) {
                   s.match.draft = makeDraft(game, s.match.players, s.match.rounds, s.match.draft.mode);
                 }
@@ -1074,6 +1148,7 @@ async function validateRound() {
     }
     // Au Mölkky, corriger un lancer change tous les suivants : on rejoue.
     replay(s.match, game);
+    oublierProlongation(s.match, game);
     s.match.draft = makeDraft(game, s.match.players, s.match.rounds, draft.mode);
   });
 
@@ -1507,7 +1582,10 @@ function renderMatchDetail() {
   $('#detail-title').textContent = `${game.name} — ${board[0].player.name} gagne`;
   $('#detail-sub').textContent =
     `${formatDate(past.updatedAt)} · ${roundsLabel(game, past.rounds.length)} · `
-    + (endModeOf(past, game).id === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`);
+    + (endModeOf(past, game).id === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`)
+    // La table a joué au-delà : le sous-titre le dit, sinon le nombre de
+    // manches semblerait contredire l'objectif annoncé.
+    + (past.prolonge ? ', prolongée' : '');
 
   renderBoard($('#detail-board'), past, game, label);
 
@@ -1572,19 +1650,7 @@ function wire() {
     store.update((s) => { s.match.draft = makeDraft(getGame(match.gameId), s.match.players, s.match.rounds); });
   });
 
-  $('#btn-finish').addEventListener('click', async () => {
-    const match = store.state.match;
-    if (match.rounds.length === 0) return toast('Aucune manche à archiver.', 'warn');
-    const game = getGame(match.gameId);
-    const winner = standings(match, game)[0];
-    if (!(await confirmDialog(`Archiver la partie ? ${winner.player.name} gagne avec ${winner.total} points.`, { okLabel: 'Archiver' }))) return;
-    store.update((s) => {
-      s.history.push({ ...s.match, finished: true, draft: null });
-      s.match = null;
-    });
-    backStack.length = 0;
-    show('home', { push: false });
-  });
+  $('#btn-finish').addEventListener('click', archiverPartie);
 
   $('#btn-abandon').addEventListener('click', async () => {
     if (!(await confirmDialog('Abandonner la partie en cours ? Les scores seront perdus.', { okLabel: 'Abandonner', danger: true }))) return;

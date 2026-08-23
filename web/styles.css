@@ -407,6 +407,17 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   background: color-mix(in srgb, var(--gold) 14%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--border));
 }
+/* Partie prolongée : le rappel reste, mais il ne crie plus victoire. */
+.banner-soft {
+  background: color-mix(in srgb, var(--gold) 5%, var(--surface));
+  border-color: var(--border);
+}
+.banner-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.banner-actions .btn { flex: 1; }
 
 /* --- Saisie de manche --------------------------------------------------- */
 
