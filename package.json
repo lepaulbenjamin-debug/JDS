@@ -1,0 +1,18 @@
+{
+  "name": "jds-marque-points",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Compteur de points pour jeux de société, avec lecture des scores en photo.",
+  "scripts": {
+    "start": "node server/index.js",
+    "check": "node server/check.mjs",
+    "bundle": "node scripts/build-single-file.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0"
+  }
+}

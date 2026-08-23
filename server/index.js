@@ -13,14 +13,10 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Anthropic from '@anthropic-ai/sdk';
-
-import { buildPayload, parseResponse, BETA_REPLI } from '../web/js/vision-prompt.js';
-import { GAMES } from '../web/js/games/index.js';
+import { runScan, MAX_BODY } from '../lib/scan.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const PORT = Number(process.env.PORT ?? 8080);
-const MAX_BODY = 12 * 1024 * 1024; // ~12 Mo : une photo compressée tient large
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -33,14 +29,6 @@ const MIME = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
 };
-
-// Client créé à la première requête : sans clé, le serveur doit quand même
-// continuer à servir la PWA (le scoring, lui, n'a besoin de rien).
-let client;
-function getClient() {
-  client ??= new Anthropic(); // lit ANTHROPIC_API_KEY (ou un profil `ant auth login`)
-  return client;
-}
 
 function sendJson(res, status, body) {
   const payload = JSON.stringify(body);
@@ -69,18 +57,6 @@ function readBody(req) {
   });
 }
 
-function validateScanInput(input) {
-  const errors = [];
-  if (typeof input.imageBase64 !== 'string' || input.imageBase64.length < 32) errors.push('image manquante');
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(input.mediaType)) errors.push('format d\'image non supporté');
-  if (!['scoresheet', 'cards'].includes(input.mode)) errors.push('mode inconnu');
-  if (!Array.isArray(input.players)) errors.push('liste de joueurs invalide');
-  // Le jeu est résolu ici, à partir d'un identifiant connu : le client ne peut
-  // pas injecter de texte dans le prompt système.
-  if (!GAMES.some((g) => g.id === input.gameId)) errors.push('jeu inconnu');
-  return errors;
-}
-
 async function handleScan(req, res) {
   let input;
   try {
@@ -88,37 +64,8 @@ async function handleScan(req, res) {
   } catch (error) {
     return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
   }
-
-  const errors = validateScanInput(input);
-  if (errors.length) return sendJson(res, 400, { error: `Requête invalide : ${errors.join(', ')}.` });
-
-  try {
-    const message = await getClient().beta.messages.create({
-      betas: [BETA_REPLI],
-      ...buildPayload({
-        mode: input.mode,
-        game: GAMES.find((g) => g.id === input.gameId),
-        players: input.players.map(String).slice(0, 12),
-        imageBase64: input.imageBase64,
-        mediaType: input.mediaType,
-      }),
-    });
-    return sendJson(res, 200, parseResponse(message));
-  } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      console.error('Clé API refusée par Anthropic.');
-      return sendJson(res, 502, { error: 'Clé API du serveur invalide.' });
-    }
-    if (error instanceof Anthropic.RateLimitError) {
-      return sendJson(res, 429, { error: 'Trop de requêtes, réessayez dans un instant.' });
-    }
-    if (error instanceof Anthropic.APIError) {
-      console.error(`Erreur API ${error.status}:`, error.message);
-      return sendJson(res, 502, { error: `L'API a répondu ${error.status}.` });
-    }
-    console.error(error);
-    return sendJson(res, 500, { error: "Échec de l'analyse de l'image." });
-  }
+  const { status, body } = await runScan(input);
+  return sendJson(res, status, body);
 }
 
 async function serveStatic(req, res) {

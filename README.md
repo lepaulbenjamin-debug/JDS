@@ -121,7 +121,6 @@ sont donc sur la même origine, et le champ « Adresse du serveur » des réglag
 peut rester vide.
 
 ```bash
-cd server
 npm install
 ANTHROPIC_API_KEY=sk-ant-... npm run check   # vérifie la clé avant de commencer
 ANTHROPIC_API_KEY=sk-ant-... npm start       # http://localhost:8080
@@ -132,30 +131,50 @@ clairement si la clé est absente, refusée, sans accès au modèle, ou si c'est
 réseau qui bloque. À lancer en premier : ça évite de déboguer à travers
 l'interface.
 
-### Héberger l'appli avec la lecture photo
+### Déployer sur Vercel
 
-Le serveur est un `node:http` sans framework : il tourne partout où Node
-tourne. Il lit `PORT` et `ANTHROPIC_API_KEY` dans l'environnement.
+Le dépôt est configuré pour Vercel : `web/` est servi en statique par le CDN,
+et seul `/api/scan` réveille une fonction.
 
-| Réglage chez l'hébergeur | Valeur |
-|---|---|
-| Répertoire racine | `server` |
-| Installation | `npm install` |
-| Démarrage | `npm start` |
-| Variable secrète | `ANTHROPIC_API_KEY` |
-| Port | fourni par l'hébergeur, lu automatiquement |
+```
+vercel.json          outputDirectory: web, et maxDuration: 60 sur la fonction
+api/scan.mjs         la fonction : POST /api/scan
+lib/scan.js          la logique, partagée avec le serveur Node autonome
+```
 
-Le serveur remonte d'un cran pour servir `web/` : déployez **tout le dépôt**,
-pas seulement `server/`.
+**Les trois choses à faire :**
 
-**GitHub Pages ne convient pas pour cette option** : Pages est purement
-statique, il ne peut ni exécuter Node ni garder un secret. Avec Pages, la seule
-lecture photo possible est le mode « clé directe », où la clé vit dans le
-navigateur du téléphone.
+1. Importer le dépôt sur Vercel. Aucun framework à choisir, aucune commande de
+   build : `vercel.json` dit déjà tout.
+2. Ajouter la variable d'environnement **`ANTHROPIC_API_KEY`** dans les
+   réglages du projet (Settings → Environment Variables), pour les trois
+   environnements si vous voulez tester les préversions.
+3. Déployer. Le champ « Adresse du serveur » des réglages de l'appli reste
+   **vide** : l'appli et l'API sont sur la même origine.
 
-**Ne committez jamais la clé.** `.env` et `.env.local` sont déjà ignorés par
-git ; la clé se met dans les variables d'environnement de l'hébergeur, jamais
-dans un fichier du dépôt.
+**Vérifier après le déploiement**, sans ouvrir l'interface :
+
+```bash
+curl -s https://votre-projet.vercel.app/api/scan          # doit répondre 405
+curl -s -X POST https://votre-projet.vercel.app/api/scan \
+  -H 'content-type: application/json' -d '{}'             # doit répondre 400
+```
+
+Un 405 puis un 400 signifient que la fonction est bien déployée et que la
+validation tourne. Un 404 signifie que Vercel n'a pas vu le dossier `api/`.
+
+**Les limites qui comptent** (vérifiées dans la documentation Vercel) :
+
+| | Valeur | Notre besoin |
+|---|---|---|
+| Durée d'une fonction | 300 s par défaut, même en Hobby | 4 à 18 s — large |
+| Corps de requête | 4,5 Mo | ~400 Ko par photo — large |
+
+L'appli refuse d'elle-même une image au-delà de 4 Mo, avec un message
+explicite, plutôt que de laisser Vercel renvoyer un 413 opaque.
+
+**Ne committez jamais la clé.** `.env` et `.env.local` sont ignorés par git ;
+la clé vit dans les variables d'environnement de Vercel, jamais dans le dépôt.
 
 ## Structure
 
@@ -184,7 +203,11 @@ web/                     PWA statique, sans build ni dépendance
     games/aventuriers-du-rail.js  idem + trois éditions, chacune son décompte
     games/common.js      le peu que plusieurs jeux partagent
     games/index.js       registre des jeux
-server/                  serveur optionnel (Node ≥ 20, SDK Anthropic)
+lib/scan.js              lecture d'une photo : validation, appel, erreurs
+api/scan.mjs             la même chose, en fonction Vercel
+vercel.json              configuration du déploiement
+server/index.js          serveur Node autonome (sert la PWA + /api/scan)
+server/check.mjs         vérifie la clé API avant de lancer quoi que ce soit
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
 scripts/build-single-file.mjs  assemble tout en un seul fichier HTML
 ```

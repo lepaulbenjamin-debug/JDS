@@ -44,6 +44,12 @@ export async function scan({ image, mode, game, players, settings }) {
     mediaType: image.mediaType,
   };
 
+  // L'hébergement plafonne le corps de requête (4,5 Mo chez Vercel) et
+  // renvoie sinon une erreur illisible : on s'arrête avant, pour expliquer.
+  if (payload.imageBase64.length > 4 * 1024 * 1024) {
+    throw new Error('Photo trop lourde même après réduction. Reprenez-la de plus près, ou avec moins de fond.');
+  }
+
   if (settings.mode === 'direct') {
     return scanDirect({ ...payload, game }, settings.apiKey);
   }
