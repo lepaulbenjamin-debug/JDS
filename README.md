@@ -163,6 +163,10 @@ curl -s -X POST https://votre-projet.vercel.app/api/scan \
 Un 405 puis un 400 signifient que la fonction est bien déployée et que la
 validation tourne. Un 404 signifie que Vercel n'a pas vu le dossier `api/`.
 
+**Un 503 sur une vraie photo** veut dire que la fonction tourne mais n'a pas de
+clé : une variable d'environnement ajoutée après un déploiement n'est prise en
+compte qu'au déploiement suivant. Redéployez.
+
 **Les limites qui comptent** (vérifiées dans la documentation Vercel) :
 
 | | Valeur | Notre besoin |
