@@ -11,9 +11,11 @@
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
+import { networkInterfaces } from 'node:os';
 import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runScan, MAX_BODY } from '../lib/scan.js';
+import { handleRoomRequest } from '../lib/rooms.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const PORT = Number(process.env.PORT ?? 8080);
@@ -68,11 +70,32 @@ async function handleScan(req, res) {
   return sendJson(res, status, body);
 }
 
+async function handleRoom(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  let body;
+  if (req.method === 'POST') {
+    try {
+      const raw = await readBody(req);
+      body = raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
+    }
+  }
+  const { status, body: payload } = await handleRoomRequest({
+    method: req.method,
+    query: Object.fromEntries(url.searchParams),
+    body,
+  });
+  // Les pupitres sondent en continu : rien de tout ceci n'est cachable.
+  res.setHeader('cache-control', 'no-store');
+  return sendJson(res, status, payload);
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const requested = decodeURIComponent(url.pathname);
   const relative = normalize(requested === '/' ? '/index.html' : requested).replace(/^(\.\.[/\\])+/, '');
-  const filePath = join(ROOT, relative);
+  let filePath = join(ROOT, relative);
 
   if (!filePath.startsWith(ROOT)) {
     res.writeHead(403).end('Interdit');
@@ -80,12 +103,24 @@ async function serveStatic(req, res) {
   }
 
   try {
-    const info = await stat(filePath);
-    if (info.isDirectory()) throw new Error('directory');
+    let info = await stat(filePath);
+    // `/quiz` doit ouvrir `/quiz/index.html` : l'appli n'est plus seule à la
+    // racine depuis que la Quiz Room vit dans son propre dossier.
+    if (info.isDirectory()) {
+      // La barre finale n'est pas cosmétique : sans elle, le navigateur résout
+      // `js/app.js` en `/js/app.js` et charge le compteur de points à la place
+      // de la Quiz Room.
+      if (!requested.endsWith('/')) {
+        res.writeHead(301, { location: `${requested}/${url.search}` }).end();
+        return;
+      }
+      filePath = join(filePath, 'index.html');
+      info = await stat(filePath);
+    }
     const data = await readFile(filePath);
     res.writeHead(200, {
       'content-type': MIME[extname(filePath)] ?? 'application/octet-stream',
-      'cache-control': relative === '/index.html' ? 'no-cache' : 'public, max-age=3600',
+      'cache-control': filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600',
     });
     res.end(data);
   } catch {
@@ -93,10 +128,21 @@ async function serveStatic(req, res) {
   }
 }
 
+/** Les adresses par lesquelles les téléphones du salon peuvent joindre ce poste. */
+function lanAddresses() {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((iface) => iface && iface.family === 'IPv4' && !iface.internal)
+    .map((iface) => iface.address);
+}
+
 createServer((req, res) => {
   if (req.url?.startsWith('/api/scan')) {
     if (req.method !== 'POST') return sendJson(res, 405, { error: 'Méthode non autorisée.' });
     return handleScan(req, res);
+  }
+  if (req.url?.startsWith('/api/room')) {
+    return handleRoom(req, res);
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405).end('Méthode non autorisée');
@@ -105,6 +151,11 @@ createServer((req, res) => {
   return serveStatic(req, res);
 }).listen(PORT, () => {
   console.log(`Appli disponible sur http://localhost:${PORT}`);
+  // La Quiz Room ne sert à rien si les invités ne savent pas où se connecter :
+  // le serveur écoute sur toutes les interfaces, autant afficher lesquelles.
+  for (const address of lanAddresses()) {
+    console.log(`  Quiz Room, depuis les téléphones : http://${address}:${PORT}/quiz`);
+  }
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('ANTHROPIC_API_KEY non définie : /api/scan échouera tant qu\'aucune clé n\'est configurée.');
   }

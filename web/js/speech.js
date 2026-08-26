@@ -24,6 +24,7 @@ let queue = [];
 let index = 0;
 let handlers = {};
 let keepAlive = null;
+let speakRate = 0.95;
 // Jeton de génération : cancel() peut déclencher onend/onerror en différé, et
 // une lecture annulée ne doit surtout pas relancer la suivante.
 let runId = 0;
@@ -57,7 +58,7 @@ function speakCurrent(id) {
   const voice = frenchVoice();
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang ?? 'fr-FR';
-  utterance.rate = 0.95;   // un poil plus lent : on explique une règle
+  utterance.rate = speakRate;   // par défaut un poil plus lent : on explique une règle
   utterance.pitch = 1;
 
   const fail = (reason) => {
@@ -104,8 +105,12 @@ export const speech = {
 
   /**
    * Lit une suite de textes, un par un.
+   *
+   * `rate` sert à distinguer les usages : on explique une règle posément, mais
+   * un animateur de quiz qui traîne casse le rythme de la manche.
+   *
    * @param {string[]} texts
-   * @param {{onStep?:(i:number)=>void, onEnd?:()=>void, onError?:(e:string)=>void}} callbacks
+   * @param {{onStep?:(i:number)=>void, onEnd?:()=>void, onError?:(e:string)=>void, rate?:number}} callbacks
    */
   speak(texts, callbacks = {}) {
     if (!this.supported) return false;
@@ -113,6 +118,7 @@ export const speech = {
     runId += 1;
     queue = [].concat(texts).filter(Boolean);
     index = 0;
+    speakRate = callbacks.rate ?? 0.95;
     handlers = callbacks;
     startKeepAlive();
     speakCurrent(runId);

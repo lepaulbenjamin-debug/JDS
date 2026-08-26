@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12141c">
+<meta name="description" content="Quiz Room à la maison : chaque téléphone devient un pupitre, l'animateur c'est l'appli. Questions à choix multiples, points à la rapidité et jokers pour renverser la table.">
+<title>Quiz Room</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button id="btn-back" class="icon-btn" type="button" hidden aria-label="Retour">←</button>
+  <h1 id="topbar-title">Quiz Room</h1>
+  <button id="btn-son" class="icon-btn" type="button" aria-label="Couper la voix de l'animateur">🔊</button>
+</header>
+
+<main id="app">
+
+  <!-- Accueil : créer ou rejoindre -->
+  <section class="screen" data-screen="accueil">
+    <div class="hero">
+      <p class="hero-kicker">Quiz Room</p>
+      <h2 class="hero-title">Chaque téléphone devient un pupitre.</h2>
+      <p class="hero-sub">Une question, quatre réponses, tout le monde répond en même temps. Plus vite tu réponds, plus tu marques — et les jokers font le reste. L’animateur, c’est l’appli : personne ne reste sur la touche.</p>
+    </div>
+
+    <div class="field">
+      <label for="mon-prenom">Ton prénom</label>
+      <input id="mon-prenom" type="text" autocomplete="given-name" maxlength="18" placeholder="Prénom" enterkeyhint="done">
+    </div>
+
+    <button id="btn-creer" class="btn btn-primary btn-block btn-lg" type="button">Créer une partie</button>
+
+    <h3 class="section-title">Rejoindre une partie</h3>
+    <div class="join-row">
+      <input id="code-salon" class="code-input" type="text" inputmode="text" autocapitalize="characters"
+             autocomplete="off" maxlength="4" placeholder="CODE" aria-label="Code du salon">
+      <button id="btn-rejoindre" class="btn btn-ghost" type="button">Rejoindre</button>
+    </div>
+    <p class="muted small">Le code s’affiche sur le téléphone de celui qui a créé la partie.</p>
+
+    <details class="reglage-avance">
+      <summary>Le relais n’est pas sur cet appareil</summary>
+      <div class="field">
+        <label for="relay-url">Adresse du relais</label>
+        <input id="relay-url" type="url" inputmode="url" placeholder="Vide = même adresse que cette page">
+        <p class="muted small">Utile seulement si l’appli est installée depuis une adresse et le serveur ailleurs. Voir <code>server/</code> dans le dépôt.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Réglages de la partie, côté créateur -->
+  <section class="screen" data-screen="reglages" hidden>
+    <h2 class="screen-title">La partie</h2>
+
+    <h3 class="section-title">Thèmes</h3>
+    <p class="muted small">Aucun de coché : on pioche dans tout.</p>
+    <div id="choix-themes" class="chip-row"></div>
+
+    <h3 class="section-title">Nombre de questions</h3>
+    <div id="choix-nombre" class="chip-row"></div>
+    <p id="note-nombre" class="muted small"></p>
+
+    <h3 class="section-title">Temps pour répondre</h3>
+    <div id="choix-duree" class="chip-row"></div>
+
+    <h3 class="section-title">L’animateur</h3>
+    <div id="choix-persona" class="stack"></div>
+
+    <div class="sticky-actions">
+      <button id="btn-ouvrir-salon" class="btn btn-primary btn-block btn-lg" type="button">Ouvrir le salon</button>
+    </div>
+  </section>
+
+  <!-- Lobby : le code et les arrivants -->
+  <section class="screen" data-screen="lobby" hidden>
+    <p class="muted small centre">Code du salon</p>
+    <p id="code-affiche" class="code-affiche"></p>
+    <p class="muted small centre">Les autres ouvrent cette page et tapent ce code.</p>
+
+    <div id="qr-lien" class="lien-partage"></div>
+
+    <h3 class="section-title">Autour de la table</h3>
+    <div id="liste-joueurs" class="stack"></div>
+
+    <p id="lobby-note" class="muted small"></p>
+
+    <div class="sticky-actions">
+      <button id="btn-lancer" class="btn btn-primary btn-block btn-lg" type="button">Lancer la partie</button>
+    </div>
+  </section>
+
+  <!-- La manche en cours -->
+  <section class="screen screen-jeu" data-screen="jeu" hidden>
+    <div class="jeu-entete">
+      <span id="jeu-manche" class="pastille"></span>
+      <span id="jeu-theme" class="pastille pastille-douce"></span>
+    </div>
+
+    <div id="jeu-chrono" class="chrono"><div id="chrono-jauge" class="chrono-jauge"></div></div>
+
+    <p id="jeu-annonce" class="annonce"></p>
+    <h2 id="jeu-question" class="question"></h2>
+
+    <div id="jeu-reponses" class="reponses"></div>
+
+    <div id="jeu-etat" class="jeu-etat"></div>
+
+    <h3 class="section-title">Jokers</h3>
+    <div id="jeu-jokers" class="jokers"></div>
+    <p id="joker-note" class="muted small"></p>
+  </section>
+
+  <!-- Fin de partie -->
+  <section class="screen" data-screen="fin" hidden>
+    <h2 class="screen-title centre">Podium</h2>
+    <p id="fin-annonce" class="annonce centre"></p>
+    <div id="fin-podium" class="stack"></div>
+    <div class="sticky-actions">
+      <button id="btn-rejouer" class="btn btn-primary btn-block" type="button">Une autre !</button>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="confirm-dialog" class="dialog">
+  <form method="dialog">
+    <p id="confirm-message"></p>
+    <div class="dialog-actions">
+      <button value="cancel" class="btn btn-ghost" type="submit">Annuler</button>
+      <button id="confirm-ok" value="ok" class="btn btn-primary" type="submit">Confirmer</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

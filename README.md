@@ -3,6 +3,10 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
+Le dépôt héberge aussi **Quiz Room** (`/quiz/`), un quiz de soirée où chaque
+téléphone devient un pupitre et où l'animateur, c'est l'appli — [voir plus
+bas](#quiz-room--le-quiz-de-soirée).
+
 Dix jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
 **Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders**, **Mölkky**
 et **Les Aventuriers du Rail** (États-Unis, Europe, Autour du Monde). Un jeu =
@@ -94,6 +98,80 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
 - **Local.** Parties, carnet et réglages restent dans le navigateur
   (`localStorage`). Rien n'est envoyé nulle part, à part les photos que vous
   soumettez à l'IA.
+
+## Quiz Room — le quiz de soirée
+
+Deuxième appli du dépôt, sous `web/quiz/`, servie à **`/quiz/`**. Elle ne compte
+pas les points d'un jeu de plateau : elle *est* le jeu.
+
+Le principe est celui des salles de quiz : une question et quatre réponses, tout
+le monde répond en même temps, et **plus on répond vite, plus on marque**. La
+différence, c'est qu'il n'y a **pas d'animateur humain**. Personne ne pilote
+l'écran, personne n'annonce les points, personne ne reste sur la touche : la
+partie se déroule toute seule et tout le monde joue.
+
+- **Chaque téléphone est un pupitre.** Un joueur crée le salon, les autres
+  tapent un code à quatre lettres (ou suivent le lien partagé). Aucune install :
+  c'est une page web.
+- **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches,
+  révèle les réponses, commente qui a été le plus rapide et clôt sur le podium —
+  à voix haute, via la synthèse vocale du navigateur, avec trois personnalités
+  au choix : classique, chambreur, pince-sans-rire.
+- **Des jokers pour renverser la table.** Un usage chacun par partie, choisi
+  *avant* de répondre : **quitte ou double**, **vol** (prendre la moitié de ce
+  que le leader gagne), **sabotage** (le leader ne marque rien), **sang-froid**
+  (marquer le maximum sans courir après le chrono). C'est ce qui fait qu'un jeu
+  de soirée n'est pas gagné d'avance par le plus cultivé.
+- **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
+  personne n'est éliminé avant la fin.
+
+```bash
+npm start                     # http://localhost:8080/quiz/
+```
+
+Le serveur affiche au démarrage l'adresse à donner aux téléphones du salon
+(`http://192.168.x.x:8080/quiz/`) : tout le monde est sur le même Wi-Fi, rien à
+installer.
+
+**Comment ça tient debout.** L'appareil qui crée le salon fait tourner le moteur
+de jeu — « la régie ». Le serveur, lui, est volontairement bête : il garde le
+dernier état publié, encaisse les réponses, et donne l'heure. Trois
+conséquences :
+
+- La bonne réponse n'est publiée qu'à la révélation. Pendant que le chrono
+  tourne, elle n'existe sur aucun autre appareil que celui de la régie.
+- Les points de rapidité sont mesurés **sur le pupitre**, pas à l'arrivée au
+  serveur : la latence réseau n'entre jamais dans le score. Les pupitres se
+  calent sur l'horloge du relais pour partir tous au même instant.
+- Faire évoluer les règles ne demande aucun redéploiement du serveur.
+
+En contrepartie : **si l'appareil de la régie recharge la page, la partie
+s'arrête** pour tout le monde (une confirmation prévient avant de quitter). Les
+autres pupitres, eux, peuvent se verrouiller, perdre le Wi-Fi ou revenir : ils
+retrouvent leur place et leur score.
+
+**En hébergement serverless**, le relais a besoin d'un stockage partagé, sinon
+deux requêtes successives tombent sur deux instances différentes et le salon
+paraît introuvable une fois sur deux. Renseignez `UPSTASH_REDIS_REST_URL` et
+`UPSTASH_REDIS_REST_TOKEN` ; sans elles, le relais retombe sur un stockage en
+mémoire, qui ne convient qu'au serveur Node autonome.
+
+```bash
+npm run check:quiz            # barème, jokers, déroulé d'une partie, relais
+```
+
+**Ajouter des questions** : `web/quiz/js/questions.js`, la bonne réponse en
+premier (le jeu mélange au tirage), avec l'explication lue à la révélation.
+Pour s'aider d'un modèle :
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... node scripts/generate-questions.mjs musique 10
+```
+
+Le script écrit un **brouillon** dans `scripts/questions-brouillon.json`, jamais
+directement dans le jeu, et marque « a-verifier » ce dont il n'est pas sûr. Un
+modèle se trompe sur des faits pointus, et une mauvaise réponse annoncée par
+l'animateur en pleine soirée ne se rattrape pas : on relit avant de recopier.
 
 ## Lancer l'appli
 
@@ -207,13 +285,28 @@ web/                     PWA statique, sans build ni dépendance
     games/aventuriers-du-rail.js  idem + trois éditions, chacune son décompte
     games/common.js      le peu que plusieurs jeux partagent
     games/index.js       registre des jeux
+  quiz/                  la Quiz Room : PWA séparée, servie à /quiz/
+    index.html           ses écrans (accueil, réglages, lobby, manche, podium)
+    styles.css           mêmes jetons de couleur, cibles plus grandes
+    manifest.webmanifest
+    sw.js                son propre service worker
+    js/
+      app.js             écrans, boucle réseau, actions du joueur
+      engine.js          LA RÈGLE DU JEU : barème, jokers, déroulé d'une partie
+      net.js             appels au relais + calage d'horloge entre pupitres
+      emcee.js           l'animateur : répliques, voix, jingles synthétisés
+      questions.js       la banque de questions et le tirage
 lib/scan.js              lecture d'une photo : validation, appel, erreurs
+lib/rooms.js             relais de salons : état publié, réponses, horloge
 api/scan.mjs             la même chose, en fonction Vercel
+api/room.mjs             le relais, en fonction Vercel
 vercel.json              configuration du déploiement
-server/index.js          serveur Node autonome (sert la PWA + /api/scan)
+server/index.js          serveur Node autonome (sert les deux PWA + les API)
 server/check.mjs         vérifie la clé API avant de lancer quoi que ce soit
+scripts/check-quiz.mjs   tests des règles du quiz et du relais (npm run check:quiz)
+scripts/generate-questions.mjs  brouillon de questions à relire, via l'API Claude
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
-scripts/build-single-file.mjs  assemble tout en un seul fichier HTML
+scripts/build-single-file.mjs  assemble le compteur de points en un fichier HTML
 ```
 
 ## Tester sans rien installer

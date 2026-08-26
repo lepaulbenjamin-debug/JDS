@@ -1,0 +1,396 @@
+/* Quiz Room.
+   Mêmes jetons de couleur que le compteur de points : les deux applis vivent
+   sous le même toit et doivent se ressembler. Ce qui change ici, c'est la
+   taille des cibles — on joue une main occupée, souvent debout, parfois avec un
+   verre dans l'autre. */
+
+:root {
+  --bg: #0f1116;
+  --surface: #171a22;
+  --surface-2: #1e222c;
+  --border: #2a2f3c;
+  --text: #e9ebf2;
+  --muted: #99a1b3;
+  --accent: #6366f1;
+  --accent-soft: #6366f133;
+  --gold: #f5c518;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --radius: 14px;
+  --pad: 16px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+/* --- Barre du haut ------------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--pad);
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: color-mix(in srgb, var(--bg) 97%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { margin: 0; font-size: 17px; font-weight: 600; text-align: center; }
+
+.icon-btn {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 12px;
+  background: transparent; color: var(--muted);
+  font-size: 20px; cursor: pointer;
+}
+.icon-btn:active { background: var(--surface-2); }
+
+/* --- Structure ----------------------------------------------------------- */
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--pad);
+  padding-bottom: calc(120px + var(--safe-b));
+}
+
+.screen-title { margin: 4px 0 8px; font-size: 22px; }
+.section-title {
+  margin: 26px 0 10px;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.stack { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.centre { text-align: center; }
+
+/* --- Boutons et champs --------------------------------------------------- */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 12px 16px;
+  font: inherit; font-weight: 600;
+  cursor: pointer;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn-primary { background: var(--accent); border-color: transparent; color: #fff; }
+.btn-ghost { background: transparent; }
+.btn-block { display: block; width: 100%; }
+.btn-lg { padding: 16px; font-size: 17px; }
+
+.field { display: grid; gap: 6px; margin: 14px 0; }
+.field label { font-size: 13px; color: var(--muted); }
+.field input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  margin-top: 22px;
+  padding: 12px 0 calc(12px + var(--safe-b));
+  background: linear-gradient(to top, var(--bg) 68%, transparent);
+}
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 9px 14px;
+  font: inherit; font-size: 14px;
+  cursor: pointer;
+}
+.chip.est-actif { background: var(--accent-soft); border-color: var(--accent); }
+
+/* --- Accueil ------------------------------------------------------------- */
+
+.hero {
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #3a2a5e 0%, #1f1d33 55%, var(--surface) 100%);
+  border: 1px solid var(--border);
+}
+.hero-kicker {
+  margin: 0 0 6px;
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold);
+}
+.hero-title { margin: 0 0 6px; font-size: 24px; line-height: 1.25; }
+.hero-sub { margin: 0; color: var(--muted); font-size: 14px; }
+
+.join-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.code-input {
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 700 22px/1.2 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.35em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.reglage-avance { margin-top: 26px; }
+.reglage-avance summary { color: var(--muted); font-size: 13px; cursor: pointer; }
+
+.carte-persona {
+  display: grid; gap: 2px;
+  text-align: left;
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.carte-persona.est-actif { border-color: var(--accent); background: var(--accent-soft); }
+.persona-nom { font-weight: 600; }
+.persona-desc { font-size: 13px; color: var(--muted); }
+
+/* --- Lobby --------------------------------------------------------------- */
+
+.code-affiche {
+  margin: 6px 0 4px;
+  text-align: center;
+  font: 800 clamp(48px, 18vw, 76px)/1 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+
+.lien-partage { display: grid; gap: 8px; justify-items: center; margin-top: 16px; }
+.lien-texte {
+  margin: 0;
+  font-size: 12px; color: var(--muted);
+  word-break: break-all; text-align: center;
+}
+
+.ligne-joueur {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.pastille-nom { font-weight: 600; }
+
+/* --- La manche ----------------------------------------------------------- */
+
+.jeu-entete { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pastille {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  font-size: 12px; font-weight: 600;
+}
+.pastille-douce { background: var(--surface-2); border-color: var(--border); color: var(--muted); }
+
+.chrono {
+  position: relative;
+  height: 8px;
+  margin: 26px 0 16px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.chrono-jauge {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ok), var(--accent));
+  transition: width 0.12s linear;
+}
+.chrono-jauge.est-urgent { background: var(--danger); }
+/* Le décompte d'avant-question, posé au-dessus de la jauge. */
+.chrono[data-compte]::after {
+  content: attr(data-compte);
+  position: absolute;
+  inset-inline: 0;
+  bottom: 18px;
+  text-align: center;
+  font: 800 clamp(56px, 20vw, 88px)/1 system-ui, sans-serif;
+  color: var(--gold);
+}
+
+.annonce { margin: 26px 0 6px; color: var(--muted); font-size: 14px; font-style: italic; }
+.question { margin: 0 0 18px; font-size: clamp(21px, 5.2vw, 28px); line-height: 1.28; }
+
+.reponses { display: grid; gap: 10px; }
+.reponse {
+  display: grid;
+  grid-template-columns: 34px 1fr 22px;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 11px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit; font-size: 17px;
+  cursor: pointer;
+}
+.reponse:disabled { cursor: default; }
+.reponse-lettre {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-weight: 800; font-size: 15px;
+  color: var(--muted);
+}
+.reponse-marque { text-align: right; font-weight: 800; }
+.reponse.est-choisi { border-color: var(--accent); background: var(--accent-soft); }
+.reponse.est-choisi .reponse-lettre { background: var(--accent); color: #fff; }
+.reponse.est-juste { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
+.reponse.est-juste .reponse-marque { color: var(--ok); }
+.reponse.est-faux { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.reponse.est-faux .reponse-marque { color: var(--danger); }
+/* Une réponse fausse non choisie s'efface : seul compte ce qu'on regarde. */
+.reponse:disabled:not(.est-juste):not(.est-faux):not(.est-choisi) { opacity: 0.5; }
+
+.jeu-etat { display: grid; gap: 8px; margin-top: 18px; }
+.atteinte { margin: 0; font-weight: 600; color: var(--ok); }
+.gain { margin: 0; font-size: 30px; font-weight: 800; }
+.gain-plus { color: var(--ok); }
+.gain-moins { color: var(--danger); }
+.gain-zero { color: var(--muted); }
+.note {
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+  background: var(--surface);
+  font-size: 14px;
+}
+.evenement { margin: 0; font-weight: 600; color: var(--gold); }
+
+/* --- Jokers -------------------------------------------------------------- */
+
+.jokers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.joker {
+  display: grid; gap: 3px; justify-items: center;
+  padding: 11px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.joker-emoji { font-size: 21px; }
+.joker-nom { font-size: 11px; line-height: 1.15; text-align: center; color: var(--muted); }
+.joker.est-arme { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, transparent); }
+.joker.est-arme .joker-nom { color: var(--text); }
+.joker.est-use { opacity: 0.3; }
+.joker:disabled { cursor: default; }
+
+/* --- Classement et podium ------------------------------------------------ */
+
+.classement { display: grid; gap: 6px; margin-top: 8px; }
+.rang {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.rang.est-moi { background: var(--accent-soft); }
+.rang-place { color: var(--muted); font-weight: 700; }
+.rang-score { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.podium-ligne {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 17px;
+}
+.podium-ligne.est-moi { border-color: var(--accent); }
+.podium-medaille { font-size: 26px; text-align: center; }
+.podium-nom { font-weight: 600; }
+.podium-score { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
+
+/* --- Toast et dialogue --------------------------------------------------- */
+
+#toast {
+  position: fixed;
+  left: 50%; bottom: calc(22px + var(--safe-b));
+  transform: translate(-50%, 20px);
+  max-width: min(92vw, 460px);
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+  z-index: 40;
+}
+#toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+#toast[data-kind="warn"] { border-color: var(--warn); }
+
+.dialog {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  max-width: min(92vw, 420px);
+  padding: 20px;
+}
+.dialog::backdrop { background: #0008; }
+.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.btn-danger { background: var(--danger); border-color: transparent; color: #1a1a1a; }
+
+/* --- Écrans larges ------------------------------------------------------- */
+
+/* Sur une tablette posée au milieu de la table, les réponses passent sur deux
+   colonnes : c'est le premier pas vers l'écran commun. */
+@media (min-width: 640px) {
+  .reponses { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chrono-jauge { transition: none; }
+  .btn:active { transform: none; }
+}
