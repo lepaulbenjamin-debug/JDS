@@ -154,7 +154,9 @@ createServer((req, res) => {
   // La Quiz Room ne sert à rien si les invités ne savent pas où se connecter :
   // le serveur écoute sur toutes les interfaces, autant afficher lesquelles.
   for (const address of lanAddresses()) {
-    console.log(`  Quiz Room, depuis les téléphones : http://${address}:${PORT}/quiz`);
+    // La barre finale compte : tapée telle quelle sur un téléphone, une adresse
+    // sans elle passe par une redirection qu'on peut s'épargner.
+    console.log(`  Quiz Room, depuis les téléphones : http://${address}:${PORT}/quiz/`);
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('ANTHROPIC_API_KEY non définie : /api/scan échouera tant qu\'aucune clé n\'est configurée.');
