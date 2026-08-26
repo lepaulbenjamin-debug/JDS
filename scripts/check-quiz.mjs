@@ -259,8 +259,8 @@ test('la manche finale vaut le double', () => {
  * public à chaque pas et peut renvoyer des réponses de pupitres, exactement
  * comme le relais les livrerait.
  */
-function jouerUnePartie({ questions, repondre, joueurs = JOUEURS, dureeMs = DUREE }) {
-  const regie = creerRegie({ questions, dureeMs, persona: 'classique' });
+function jouerUnePartie({ questions, repondre, joueurs = JOUEURS, dureeMs = DUREE, jokers }) {
+  const regie = creerRegie({ questions, dureeMs, persona: 'classique', jokers });
   let horloge = 1_000_000;
   regie.lancer(horloge, joueurs);
 
@@ -396,6 +396,69 @@ test('la fenêtre de jokers précède la question', () => {
   const vue = regie.etatPublic(JOUEURS);
   assert.equal(vue.startAt - horloge, DUREE_JOKERS_MS);
   assert.equal(vue.deadline - vue.startAt, DUREE);
+});
+
+/* --- Jokers choisis à la partie ------------------------------------------ */
+
+const repondAvec = (joker) => (vue, horloge) => (
+  vue.phase === 'manche' && horloge - vue.startAt === 100
+    ? [{ playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 12000, joker }]
+    : []
+);
+
+test('une partie peut n’ouvrir qu’une partie des jokers', () => {
+  const { vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    jokers: ['double', 'sangfroid'],
+  });
+  const vue = vues[0];
+  assert.deepEqual(vue.jokersActifs, ['double', 'sangfroid']);
+  assert.deepEqual(vue.jokers.a, ['double', 'sangfroid']);
+});
+
+test('l’ordre des jokers reste celui du jeu, pas celui du réglage', () => {
+  const { vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    jokers: ['cinquante', 'double'],
+  });
+  assert.deepEqual(vues[0].jokersActifs, ['double', 'cinquante']);
+});
+
+test('une partie sans aucun joker est un mode valide', () => {
+  const { vues, etatFinal } = jouerUnePartie({ questions: troisQuestions(), jokers: [] });
+  assert.deepEqual(vues[0].jokersActifs, []);
+  assert.deepEqual(vues[0].jokers.a, []);
+  assert.equal(etatFinal.phase, 'podium');
+});
+
+test('un joker écarté des réglages n’a aucun effet, même envoyé par un pupitre', () => {
+  // Sang-froid ferait marquer le maximum ; sans lui, le barème s'applique.
+  const avec = jouerUnePartie({
+    questions: troisQuestions(),
+    jokers: ['sangfroid'],
+    repondre: repondAvec('sangfroid'),
+  });
+  const sans = jouerUnePartie({
+    questions: troisQuestions(),
+    jokers: [],
+    repondre: repondAvec('sangfroid'),
+  });
+
+  const gainAvec = avec.vues.find((v) => v.phase === 'revelation').resultat.detail.a.points;
+  const gainSans = sans.vues.find((v) => v.phase === 'revelation').resultat.detail.a.points;
+  assert.equal(gainAvec, 1000);
+  assert.equal(gainSans, pointsDeRapidite(12000, DUREE, 1000));
+  assert.ok(gainSans < gainAvec);
+});
+
+test('un joker écarté n’est pas consommé non plus', () => {
+  const { vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    jokers: ['double'],
+    repondre: repondAvec('sangfroid'),
+  });
+  // Le seul joker ouvert reste disponible : rien n'a été dépensé.
+  assert.deepEqual(vues.at(-1).jokers.a, ['double']);
 });
 
 /* --- Banque de questions ------------------------------------------------- */

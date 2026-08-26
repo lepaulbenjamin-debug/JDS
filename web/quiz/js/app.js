@@ -63,7 +63,13 @@ let aPublier;                  // état que la régie doit pousser au prochain b
 let boucle = null;
 let erreurs = 0;
 
-let reglages = { themes: [], nombre: 12, dureeMs: 15000, persona: 'classique' };
+let reglages = {
+  themes: [],
+  nombre: 12,
+  dureeMs: 15000,
+  persona: 'classique',
+  jokers: JOKERS.map((j) => j.id),
+};
 
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
 let jokerArme = null;
@@ -361,6 +367,14 @@ function peindreReponses() {
 
 function rendreJokers() {
   const hote = clear($('#jeu-jokers'));
+  // Une partie peut se jouer sans jokers, ou avec seulement quelques-uns : la
+  // section disparaît alors au lieu d'afficher une rangée de boutons morts.
+  const actifs = etat.jokersActifs ?? JOKERS.map((j) => j.id);
+  $('#titre-jokers').hidden = !actifs.length;
+  $('#joker-note').hidden = !actifs.length;
+  hote.hidden = !actifs.length;
+  if (!actifs.length) return;
+
   const restants = etat.jokers?.[moi.id] ?? [];
   // Uniquement pendant la fenêtre d'avant-question, puis verrouillé : on parie
   // sans avoir vu l'énoncé, sinon le joker n'est plus un pari.
@@ -376,7 +390,7 @@ function rendreJokers() {
   // repart pas sur un autre joker en gardant l'information.
   const verrouille = jokerArme === 'cinquante';
 
-  for (const joker of JOKERS) {
+  for (const joker of JOKERS.filter((j) => actifs.includes(j.id))) {
     const utilise = !restants.includes(joker.id);
     const cible = joker.id === 'vol' || joker.id === 'sabotage';
     const inutile = cible && (sansCible || jeSuisLeader);
@@ -393,11 +407,14 @@ function rendreJokers() {
     ]));
   }
 
+  // L'avertissement sur l'absence de cible n'a de sens que si un joker à cible
+  // est effectivement de la partie.
+  const aUneCible = actifs.includes('vol') || actifs.includes('sabotage');
   const arme = JOKERS.find((j) => j.id === jokerArme);
   $('#joker-note').textContent = arme
     ? `${arme.nom} : ${arme.desc}`
     : (jouable
-      ? (sansCible
+      ? (sansCible && aUneCible
         ? 'Vol et sabotage visent le joueur en tête : ils s’activeront dès que quelqu’un aura marqué.'
         : 'C’est maintenant ou jamais : un joker se joue avant de voir la question, et ne sert qu’une fois.')
       : 'Jokers verrouillés pour cette manche.');
@@ -723,6 +740,25 @@ function rendreReglages() {
     }, libelle));
   }
 
+  const jokers = clear($('#choix-jokers'));
+  for (const joker of JOKERS) {
+    const actif = reglages.jokers.includes(joker.id);
+    jokers.append(el('button', {
+      class: `chip${actif ? ' est-actif' : ''}`,
+      type: 'button',
+      title: joker.desc,
+      onclick: () => {
+        reglages.jokers = actif
+          ? reglages.jokers.filter((j) => j !== joker.id)
+          : JOKERS.map((j) => j.id).filter((j) => j === joker.id || reglages.jokers.includes(j));
+        rendreReglages();
+      },
+    }, `${joker.emoji} ${joker.nom}`));
+  }
+  $('#note-jokers').textContent = reglages.jokers.length
+    ? 'Un usage chacun, à jouer avant de voir la question.'
+    : 'Aucun joker : pas de filet, c’est le plus rapide qui gagne.';
+
   const personas = clear($('#choix-persona'));
   for (const persona of PERSONAS) {
     personas.append(el('button', {
@@ -753,6 +789,7 @@ async function ouvrirSalon() {
       dureeMs: reglages.dureeMs,
       persona: reglages.persona,
       themes: reglages.themes,
+      jokers: reglages.jokers,
       // Le moteur ne connaît pas les fichiers audio : c'est ici qu'on lui dit
       // combien de temps il faut pour lire la réponse et son explication, sans
       // quoi la phase se termine au milieu de la phrase.

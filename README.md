@@ -127,6 +127,10 @@ partie se déroule toute seule et tout le monde joue.
   (marquer le maximum sans courir après le chrono), **50/50** (deux mauvaises
   réponses disparaissent, points divisés par deux). C'est ce qui fait qu'un jeu
   de soirée n'est pas gagné d'avance par le plus cultivé.
+- **Les jokers se choisissent à la partie.** Les réglages permettent de n'en
+  ouvrir que certains — ou aucun. Sans jokers, c'est le « quiz loyal » : pas de
+  filet, le plus rapide gagne. La section disparaît alors de l'écran de jeu, et
+  un joker écarté n'a aucun effet même si un pupitre en renvoie un.
 - **Un seul vol et un seul sabotage par manche**, au plus rapide à avoir trouvé.
   Les autres récupèrent leur joker : il n'y avait plus rien à prendre, ils ne
   vont pas le perdre pour autant. Un joker joué sur une mauvaise réponse, lui,

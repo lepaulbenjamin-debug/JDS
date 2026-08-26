@@ -220,8 +220,14 @@ function commentaire({ detail, joueurs, question, persona }) {
  */
 export function creerRegie({
   questions, dureeMs = 15000, persona = 'classique', themes = [], dureeRevelation,
+  jokers = JOKERS.map((j) => j.id),
 }) {
   const total = questions.length;
+
+  // Les jokers retenus pour cette partie, dans l'ordre canonique. Une liste
+  // vide est un mode à part entière — pas de filet, c'est le plus rapide qui
+  // gagne — et non une erreur de réglage.
+  const autorises = JOKERS.map((j) => j.id).filter((id) => jokers.includes(id));
 
   /**
    * Combien de temps laisser sur la révélation.
@@ -260,8 +266,7 @@ export function creerRegie({
     reponses: {},        // manche en cours seulement
   };
 
-  const jokersRestants = (id) => JOKERS
-    .map((j) => j.id)
+  const jokersRestants = (id) => autorises
     .filter((j) => !(etat.jokers[id] ?? []).includes(j));
 
   const classement = (joueurs) => joueurs
@@ -360,7 +365,9 @@ export function creerRegie({
         etat.reponses[reponse.playerId] = {
           choice: reponse.choice,
           elapsedMs: reponse.elapsedMs,
-          joker: reponse.joker,
+          // Un joker écarté des réglages est ignoré, même si un pupitre bricolé
+          // en renvoie un : le réglage de la partie fait loi ici, pas là-bas.
+          joker: autorises.includes(reponse.joker) ? reponse.joker : null,
         };
         nouvelle = true;
       }
@@ -445,6 +452,7 @@ export function creerRegie({
         resultat: etat.resultat,
         podium: etat.podium ?? null,
         classement: classement(joueurs),
+        jokersActifs: autorises,
         jokers: Object.fromEntries(joueurs.map((j) => [j.id, jokersRestants(j.id)])),
         // Sert au pupitre à afficher « 3 sur 5 ont répondu » sans révéler quoi.
         ontRepondu: Object.keys(etat.reponses),
