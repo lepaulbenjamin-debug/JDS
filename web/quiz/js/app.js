@@ -18,6 +18,21 @@ const ERREURS_AVANT_ALERTE = 5;
 
 /* --- Identité ------------------------------------------------------------ */
 
+/**
+ * Un identifiant aléatoire, sans `crypto.randomUUID`.
+ *
+ * On joue depuis `http://192.168.x.x` : le navigateur ne considère pas cette
+ * adresse comme un contexte sécurisé et n'expose donc PAS `randomUUID` —
+ * contrairement à `getRandomValues`, disponible partout. Un appel direct à
+ * `randomUUID` lèverait une exception au chargement, et la page resterait
+ * affichée mais entièrement morte : aucun bouton branché.
+ */
+function identifiant() {
+  const octets = new Uint8Array(16);
+  crypto.getRandomValues(octets);
+  return Array.from(octets, (o) => o.toString(16).padStart(2, '0')).join('');
+}
+
 // L'identifiant survit au rechargement de la page : c'est lui qui permet de
 // retrouver sa place et son score quand un téléphone se verrouille ou que le
 // Wi-Fi saute en pleine manche.
@@ -26,7 +41,7 @@ function chargerMoi() {
     const brut = JSON.parse(localStorage.getItem(MOI_KEY) ?? 'null');
     if (brut?.id) return { id: brut.id, name: brut.name ?? '' };
   } catch { /* stockage indisponible */ }
-  return { id: crypto.randomUUID(), name: '' };
+  return { id: identifiant(), name: '' };
 }
 
 function enregistrerMoi() {
@@ -76,10 +91,39 @@ const ECRAN_DE_PHASE = {
   podium: 'fin',
 };
 
+/* --- Veille de l'écran --------------------------------------------------- */
+
+// L'appareil qui tient la régie fait avancer la partie : si son écran s'éteint,
+// le navigateur gèle les minuteurs et le jeu s'arrête pour tout le monde. Le
+// verrou de veille demande donc à l'appareil de rester allumé pendant la partie.
+// Il n'existe qu'en contexte sécurisé — donc pas sur une adresse `http://192…`,
+// d'où le conseil de tenir la régie depuis la machine qui sert l'appli.
+let veille = null;
+
+async function garderEcranAllume(actif) {
+  try {
+    if (!actif) {
+      await veille?.release();
+      veille = null;
+      return;
+    }
+    if (veille || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+    veille = await navigator.wakeLock.request('screen');
+    // Le verrou saute dès que l'onglet passe en arrière-plan : on le reprend au
+    // retour plutôt que de le croire encore acquis.
+    veille.addEventListener('release', () => { veille = null; });
+  } catch { /* refusé, indisponible, ou onglet caché : la partie continue */ }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && boucle !== null) garderEcranAllume(true);
+});
+
 /* --- Boucle réseau ------------------------------------------------------- */
 
 function demarrerBoucle() {
   arreterBoucle();
+  garderEcranAllume(true);
   const pas = estRegie() ? BATTEMENT_REGIE_MS : BATTEMENT_PUPITRE_MS;
   const battre = async () => {
     try {
@@ -101,6 +145,7 @@ function demarrerBoucle() {
 function arreterBoucle() {
   clearTimeout(boucle);
   boucle = null;
+  garderEcranAllume(false);
 }
 
 async function battementRegie() {
@@ -644,15 +689,24 @@ function rendreLienPartage() {
     class: 'btn btn-ghost',
     type: 'button',
     onclick: async () => {
-      // Le partage natif ouvre directement WhatsApp ou les SMS ; le
-      // presse-papiers reste le repli quand il n'existe pas.
+      // Trois niveaux, parce qu'en Wi-Fi domestique on est sur une adresse non
+      // sécurisée : le partage natif et le presse-papiers y sont indisponibles.
+      // Le dernier repli sélectionne le lien pour qu'il reste copiable à la main.
       try {
-        if (navigator.share) await navigator.share({ title: 'Quiz Room', text: 'On joue ?', url: lien });
-        else {
+        if (navigator.share) {
+          await navigator.share({ title: 'Quiz Room', text: 'On joue ?', url: lien });
+          return;
+        }
+        if (navigator.clipboard) {
           await navigator.clipboard.writeText(lien);
           toast('Lien copié.');
+          return;
         }
-      } catch { /* partage annulé */ }
+      } catch {
+        return;                                   // partage refusé ou annulé
+      }
+      getSelection()?.selectAllChildren($('.lien-texte', hote));
+      toast('Lien sélectionné : copie-le, ou dicte le code.');
     },
   }, '📤 Envoyer le lien'));
 }
@@ -767,8 +821,19 @@ function brancher() {
   if (code.length === 4) $('#code-salon').value = code;
 }
 
-brancher();
-montrer('accueil');
+try {
+  brancher();
+  montrer('accueil');
+} catch (erreur) {
+  // Sans ce filet, une API manquante laisse une page qui s'affiche normalement
+  // mais dont aucun bouton ne répond : on découvre la panne au premier tap,
+  // devant tout le monde, sans la moindre indication de ce qui cloche.
+  document.body.prepend(el('p', {
+    class: 'panne',
+    text: `L’appli n’a pas pu démarrer sur ce navigateur : ${erreur.message}`,
+  }));
+  throw erreur;
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

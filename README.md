@@ -126,13 +126,38 @@ partie se déroule toute seule et tout le monde joue.
 - **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
   personne n'est éliminé avant la fin.
 
+### Faire une première partie
+
 ```bash
-npm start                     # http://localhost:8080/quiz/
+npm install
+npm start
 ```
 
-Le serveur affiche au démarrage l'adresse à donner aux téléphones du salon
-(`http://192.168.x.x:8080/quiz/`) : tout le monde est sur le même Wi-Fi, rien à
-installer.
+Le serveur affiche au démarrage l'adresse à donner aux téléphones
+(`http://192.168.x.x:8080/quiz/`). Tout le monde est sur le même Wi-Fi, rien à
+installer : c'est une page web.
+
+**Tenez la régie depuis l'ordinateur qui fait tourner `npm start`**, sur
+`http://localhost:8080/quiz/`. Trois raisons, et la première suffit :
+
+1. La partie avance sur l'appareil qui a créé le salon. Si son écran s'éteint,
+   le navigateur gèle les minuteurs et **le jeu s'arrête pour tout le monde**.
+   L'appli demande un verrou de veille, mais celui-ci n'existe qu'en contexte
+   sécurisé — donc sur `localhost`, pas sur une adresse `http://192.168…`.
+2. Un ordinateur ne reçoit pas d'appel en pleine manche finale.
+3. C'est la même machine que le serveur : si elle est là, la partie est là.
+
+Pensez aussi à désactiver la mise en veille de l'ordinateur, et à **laisser
+l'onglet au premier plan** : un onglet en arrière-plan est ralenti par le
+navigateur.
+
+**Le reste des téléphones** peut se verrouiller, perdre le Wi-Fi, revenir : le
+joueur retrouve sa place et son score. Un retardataire peut entrer entre deux
+manches.
+
+Pour une première fois : **8 questions, 15 secondes, trois ou quatre joueurs**.
+Ça dure cinq minutes, ce qui est exactement ce qu'il faut pour voir si le rythme
+tient avant d'y passer la soirée.
 
 **Comment ça tient debout.** L'appareil qui crée le salon fait tourner le moteur
 de jeu — « la régie ». Le serveur, lui, est volontairement bête : il garde le

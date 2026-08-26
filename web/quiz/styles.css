@@ -356,6 +356,15 @@ body {
 .podium-nom { font-weight: 600; }
 .podium-score { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
 
+/* Message de dernier recours si le câblage n'a pas pu se faire. */
+.panne {
+  margin: 0;
+  padding: 14px var(--pad);
+  background: var(--danger);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
 /* --- Toast et dialogue --------------------------------------------------- */
 
 #toast {
