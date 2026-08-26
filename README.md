@@ -120,7 +120,8 @@ partie se déroule toute seule et tout le monde joue.
 - **Des jokers pour renverser la table.** Un usage chacun par partie, choisi
   *avant* de répondre : **quitte ou double**, **vol** (prendre la moitié de ce
   que le leader gagne), **sabotage** (le leader ne marque rien), **sang-froid**
-  (marquer le maximum sans courir après le chrono). C'est ce qui fait qu'un jeu
+  (marquer le maximum sans courir après le chrono), **50/50** (deux mauvaises
+  réponses disparaissent, points divisés par deux). C'est ce qui fait qu'un jeu
   de soirée n'est pas gagné d'avance par le plus cultivé.
 - **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
   personne n'est éliminé avant la fin.
@@ -138,12 +139,19 @@ de jeu — « la régie ». Le serveur, lui, est volontairement bête : il garde
 dernier état publié, encaisse les réponses, et donne l'heure. Trois
 conséquences :
 
-- La bonne réponse n'est publiée qu'à la révélation. Pendant que le chrono
-  tourne, elle n'existe sur aucun autre appareil que celui de la régie.
 - Les points de rapidité sont mesurés **sur le pupitre**, pas à l'arrivée au
   serveur : la latence réseau n'entre jamais dans le score. Les pupitres se
   calent sur l'horloge du relais pour partir tous au même instant.
 - Faire évoluer les règles ne demande aucun redéploiement du serveur.
+
+**Ce que le jeu ne protège pas.** La banque de questions est embarquée dans la
+PWA — c'est ce qui permet de jouer sans réseau — donc **chaque téléphone connaît
+déjà toutes les bonnes réponses**. L'état publié n'inclut `bonne` qu'à la
+révélation, ce qui évite de l'avoir sous les yeux dans l'onglet réseau, mais ce
+n'est pas une protection : qui veut tricher le peut. C'est assumé — entre amis
+sur un canapé, une partie qui s'arrête quand le Wi-Fi tombe coûterait plus cher
+qu'un tricheur théorique. C'est aussi ce qui rend le **50/50** possible sans
+rien demander à la régie : le pupitre retrouve la bonne réponse tout seul.
 
 En contrepartie : **si l'appareil de la régie recharge la page, la partie
 s'arrête** pour tout le monde (une confirmation prévient avant de quitter). Les

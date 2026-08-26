@@ -284,6 +284,11 @@ body {
 /* Une réponse fausse non choisie s'efface : seul compte ce qu'on regarde. */
 .reponse:disabled:not(.est-juste):not(.est-faux):not(.est-choisi) { opacity: 0.5; }
 
+/* Retirée par le 50/50 : barrée et presque effacée, mais toujours à sa place —
+   les réponses ne doivent pas se réorganiser sous le doigt en pleine manche. */
+.reponse.est-retiree { opacity: 0.22; }
+.reponse.est-retiree .reponse-texte { text-decoration: line-through; }
+
 .jeu-etat { display: grid; gap: 8px; margin-top: 18px; }
 .atteinte { margin: 0; font-weight: 600; color: var(--ok); }
 .gain { margin: 0; font-size: 30px; font-weight: 800; }
@@ -302,10 +307,10 @@ body {
 
 /* --- Jokers -------------------------------------------------------------- */
 
-.jokers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.jokers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .joker {
   display: grid; gap: 3px; justify-items: center;
-  padding: 11px 4px;
+  padding: 10px 2px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -313,8 +318,8 @@ body {
   font: inherit;
   cursor: pointer;
 }
-.joker-emoji { font-size: 21px; }
-.joker-nom { font-size: 11px; line-height: 1.15; text-align: center; color: var(--muted); }
+.joker-emoji { font-size: 20px; }
+.joker-nom { font-size: 10px; line-height: 1.15; text-align: center; color: var(--muted); }
 .joker.est-arme { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, transparent); }
 .joker.est-arme .joker-nom { color: var(--text); }
 .joker.est-use { opacity: 0.3; }

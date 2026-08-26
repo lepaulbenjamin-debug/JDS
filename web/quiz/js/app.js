@@ -8,7 +8,7 @@
 import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS } from './engine.js';
-import { THEMES, tirerQuestions, tailleDuPool, nomDuTheme } from './questions.js';
+import { THEMES, QUESTIONS, tirerQuestions, tailleDuPool, nomDuTheme } from './questions.js';
 import { PERSONAS, voix, sons } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
@@ -52,6 +52,7 @@ let reglages = { themes: [], nombre: 12, dureeMs: 15000, persona: 'classique' };
 
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
 let jokerArme = null;
+let masque = null;             // { manche, caches } — les réponses retirées par le 50/50
 let cleRendue = '';            // phase + manche : sert à ne reconstruire que le nécessaire
 let derniereVoix = '';
 let boutonsReponse = [];
@@ -141,6 +142,7 @@ function appliquer(nouvel) {
     if (etat.phase === 'manche') {
       monChoix = null;
       jokerArme = null;
+      masque = null;
     }
     parler();
   }
@@ -256,9 +258,14 @@ function peindreReponses() {
   const ouvert = etat.phase === 'manche'
     && net.serverNow() >= etat.startAt
     && !monChoix;
+  const caches = etat.phase === 'manche' && masque?.manche === etat.manche
+    ? masque.caches
+    : [];
 
   boutonsReponse.forEach((bouton, index) => {
-    bouton.disabled = !ouvert;
+    const retiree = caches.includes(index);
+    bouton.disabled = !ouvert || retiree;
+    bouton.classList.toggle('est-retiree', retiree);
     bouton.classList.toggle('est-choisi', monChoix?.choix === index);
     const revele = etat.phase === 'revelation' && question.bonne != null;
     bouton.classList.toggle('est-juste', revele && index === question.bonne);
@@ -282,6 +289,10 @@ function rendreJokers() {
   const sansCible = !leader || leader.score <= 0;
   const jeSuisLeader = leader?.id === moi.id;
 
+  // Le 50/50 verrouille la barre : une fois les réponses retirées, on ne
+  // repart pas sur un autre joker en gardant l'information.
+  const verrouille = jokerArme === 'cinquante';
+
   for (const joker of JOKERS) {
     const utilise = !restants.includes(joker.id);
     const cible = joker.id === 'vol' || joker.id === 'sabotage';
@@ -290,7 +301,7 @@ function rendreJokers() {
     hote.append(el('button', {
       class: `joker${jokerArme === joker.id ? ' est-arme' : ''}${utilise ? ' est-use' : ''}`,
       type: 'button',
-      disabled: utilise || inutile || !jouable,
+      disabled: utilise || inutile || !jouable || (verrouille && joker.id !== 'cinquante'),
       title: joker.desc,
       onclick: () => armerJoker(joker.id),
     }, [
@@ -416,11 +427,51 @@ function rendreFin() {
 
 /* --- Actions du joueur --------------------------------------------------- */
 
+/**
+ * Les deux mauvaises réponses que le 50/50 retire.
+ *
+ * Calculé sur le pupitre : la banque est embarquée dans l'appli, donc l'énoncé
+ * publié suffit à retrouver la bonne réponse par son identifiant. Le tirage
+ * publié a mélangé l'ordre, d'où le passage par le *texte* plutôt que l'index.
+ */
+function calculerMasque() {
+  const publiee = etat?.question;
+  const source = QUESTIONS.find((q) => q.id === publiee?.id);
+  if (!source) return null;
+
+  const bonne = publiee.reponses.indexOf(source.reponses[source.bonne]);
+  if (bonne < 0) return null;
+
+  const fausses = publiee.reponses.map((_, i) => i).filter((i) => i !== bonne);
+  for (let i = fausses.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fausses[i], fausses[j]] = [fausses[j], fausses[i]];
+  }
+  return { manche: etat.manche, caches: fausses.slice(0, 2) };
+}
+
 function armerJoker(id) {
   sons.debloquer();
-  jokerArme = jokerArme === id ? null : id;
+
+  // Une fois la moitié des réponses dévoilée, le choix est irréversible : sans
+  // ça, on regarde le 50/50, on le désarme, et on répond au plein tarif.
+  if (jokerArme === 'cinquante') return;
+
+  if (id === 'cinquante') {
+    const calcule = calculerMasque();
+    if (!calcule) {
+      toast('50/50 indisponible sur cette question.', 'warn');
+      return;
+    }
+    masque = calcule;
+    jokerArme = 'cinquante';
+  } else {
+    jokerArme = jokerArme === id ? null : id;
+  }
+
   if (jokerArme) sons.joker();
   rendreJokers();
+  peindreReponses();
 }
 
 async function repondre(index) {

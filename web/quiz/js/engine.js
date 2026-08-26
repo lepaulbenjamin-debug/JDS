@@ -28,14 +28,21 @@ export const JOKERS = [
     id: 'sangfroid', nom: 'Sang-froid', emoji: '🧊',
     desc: 'Prends tout ton temps : tu marques le maximum de points, comme si tu avais répondu du tac au tac.',
   },
+  {
+    id: 'cinquante', nom: '50/50', emoji: '✂️',
+    desc: 'Deux mauvaises réponses disparaissent — mais tes points de la manche sont divisés par deux.',
+  },
 ];
 
-// Pourquoi pas de 50/50, le joker le plus attendu ? Parce qu'un pupitre ne
-// connaît pas la bonne réponse tant que le chrono tourne — c'est ce qui empêche
-// de tricher en lisant le réseau. Lui envoyer les deux réponses restantes
-// reviendrait à la lui révéler à moitié, et la lui faire demander à la régie
-// coûterait un aller-retour en pleine manche. « Sang-froid » remplit le même
-// rôle — donner sa chance à celui qui hésite — sans rien divulguer.
+// Le 50/50 se calcule sur le pupitre, pas ici : la banque de questions est
+// embarquée dans la PWA, donc chaque appareil connaît déjà la bonne réponse et
+// n'a besoin de rien demander à la régie. Retirer `bonne` de l'état publié
+// reste utile — ça évite de l'avoir sous les yeux dans l'onglet réseau — mais
+// ce n'est pas une protection : entre amis sur un canapé, la banque en local
+// vaut mieux qu'un jeu qui s'arrête quand le Wi-Fi tombe.
+//
+// Si la banque partait un jour sur un serveur, ce joker devrait changer de
+// camp : ce serait alors à la régie de publier un masque par joueur.
 
 export const DUREE_COMPTE_MS = 3000;      // le temps de poser son verre
 const DUREE_INTRO_MS = 5500;
@@ -88,6 +95,7 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
       : pointsDeRapidite(reponse.elapsedMs, dureeMs, base);
     let points = correct ? brut : 0;
 
+    if (reponse.joker === 'cinquante' && correct) points = Math.round(points / 2);
     if (reponse.joker === 'double') points = correct ? brut * 2 : -Math.round(brut / 2);
 
     gains[joueur.id] = points;

@@ -92,6 +92,20 @@ test('le sang-froid annule le barème dégressif', () => {
   assert.ok(detail.a.points > detail.b.points);
 });
 
+test('le 50/50 divise les points de la manche par deux', () => {
+  const { detail } = manche({
+    a: { choice: 0, elapsedMs: 0, joker: 'cinquante' },
+    b: { choice: 0, elapsedMs: 0, joker: null },
+  });
+  assert.equal(detail.b.points, 1000);
+  assert.equal(detail.a.points, 500);
+});
+
+test('le 50/50 ne rapporte rien si on se trompe quand même', () => {
+  const { detail } = manche({ a: { choice: 1, elapsedMs: 0, joker: 'cinquante' } });
+  assert.equal(detail.a.points, 0);
+});
+
 test('quitte ou double : doublé si juste, moitié perdue si faux', () => {
   const juste = manche({ a: { choice: 0, elapsedMs: 0, joker: 'double' } });
   assert.equal(juste.detail.a.points, 2000);
