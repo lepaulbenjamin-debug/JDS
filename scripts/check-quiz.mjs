@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_COMPTE_MS,
+  resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
 } from '../web/quiz/js/engine.js';
 import { QUESTIONS, tirerQuestions, tailleDuPool } from '../web/quiz/js/questions.js';
 import { handleRoomRequest } from '../lib/rooms.js';
@@ -180,13 +180,58 @@ test('vol puis sabotage se cumulent sur la même manche', () => {
   assert.equal(detail.b.points, 0);
 });
 
-test('sans leader, vol et sabotage n’ont aucune cible', () => {
+test('sans leader, vol et sabotage n’ont aucune cible — et le joker est rendu', () => {
   const { detail } = manche({
     a: { choice: 0, elapsedMs: 1000, joker: 'vol' },
     b: { choice: 0, elapsedMs: 0, joker: null },
   });
   assert.equal(detail.a.vol, undefined);
+  assert.equal(detail.a.jokerRendu, true);
   assert.equal(detail.b.points, 1000);
+});
+
+test('un seul vol par manche : le plus rapide sert, l’autre récupère son joker', () => {
+  const { detail } = manche(
+    {
+      a: { choice: 0, elapsedMs: 5000, joker: 'vol' },
+      b: { choice: 0, elapsedMs: 0, joker: null },
+      c: { choice: 0, elapsedMs: 2000, joker: 'vol' },
+    },
+    { b: 4000 },
+  );
+  // Cé a répondu plus vite : c'est lui qui vole.
+  assert.equal(detail.c.vol, 500);
+  assert.equal(detail.a.vol, undefined);
+  assert.equal(detail.a.jokerRendu, true);
+  assert.equal(detail.c.jokerRendu, undefined);
+  // Le leader n'est ponctionné qu'une seule fois.
+  assert.equal(detail.b.points, 500);
+});
+
+test('un seul sabotage par manche', () => {
+  const { detail } = manche(
+    {
+      a: { choice: 0, elapsedMs: 4000, joker: 'sabotage' },
+      b: { choice: 0, elapsedMs: 0, joker: null },
+      c: { choice: 0, elapsedMs: 1000, joker: 'sabotage' },
+    },
+    { b: 4000 },
+  );
+  assert.equal(detail.c.sabotage, 'b');
+  assert.equal(detail.a.sabotage, undefined);
+  assert.equal(detail.a.jokerRendu, true);
+  assert.equal(detail.b.points, 0);
+});
+
+test('un vol raté sur une mauvaise réponse est bien perdu', () => {
+  const { detail } = manche(
+    {
+      a: { choice: 2, elapsedMs: 1000, joker: 'vol' },
+      b: { choice: 0, elapsedMs: 0, joker: null },
+    },
+    { b: 2000 },
+  );
+  assert.equal(detail.a.jokerRendu, undefined);
 });
 
 test('on ne peut pas se voler ni se saboter soi-même', () => {
@@ -297,6 +342,22 @@ test('une manche se clôt d’elle-même dès que tout le monde a répondu', () 
   assert.ok(mancheVueA < DUREE / 2, `la manche a duré ${mancheVueA} ms`);
 });
 
+test('un joker rendu reste disponible pour les manches suivantes', () => {
+  // Personne n'a encore marqué en manche 1 : le vol n'a pas de cible.
+  const { vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    repondre: (vue, horloge) => (vue.phase === 'manche' && horloge - vue.startAt === 100
+      ? [{
+          playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 100,
+          joker: vue.manche === 1 ? 'vol' : null,
+        }]
+      : []),
+  });
+  const apresManche1 = vues.find((v) => v.phase === 'revelation');
+  assert.equal(apresManche1.resultat.detail.a.jokerRendu, true);
+  assert.ok(apresManche1.jokers.a.includes('vol'), 'le vol aurait dû être rendu');
+});
+
 test('un joker n’est consommé qu’une fois, et seulement s’il a été joué', () => {
   const { vues } = jouerUnePartie({
     questions: troisQuestions(),
@@ -324,7 +385,7 @@ test('une réponse qui arrive après la fin de la manche est ignorée', () => {
   assert.equal(etatFinal.podium.every((j) => j.score === 0), true);
 });
 
-test('le décompte laisse le temps de poser son verre avant la question', () => {
+test('la fenêtre de jokers précède la question', () => {
   const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE });
   regie.lancer(0, JOUEURS);
   let horloge = 0;
@@ -333,7 +394,7 @@ test('le décompte laisse le temps de poser son verre avant la question', () => 
     regie.avancer(horloge, JOUEURS);
   }
   const vue = regie.etatPublic(JOUEURS);
-  assert.equal(vue.startAt - horloge, DUREE_COMPTE_MS);
+  assert.equal(vue.startAt - horloge, DUREE_JOKERS_MS);
   assert.equal(vue.deadline - vue.startAt, DUREE);
 });
 

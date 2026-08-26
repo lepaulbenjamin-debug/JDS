@@ -44,7 +44,11 @@ export const JOKERS = [
 // Si la banque partait un jour sur un serveur, ce joker devrait changer de
 // camp : ce serait alors à la régie de publier un masque par joueur.
 
-export const DUREE_COMPTE_MS = 3000;      // le temps de poser son verre
+// La fenêtre d'avant-question. C'est le temps de poser son verre, mais surtout
+// le seul moment où l'on peut sortir un joker : on parie sans avoir vu
+// l'énoncé. Un joker choisi la question sous les yeux n'est plus un pari, c'est
+// une évidence — « je connais celle-là, je double ».
+export const DUREE_JOKERS_MS = 6000;
 const DUREE_INTRO_MS = 5500;
 // La révélation dure le temps de lire l'explication à voix haute : c'est elle
 // qui transforme « tu as faux » en « ah bon, tiens », et c'est ce qui fait
@@ -110,11 +114,32 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
 
   const evenements = [];
 
+  /**
+   * Un seul vol, un seul sabotage par manche — le plus rapide à avoir trouvé.
+   *
+   * Trois joueurs qui volent le même leader ne se partagent pas le butin : le
+   * deuxième et le troisième ne trouveraient plus rien à prendre et auraient
+   * grillé leur joker pour rien. Ceux-là le récupèrent donc, plutôt que de le
+   * perdre au profit de quelqu'un qui a simplement tapé plus vite.
+   */
+  const premierAvoirJoue = (nom) => {
+    const candidats = Object.entries(detail)
+      .filter(([, r]) => r.joker === nom && r.correct)
+      .sort((a, b) => a[1].elapsedMs - b[1].elapsedMs);
+
+    const gagnant = candidats.find(([id]) => leader && leader !== id) ?? null;
+    for (const [, r] of candidats) if (r !== gagnant?.[1]) r.jokerRendu = true;
+    // Sans cible, personne ne consomme quoi que ce soit.
+    if (!gagnant) return null;
+    return gagnant;
+  };
+
   // Le vol passe avant le sabotage : le voleur prend sa part de ce que le leader
-  // a gagné, puis le saboteur efface ce qu'il en reste. Deux jokers joués sur la
-  // même manche se cumulent donc, et c'est voulu.
-  for (const [id, r] of Object.entries(detail)) {
-    if (r.joker !== 'vol' || !r.correct || !leader || leader === id) continue;
+  // a gagné, puis le saboteur efface ce qu'il en reste. Les deux jokers se
+  // cumulent donc sur une même manche, et c'est voulu.
+  const voleur = premierAvoirJoue('vol');
+  if (voleur) {
+    const [id, r] = voleur;
     const pris = Math.round(Math.max(0, gains[leader] ?? 0) / 2);
     gains[leader] = (gains[leader] ?? 0) - pris;
     gains[id] += pris;
@@ -125,8 +150,9 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
     });
   }
 
-  for (const [id, r] of Object.entries(detail)) {
-    if (r.joker !== 'sabotage' || !r.correct || !leader || leader === id) continue;
+  const saboteur = premierAvoirJoue('sabotage');
+  if (saboteur) {
+    const [id, r] = saboteur;
     gains[leader] = Math.min(0, gains[leader] ?? 0);
     r.sabotage = leader;
     evenements.push({
@@ -134,6 +160,9 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
       texte: repliqueDe(persona, 'sabotage', { nom: nomDe(id), cible: nomDe(leader) }),
     });
   }
+
+  // Un vol ou un sabotage tenté sur une mauvaise réponse est bel et bien perdu :
+  // c'est le risque du pari, pris avant même d'avoir vu la question.
 
   for (const [id, r] of Object.entries(detail)) {
     if (r.joker !== 'double') continue;
@@ -210,7 +239,7 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
     etat.reponses = {};
     etat.resultat = null;
     etat.phase = 'manche';
-    etat.startAt = now + DUREE_COMPTE_MS;
+    etat.startAt = now + DUREE_JOKERS_MS;
     etat.deadline = etat.startAt + dureeMs;
     etat.finPhase = etat.deadline;
     etat.annonce = numero === total
@@ -233,7 +262,9 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
     for (const joueur of joueurs) {
       const r = detail[joueur.id];
       etat.absences[joueur.id] = r?.absent ? (etat.absences[joueur.id] ?? 0) + 1 : 0;
-      const joker = r?.joker;
+      // Un joker rendu n'est pas consommé : il n'a rien pu faire, faute de
+      // cible ou parce que quelqu'un a été plus rapide sur le même coup.
+      const joker = r?.jokerRendu ? null : r?.joker;
       if (joker) etat.jokers[joueur.id] = [...(etat.jokers[joueur.id] ?? []), joker];
     }
 

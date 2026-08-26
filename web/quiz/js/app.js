@@ -202,9 +202,10 @@ function parler() {
   const lignes = [];
   if (etat.phase === 'revelation' && etat.resultat) {
     lignes.push(etat.resultat.commentaire);
-    if (etat.question?.note) lignes.push(etat.question.note);
     const marquant = etat.resultat.evenements?.[0];
     if (marquant) lignes.push(marquant.texte);
+    // L'explication n'est pas lue : c'est le passage le plus long, donc celui
+    // où une voix de synthèse lasse le plus. Elle reste affichée à l'écran.
   } else if (etat.annonce) {
     lignes.push(etat.annonce);
   }
@@ -324,9 +325,9 @@ function peindreReponses() {
 function rendreJokers() {
   const hote = clear($('#jeu-jokers'));
   const restants = etat.jokers?.[moi.id] ?? [];
-  // Armable dès le décompte : choisir son joker pendant les trois secondes
-  // d'attente, c'est le petit temps de stratégie de la manche.
-  const jouable = etat.phase === 'manche' && !monChoix;
+  // Uniquement pendant la fenêtre d'avant-question, puis verrouillé : on parie
+  // sans avoir vu l'énoncé, sinon le joker n'est plus un pari.
+  const jouable = etat.phase === 'manche' && net.serverNow() < etat.startAt;
 
   // Vol et sabotage visent le premier au classement : sans leader, ils n'ont
   // aucune cible et on le dit plutôt que de laisser gâcher un joker.
@@ -358,9 +359,11 @@ function rendreJokers() {
   const arme = JOKERS.find((j) => j.id === jokerArme);
   $('#joker-note').textContent = arme
     ? `${arme.nom} : ${arme.desc}`
-    : (sansCible
-      ? 'Vol et sabotage visent le joueur en tête : ils s’activeront dès que quelqu’un aura marqué.'
-      : 'Un joker se choisit avant de répondre, et ne sert qu’une fois dans la partie.');
+    : (jouable
+      ? (sansCible
+        ? 'Vol et sabotage visent le joueur en tête : ils s’activeront dès que quelqu’un aura marqué.'
+        : 'C’est maintenant ou jamais : un joker se joue avant de voir la question, et ne sert qu’une fois.')
+      : 'Jokers verrouillés pour cette manche.');
 }
 
 function rendreEtatManche() {
@@ -375,6 +378,12 @@ function rendreEtatManche() {
         ? 'Trop tard : rien pour toi cette manche.'
         : `${gain > 0 ? '+' : ''}${gain} point${Math.abs(gain) > 1 ? 's' : ''}`,
     }));
+    if (mien?.jokerRendu) {
+      hote.append(el('p', {
+        class: 'evenement',
+        text: 'Ton joker t’est rendu : il n’a rien pu faire cette manche.',
+      }));
+    }
     if (etat.question?.note) {
       hote.append(el('p', { class: 'note', text: etat.question.note }));
     }
@@ -433,6 +442,7 @@ function rafraichirChrono() {
     $('#jeu-question').hidden = false;
     $('#jeu-reponses').hidden = false;
     $('#jeu-annonce').hidden = false;
+    $('#jeu-etat').hidden = false;
     return;
   }
 
@@ -443,6 +453,9 @@ function rafraichirChrono() {
   // Pendant qu'on répond, la phrase de l'animateur ne fait que repousser la
   // question vers le bas de l'écran : elle a déjà été dite, et lue, au décompte.
   $('#jeu-annonce').hidden = !avantDepart;
+  // « 0 sur 4 ont répondu » n'a aucun sens avant que la question existe.
+  $('#jeu-etat').hidden = avantDepart;
+  $('#titre-jokers').textContent = avantDepart ? 'Un joker, avant de voir la question ?' : 'Jokers';
 
   if (avantDepart) {
     cadre.dataset.compte = String(Math.max(1, Math.ceil((etat.startAt - maintenant) / 1000)));
@@ -468,6 +481,59 @@ function rendreFin() {
     ]));
   });
   $('#btn-rejouer').hidden = !estRegie();
+}
+
+/* --- Voix ---------------------------------------------------------------- */
+
+function majBoutonSon() {
+  const bouton = $('#btn-son');
+  if (!bouton) return;
+  bouton.textContent = voix.active ? '🔊' : '🔇';
+  bouton.setAttribute(
+    'aria-label',
+    voix.active ? 'Couper la voix de l’animateur' : 'Rétablir la voix de l’animateur',
+  );
+}
+
+/**
+ * Le choix du timbre. Le navigateur ne propose que les voix installées sur le
+ * système, et la française retenue par défaut est rarement la meilleure qu'il
+ * ait : sur macOS, les voix « améliorées » se téléchargent dans les réglages
+ * d'accessibilité et apparaissent ensuite ici. D'où ce sélecteur plutôt qu'un
+ * réglage caché — c'est la différence entre un animateur et un GPS de 2008.
+ */
+function rendreChoixVoix() {
+  const hote = $('#choix-voix');
+  if (!hote) return;
+  const timbres = voix.timbresDisponibles;
+
+  clear(hote);
+  if (!voix.disponible || !timbres.length) {
+    hote.append(el('p', { class: 'muted small', text: 'Aucune voix française installée sur cet appareil.' }));
+    return;
+  }
+
+  const selecteur = el('select', {
+    id: 'timbre',
+    onchange: (event) => {
+      voix.timbre = event.target.value;
+      voix.dire('Bonsoir. C’est moi qui animerai cette soirée.', { force: true });
+    },
+  }, [
+    el('option', { value: '', text: 'Voix par défaut du système' }),
+    ...timbres.map((v) => el('option', {
+      value: v.voiceURI,
+      selected: v.voiceURI === voix.timbre,
+      text: `${v.name}${v.localService ? '' : ' (en ligne)'}`,
+    })),
+  ]);
+
+  hote.append(selecteur);
+  hote.append(el('button', {
+    class: 'btn btn-ghost',
+    type: 'button',
+    onclick: () => voix.dire('Bonsoir. C’est moi qui animerai cette soirée.', { force: true }),
+  }, '🔊 Écouter'));
 }
 
 /* --- Actions du joueur --------------------------------------------------- */
@@ -638,6 +704,8 @@ async function ouvrirSalon() {
     const arrivee = await net.joinRoom(code, moi);
     moi.id = arrivee.playerId;
     enregistrerMoi();
+    voix.appliquerDefaut(true);           // la régie est la voix de la pièce
+    majBoutonSon();
     joueurs = arrivee.players ?? [{ id: moi.id, name: moi.name }];
     aPublier = regie.etatPublic(joueurs);
     location.hash = code;
@@ -666,6 +734,8 @@ async function rejoindreSalon() {
     const reponse = await net.joinRoom(code, moi);
     moi.id = reponse.playerId;
     enregistrerMoi();
+    voix.appliquerDefaut(false);          // un pupitre se tait : la régie parle
+    majBoutonSon();
     salon = { code, hostToken: null };
     joueurs = reponse.players ?? [];
     version = -1;
@@ -779,19 +849,17 @@ function brancher() {
   });
 
   const boutonSon = $('#btn-son');
-  const majSon = () => {
-    boutonSon.textContent = voix.active ? '🔊' : '🔇';
-    boutonSon.setAttribute(
-      'aria-label',
-      voix.active ? 'Couper la voix de l’animateur' : 'Rétablir la voix de l’animateur',
-    );
-  };
   boutonSon.addEventListener('click', () => {
     voix.active = !voix.active;
-    majSon();
+    majBoutonSon();
+    if (voix.active) voix.dire('Voix de l’animateur activée.');
   });
   boutonSon.hidden = !voix.disponible;
-  majSon();
+  majBoutonSon();
+  rendreChoixVoix();
+  // Les voix système arrivent souvent après le chargement de la page : sans ce
+  // rappel, la liste resterait vide sur la plupart des navigateurs.
+  window.speechSynthesis?.addEventListener?.('voiceschanged', rendreChoixVoix);
 
   const champRelais = $('#relay-url');
   champRelais.value = net.relayBase();
@@ -801,10 +869,17 @@ function brancher() {
   });
 
   // Le chrono ne doit pas dépendre du rythme des sondages : il s'anime tout seul.
+  let jokersOuverts = null;
   setInterval(() => {
-    if (etat?.phase === 'manche') {
-      rafraichirChrono();
-      peindreReponses();
+    if (etat?.phase !== 'manche') return;
+    rafraichirChrono();
+    peindreReponses();
+    // Le verrouillage des jokers tombe sur une heure, pas sur un état publié :
+    // c'est ici qu'on le voit passer.
+    const ouverts = net.serverNow() < etat.startAt;
+    if (ouverts !== jokersOuverts) {
+      jokersOuverts = ouverts;
+      rendreJokers();
     }
   }, 100);
 

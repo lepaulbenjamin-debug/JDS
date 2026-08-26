@@ -47,6 +47,13 @@
     <p class="muted small">Le code s’affiche sur le téléphone de celui qui a créé la partie.</p>
 
     <details class="reglage-avance">
+      <summary>La voix de l’animateur</summary>
+      <p class="muted small">Par défaut, seul l’appareil qui crée la partie parle — sinon toute la table récite la même phrase en même temps. Le bouton 🔊 en haut la coupe ou la rétablit sur cet appareil.</p>
+      <div id="choix-voix" class="voix-row"></div>
+      <p class="muted small">Le navigateur ne propose que les voix installées sur le système. Sur un Mac : Réglages Système → Accessibilité → Contenu énoncé → Voix système, où l’on peut télécharger des voix françaises bien meilleures.</p>
+    </details>
+
+    <details class="reglage-avance">
       <summary>Le relais n’est pas sur cet appareil</summary>
       <div class="field">
         <label for="relay-url">Adresse du relais</label>
@@ -113,7 +120,7 @@
 
     <div id="jeu-etat" class="jeu-etat"></div>
 
-    <h3 class="section-title">Jokers</h3>
+    <h3 id="titre-jokers" class="section-title">Jokers</h3>
     <div id="jeu-jokers" class="jokers"></div>
     <p id="joker-note" class="muted small"></p>
   </section>

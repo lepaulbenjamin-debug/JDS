@@ -114,15 +114,26 @@ partie se déroule toute seule et tout le monde joue.
   tapent un code à quatre lettres (ou suivent le lien partagé). Aucune install :
   c'est une page web.
 - **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches,
-  révèle les réponses, commente qui a été le plus rapide et clôt sur le podium —
-  à voix haute, via la synthèse vocale du navigateur, avec trois personnalités
-  au choix : classique, chambreur, pince-sans-rire.
-- **Des jokers pour renverser la table.** Un usage chacun par partie, choisi
-  *avant* de répondre : **quitte ou double**, **vol** (prendre la moitié de ce
+  révèle les réponses, commente qui a été le plus rapide et clôt sur le podium,
+  avec trois personnalités au choix : classique, chambreur, pince-sans-rire.
+  Il parle via la synthèse vocale du navigateur, et **seul l'appareil qui tient
+  la régie parle** : sinon toute la table récite la même phrase en canon. Le
+  bouton 🔊 l'active ou la coupe sur chaque appareil, et l'accueil permet de
+  choisir parmi les voix françaises installées sur le système — celle retenue
+  par défaut est rarement la meilleure, et la différence s'entend.
+- **Des jokers pour renverser la table.** Un usage chacun par partie, et une
+  seule fenêtre pour les jouer : les six secondes qui précèdent la question,
+  **avant d'avoir vu l'énoncé**. Passé le top, la barre se verrouille — un
+  joker choisi la question sous les yeux ne serait plus un pari mais une
+  évidence. Au menu : **quitte ou double**, **vol** (prendre la moitié de ce
   que le leader gagne), **sabotage** (le leader ne marque rien), **sang-froid**
   (marquer le maximum sans courir après le chrono), **50/50** (deux mauvaises
   réponses disparaissent, points divisés par deux). C'est ce qui fait qu'un jeu
   de soirée n'est pas gagné d'avance par le plus cultivé.
+- **Un seul vol et un seul sabotage par manche**, au plus rapide à avoir trouvé.
+  Les autres récupèrent leur joker : il n'y avait plus rien à prendre, ils ne
+  vont pas le perdre pour autant. Un joker joué sur une mauvaise réponse, lui,
+  est bel et bien perdu.
 - **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
   personne n'est éliminé avant la fin.
 

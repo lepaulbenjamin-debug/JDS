@@ -15,7 +15,7 @@
 // gabarits sont donc tournés pour rester neutres — « {nom}, et personne
 // d'autre » plutôt que « la seule à avoir trouvé ».
 
-import { speech } from '../../js/speech.js';
+import { speech, frenchVoices } from '../../js/speech.js';
 
 export const PERSONAS = [
   { id: 'classique', nom: 'Classique', desc: 'Le ton du plateau télé, sérieux et chaleureux.' },
@@ -184,29 +184,65 @@ export function repliqueDe(persona, cle, vars = {}) {
 /* --- Voix ---------------------------------------------------------------- */
 
 const VOIX_KEY = 'quizroom.voix';
+const TIMBRE_KEY = 'quizroom.timbre';
+
+const lire = (cle) => {
+  try {
+    return localStorage.getItem(cle);
+  } catch {
+    return null;
+  }
+};
+const ecrire = (cle, valeur) => {
+  try {
+    if (valeur == null) localStorage.removeItem(cle);
+    else localStorage.setItem(cle, valeur);
+  } catch { /* navigation privée */ }
+};
 
 export const voix = {
+  /**
+   * Par défaut, seule la régie parle.
+   *
+   * Sans cette règle, chaque téléphone récite la même phrase en même temps :
+   * quatre voix de synthèse légèrement décalées, en canon, au milieu du salon.
+   * L'animateur d'une salle de quiz est une voix dans la pièce, pas une par
+   * personne. Chacun peut quand même l'activer sur son appareil — pratique si
+   * la machine qui tient la régie n'a pas de haut-parleur.
+   */
+  appliquerDefaut(estRegie) {
+    if (lire(VOIX_KEY) === null) ecrire(VOIX_KEY, estRegie ? 'on' : 'off');
+  },
+
   get active() {
-    try {
-      return localStorage.getItem(VOIX_KEY) !== 'off';
-    } catch {
-      return true;
-    }
+    return lire(VOIX_KEY) === 'on';
   },
   set active(on) {
-    try {
-      localStorage.setItem(VOIX_KEY, on ? 'on' : 'off');
-    } catch { /* navigation privée */ }
+    ecrire(VOIX_KEY, on ? 'on' : 'off');
     if (!on) speech.stop();
   },
+
+  /** La voix système retenue, parmi celles installées sur cet appareil. */
+  get timbre() {
+    return lire(TIMBRE_KEY);
+  },
+  set timbre(uri) {
+    ecrire(TIMBRE_KEY, uri || null);
+  },
+  get timbresDisponibles() {
+    return frenchVoices();
+  },
+
   get disponible() {
     return speech.supported;
   },
+
   /** Un animateur de quiz ne traîne pas : on parle plus vite que pour une règle. */
-  dire(texte) {
+  dire(texte, { force = false } = {}) {
     const lignes = [].concat(texte).filter(Boolean);
-    if (!lignes.length || !this.active || !speech.supported) return;
-    speech.speak(lignes, { rate: 1.08 });
+    if (!lignes.length || !speech.supported) return;
+    if (!force && !this.active) return;
+    speech.speak(lignes, { rate: 1.08, voiceURI: this.timbre ?? undefined });
   },
   taire() {
     speech.stop();

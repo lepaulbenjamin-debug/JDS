@@ -13,11 +13,19 @@ if (synth) {
   synth.addEventListener?.('voiceschanged', loadVoices);
 }
 
-function frenchVoice() {
+/** Les voix françaises installées sur cet appareil, pour laisser choisir. */
+export function frenchVoices() {
   if (!voices.length) loadVoices();
-  const fr = voices.filter((v) => v.lang?.toLowerCase().startsWith('fr'));
+  return voices.filter((v) => v.lang?.toLowerCase().startsWith('fr'));
+}
+
+function frenchVoice(wanted) {
+  const fr = frenchVoices();
+  // Le choix explicite prime : la voix française par défaut d'un système n'est
+  // pas toujours la meilleure qu'il ait, et la différence s'entend beaucoup.
+  const choisie = wanted && fr.find((v) => v.voiceURI === wanted);
   // Une voix locale évite la latence et fonctionne hors-ligne.
-  return fr.find((v) => v.localService) ?? fr[0] ?? null;
+  return choisie ?? fr.find((v) => v.localService) ?? fr[0] ?? null;
 }
 
 let queue = [];
@@ -25,6 +33,7 @@ let index = 0;
 let handlers = {};
 let keepAlive = null;
 let speakRate = 0.95;
+let speakVoice = null;
 // Jeton de génération : cancel() peut déclencher onend/onerror en différé, et
 // une lecture annulée ne doit surtout pas relancer la suivante.
 let runId = 0;
@@ -55,7 +64,7 @@ function speakCurrent(id) {
   handlers.onStep?.(index);
 
   const utterance = new SpeechSynthesisUtterance(queue[index]);
-  const voice = frenchVoice();
+  const voice = frenchVoice(speakVoice);
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang ?? 'fr-FR';
   utterance.rate = speakRate;   // par défaut un poil plus lent : on explique une règle
@@ -110,7 +119,7 @@ export const speech = {
    * un animateur de quiz qui traîne casse le rythme de la manche.
    *
    * @param {string[]} texts
-   * @param {{onStep?:(i:number)=>void, onEnd?:()=>void, onError?:(e:string)=>void, rate?:number}} callbacks
+   * @param {{onStep?:(i:number)=>void, onEnd?:()=>void, onError?:(e:string)=>void, rate?:number, voiceURI?:string}} callbacks
    */
   speak(texts, callbacks = {}) {
     if (!this.supported) return false;
@@ -119,6 +128,7 @@ export const speech = {
     queue = [].concat(texts).filter(Boolean);
     index = 0;
     speakRate = callbacks.rate ?? 0.95;
+    speakVoice = callbacks.voiceURI ?? null;
     handlers = callbacks;
     startKeepAlive();
     speakCurrent(runId);

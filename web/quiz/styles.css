@@ -167,6 +167,17 @@ body {
 .reglage-avance { margin-top: 26px; }
 .reglage-avance summary { color: var(--muted); font-size: 13px; cursor: pointer; }
 
+.voix-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 10px 0; }
+.voix-row select {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
 .carte-persona {
   display: grid; gap: 2px;
   text-align: left;
@@ -235,12 +246,14 @@ body {
   transition: width 0.12s linear;
 }
 .chrono-jauge.est-urgent { background: var(--danger); }
-/* Le décompte d'avant-question, posé au-dessus de la jauge. */
+/* Le décompte de la fenêtre de jokers, sous la jauge. La marge lui réserve sa
+   place : le chiffre est en position absolue et ne pousse rien tout seul. */
+.chrono[data-compte] { margin-bottom: 116px; }
 .chrono[data-compte]::after {
   content: attr(data-compte);
   position: absolute;
   inset-inline: 0;
-  bottom: 18px;
+  top: 22px;
   text-align: center;
   font: 800 clamp(56px, 20vw, 88px)/1 system-ui, sans-serif;
   color: var(--gold);
