@@ -9,7 +9,7 @@ import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS } from './engine.js';
 import { THEMES, QUESTIONS, tirerQuestions, tailleDuPool, nomDuTheme } from './questions.js';
-import { PERSONAS, voix, sons } from './emcee.js';
+import { PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
 const BATTEMENT_REGIE_MS = 450;
@@ -188,6 +188,11 @@ function appliquer(nouvel) {
       monChoix = null;
       jokerArme = null;
       masque = null;
+      // L'énoncé sera lu au top : on le met en cache pendant la fenêtre de
+      // jokers, pour qu'il parte pile à l'heure et non après un aller-retour.
+      if (etat.question?.id) {
+        voix.precharger([`question/${etat.question.id}`, `reponse/${etat.question.id}`]);
+      }
     }
     parler();
   }
@@ -196,30 +201,62 @@ function appliquer(nouvel) {
   rendre();
 }
 
-/** Ce que l'animateur dit au moment où l'on change de phase. */
+/**
+ * Ce que l'animateur dit au moment où l'on change de phase.
+ *
+ * Deux listes : les clips pré-générés, et le texte de repli pour la synthèse du
+ * navigateur. Elles ne disent pas tout à fait la même chose, et c'est voulu.
+ * Avec une vraie voix, on enchaîne la bonne réponse et son explication — le
+ * meilleur moment de la manche. Avec une voix de synthèse, ce même passage est
+ * celui qui lasse le plus, donc le repli s'arrête au commentaire.
+ */
 function parler() {
   if (!etat) return;
-  const lignes = [];
+  const clips = [];
+  const repli = [];
+  const qid = etat.question?.id;
+
   if (etat.phase === 'revelation' && etat.resultat) {
-    lignes.push(etat.resultat.commentaire);
+    const mot = paroleDe(etat.persona, etat.resultat.commentaireCle);
+    if (mot) clips.push(mot.id);
+    repli.push(etat.resultat.commentaire);
+
     const marquant = etat.resultat.evenements?.[0];
-    if (marquant) lignes.push(marquant.texte);
-    // L'explication n'est pas lue : c'est le passage le plus long, donc celui
-    // où une voix de synthèse lasse le plus. Elle reste affichée à l'écran.
-  } else if (etat.annonce) {
-    lignes.push(etat.annonce);
+    if (marquant?.cle) {
+      const dit = paroleDe(etat.persona, marquant.cle);
+      if (dit) clips.push(dit.id);
+      repli.push(marquant.texte);
+    }
+    if (qid) clips.push(`reponse/${qid}`, `note/${qid}`);
+  } else if (etat.annonceCle) {
+    const mot = paroleDe(etat.persona, etat.annonceCle);
+    if (mot) clips.push(mot.id);
+    repli.push(etat.annonce);
   }
 
-  const texte = lignes.filter(Boolean).join(' ');
-  if (!texte || texte === derniereVoix) return;
-  derniereVoix = texte;
-  voix.dire(lignes.filter(Boolean));
+  const signature = [...clips, ...repli].filter(Boolean).join('|');
+  if (!signature || signature === derniereVoix) return;
+  derniereVoix = signature;
+  voix.enoncer({ clips, repli: repli.filter(Boolean) });
 
   if (etat.phase === 'revelation') {
     const bon = monChoix?.choix === etat.question?.bonne;
     (bon ? sons.juste : sons.faux)();
   }
   if (etat.phase === 'podium') sons.fanfare();
+}
+
+/**
+ * L'énoncé, lu au top et pas avant.
+ *
+ * Il est déjà sur l'appareil pendant la fenêtre de jokers — il le faut, pour
+ * démarrer sans attendre le réseau — mais le lire là reviendrait à dévoiler la
+ * question à ceux qui sont en train de miser dessus à l'aveugle.
+ */
+function lireEnonce() {
+  const qid = etat?.question?.id;
+  if (!qid) return;
+  voix.enoncer({ clips: [`question/${qid}`], repli: [] });
 }
 
 /* --- Rendu --------------------------------------------------------------- */
@@ -508,6 +545,22 @@ function rendreChoixVoix() {
   const timbres = voix.timbresDisponibles;
 
   clear(hote);
+
+  // Quand les clips sont là, la voix système ne sert plus à rien : tout le
+  // monde entend la même, et le sélecteur ne ferait que semer le doute.
+  if (voix.clipsDisponibles) {
+    hote.append(el('p', {
+      class: 'voix-etat',
+      text: `Voix enregistrée${voix.nomDeLaVoix ? ` — ${voix.nomDeLaVoix}` : ''}. Identique sur tous les appareils.`,
+    }));
+    return;
+  }
+
+  hote.append(el('p', {
+    class: 'muted small',
+    text: 'Aucun enregistrement installé : l’animateur passe par la voix de synthèse de cet appareil.',
+  }));
+
   if (!voix.disponible || !timbres.length) {
     hote.append(el('p', { class: 'muted small', text: 'Aucune voix française installée sur cet appareil.' }));
     return;
@@ -700,6 +753,14 @@ async function ouvrirSalon() {
       dureeMs: reglages.dureeMs,
       persona: reglages.persona,
       themes: reglages.themes,
+      // Le moteur ne connaît pas les fichiers audio : c'est ici qu'on lui dit
+      // combien de temps il faut pour lire la réponse et son explication, sans
+      // quoi la phase se termine au milieu de la phrase.
+      dureeRevelation: (question) => {
+        const lu = dureeDuClip(`reponse/${question.id}`) + dureeDuClip(`note/${question.id}`);
+        // + la réplique de l'animateur, + le temps de regarder son score.
+        return lu ? (lu + 6) * 1000 : 0;
+      },
     });
     const arrivee = await net.joinRoom(code, moi);
     moi.id = arrivee.playerId;
@@ -860,6 +921,7 @@ function brancher() {
   // Les voix système arrivent souvent après le chargement de la page : sans ce
   // rappel, la liste resterait vide sur la plupart des navigateurs.
   window.speechSynthesis?.addEventListener?.('voiceschanged', rendreChoixVoix);
+  chargerLesClips().then(rendreChoixVoix);
 
   const champRelais = $('#relay-url');
   champRelais.value = net.relayBase();
@@ -875,11 +937,14 @@ function brancher() {
     rafraichirChrono();
     peindreReponses();
     // Le verrouillage des jokers tombe sur une heure, pas sur un état publié :
-    // c'est ici qu'on le voit passer.
+    // c'est ici qu'on le voit passer. Et c'est le même instant que le top, donc
+    // celui où l'énoncé peut enfin être lu.
     const ouverts = net.serverNow() < etat.startAt;
     if (ouverts !== jokersOuverts) {
+      const etaitOuvert = jokersOuverts;
       jokersOuverts = ouverts;
       rendreJokers();
+      if (etaitOuvert === true && !ouverts) lireEnonce();
     }
   }, 100);
 

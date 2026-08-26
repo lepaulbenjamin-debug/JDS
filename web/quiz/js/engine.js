@@ -55,6 +55,7 @@ const DUREE_INTRO_MS = 5500;
 // qu'on enchaîne une deuxième partie.
 const DUREE_REVELATION_MS = 9500;
 const DUREE_REVELATION_FINALE_MS = 11000;
+const PLAFOND_REVELATION_MS = 22000;   // au-delà, l'explication casse le rythme
 const ABSENCES_AVANT_SOMMEIL = 2;         // au-delà, on n'attend plus ce pupitre
 
 /** Barème dégressif : 100 % à l'instant zéro, 20 % à la dernière seconde. */
@@ -146,6 +147,7 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
     r.vol = pris;
     evenements.push({
       type: 'vol',
+      cle: 'vol',
       texte: repliqueDe(persona, 'vol', { nom: nomDe(id), cible: nomDe(leader), points: pris }),
     });
   }
@@ -157,6 +159,7 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
     r.sabotage = leader;
     evenements.push({
       type: 'sabotage',
+      cle: 'sabotage',
       texte: repliqueDe(persona, 'sabotage', { nom: nomDe(id), cible: nomDe(leader) }),
     });
   }
@@ -166,10 +169,8 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
 
   for (const [id, r] of Object.entries(detail)) {
     if (r.joker !== 'double') continue;
-    evenements.push({
-      type: 'double',
-      texte: repliqueDe(persona, r.correct ? 'doubleReussi' : 'doubleRate', { nom: nomDe(id) }),
-    });
+    const cle = r.correct ? 'doubleReussi' : 'doubleRate';
+    evenements.push({ type: 'double', cle, texte: repliqueDe(persona, cle, { nom: nomDe(id) }) });
   }
 
   // Report des gains. Un total ne descend jamais sous zéro : un joueur enfoncé
@@ -185,25 +186,58 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
   return { detail, scores: nouveauxScores, evenements, leaderAvant: leader };
 }
 
-/** La phrase que l'animateur prononce à la révélation. */
+/**
+ * Le commentaire de la révélation.
+ *
+ * Rend aussi sa clé : c'est elle qui désigne le clip audio à jouer côté régie,
+ * le texte affiché contenant des prénoms qu'aucun fichier pré-généré ne peut
+ * prononcer.
+ */
 function commentaire({ detail, joueurs, question, persona }) {
   const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
   const bonnes = Object.entries(detail).filter(([, r]) => r.correct);
   const reponse = question.reponses[question.bonne];
   const repondants = Object.values(detail).filter((r) => !r.absent).length;
 
-  if (bonnes.length === 0) return repliqueDe(persona, 'personne', { reponse });
-  if (bonnes.length === 1) return repliqueDe(persona, 'unSeul', { nom: nomDe(bonnes[0][0]), reponse });
-  if (bonnes.length === repondants && repondants > 1) return repliqueDe(persona, 'tous', { reponse });
-  return repliqueDe(persona, 'plusieurs', { nb: bonnes.length, reponse });
+  const cle = bonnes.length === 0 ? 'personne'
+    : bonnes.length === 1 ? 'unSeul'
+      : (bonnes.length === repondants && repondants > 1) ? 'tous'
+        : 'plusieurs';
+
+  return {
+    cle,
+    texte: repliqueDe(persona, cle, {
+      reponse,
+      nb: bonnes.length,
+      nom: bonnes.length === 1 ? nomDe(bonnes[0][0]) : '',
+    }),
+  };
 }
 
 /**
  * Crée une régie. `questions` est déjà tiré et mélangé, `dureeMs` est le temps
  * laissé pour répondre.
  */
-export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', themes = [] }) {
+export function creerRegie({
+  questions, dureeMs = 15000, persona = 'classique', themes = [], dureeRevelation,
+}) {
   const total = questions.length;
+
+  /**
+   * Combien de temps laisser sur la révélation.
+   *
+   * Le plancher suffit quand l'animateur ne fait que commenter, mais dès qu'il
+   * lit la bonne réponse et son explication, une durée fixe couperait la fin de
+   * la phrase — et la fin de la phrase, c'est justement le « ah bon, tiens » qui
+   * fait la valeur de la manche. `dureeRevelation` est fourni par l'appli, qui
+   * seule connaît la longueur des clips.
+   */
+  const tempsDeRevelation = (question, finale) => {
+    const plancher = finale ? DUREE_REVELATION_FINALE_MS : DUREE_REVELATION_MS;
+    // Plafonné : une explication à rallonge ne doit pas casser le rythme.
+    const audio = Math.min(dureeRevelation?.(question) ?? 0, PLAFOND_REVELATION_MS);
+    return Math.max(plancher, audio);
+  };
 
   const etat = {
     phase: 'lobby',
@@ -217,6 +251,7 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
     finPhase: 0,
     question: null,
     annonce: '',
+    annonceCle: '',
     resultat: null,
     podium: null,
     scores: {},
@@ -242,9 +277,8 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
     etat.startAt = now + DUREE_JOKERS_MS;
     etat.deadline = etat.startAt + dureeMs;
     etat.finPhase = etat.deadline;
-    etat.annonce = numero === total
-      ? repliqueDe(persona, 'derniereManche', { manche: numero, total })
-      : repliqueDe(persona, 'avantManche', { manche: numero, total });
+    etat.annonceCle = numero === total ? 'derniereManche' : 'avantManche';
+    etat.annonce = repliqueDe(persona, etat.annonceCle, { manche: numero, total });
   }
 
   function cloreManche(joueurs, now) {
@@ -278,11 +312,14 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
     const rapide = bonnes[0];
     const tete = classement(joueurs)[0];
 
+    const mot = commentaire({ detail, joueurs, question: etat.question, persona });
+
     etat.phase = 'revelation';
     etat.resultat = {
       detail,
       evenements,
-      commentaire: commentaire({ detail, joueurs, question: etat.question, persona }),
+      commentaire: mot.texte,
+      commentaireCle: mot.cle,
       rapide: rapide
         ? {
             nom: joueurs.find((j) => j.id === rapide[0])?.name ?? '—',
@@ -291,7 +328,7 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
         : null,
       leader: tete && tete.score > 0 ? { nom: tete.name, points: tete.score } : null,
     };
-    etat.finPhase = now + (finale ? DUREE_REVELATION_FINALE_MS : DUREE_REVELATION_MS);
+    etat.finPhase = now + tempsDeRevelation(etat.question, finale);
   }
 
   return {
@@ -304,6 +341,7 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
       if (etat.phase !== 'lobby') return false;
       etat.phase = 'intro';
       etat.finPhase = now + DUREE_INTRO_MS;
+      etat.annonceCle = 'ouverture';
       etat.annonce = repliqueDe(persona, 'ouverture', { nb: joueurs.length });
       return true;
     },
@@ -361,6 +399,7 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
           etat.phase = 'podium';
           etat.question = null;
           etat.resultat = null;
+          etat.annonceCle = 'podium';
           etat.annonce = podium[0]
             ? repliqueDe(persona, 'podium', { nom: podium[0].name, points: podium[0].score })
             : '';
@@ -398,6 +437,8 @@ export function creerRegie({ questions, dureeMs = 15000, persona = 'classique', 
         startAt: etat.startAt,
         deadline: etat.deadline,
         finPhase: etat.finPhase,
+        // La clé désigne le clip audio ; le texte, lui, porte les prénoms.
+        annonceCle: etat.annonceCle,
         finale: etat.manche === total,
         question,
         annonce: etat.annonce,

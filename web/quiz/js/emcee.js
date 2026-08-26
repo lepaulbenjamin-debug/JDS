@@ -16,6 +16,9 @@
 // d'autre » plutôt que « la seule à avoir trouvé ».
 
 import { speech, frenchVoices } from '../../js/speech.js';
+import * as audio from './audio.js';
+
+export { charger as chargerLesClips, duree as dureeDuClip } from './audio.js';
 
 export const PERSONAS = [
   { id: 'classique', nom: 'Classique', desc: 'Le ton du plateau télé, sérieux et chaleureux.' },
@@ -165,6 +168,92 @@ const BANQUE = {
   },
 };
 
+/**
+ * Ce que l'animateur PRONONCE, par opposition à ce qu'il affiche.
+ *
+ * Ces répliques-là ne contiennent ni prénom, ni score, ni bonne réponse : rien
+ * qui varie d'une partie à l'autre. C'est la condition pour qu'elles existent
+ * en fichiers audio pré-générés — on ne peut pas fabriquer à l'avance un clip
+ * qui dit « Ana ». Les prénoms et les points restent à l'écran, comme dans une
+ * vraie salle de quiz où la voix off commente et où le tableau porte les noms.
+ *
+ * La bonne réponse et son explication, elles, sont propres à chaque question :
+ * elles ont leurs propres clips (`reponse/<id>`, `note/<id>`), enchaînés après
+ * celui-ci.
+ */
+const DIT = {
+  classique: {
+    ouverture: ['Bonsoir à tous, et bienvenue. Dans un quart d’heure, il n’en restera qu’un.'],
+    avantManche: ['Question suivante.', 'On enchaîne.'],
+    derniereManche: ['Dernière manche, et elle vaut double. Tout peut encore basculer.'],
+    personne: ['Personne. Pas un seul.', 'Aucune bonne réponse.'],
+    tous: ['Tout le monde a trouvé.', 'Sans faute pour tout le monde.'],
+    unSeul: ['Une seule bonne réponse. Chapeau.'],
+    plusieurs: ['Plusieurs d’entre vous ont trouvé.'],
+    vol: ['Vol réussi ! Le leader vient de perdre la moitié de ses points.'],
+    sabotage: ['Sabotage ! Le leader ne marquera rien cette manche.'],
+    doubleReussi: ['Quitte ou double, et ça paie.'],
+    doubleRate: ['Quitte ou double, et ça coûte cher.'],
+    podium: ['Voilà, c’est terminé. Le classement final est à l’écran. Bravo à tous !'],
+  },
+
+  chambreur: {
+    ouverture: ['Bon. Statistiquement, il y en a au moins deux qui vont le regretter.'],
+    avantManche: ['Allez, on se réveille.', 'Celle-là, elle est cadeau. Enfin, normalement.'],
+    derniereManche: ['Dernière question, elle vaut double. C’est le moment de trahir vos amis.'],
+    personne: ['Alors là, rien. Zéro. Le néant.', 'Personne n’a trouvé. Vous me faites de la peine.'],
+    tous: ['Tout le monde a bon. Trop facile, je vais corser ça.'],
+    unSeul: ['Une seule bonne réponse. Les autres, vous étiez où ?'],
+    plusieurs: ['Quelques bonnes réponses. Les autres, ce n’est pas grave. Enfin si.'],
+    vol: ['Oh ! Braquage en pleine lumière ! Aucune pitié.'],
+    sabotage: ['Sabotage en règle. Ambiance à table tout à l’heure.'],
+    doubleReussi: ['Doublé, et ça passe. Insolent.'],
+    doubleRate: ['Doublé, et planté. C’était magnifique.'],
+    podium: ['C’est fini. Le classement est à l’écran, et quelqu’un va en parler pendant des mois.'],
+  },
+
+  pincesansrire: {
+    ouverture: ['Bonsoir. Nous verrons bien.'],
+    avantManche: ['Question suivante.', 'Prenez votre temps. Enfin, non.'],
+    derniereManche: ['Dernière manche, points doublés. Rien n’est joué, hélas.'],
+    personne: ['Aucune bonne réponse. Je note.'],
+    tous: ['Tout le monde a trouvé. J’ajusterai la difficulté.'],
+    unSeul: ['Une seule bonne réponse. Intéressant.'],
+    plusieurs: ['Quelques bonnes réponses.'],
+    vol: ['Un vol. C’est permis, je le rappelle.'],
+    sabotage: ['Un sabotage. Le règlement l’autorise. La morale, moins.'],
+    doubleReussi: ['Doublé. Bien vu.'],
+    doubleRate: ['Doublé. C’était audacieux.'],
+    podium: ['Voilà. Le classement final est à l’écran. Merci d’être venus.'],
+  },
+};
+
+/**
+ * L'identifiant du clip à jouer pour une réplique, tiré au sort parmi les
+ * variantes. Rend aussi le texte, qui sert de repli à la synthèse quand les
+ * clips ne sont pas générés.
+ */
+export function paroleDe(persona, cle) {
+  const liste = DIT[persona]?.[cle] ?? DIT.classique[cle];
+  if (!liste?.length) return null;
+  const index = Math.floor(Math.random() * liste.length);
+  const nom = DIT[persona]?.[cle] ? persona : 'classique';
+  return { id: `emcee/${nom}/${cle}/${index}`, texte: liste[index] };
+}
+
+/** Tout ce qui doit être prononcé, pour le script de génération. */
+export function inventaireDesParoles() {
+  const clips = [];
+  for (const [persona, cles] of Object.entries(DIT)) {
+    for (const [cle, variantes] of Object.entries(cles)) {
+      variantes.forEach((texte, index) => {
+        clips.push({ id: `emcee/${persona}/${cle}/${index}`, texte });
+      });
+    }
+  }
+  return clips;
+}
+
 /** Remplit les trous d'un gabarit : `{nom}` devient le prénom, et ainsi de suite. */
 function remplir(gabarit, vars) {
   return gabarit.replace(/\{(\w+)\}/g, (_, cle) => String(vars?.[cle] ?? ''));
@@ -244,8 +333,38 @@ export const voix = {
     if (!force && !this.active) return;
     speech.speak(lignes, { rate: 1.08, voiceURI: this.timbre ?? undefined });
   },
+
+  /**
+   * Le passage complet : les clips pré-générés s'ils sont tous là, sinon la
+   * synthèse du navigateur sur le texte de repli.
+   *
+   * Deux listes distinctes, et c'est délibéré : avec une vraie voix, on prend
+   * le temps de lire l'explication de la réponse — c'est le meilleur moment de
+   * la manche. Avec une voix de synthèse, ce même passage est celui qui lasse
+   * le plus, donc le repli s'en tient au commentaire.
+   */
+  async enoncer({ clips = [], repli = [] } = {}) {
+    if (!this.active) return;
+    speech.stop();
+    if (await audio.jouer(clips)) return;
+    this.dire(repli);
+  },
+
+  /** Ce que la version pré-générée apporte : à afficher dans les réglages. */
+  get clipsDisponibles() {
+    return audio.disponible();
+  },
+  get nomDeLaVoix() {
+    return audio.nomDeLaVoix();
+  },
+
+  precharger(clips) {
+    if (this.active) audio.precharger(clips);
+  },
+
   taire() {
     speech.stop();
+    audio.taire();
   },
 };
 
@@ -255,14 +374,14 @@ export const voix = {
 // fonctionnent hors-ligne, et évitent d'embarquer des fichiers audio dont on
 // n'a pas les droits.
 
-let audio = null;
+let contexteAudio = null;
 
 function contexte() {
-  if (audio) return audio;
+  if (contexteAudio) return contexteAudio;
   const Ctor = window.AudioContext ?? window.webkitAudioContext;
   if (!Ctor) return null;
-  audio = new Ctor();
-  return audio;
+  contexteAudio = new Ctor();
+  return contexteAudio;
 }
 
 function note(frequence, debut, duree, volume = 0.15, forme = 'sine') {

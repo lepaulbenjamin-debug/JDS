@@ -8,3 +8,8 @@ dist/
 
 # Sortie de scripts/generate-questions.mjs : un brouillon à relire, pas une source.
 scripts/questions-brouillon.json
+
+# Sortie de scripts/generate-audio.mjs : des binaires lourds, régénérables à
+# l'identique depuis la banque de questions. Sans eux, l'appli retombe sur la
+# synthèse du navigateur, donc rien ne casse.
+web/quiz/audio/

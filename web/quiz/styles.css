@@ -168,6 +168,15 @@ body {
 .reglage-avance summary { color: var(--muted); font-size: 13px; cursor: pointer; }
 
 .voix-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 10px 0; }
+.voix-etat {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 11px 14px;
+  border-left: 3px solid var(--ok);
+  border-radius: 0 10px 10px 0;
+  background: var(--surface);
+  font-size: 14px;
+}
 .voix-row select {
   min-width: 0;
   padding: 12px 14px;

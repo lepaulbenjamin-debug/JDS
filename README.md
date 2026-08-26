@@ -113,14 +113,11 @@ partie se déroule toute seule et tout le monde joue.
 - **Chaque téléphone est un pupitre.** Un joueur crée le salon, les autres
   tapent un code à quatre lettres (ou suivent le lien partagé). Aucune install :
   c'est une page web.
-- **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches,
-  révèle les réponses, commente qui a été le plus rapide et clôt sur le podium,
+- **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches, lit
+  l'énoncé, révèle la bonne réponse et son explication, et clôt sur le podium —
   avec trois personnalités au choix : classique, chambreur, pince-sans-rire.
-  Il parle via la synthèse vocale du navigateur, et **seul l'appareil qui tient
-  la régie parle** : sinon toute la table récite la même phrase en canon. Le
-  bouton 🔊 l'active ou la coupe sur chaque appareil, et l'accueil permet de
-  choisir parmi les voix françaises installées sur le système — celle retenue
-  par défaut est rarement la meilleure, et la différence s'entend.
+  **Seul l'appareil qui tient la régie parle** : sinon toute la table récite la
+  même phrase en canon. Le bouton 🔊 l'active ou la coupe sur chaque appareil.
 - **Des jokers pour renverser la table.** Un usage chacun par partie, et une
   seule fenêtre pour les jouer : les six secondes qui précèdent la question,
   **avant d'avoir vu l'énoncé**. Passé le top, la barre se verrouille — un
@@ -203,6 +200,42 @@ mémoire, qui ne convient qu'au serveur Node autonome.
 ```bash
 npm run check:quiz            # barème, jokers, déroulé d'une partie, relais
 ```
+
+### La voix de l'animateur
+
+`speechSynthesis` ne donne accès qu'aux voix **installées sur l'appareil**. Un
+Mac, un iPhone et un Android n'ont pas le même catalogue, iOS n'en laisse pas
+installer d'autres, et la qualité va du correct au robot de 2005. Aucun réglage
+ne permet de garantir la même voix à toute la table : c'est structurel.
+
+La banque de questions étant connue à l'avance, on ne lit pas en direct — on
+**fabrique les fichiers une fois** :
+
+```bash
+node scripts/generate-audio.mjs --blanc          # clips muets, pour tester la chaîne
+OPENAI_API_KEY=sk-... node scripts/generate-audio.mjs --voix=onyx
+```
+
+Même voix partout, aucune latence, hors-ligne, rien à payer à chaque partie, et
+surtout : on peut **écouter chaque prise avant de la livrer**. Trois clips par
+question — l'énoncé, la bonne réponse, l'explication — plus les répliques de
+l'animateur. Comptez une quinzaine de minutes d'audio pour soixante questions.
+
+Une relance ne refait que ce qui manque (`--tout` pour tout regénérer), et
+`web/quiz/audio/` est ignoré par git : ce sont des binaires lourds, régénérables
+à l'identique depuis la banque.
+
+**La contrainte à connaître** : un fichier pré-généré ne peut pas dire « Ana ».
+Les répliques prononcées ne contiennent donc **ni prénom, ni score, ni bonne
+réponse** — tout cela reste à l'écran, comme dans une vraie salle de quiz où la
+voix off commente et où le tableau porte les noms. La bonne réponse et son
+explication, elles, ont leurs propres clips par question.
+
+Sans le dossier `audio/`, rien ne casse : l'animateur retombe sur la synthèse du
+navigateur, et l'accueil permet alors de choisir parmi les voix du système. La
+durée de la phase de révélation s'ajuste d'elle-même à la longueur des clips —
+sinon la phrase serait coupée en plein milieu de l'explication, c'est-à-dire
+juste avant le moment intéressant.
 
 **Ajouter des questions** : `web/quiz/js/questions.js`, la bonne réponse en
 premier (le jeu mélange au tirage), avec l'explication lue à la révélation.
@@ -340,6 +373,7 @@ web/                     PWA statique, sans build ni dépendance
       net.js             appels au relais + calage d'horloge entre pupitres
       emcee.js           l'animateur : répliques, voix, jingles synthétisés
       questions.js       la banque de questions et le tirage
+      audio.js           lecture des clips pré-générés, repli sur la synthèse
 lib/scan.js              lecture d'une photo : validation, appel, erreurs
 lib/rooms.js             relais de salons : état publié, réponses, horloge
 api/scan.mjs             la même chose, en fonction Vercel
@@ -349,6 +383,7 @@ server/index.js          serveur Node autonome (sert les deux PWA + les API)
 server/check.mjs         vérifie la clé API avant de lancer quoi que ce soit
 scripts/check-quiz.mjs   tests des règles du quiz et du relais (npm run check:quiz)
 scripts/generate-questions.mjs  brouillon de questions à relire, via l'API Claude
+scripts/generate-audio.mjs  fabrique les enregistrements de l'animateur
 scripts/make-icons.mjs   génère les PNG d'icône (node scripts/make-icons.mjs)
 scripts/build-single-file.mjs  assemble le compteur de points en un fichier HTML
 ```
