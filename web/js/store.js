@@ -147,6 +147,10 @@ export function makeMatch(game, players, target, options = {}, endMode = null) {
     // La table a décidé de jouer au-delà de ce qui était convenu : la partie
     // ne s'arrête plus d'elle-même, elle s'arrête quand on l'archive.
     prolonge: false,
+    // Ce qu'il a fallu demander à la table pour appliquer le départage prévu
+    // par le livret, quand le décompte ne le contenait pas (aux Aventuriers du
+    // Rail : le nombre de cartes Destination réussies, et non leurs points).
+    tieData: {},
     rounds: [],
     draft: makeDraft(game, players),
     finished: false,
@@ -189,18 +193,43 @@ export function totals(match) {
   return out;
 }
 
-/** Classement (meilleur en premier) selon le sens du jeu. */
+/**
+ * Comparaison de deux joueurs selon le sens du jeu, puis selon le départage
+ * que prévoit son livret. Renvoie 0 quand rien ne les sépare — c'est cette
+ * valeur-là qui fait les ex æquo, et il ne faut donc pas la contourner.
+ */
+function comparer(game, match) {
+  return (a, b) => {
+    const ecart = game.lowestWins ? a.total - b.total : b.total - a.total;
+    if (ecart !== 0) return ecart;
+    // Certains livrets départagent par autre chose que le score (au 7 Wonders,
+    // le trésor ; aux Aventuriers du Rail, les destinations réussies).
+    return game.tieBreak?.(a.player, b.player, match) ?? 0;
+  };
+}
+
+/**
+ * Classement (meilleur en premier), chaque entrée portant son rang.
+ *
+ * Deux joueurs que rien ne sépare partagent le même rang. C'est le seul
+ * traitement honnête : quand le livret ne prévoit pas de départage — au
+ * Papayoo, au Skyjo, au 6 qui prend — désigner un vainqueur reviendrait à
+ * trancher au hasard, sur l'ordre où les prénoms ont été tapés.
+ */
 export function standings(match, game) {
   const t = totals(match);
-  return match.players
-    .map((p) => ({ player: p, total: t[p.id] }))
-    .sort((a, b) => {
-      const ecart = game.lowestWins ? a.total - b.total : b.total - a.total;
-      if (ecart !== 0) return ecart;
-      // Certains jeux départagent les ex æquo par autre chose que le score
-      // (au 7 Wonders, le trésor) : sans ça le tableau désignerait au hasard.
-      return game.tieBreak?.(a.player, b.player, match) ?? 0;
-    });
+  const cmp = comparer(game, match);
+  const board = match.players.map((p) => ({ player: p, total: t[p.id] })).sort(cmp);
+  let rang = 1;
+  return board.map((entry, i) => {
+    if (i > 0 && cmp(board[i - 1], entry) !== 0) rang = i + 1;
+    return { ...entry, rank: rang };
+  });
+}
+
+/** Le ou les joueurs en tête : plusieurs quand le livret ne les départage pas. */
+export function winners(match, game) {
+  return standings(match, game).filter((e) => e.rank === 1);
 }
 
 /**

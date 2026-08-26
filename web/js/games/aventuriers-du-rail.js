@@ -33,6 +33,12 @@ export const EDITIONS = {
     plusLong: 10,
     gares: 0,
     ports: false,
+    // « Si plusieurs joueurs sont à égalité pour la victoire, celui parmi eux
+    // qui a réalisé le plus de tickets l'emporte. Si l'égalité persiste, c'est
+    // le joueur parmi les ex-æquo qui détient la carte bonus "chemin le plus
+    // long" s'il y en a un qui gagne. Dans le cas contraire, ces joueurs
+    // partagent la victoire. » (livret Days of Wonder, éd. française 2025)
+    departage: true,
   },
   europe: {
     label: 'Europe',
@@ -42,6 +48,12 @@ export const EDITIONS = {
     // Une gare laissée dans sa réserve rapporte 4 points.
     gares: 4,
     ports: false,
+    // « En cas d'égalité entre plusieurs joueurs, le joueur qui a complété le
+    // plus de cartes Destination remporte la victoire. En cas d'égalité
+    // répétée, celui qui a construit le moins de Gares est déclaré vainqueur.
+    // Dans le cas peu probable où il y aurait encore égalité, le joueur qui a
+    // le chemin le plus long gagne. » (livret Europe)
+    departage: true,
   },
   monde: {
     label: 'Autour du Monde',
@@ -51,6 +63,9 @@ export const EDITIONS = {
     plusLong: 0,
     gares: 0,
     ports: true,
+    // « Le joueur qui a le plus de points l'emporte » — et rien de plus : ce
+    // livret-là ne prévoit aucun départage.
+    departage: false,
   },
 };
 
@@ -215,6 +230,68 @@ export default {
 
   formDefaults() {
     return { plusLong: [] };
+  },
+
+  /**
+   * Ce qu'il faut demander à la table pour départager, faute de l'avoir déjà.
+   *
+   * Le livret départage d'abord par le NOMBRE de cartes Destination réussies.
+   * Le décompte, lui, ne retient que leurs POINTS — deux cartes à 5 valent
+   * autant qu'une à 10 sans dire combien elles sont. Il faut donc les compter,
+   * mais seulement le jour où l'égalité survient : les compter à chaque partie
+   * serait une saisie de plus pour un cas rare.
+   */
+  tieBreakAsk(match) {
+    if (!edition(match?.options).departage) return null;
+    return {
+      label: 'Cartes Destination réussies',
+      hint: 'Le livret départage d’abord par leur nombre — et non par leurs points, seuls retenus dans le décompte.',
+      min: 0,
+      max: 30,
+    };
+  },
+
+  /** Le départage du livret, dans son ordre, édition par édition. */
+  tieBreak(a, b, match) {
+    const ed = edition(match?.options);
+    if (!ed.departage) return 0;
+
+    // 1. Le plus de cartes Destination réussies. Tant que la table n'a pas
+    //    répondu, on s'arrête là : passer au critère suivant appliquerait le
+    //    livret dans le désordre, et pourrait désigner l'autre joueur.
+    const reussies = (p) => Number(match?.tieData?.[p.id]);
+    if (!Number.isFinite(reussies(a)) || !Number.isFinite(reussies(b))) return 0;
+    const ecartDestinations = reussies(b) - reussies(a);
+    if (ecartDestinations !== 0) return ecartDestinations;
+
+    // 2. Europe seulement : le moins de gares construites, ce qui revient au
+    //    plus de gares restées en réserve — c'est ce que l'appli enregistre.
+    if (ed.gares) {
+      const restantes = (p) => (match.rounds ?? []).reduce(
+        (total, r) => total + (Number(r.raw?.gares?.[p.id]?.restantes) || 0),
+        0,
+      );
+      const ecart = restantes(b) - restantes(a);
+      if (ecart !== 0) return ecart;
+    }
+
+    // 3. Le chemin le plus long. Aux États-Unis c'est le second critère, en
+    //    Europe le troisième ; dans les deux cas il vient en dernier ici.
+    const bonus = (p) => ((match.rounds ?? []).some(
+      (r) => (r.raw?.plusLong ?? []).includes(p.id),
+    ) ? 1 : 0);
+    return bonus(b) - bonus(a);
+  },
+
+  /** Ce que le livret prescrit, dit à la table quand l'égalité subsiste. */
+  tieNote(match) {
+    const ed = edition(match?.options);
+    if (!ed.departage) {
+      return 'Le livret d’Autour du Monde ne prévoit aucun départage : « le joueur qui a le plus de points l’emporte », et rien de plus.';
+    }
+    return ed.gares
+      ? 'Livret Europe : le plus de cartes Destination réussies, puis le moins de gares construites, puis le chemin le plus long.'
+      : 'Livret États-Unis : le plus de tickets réalisés, puis la carte « chemin le plus long ». À défaut, ces joueurs partagent la victoire.';
   },
 
   validateRound(form, players, ctx) {

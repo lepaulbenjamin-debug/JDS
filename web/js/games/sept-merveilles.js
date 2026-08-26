@@ -121,6 +121,11 @@ export default {
    * En cas d'égalité, la règle départage au trésor : le joueur qui a le plus
    * de pièces l'emporte. On cumule sur toutes les parties de la série.
    */
+  // « En cas d'égalité, le joueur avec le plus de pièces dans son trésor est le
+  // vainqueur. Une égalité sur les pièces n'est pas départagée. » (livret Repos
+  // Production, éd. française)
+  tieNote: 'Le livret est explicite : « une égalité sur les pièces n’est pas départagée ».',
+
   tieBreak(a, b, match) {
     const sous = (p) => (match.rounds ?? []).reduce(
       (total, r) => total + (Number(r.raw?.general?.[p.id]?.pieces) || 0),
@@ -191,10 +196,14 @@ export default {
     const exaequo = classement.filter((p) => scores[p.id] === scores[tete.id]);
     if (exaequo.length > 1) {
       const parPieces = [...exaequo].sort((a, b) => details[b.id].pieces - details[a.id].pieces);
-      notes.push(
-        `${exaequo.map((p) => p.name).join(' et ')} à ${scores[tete.id]} :`
-        + ` ${parPieces[0].name} l'emporte avec ${details[parPieces[0].id].pieces} pièces.`,
-      );
+      const noms = exaequo.map((p) => p.name).join(' et ');
+      const tresor = details[parPieces[0].id].pieces;
+      // « Une égalité sur les pièces n'est pas départagée » : on ne désigne
+      // alors personne, sous peine de trancher sur l'ordre des prénoms.
+      const departages = exaequo.filter((p) => details[p.id].pieces === tresor).length === 1;
+      notes.push(departages
+        ? `${noms} à ${scores[tete.id]} : ${parPieces[0].name} l'emporte avec ${tresor} pièces.`
+        : `${noms} à ${scores[tete.id]}, et à ${tresor} pièces : le livret ne départage pas plus loin.`);
     } else {
       notes.push(`${tete.name} l'emporte avec ${scores[tete.id]} points.`);
     }

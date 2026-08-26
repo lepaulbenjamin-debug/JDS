@@ -259,7 +259,9 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `replays` | après un ajout, une correction ou une suppression, toutes les manches sont recalculées dans l'ordre, chacune à partir des seules manches qui la précèdent. Indispensable dès qu'une manche dépend de l'état laissé par les précédentes |
 | `art` | `{ teinte, svg }` : la vignette du jeu sur l'écran d'accueil. Un dessin **original** dans une boîte 32×32, en `currentColor`, évoquant le matériel du jeu — pas le visuel de la boîte, qui est une œuvre protégée |
 | `roundLabelGender: 'm'` | le mot employé pour une manche est masculin (« le lancer ») ; féminin par défaut (« la manche », « la donne », « la partie ») |
-| `tieBreak(a, b, match)` | départage deux joueurs à égalité de score par autre chose que le score (au 7 Wonders, le trésor) ; sans lui le tableau tranche au hasard |
+| `tieBreak(a, b, match)` | départage deux joueurs à égalité de score, dans l'ordre exact du livret (au 7 Wonders, le trésor). Renvoyer 0 laisse l'égalité : c'est ce qu'il faut faire tant qu'un critère prioritaire reste sans réponse, sinon le livret s'applique à l'envers |
+| `tieBreakAsk(match)` | `{ label, hint, min, max }` : la valeur à demander à la table pour appliquer le départage, quand le décompte ne la contient pas (aux Aventuriers du Rail, le **nombre** de cartes Destination réussies, alors que seuls leurs points sont saisis). Posée le jour où l'égalité survient, et à ces joueurs-là seulement ; la réponse va dans `match.tieData` |
+| `tieNote` | ce que le livret prescrit quand l'égalité subsiste, en toutes lettres ; chaîne ou `(match) => string` quand cela dépend d'une variante. Sans lui, l'appli dit simplement que le livret ne prévoit rien — elle n'invente pas de départage |
 | `roundLabel` | « Manche » ou « Donne », employé partout dans l'interface |
 | `participantLabel` + `defaultNames` | les participants sont des équipes et non des joueurs (Belote) |
 | `options` | variantes fixées avant de commencer, rendues sur l'écran de configuration **et sur la fiche règles**, puis transmises au calcul, à `form()` et à `setup()` (litige à la belote, barèmes du Barbu, édition des Aventuriers du Rail) |
@@ -292,6 +294,34 @@ préférant une voix locale. Si le navigateur n'a pas l'API, les commandes audio
 disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
+
+## Le départage des ex æquo, livret par livret
+
+Déclarer un vainqueur à la place d'une égalité, c'est trancher sur l'ordre où
+les prénoms ont été tapés. L'appli ne le fait jamais : à défaut de départage
+écrit, deux joueurs à égalité partagent le premier rang, dans le tableau, dans
+le bandeau, dans l'historique et dans le palmarès.
+
+Ce que disent les livrets, vérifié sur les documents officiels :
+
+| Jeu | Ce que prévoit le livret |
+| --- | --- |
+| **Aventuriers du Rail — États-Unis** | le plus de tickets réalisés, puis le porteur de la carte « chemin le plus long » ; « dans le cas contraire, ces joueurs partagent la victoire » |
+| **— Europe** | le plus de cartes Destination réussies, puis le **moins de gares construites**, puis le chemin le plus long |
+| **— Autour du Monde** | rien : « le joueur qui a le plus de points l'emporte », et le livret s'arrête là |
+| **7 Wonders** | le plus de pièces au trésor, puis plus rien : « une égalité sur les pièces n'est pas départagée » |
+| **Belote** | règlement FFB, art. 10.4.2 : « une nouvelle donne est jouée jusqu'à ce que l'égalité soit rompue » |
+| **Papayoo, Skyjo, 6 qui prend !, Skull King, Tarot** | aucun départage prévu |
+| **Mölkky** | sans objet : on gagne à 50 pile, un seul joueur peut y arriver le premier |
+| **Barbu** | jeu traditionnel, sans livret d'éditeur — donc sans départage officiel |
+
+Deux conséquences dans le code. D'abord, le nombre de cartes Destination
+réussies ne figure nulle part dans le décompte — on y saisit leurs points, et
+deux cartes à 5 valent autant qu'une à 10 sans dire combien elles sont :
+l'appli le demande à la table, mais seulement le jour où l'égalité survient.
+Ensuite, un critère prioritaire resté sans réponse interdit d'appliquer les
+suivants : sauter des destinations aux gares appliquerait le livret à l'envers
+et pourrait désigner l'autre joueur.
 
 ## Ce qui a été vérifié en conditions réelles
 

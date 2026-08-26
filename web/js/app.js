@@ -1,7 +1,7 @@
 import { GAMES, getGame } from './games/index.js';
 import {
   store, makePlayer, makePerson, playerFromPerson, makeMatch, makeDraft, makeRoundId,
-  totals, standings, isOver, replay, PLAYER_COLORS,
+  totals, standings, winners, isOver, replay, PLAYER_COLORS,
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
@@ -82,8 +82,7 @@ function recordsByPerson(history) {
   for (const past of history) {
     const game = getGame(past.gameId);
     const classement = standings(past, game);
-    const meilleur = classement[0]?.total;
-    for (const { player, total } of classement) {
+    for (const { player, rank } of classement) {
       // Les parties d'avant le carnet n'ont pas de joueur identifiable.
       if (!player.personId) continue;
       const rec = touch(player.personId);
@@ -91,8 +90,9 @@ function recordsByPerson(history) {
       if (!rec.byGame.has(past.gameId)) rec.byGame.set(past.gameId, { games: 0, wins: 0 });
       const parJeu = rec.byGame.get(past.gameId);
       parJeu.games += 1;
-      // Une égalité en tête compte comme une victoire pour chacun.
-      if (total === meilleur) { rec.wins += 1; parJeu.wins += 1; }
+      // Une égalité que le livret ne départage pas compte comme une victoire
+      // pour chacun des ex æquo.
+      if (rank === 1) { rec.wins += 1; parJeu.wins += 1; }
     }
   }
   return records;
@@ -498,14 +498,81 @@ async function archiverPartie() {
   if (!match) return;
   if (match.rounds.length === 0) return toast('Aucune manche à archiver.', 'warn');
   const game = getGame(match.gameId);
-  const winner = standings(match, game)[0];
-  if (!(await confirmDialog(`Archiver la partie ? ${winner.player.name} gagne avec ${winner.total} points.`, { okLabel: 'Archiver' }))) return;
+  const tetes = winners(match, game);
+  const issue = tetes.length > 1
+    ? `${nomsEt(tetes)} sont à égalité avec ${tetes[0].total} points.`
+    : `${tetes[0].player.name} gagne avec ${tetes[0].total} points.`;
+  if (!(await confirmDialog(`Archiver la partie ? ${issue}`, { okLabel: 'Archiver' }))) return;
   store.update((s) => {
     s.history.push({ ...s.match, finished: true, draft: null });
     s.match = null;
   });
   backStack.length = 0;
   show('home', { push: false });
+}
+
+/** « Ana », « Ana et Cy », « Ana, Bo et Cy ». */
+function nomsEt(entrees) {
+  const noms = entrees.map((e) => e.player.name);
+  if (noms.length <= 1) return noms[0] ?? '';
+  return `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
+}
+
+/**
+ * Ce que le livret prescrit quand l'égalité subsiste. Sans consigne écrite, on
+ * ne l'invente pas : on dit qu'il n'y en a pas, et l'égalité reste.
+ */
+function noteEgalite(match, game) {
+  const note = typeof game.tieNote === 'function' ? game.tieNote(match) : game.tieNote;
+  return note ?? 'Le livret ne prévoit pas de départage : l’égalité reste.';
+}
+
+/** Les joueurs à égalité qui n'ont pas encore répondu à la question du livret. */
+function departageAFaire(match, game, tetes) {
+  const ask = game.tieBreakAsk?.(match);
+  if (!ask || tetes.length < 2) return null;
+  const manquants = tetes.filter((e) => !Number.isFinite(Number(match.tieData?.[e.player.id])));
+  return manquants.length > 0 ? ask : null;
+}
+
+/**
+ * Le formulaire qui applique le départage du livret : une valeur par joueur à
+ * égalité, demandée seulement le jour où l'égalité survient.
+ */
+function formDepartage(match, game, tetes, ask) {
+  const saisie = {};
+  const champs = tetes.map((e) => el('label', { class: 'tie-field' }, [
+    el('span', { text: e.player.name }),
+    el('input', {
+      type: 'number',
+      inputmode: 'numeric',
+      min: ask.min ?? 0,
+      max: ask.max ?? 99,
+      placeholder: '0',
+      oninput: (ev) => { saisie[e.player.id] = ev.target.value; },
+    }),
+  ]));
+
+  return el('div', { class: 'tie-ask' }, [
+    el('strong', { text: `${nomsEt(tetes)} sont à égalité avec ${tetes[0].total} points` }),
+    el('span', { class: 'small', text: ask.hint }),
+    el('span', { class: 'small tie-label', text: `${ask.label} :` }),
+    el('div', { class: 'tie-grid' }, champs),
+    el('button', {
+      class: 'btn btn-primary btn-block',
+      type: 'button',
+      onclick: () => {
+        const brut = tetes.map((e) => saisie[e.player.id]);
+        if (brut.some((v) => v == null || v === '' || !Number.isFinite(Number(v)))) {
+          return toast('Indiquez la valeur de chaque joueur à égalité.', 'warn');
+        }
+        store.update((s) => {
+          s.match.tieData = { ...(s.match.tieData ?? {}) };
+          tetes.forEach((e) => { s.match.tieData[e.player.id] = Number(saisie[e.player.id]); });
+        });
+      },
+    }, 'Départager'),
+  ]);
 }
 
 /**
@@ -538,12 +605,20 @@ function renderBanner(match, game) {
     ? `${roundsLabel(game, match.target)} ${roundWords(game).jouee}${match.target > 1 ? 's' : ''}.`
     : `Objectif ${match.target} atteint.`;
 
+  // Plusieurs joueurs en tête : le livret ne les départage pas, ou pas encore.
+  const tetes = board.filter((e) => e.rank === 1);
+  const egalite = tetes.length > 1;
+
   // La partie continue au-delà de ce qui était convenu : on ne proclame pas un
   // vainqueur à chaque manche, on rappelle qui mène et pourquoi ça dure.
   if (match.prolonge) {
     host.append(
       el('div', { class: 'banner banner-soft' }, [
-        el('strong', { text: `${board[0].player.name} mène avec ${board[0].total} points` }),
+        el('strong', {
+          text: egalite
+            ? `${nomsEt(tetes)} sont à égalité avec ${tetes[0].total} points`
+            : `${board[0].player.name} mène avec ${board[0].total} points`,
+        }),
         el('span', {
           class: 'small',
           text: `${raison} Vous avez choisi de continuer : la partie s'arrêtera quand vous l'archiverez.`,
@@ -553,16 +628,36 @@ function renderBanner(match, game) {
     return;
   }
 
+  // Le livret prévoit un départage, mais il repose sur une information que le
+  // décompte ne contient pas : on la demande, plutôt que de trancher au hasard.
+  const ask = departageAFaire(match, game, tetes);
+  if (ask) {
+    host.append(el('div', { class: 'banner' }, [formDepartage(match, game, tetes, ask)]));
+    return;
+  }
+
   const peutContinuer = prolongeable(match, game);
   host.append(
     el('div', { class: 'banner' }, [
-      el('strong', { text: `🏆 ${board[0].player.name} gagne avec ${board[0].total} points` }),
+      el('strong', {
+        text: egalite
+          ? `🤝 ${nomsEt(tetes)} sont à égalité avec ${tetes[0].total} points`
+          : `🏆 ${board[0].player.name} gagne avec ${board[0].total} points`,
+      }),
+      egalite && el('span', { class: 'small', text: noteEgalite(match, game) }),
       el('span', {
         class: 'small',
         text: peutContinuer
           ? `${raison} À vous de voir si la partie s'arrête là.`
           : `${raison} Vous pouvez archiver la partie en bas de l'écran.`,
       }),
+      // Revenir sur une valeur mal tapée : sans ça, une faute de frappe
+      // désignerait un vainqueur sans appel.
+      Object.keys(match.tieData ?? {}).length > 0 && el('button', {
+        class: 'btn btn-ghost btn-block',
+        type: 'button',
+        onclick: () => store.update((s) => { s.match.tieData = {}; }),
+      }, 'Refaire le départage'),
       peutContinuer && el('div', { class: 'banner-actions' }, [
         el('button', {
           class: 'btn btn-primary',
@@ -603,13 +698,13 @@ function renderBoard(table, match, game, label) {
   table.append(head);
 
   const body = el('tbody');
-  board.forEach((entry, rank) => {
+  board.forEach((entry) => {
     const p = entry.player;
     // Le jeu peut qualifier un joueur d'un mot : au Mölkky, ses ratés en
     // cours et son élimination, qui ne se lisent pas dans le total.
     const statut = game.playerStatus?.(p, match);
     body.append(el('tr', { class: statut?.tone === 'danger' ? 'is-out' : '' }, [
-      el('td', { class: 'rank', text: String(rank + 1) }),
+      el('td', { class: 'rank', text: String(entry.rank) }),
       el('td', {}, [
         el('span', { class: 'dot', style: { background: p.color } }),
         el('span', { text: p.name }),
@@ -1546,14 +1641,16 @@ function renderPeople() {
 function matchRow(past) {
   const game = getGame(past.gameId);
   const board = standings(past, game);
-  const winner = board[0];
+  const tetes = board.filter((e) => e.rank === 1);
   return el('button', {
     class: 'row row-button',
     type: 'button',
     onclick: () => { detailId = past.id; show('match-detail'); },
   }, [
     el('div', { class: 'row-main' }, [
-      el('strong', { text: `${game.name} · ${winner.player.name} gagne` }),
+      el('strong', {
+        text: `${game.name} · ${nomsEt(tetes)}${tetes.length > 1 ? ' à égalité' : ' gagne'}`,
+      }),
       el('span', {
         class: 'muted small',
         text: `${formatDate(past.updatedAt)} · ${board.map((r) => `${r.player.name} ${r.total}`).join(' · ')}`,
@@ -1579,7 +1676,9 @@ function renderMatchDetail() {
   const board = standings(past, game);
   const label = game.roundLabel ?? 'Manche';
 
-  $('#detail-title').textContent = `${game.name} — ${board[0].player.name} gagne`;
+  const tetes = board.filter((e) => e.rank === 1);
+  $('#detail-title').textContent =
+    `${game.name} — ${nomsEt(tetes)}${tetes.length > 1 ? ' à égalité' : ' gagne'}`;
   $('#detail-sub').textContent =
     `${formatDate(past.updatedAt)} · ${roundsLabel(game, past.rounds.length)} · `
     + (endModeOf(past, game).id === 'rounds' ? `partie en ${roundsLabel(game, past.target)}` : `objectif ${past.target} points`)

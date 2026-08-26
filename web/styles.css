@@ -419,6 +419,27 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 }
 .banner-actions .btn { flex: 1; }
 
+/* Départage : la question du livret, posée le jour où l'égalité survient. */
+.tie-ask { display: grid; gap: 6px; }
+.tie-label { margin-top: 6px; font-weight: 600; }
+.tie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.tie-field { display: grid; gap: 4px; font-size: 14px; }
+.tie-field input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 17px;
+  text-align: center;
+}
+
 /* --- Saisie de manche --------------------------------------------------- */
 
 .round-panel {

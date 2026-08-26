@@ -41,6 +41,12 @@ export default {
   lowestWins: false,
   roundTotal: null,
   supportsTokens: false,
+  // Règlement officiel de la Fédération Française de Belote, art. 10.4.2 :
+  // « Si les deux camps dépassent les points fixés au même moment, c'est celui
+  // qui a le plus de points au-delà qui remporte la partie. En cas d'égalité,
+  // une nouvelle donne est jouée jusqu'à ce que l'égalité soit rompue. »
+  tieNote: 'Règlement FFB : à égalité, on joue une nouvelle donne jusqu’à ce que l’égalité soit rompue.',
+
   endMode: 'target',
   defaultTarget: 1000,
   targetChoices: [500, 1000, 1500, 2000],
