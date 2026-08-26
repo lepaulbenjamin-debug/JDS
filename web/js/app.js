@@ -333,10 +333,19 @@ function endModesOf(game) {
   }];
 }
 
-/** La fin de partie retenue pour une partie donnée. */
+/**
+ * La fin de partie retenue pour une partie donnée.
+ *
+ * Les parties d'avant ce réglage n'ont pas de `endMode` : elles s'arrêtaient au
+ * score, comme `isOver` le suppose déjà. Il faut retomber là-dessus et non sur
+ * le premier mode du jeu, sans quoi une vieille partie de Papayoo en 250 points
+ * se relirait « partie en 250 manches » le jour où le jeu propose les manches
+ * en premier.
+ */
 function endModeOf(match, game) {
   const modes = endModesOf(game);
-  return modes.find((m) => m.id === (match.endMode ?? game.endMode)) ?? modes[0];
+  const id = match.endMode ?? game.endMode ?? 'score';
+  return modes.find((m) => m.id === id) ?? modes[0];
 }
 
 /** Options de partie et condition de fin, communes aux deux modes de saisie. */
@@ -396,6 +405,13 @@ function renderSetupTail(game) {
       }, parDonnes ? roundsLabel(game, value) : `${value} pts`),
     );
   }
+
+  // D'où vient cette façon de finir. Certaines sont dans le livret, d'autres
+  // sont des usages de table : l'appli propose les deux, mais ne les présente
+  // pas comme équivalentes.
+  const note = $('#end-mode-note');
+  note.textContent = mode.note ?? '';
+  note.hidden = !mode.note;
 }
 
 

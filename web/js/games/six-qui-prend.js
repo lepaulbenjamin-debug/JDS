@@ -44,6 +44,26 @@ export default {
   supportsTokens: false,
   defaultTarget: 66,
   targetChoices: [66, 100, 150],
+  // Le livret prévoit les deux : « On joue plusieurs manches jusqu'à ce que
+  // l'un des joueurs ait réuni en tout plus de 66 têtes de bœuf. […] Avant le
+  // début du jeu, il est bien sûr possible de convenir d'un autre total de
+  // points ou d'un nombre de manches maximum. »
+  endModes: [
+    {
+      id: 'score',
+      label: 'Au score',
+      hint: "La partie s'arrête dès qu'un joueur atteint :",
+      choices: [66, 100, 150],
+      defaut: 66,
+    },
+    {
+      id: 'rounds',
+      label: 'En manches',
+      hint: 'La partie dure :',
+      choices: [3, 5, 8, 10],
+      defaut: 5,
+    },
+  ],
 
   // Les cinq valeurs possibles d'une carte : on compte les tas en tapotant.
   quickAdd: [

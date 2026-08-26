@@ -37,6 +37,28 @@ export default {
   supportsTokens: false,
   defaultTarget: 100,
   targetChoices: [100, 150, 200],
+  // Le livret Magilano ne connaît qu'une fin : « Le jeu se termine dès qu'un
+  // joueur atteint 100 points ou plus. » Les autres valeurs, comme la partie
+  // en un nombre de manches convenu, sont des usages de table : l'appli les
+  // propose parce qu'on joue comme ça, et le dit plutôt que de les faire
+  // passer pour la règle.
+  endModes: [
+    {
+      id: 'score',
+      label: 'Au score',
+      hint: "La partie s'arrête dès qu'un joueur atteint :",
+      choices: [100, 150, 200],
+      defaut: 100,
+    },
+    {
+      id: 'rounds',
+      label: 'En manches',
+      hint: 'La partie dure :',
+      choices: [3, 5, 8, 10],
+      defaut: 5,
+      note: 'Le livret fixe la fin à 100 points ; jouer un nombre de manches convenu est un usage de table.',
+    },
+  ],
 
   /** Informations demandées avant de valider une manche. */
   extras: [

@@ -41,23 +41,26 @@ export default {
   roundTotal: 250,
   defaultTarget: 250,
   targetChoices: [150, 200, 250, 300, 500],
-  // Deux façons de finir, également répandues : on joue jusqu'à ce que
-  // quelqu'un craque, ou on convient d'un nombre de manches pour tenir
-  // dans le temps qu'on a.
+  // Le livret Gigamic ne connaît qu'une façon de finir : « Les joueurs fixent
+  // en début de partie le nombre de manches qu'ils souhaitent jouer (4 manches
+  // durent environ 30 minutes). » C'est donc elle qui est proposée d'abord.
+  // S'arrêter à un score est un usage de table, très répandu mais absent du
+  // livret : l'appli le propose, et le dit.
   endModes: [
+    {
+      id: 'rounds',
+      label: 'En manches',
+      hint: 'La partie dure :',
+      choices: [3, 4, 5, 8, 10],
+      defaut: 4,
+    },
     {
       id: 'score',
       label: 'Au score',
       hint: "La partie s'arrête dès qu'un joueur atteint :",
       choices: [150, 200, 250, 300, 500],
       defaut: 250,
-    },
-    {
-      id: 'rounds',
-      label: 'En manches',
-      hint: 'La partie dure :',
-      choices: [3, 5, 8, 10],
-      defaut: 5,
+      note: 'Le livret fait fixer un nombre de manches ; s’arrêter à un score est un usage de table.',
     },
   ],
   allowsNegative: false,

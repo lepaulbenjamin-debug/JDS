@@ -248,7 +248,7 @@ Le moteur s'adapte au jeu par des champs optionnels :
 | `finalize(raw, extras, players)` | applique les règles de fin de manche, renvoie `{ scores, notes }` — les points saisis sont conservés à part, donc rouvrir une manche ne rejoue pas l'effet |
 | `vision` | contexte de règles et mode « cartes » pour la lecture par IA ; `vision.cards.mapValue` convertit ce que l'IA lit sur la carte en points |
 | `endMode: 'rounds'` | la partie s'arrête après N donnes au lieu d'un score cible ; `targetChoices` est alors un nombre de donnes |
-| `endModes` | plusieurs façons de finir, au choix de la table avant de commencer : `[{ id: 'score'|'rounds', label, hint, choices, defaut }]`. Au Papayoo, on joue jusqu'à ce que quelqu'un craque, ou en un nombre de manches convenu. Le choix est retenu dans la partie, pas dans le jeu : les parties déjà jouées gardent le leur |
+| `endModes` | plusieurs façons de finir, au choix de la table avant de commencer : `[{ id: 'score'|'rounds', label, hint, choices, defaut, note }]`. Le **premier** mode est celui que le livret prescrit, et c'est lui le réglage par défaut ; `note` dit d'où vient un mode que le livret ne prévoit pas. Le choix est retenu dans la partie, pas dans le jeu : les parties déjà jouées gardent le leur, et celles d'avant ce réglage sont relues comme des parties au score |
 | Prolonger la partie | quand la fin est une convention de table — c'est-à-dire dès que `choices` propose plusieurs valeurs —, le bandeau de fin offre de continuer au lieu d'archiver. Rien à déclarer dans le jeu : un seul choix possible (les 50 points du Mölkky) vaut règle, et la proposition n'apparaît pas |
 | `lowestWins: false` | le plus grand total gagne (Tarot) |
 | `entry: 'form'` + `form(playerCount, players, rounds, form, options)` | la manche est décrite par un formulaire (`player`, `choice`, `number`, `players`) et non par un score par joueur ; `finalize` calcule alors tous les scores, et `raw` conserve le formulaire pour permettre la correction. Le 4e argument est la saisie en cours (au Barbu, les champs dépendent du contrat choisi) et le 5e les variantes de la partie (aux Aventuriers du Rail, l'édition décide des colonnes) |
@@ -294,6 +294,18 @@ préférant une voix locale. Si le navigateur n'a pas l'API, les commandes audio
 disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
+
+## Quand la partie s'arrête, livret par livret
+
+Même principe que pour le départage : ce que dit le livret est proposé en
+premier, et ce qui n'y est pas est signalé comme un usage de table.
+
+| Jeu | Fin de partie |
+| --- | --- |
+| **Papayoo** | « Les joueurs fixent en début de partie le nombre de manches qu'ils souhaitent jouer (4 manches durent environ 30 minutes). » C'est donc **En manches, 4** par défaut ; s'arrêter à un score est un usage de table, et l'appli le dit |
+| **6 qui prend !** | plus de 66 têtes de bœuf, et le livret ajoute : « il est bien sûr possible de convenir d'un autre total de points ou d'un nombre de manches maximum ». Les deux modes sont donc au livret |
+| **Skyjo** | « Le jeu se termine dès qu'un joueur atteint 100 points ou plus », et rien d'autre. Le mode en manches est proposé parce qu'on joue comme ça, avec la mention qui va avec |
+| **Belote** | le règlement FFB prévoit les deux (art. 10.4.1 et 10.4.2) ; seule la limite de points est implémentée |
 
 ## Le départage des ex æquo, livret par livret
 
