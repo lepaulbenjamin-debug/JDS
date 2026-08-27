@@ -95,7 +95,9 @@ export function ordinalEnLettres(n, feminin) {
   if (n === 1) return feminin ? 'première' : 'premier';
   const base = entierEnLettres(n);
   return `${base
-    .replace(/s$/, '')          // quatre-vingts → quatre-vingtième, cents → centième
+    // Seuls « vingts » et « cents » perdent leur s : « trois » garde le sien,
+    // sans quoi troisième devenait « troiième ».
+    .replace(/(vingt|cent)s$/, '$1')
     .replace(/e$/, '')          // quatre → quatr, onze → onz, trente → trent
     .replace(/q$/, 'qu')        // cinq → cinqu
     .replace(/f$/, 'v')}ième`;  // neuf → neuv

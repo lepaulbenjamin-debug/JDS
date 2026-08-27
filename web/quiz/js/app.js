@@ -16,7 +16,8 @@ import {
 } from './questions.js';
 import * as packs from './packs.js';
 import {
-  PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip, dureeDeLaReplique,
+  PERSONAS, voix, sons, paroleDe, annonceDeManche, clipsDAnnonce, chargerLesClips,
+  dureeDuClip, dureeDeLaReplique,
 } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
@@ -206,6 +207,12 @@ function appliquer(nouvel) {
   etat = nouvel;
 
   if (phaseAvant !== etat.phase || mancheAvant !== etat.manche) {
+    // L'ouverture est le seul moment calme de la partie : on en profite pour
+    // charger toutes les annonces d'un coup. Elles sont courtes, et les avoir
+    // sous la main évite que la seconde moitié de l'annonce n'arrive après le
+    // top — la fenêtre de jokers ne laisse pas de marge pour un aller-retour.
+    if (etat.phase === 'intro') voix.precharger(clipsDAnnonce(etat.persona));
+
     // Nouvelle manche : l'écho local d'une réponse précédente n'a plus cours.
     if (etat.phase === 'manche') {
       monChoix = null;
@@ -254,8 +261,10 @@ function parler() {
     }
     if (qid) clips.push(`reponse/${qid}`, `note/${qid}`);
   } else if (etat.annonceCle) {
-    const mot = paroleDe(etat.persona, etat.annonceCle);
-    if (mot) clips.push(mot.id);
+    // L'annonce de manche dit son numéro puis une formule : deux clips, et
+    // c'est `annonceDeManche` qui sait lesquels. Les autres annonces (ouverture,
+    // podium) n'en ont qu'un.
+    clips.push(...annonceDeManche(etat.persona, etat.annonceCle, etat.manche));
     repli.push(etat.annonce);
   }
 

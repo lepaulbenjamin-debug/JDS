@@ -13,7 +13,7 @@ import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
   PLAFOND_REVELATION_MS,
 } from '../web/quiz/js/engine.js';
-import { dureeDeLaReplique } from '../web/quiz/js/emcee.js';
+import { dureeDeLaReplique, annonceDeManche } from '../web/quiz/js/emcee.js';
 import {
   QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
@@ -1492,4 +1492,68 @@ test('une réplique se budgète sur sa variante la plus longue', () => {
   assert.equal(dureeDeLaReplique('classique', 'cleQuiNExistePas'), 0);
   assert.equal(dureeDeLaReplique('classique', undefined), 0,
     'une manche sans action marquante ne budgète rien');
+});
+
+/* --- L'annonce de manche -------------------------------------------------- */
+
+test('l’annonce dit le numéro de la manche, puis une formule', () => {
+  const annonce = annonceDeManche('classique', 'avantManche', 7);
+  assert.deepEqual(annonce[0], 'emcee/classique/manche/7', 'le numéro vient en premier');
+  assert.match(annonce[1] ?? '', /^emcee\/classique\/avantManche\/\d+$/);
+
+  // Les autres annonces n'ont pas de numéro : une seule réplique.
+  assert.equal(annonceDeManche('classique', 'podium', 3).length, 1);
+  assert.equal(annonceDeManche('classique', 'ouverture', 0).length, 1);
+
+  // Une manche hors du format le plus grand ne réclame pas un clip inexistant.
+  assert.equal(annonceDeManche('classique', 'avantManche', 99).length, 1);
+});
+
+test('chaque persona a de quoi ne pas se répéter sur douze manches', () => {
+  for (const persona of ['classique', 'chambreur', 'pincesansrire']) {
+    const variantes = new Set();
+    for (let i = 0; i < 400; i += 1) {
+      variantes.add(annonceDeManche(persona, 'avantManche', 1)[1]);
+    }
+    assert.ok(variantes.size >= 6,
+      `${persona} n’a que ${variantes.size} formules d’annonce`);
+  }
+});
+
+test('les ordinaux gardent le s de trois, six et dix', () => {
+  // « trois » perdait son s avec la règle de quatre-vingts : « troiième ».
+  assert.equal(ordinalEnLettres(3), 'troisième');
+  assert.equal(ordinalEnLettres(6), 'sixième');
+  assert.equal(ordinalEnLettres(10), 'dixième');
+  assert.equal(ordinalEnLettres(80), 'quatre-vingtième');
+  assert.equal(ordinalEnLettres(200), 'deux centième');
+});
+
+test('l’annonce tient dans la fenêtre de jokers', async () => {
+  // L'énoncé part au top et n'attend personne : une annonce plus longue que la
+  // fenêtre se ferait couper par sa propre question.
+  const { readFileSync } = await import('node:fs');
+  let manifeste;
+  try {
+    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+  } catch {
+    return;                                  // clips non générés : rien à vérifier
+  }
+  const duree = (id) => manifeste.clips[id] ?? 0;
+  const maxSous = (prefixe) => {
+    const ids = Object.keys(manifeste.clips).filter((i) => i.startsWith(prefixe));
+    return ids.length ? Math.max(...ids.map(duree)) : 0;
+  };
+  // Le temps que met le lecteur à enchaîner deux clips, mesuré en pilotant une
+  // vraie partie. Le compter change tout : sans lui, l'annonce paraît tenir
+  // alors qu'elle se fait couper par son propre énoncé.
+  const ENCHAINEMENT_S = 1.4;
+  for (const persona of ['classique', 'chambreur', 'pincesansrire']) {
+    const numero = maxSous(`emcee/${persona}/manche/`);
+    const formule = maxSous(`emcee/${persona}/avantManche/`);
+    if (!numero || !formule) continue;       // clips pas encore régénérés
+    const pire = numero + ENCHAINEMENT_S + formule;
+    assert.ok(pire * 1000 <= DUREE_JOKERS_MS,
+      `${persona} : annonce de ${pire.toFixed(1)} s pour une fenêtre de ${DUREE_JOKERS_MS / 1000} s`);
+  }
 });

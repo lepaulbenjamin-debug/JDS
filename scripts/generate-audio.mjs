@@ -68,9 +68,15 @@ export function inventaire() {
   // Les chiffres partent en lettres au modèle, jamais à l'écran : c'est la
   // seule façon qu'il lise « 1665 marches » comme une quantité et non comme
   // une année. La banque, elle, continue d'écrire 1665.
-  return clips.map((clip) => (
-    clip.titres ? clip : { ...clip, texte: direLesNombres(clip.texte) }
-  ));
+  return clips.map((clip) => {
+    if (clip.titres) return clip;
+    // Une phrase qui commence par un nombre repart en minuscule une fois le
+    // nombre écrit en lettres (« 7ᵉ question » → « septième question »). Sans
+    // effet sur la prononciation, mais l'inventaire est ce qu'on relit pour
+    // vérifier ce qui part au modèle : autant qu'il se lise.
+    const texte = direLesNombres(clip.texte);
+    return { ...clip, texte: texte.charAt(0).toUpperCase() + texte.slice(1) };
+  });
 }
 
 /* --- Fournisseurs --------------------------------------------------------- */

@@ -257,8 +257,21 @@ const DIT = {
     filTrouve: ['Le fil rouge est tombé !'],
     filManque: ['Et personne n’a vu le fil rouge de la soirée.'],
     ouverture: ['Bonsoir à tous, et bienvenue. Dans un quart d’heure, il n’en restera qu’un.'],
-    avantManche: ['Question suivante.', 'On enchaîne.'],
-    derniereManche: ['Dernière manche, et elle vaut double. Tout peut encore basculer.'],
+    avantManche: [
+      'Concentration.',
+      'À vous de jouer.',
+      'On y va.',
+      'Attention.',
+      'Écoutez bien.',
+      'Silence dans la salle.',
+      'Prêts ? C’est parti.',
+      'Écoutez jusqu’au bout.',
+    ],
+    derniereManche: [
+      'Dernière manche, et elle vaut double. Tout peut encore basculer.',
+      'Voici la dernière question. Points doublés : accrochez-vous.',
+      'On y est. Dernière question, points doublés.',
+    ],
     mixTrouve: ['Voici tout ce que j’acceptais.'],
     mixPersonne: ['Aucun titre trouvé. Pourtant, regardez la liste.'],
     ttmcTrouve: ['Chacun avait sa question. Regardez vos écrans.'],
@@ -281,8 +294,21 @@ const DIT = {
     filTrouve: ['Et voilà, le fil rouge est démasqué. Les autres cherchent encore.'],
     filManque: ['Le fil rouge vous est passé sous le nez toute la soirée.'],
     ouverture: ['Bon. Statistiquement, il y en a au moins deux qui vont le regretter.'],
-    avantManche: ['Allez, on se réveille.', 'Celle-là, elle est cadeau. Enfin, normalement.'],
-    derniereManche: ['Dernière question, elle vaut double. C’est le moment de trahir vos amis.'],
+    avantManche: [
+      'Allez, on se réveille.',
+      'Celle-là est cadeau. Normalement.',
+      'Lisez jusqu’au bout, cette fois.',
+      'On va voir qui suit vraiment.',
+      'Bon courage. Il en faudra.',
+      'Celle-ci va faire des dégâts.',
+      'Concentrez-vous. Ça changerait.',
+      'Pas de panique. Enfin, un peu.',
+    ],
+    derniereManche: [
+      'Dernière question, elle vaut double. C’est le moment de trahir vos amis.',
+      'Dernière manche, points doublés. Tout se joue là, et vous le savez.',
+      'La dernière. Elle vaut double. Aucune excuse après ça.',
+    ],
     mixTrouve: ['Et maintenant, la liste de tout ce que vous avez raté.'],
     mixPersonne: ['Rien. Le vide. Et il y avait toute cette liste.'],
     ttmcTrouve: ['Quelques rescapés. Les autres, vous vous connaissez mal.'],
@@ -305,8 +331,21 @@ const DIT = {
     filTrouve: ['Le fil rouge a été trouvé. Il fallait bien quelqu’un.'],
     filManque: ['Le fil rouge n’a été trouvé par personne. Dommage.'],
     ouverture: ['Bonsoir. Nous verrons bien.'],
-    avantManche: ['Question suivante.', 'Prenez votre temps. Enfin, non.'],
-    derniereManche: ['Dernière manche, points doublés. Rien n’est joué, hélas.'],
+    avantManche: [
+      'Prenez votre temps. Enfin, non.',
+      'Nous verrons bien.',
+      'Je vous écoute.',
+      'Si vous voulez bien.',
+      'Un effort, peut-être.',
+      'Voyons cela.',
+      'Rien d’insurmontable. En principe.',
+      'Bonne chance. Vous en aurez besoin.',
+    ],
+    derniereManche: [
+      'Dernière manche, points doublés. Rien n’est joué, hélas.',
+      'La dernière. Points doublés. Faites au mieux.',
+      'Dernière question. Elle vaut double, ce qui ne changera peut-être rien.',
+    ],
     mixTrouve: ['La liste complète suit.'],
     mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
     ttmcTrouve: ['Autant de questions que de joueurs. Les corrections sont à l’écran.'],
@@ -323,6 +362,67 @@ const DIT = {
     podium: ['Voilà. Le classement final est à l’écran. Merci d’être venus.'],
   },
 };
+
+/**
+ * Le numéro de la manche, dit à voix haute.
+ *
+ * L'annonce ne disait jamais où l'on en était : elle tournait sur deux formules
+ * générales, et au bout de douze manches on les connaissait par cœur. Un clip
+ * par numéro règle les deux problèmes d'un coup — on sait où on en est, et
+ * l'annonce change à chaque fois.
+ *
+ * Le chiffre s'écrit en chiffres : `scripts/generate-audio.mjs` le passe en
+ * lettres avant de l'envoyer au modèle. Le total, lui, reste à l'écran, comme
+ * les prénoms et les points — un clip par couple (manche, total) ferait quatre
+ * cents fichiers pour dire ce qu'un bandeau affiche déjà.
+ */
+const MANCHES_MAX = 20;                        // le plus grand format proposé aux réglages
+
+// L'ordinal, et non le cardinal : un animateur dit « septième question », pas
+// « question sept » — et surtout pas « question un » pour ouvrir. Le féminin du
+// premier compte (« première question »), les suivants sont invariables.
+const numeroDeManche = (persona, n) => ({
+  id: `emcee/${persona}/manche/${n}`,
+  texte: `${n}${n === 1 ? 'ʳᵉ' : 'ᵉ'} question.`,
+});
+
+/**
+ * Ce que l'animateur enchaîne pour lancer une manche : le numéro, puis une
+ * formule tirée au sort. Les deux clips bout à bout tiennent largement dans la
+ * fenêtre de jokers — c'est elle qui borne l'annonce, puisque l'énoncé part au
+ * top et n'attend pas.
+ */
+export function annonceDeManche(persona, cle, numero) {
+  if (cle !== 'avantManche') {
+    const seul = paroleDe(persona, cle);
+    return seul ? [seul.id] : [];
+  }
+  const nom = DIT[persona] ? persona : 'classique';
+  const clips = [];
+  if (Number.isInteger(numero) && numero >= 1 && numero <= MANCHES_MAX) {
+    clips.push(numeroDeManche(nom, numero).id);
+  }
+  const fioriture = paroleDe(persona, 'avantManche');
+  if (fioriture) clips.push(fioriture.id);
+  return clips;
+}
+
+/**
+ * Tous les clips d'annonce d'un personnage, à mettre en cache au lancement.
+ *
+ * L'annonce tient en deux clips, et charger le second prenait plus d'une
+ * seconde : à trois secondes de formule, l'annonce du chambreur débordait de la
+ * fenêtre de jokers et se faisait couper par son propre énoncé. Ils sont courts
+ * et connus dès le début de la partie — autant les avoir sous la main.
+ */
+export function clipsDAnnonce(persona) {
+  const nom = DIT[persona] ? persona : 'classique';
+  const ids = [];
+  for (let n = 1; n <= MANCHES_MAX; n += 1) ids.push(`emcee/${nom}/manche/${n}`);
+  DIT[nom].avantManche.forEach((_, i) => ids.push(`emcee/${nom}/avantManche/${i}`));
+  DIT[nom].derniereManche.forEach((_, i) => ids.push(`emcee/${nom}/derniereManche/${i}`));
+  return ids;
+}
 
 /**
  * L'identifiant du clip à jouer pour une réplique, tiré au sort parmi les
@@ -362,6 +462,8 @@ export function inventaireDesParoles() {
         clips.push({ id: `emcee/${persona}/${cle}/${index}`, texte });
       });
     }
+    // Un clip par numéro de manche, jusqu'au plus grand format proposé.
+    for (let n = 1; n <= MANCHES_MAX; n += 1) clips.push(numeroDeManche(persona, n));
   }
   return clips;
 }
