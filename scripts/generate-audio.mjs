@@ -107,27 +107,60 @@ function fournisseurBlanc() {
   };
 }
 
+/**
+ * La direction d'acteur, par animateur.
+ *
+ * Le modèle suit une consigne de jeu bien plus qu'il ne suit le nom de sa voix :
+ * les trois premières voix essayées ont été jugées plates, et c'est la consigne
+ * qui l'était — elle demandait « chaleureux et posé ». Elles ont repris vie avec
+ * celle-ci. C'est aussi ce qui donne enfin une VOIX propre à chaque animateur :
+ * jusqu'ici ils ne différaient que par leur texte écrit.
+ */
+const DIRECTIONS = {
+  defaut: 'Tu animes un quiz de soirée entre amis, et tu es ravi d’être là. '
+    + 'Énergie haute, sourire audible, débit vif et rebondissant. Tu marques les '
+    + 'ponctuations, tu relances en fin de phrase pour tenir l’attention. '
+    + 'Surtout, jamais monocorde : c’est une fête, pas un journal télévisé.',
+
+  chambreur: 'Tu chambres la table, avec le sourire. Ton railleur et complice, '
+    + 'tu marques un court silence avant la pique puis tu la lâches sans forcer, '
+    + 'l’air de rien. Jamais méchant : c’est de la taquinerie entre amis, pas du mépris.',
+
+  pincesansrire: 'Tu animes avec un flegme absolu. Débit lent et posé, aucune '
+    + 'emphase, comme si rien ne pouvait te surprendre. C’est le décalage entre '
+    + 'ton calme et l’agitation de la table qui fait l’effet.',
+};
+
+/** Les clips d'un animateur portent son nom : `emcee/<persona>/<clé>/<n>`. */
+function directionDe(id) {
+  const persona = id.startsWith('emcee/') ? id.split('/')[1] : null;
+  return DIRECTIONS[persona] ?? DIRECTIONS.defaut;
+}
+
 function fournisseurOpenAI(voixDemandee) {
   const cle = process.env.OPENAI_API_KEY;
   if (!cle) {
     throw new Error('OPENAI_API_KEY n’est pas définie (ou passez --blanc pour un essai).');
   }
-  const voix = voixDemandee ?? 'onyx';
+  const voix = voixDemandee ?? 'coral';
+  const modele = process.env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts';
 
   return {
     nom: `OpenAI TTS — ${voix}`,
     extension: 'mp3',
-    async rendre(texte) {
+    // Entre dans l'empreinte : changer de voix, de modèle ou de direction doit
+    // tout refaire, sans quoi la banque finirait à deux voix.
+    signature: (id) => `${modele}|${voix}|${directionDe(id)}`,
+    async rendre(texte, id) {
       const res = await fetch('https://api.openai.com/v1/audio/speech', {
         method: 'POST',
         headers: { authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
         body: JSON.stringify({
-          model: process.env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts',
+          model: modele,
           voice: voix,
           input: texte,
           response_format: 'mp3',
-          instructions: 'Tu es l’animateur d’un quiz de soirée entre amis, en français. '
-            + 'Ton chaleureux et vif, débit soutenu, sans emphase excessive.',
+          instructions: directionDe(id),
         }),
       });
       if (!res.ok) {
@@ -151,7 +184,10 @@ function fournisseurOpenAI(voixDemandee) {
  * temps. C'est le genre de bug qu'on ne voit pas en développant avec des clips
  * muets, et qu'on découvre en soirée.
  */
-const empreinteDe = (texte) => createHash('sha1').update(texte).digest('hex').slice(0, 12);
+const empreinteDe = (fournisseur, clip) => createHash('sha1')
+  .update(`${fournisseur.signature?.(clip.id) ?? fournisseur.nom}\u0000${clip.texte}`)
+  .digest('hex')
+  .slice(0, 12);
 
 /** Le manifeste précédent, s'il y en a un : c'est lui qui porte les empreintes. */
 async function manifestePrecedent() {
@@ -162,15 +198,22 @@ async function manifestePrecedent() {
   }
 }
 
-/** Ne pas refaire ce qui existe déjà, et seulement si le texte n'a pas bougé. */
-async function dejaFait(chemin, id, texte, anciennesEmpreintes) {
+/**
+ * Ne pas refaire ce qui existe déjà — à condition que RIEN n'ait bougé.
+ *
+ * L'empreinte ne couvrait que le texte, ce qui suffisait tant qu'on ne changeait
+ * pas de voix. Passer de coral à sage aurait laissé les six cents clips en
+ * place : une banque à deux voix, exactement ce que la pré-génération devait
+ * empêcher. La voix, le modèle et la direction en font donc partie.
+ */
+async function dejaFait(chemin, clip, fournisseur, anciennesEmpreintes) {
   try {
     await readFile(chemin);
   } catch {
     return false;
   }
   // Un manifeste d'avant les empreintes ne peut rien affirmer : on refait.
-  return anciennesEmpreintes?.[id] === empreinteDe(texte);
+  return anciennesEmpreintes?.[clip.id] === empreinteDe(fournisseur, clip);
 }
 
 async function main() {
@@ -197,9 +240,9 @@ async function main() {
   for (const [index, clip] of clips.entries()) {
     const chemin = join(RACINE, `${clip.id}.${fournisseur.extension}`);
     await mkdir(dirname(chemin), { recursive: true });
-    manifeste.empreintes[clip.id] = empreinteDe(clip.texte);
+    manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
 
-    if (!tout && await dejaFait(chemin, clip.id, clip.texte, ancien?.empreintes)) {
+    if (!tout && await dejaFait(chemin, clip, fournisseur, ancien?.empreintes)) {
       manifeste.clips[clip.id] = ancien?.clips?.[clip.id]
         ?? Number(Math.max(1, clip.texte.length / 14).toFixed(2));
       reutilises += 1;
@@ -208,7 +251,7 @@ async function main() {
     // Un clip déjà là mais dont le texte a bougé : c'est une reformulation.
     if (ancien?.clips?.[clip.id] !== undefined) refaits += 1;
 
-    const { donnees, secondes } = await fournisseur.rendre(clip.texte);
+    const { donnees, secondes } = await fournisseur.rendre(clip.texte, clip.id);
     await writeFile(chemin, donnees);
     manifeste.clips[clip.id] = secondes;
     produits += 1;
