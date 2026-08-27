@@ -1215,9 +1215,9 @@ export const QUESTIONS = [
         note: 'Gregory House. Le personnage est calqué sur Sherlock Holmes : même adresse au 221B, même addiction, même ami médecin.',
       },
       {
-        texte: 'Quel acteur a refusé son Oscar pour « Le Parrain » ?',
-        reponses: ['Marlon Brando', 'Al Pacino', 'Dustin Hoffman', 'Paul Newman'], bonne: 0,
-        note: 'Il a envoyé une militante amérindienne le refuser à sa place, en direct, pour protester contre la façon dont Hollywood dépeignait les Amérindiens.',
+        texte: 'Quelle actrice détient le record d’Oscars d’interprétation ?',
+        reponses: ['Katharine Hepburn', 'Meryl Streep', 'Ingrid Bergman', 'Bette Davis'], bonne: 0,
+        note: 'Quatre statuettes, et elle n’est venue en chercher aucune. Meryl Streep, avec bien plus de nominations, en compte trois.',
       },
       {
         texte: 'Quel film de Stanley Kubrick est sorti après sa mort ?',
@@ -1267,9 +1267,9 @@ export const QUESTIONS = [
         note: 'Le Danube arrose quatre capitales, plus que n’importe quel autre fleuve au monde — Bratislava est la quatrième.',
       },
       {
-        texte: 'Quelle est la capitale de l’Australie ?',
-        reponses: ['Canberra', 'Sydney', 'Melbourne', 'Brisbane'], bonne: 0,
-        note: 'Bâtie de toutes pièces entre Sydney et Melbourne, précisément parce qu’aucune des deux ne voulait céder à l’autre.',
+        texte: 'Quelle est la capitale de la Turquie ?',
+        reponses: ['Ankara', 'Istanbul', 'Izmir', 'Antalya'], bonne: 0,
+        note: 'Ankara, choisie par Atatürk en 1923 précisément pour tourner la page d’Istanbul et de l’Empire ottoman.',
       },
       {
         texte: 'Quel pays a pour capitale Astana ?',
@@ -1282,9 +1282,9 @@ export const QUESTIONS = [
         note: 'Quatre-vingts kilomètres d’eau, et deux îles au milieu : l’une américaine, l’autre russe, séparées de quatre kilomètres et d’une journée entière de décalage horaire.',
       },
       {
-        texte: 'Quelle est la seule ville au monde située sur deux continents ?',
-        reponses: ['Istanbul', 'Le Caire', 'Suez', 'Bakou'], bonne: 0,
-        note: 'Le Bosphore la coupe en deux. On y prend un ferry pour aller travailler d’Europe en Asie.',
+        texte: 'Quelle capitale se trouve à la plus haute altitude ?',
+        reponses: ['La Paz', 'Quito', 'Bogota', 'Katmandou'], bonne: 0,
+        note: 'Plus de 3 600 mètres — même si, constitutionnellement, la capitale de la Bolivie est Sucre : La Paz n’en est que le siège du gouvernement.',
       },
       {
         texte: 'Quel est le pays le plus densément peuplé du monde ?',
@@ -1347,6 +1347,198 @@ export const QUESTIONS = [
         texte: 'Quel compositeur a écrit l’opéra « Le Vaisseau fantôme » ?',
         reponses: ['Richard Wagner', 'Giuseppe Verdi', 'Giacomo Puccini', 'Richard Strauss'], bonne: 0,
         note: 'Wagner en 1843, inspiré d’une traversée où son bateau a manqué sombrer. La légende du navire condamné à errer, il l’a vécue de près.',
+      },
+    ],
+  },
+
+  {
+    id: 'ttm-04', theme: 'bouffe', type: 'ttmc',
+    texte: 'Bouffe — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'De quel animal vient le jambon de Parme ?',
+        reponses: ['Le porc', 'Le bœuf', 'Le mouton', 'Le veau'], bonne: 0,
+        note: 'Du porc, et de deux ingrédients seulement : la viande et le sel. Tout le reste est une affaire de temps et d’air.',
+      },
+      {
+        texte: 'Quel légume donne sa couleur au gaspacho ?',
+        reponses: ['La tomate', 'Le concombre', 'Le poivron', 'L’oignon'], bonne: 0,
+        note: 'La tomate — qui n’y était pourtant pas à l’origine : le gaspacho andalou était une soupe de pain, d’ail et d’huile, avant que l’Amérique n’envoie ses tomates.',
+      },
+      {
+        texte: 'Que veut dire « al dente » ?',
+        reponses: ['À la dent', 'Bien cuit', 'Sans sel', 'Au four'], bonne: 0,
+        note: 'Littéralement « à la dent » : la pâte doit résister sous la dent. Une bonne minute de cuisson sépare l’Italie de la France sur ce point.',
+      },
+      {
+        texte: 'Quel est l’ingrédient principal du houmous ?',
+        reponses: ['Le pois chiche', 'La fève', 'La lentille', 'Le haricot blanc'], bonne: 0,
+        note: 'Pois chiche, tahini, citron, ail. « Houmous » veut d’ailleurs dire « pois chiche » en arabe.',
+      },
+      {
+        texte: 'Qu’est-ce qui distingue un sorbet d’une glace ?',
+        reponses: [
+          'Le sorbet ne contient aucun produit laitier',
+          'Le sorbet contient plus de sucre',
+          'Le sorbet est servi plus froid',
+          'Le sorbet est fouetté plus longtemps',
+        ], bonne: 0,
+        note: 'Un sorbet, c’est de l’eau, du sucre et des fruits. Dès qu’il y a du lait ou de la crème, c’est une glace.',
+      },
+      {
+        texte: 'Quel champignon est le plus cher du monde ?',
+        reponses: ['La truffe blanche d’Alba', 'La truffe noire du Périgord', 'Le matsutake', 'La morille'], bonne: 0,
+        note: 'La truffe blanche du Piémont. On ne sait toujours pas la cultiver : il faut la trouver, et c’est tout le problème.',
+      },
+      {
+        texte: 'Quel pays a fait inscrire la culture du bortsch au patrimoine de l’UNESCO ?',
+        reponses: ['L’Ukraine', 'La Russie', 'La Pologne', 'La Roumanie'], bonne: 0,
+        note: 'En 2022, en procédure d’urgence. La paternité du plat reste un sujet brûlant dans toute la région.',
+      },
+      {
+        texte: 'Quelle réaction chimique fait brunir une viande à la poêle ?',
+        reponses: ['La réaction de Maillard', 'La caramélisation', 'L’oxydation', 'La fermentation'], bonne: 0,
+        note: 'Décrite par un médecin français en 1912. C’est elle qui donne l’odeur du pain grillé, du café torréfié et de la croûte d’un rôti.',
+      },
+      {
+        texte: 'Que mesure le degré Brix, en œnologie ?',
+        reponses: ['Le taux de sucre', 'Le taux d’alcool', 'L’acidité', 'La teneur en tanins'], bonne: 0,
+        note: 'Le sucre d’un moût — donc le degré d’alcool que le vin atteindra. C’est ce chiffre qui décide de la date des vendanges.',
+      },
+      {
+        texte: 'D’où vient le mot « restaurant » ?',
+        reponses: [
+          'D’un bouillon censé restaurer les forces',
+          'D’un lieu de repos pour les voyageurs',
+          'Du nom d’un cuisinier parisien',
+          'D’un mot venu de l’italien',
+        ], bonne: 0,
+        note: 'Au XVIIIᵉ siècle, un « restaurant » était un bouillon de viande qu’on prenait pour se remettre d’aplomb. Les maisons qui en servaient ont fini par porter le nom du plat.',
+      },
+    ],
+  },
+  {
+    id: 'ttm-05', theme: 'sport', type: 'ttmc',
+    texte: 'Sport — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'Combien de joueurs une équipe de football aligne-t-elle sur le terrain ?',
+        reponses: ['11', '10', '12', '9'], bonne: 0,
+        note: 'Onze, gardien compris, depuis les règles anglaises de 1863 — qui interdisaient encore de jouer à la main.',
+      },
+      {
+        texte: 'Sur quelle surface se pratique le judo ?',
+        reponses: ['Un tatami', 'Un ring', 'Une piste', 'Un praticable'], bonne: 0,
+        note: 'Le tatami, natte de paille de riz à l’origine, partagé avec l’aïkido et le karaté.',
+      },
+      {
+        texte: 'Tous les combien de temps les Jeux olympiques d’été ont-ils lieu ?',
+        reponses: ['Tous les 4 ans', 'Tous les 2 ans', 'Tous les 3 ans', 'Tous les 5 ans'], bonne: 0,
+        note: 'Quatre ans : c’est l’olympiade, l’unité de temps des Grecs anciens. Les Jeux d’hiver s’intercalent au milieu depuis 1994.',
+      },
+      {
+        texte: 'Dans quel sport fait-on tomber toutes les quilles d’un seul lancer ?',
+        reponses: ['Le bowling', 'La pétanque', 'Le curling', 'Le mölkky'], bonne: 0,
+        note: 'C’est le strike. Douze d’affilée font une partie parfaite, à trois cents points.',
+      },
+      {
+        texte: 'Combien de points vaut un drop au rugby à XV ?',
+        reponses: ['3', '2', '5', '1'], bonne: 0,
+        note: 'Trois, comme une pénalité. Il faut que le ballon touche le sol avant d’être frappé, ce qui explique qu’on en voie si peu.',
+      },
+      {
+        texte: 'En quelle année ont eu lieu les premiers Jeux olympiques modernes ?',
+        reponses: ['1896', '1900', '1888', '1912'], bonne: 0,
+        note: 'Athènes, 1896, à l’initiative de Pierre de Coubertin. Quatorze pays, deux cent quarante athlètes, et pas une seule femme.',
+      },
+      {
+        texte: 'Quelles sont les trois armes de l’escrime ?',
+        reponses: [
+          'Fleuret, épée, sabre',
+          'Fleuret, épée, rapière',
+          'Épée, sabre, rapière',
+          'Fleuret, sabre, dague',
+        ], bonne: 0,
+        note: 'Trois armes, trois règles : la surface valable et la priorité changent de l’une à l’autre, ce qui en fait presque trois sports.',
+      },
+      {
+        texte: 'Combien de joueurs une équipe de water-polo aligne-t-elle dans l’eau ?',
+        reponses: ['7', '6', '8', '5'], bonne: 0,
+        note: 'Sept, gardien compris. Ils n’ont pas le droit de toucher le fond — et le bassin fait au moins deux mètres de profondeur pour les en empêcher.',
+      },
+      {
+        texte: 'Quel trophée est remis au champion de NBA ?',
+        reponses: [
+          'Le Larry O’Brien Trophy',
+          'Le Vince Lombardi Trophy',
+          'La Coupe Stanley',
+          'Le Commissioner’s Trophy',
+        ], bonne: 0,
+        note: 'Chaque ligue nord-américaine a le sien : la Coupe Stanley au hockey, le Vince Lombardi au football américain, le Commissioner’s au baseball.',
+      },
+      {
+        texte: 'Qui a remporté le tout premier Tour de France ?',
+        reponses: ['Maurice Garin', 'Lucien Petit-Breton', 'Octave Lapize', 'Henri Desgrange'], bonne: 0,
+        note: 'Maurice Garin, en 1903. Henri Desgrange, lui, n’a jamais couru : c’est le patron du journal qui avait inventé la course pour vendre du papier.',
+      },
+    ],
+  },
+  {
+    id: 'ttm-06', theme: 'insolite', type: 'ttmc',
+    texte: 'Le vivant — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'Combien de pattes a une araignée ?',
+        reponses: ['8', '6', '10', '4'], bonne: 0,
+        note: 'Huit — c’est justement ce qui la distingue des insectes, qui en ont six. Une araignée n’est pas un insecte.',
+      },
+      {
+        texte: 'Quel est le plus grand animal de la planète ?',
+        reponses: ['La baleine bleue', 'L’éléphant d’Afrique', 'Le cachalot', 'Le requin-baleine'], bonne: 0,
+        note: 'Jusqu’à trente mètres. Sa langue pèse à elle seule le poids d’un éléphant.',
+      },
+      {
+        texte: 'Combien de temps dure la gestation d’une éléphante ?',
+        reponses: ['Environ 22 mois', 'Environ 12 mois', 'Environ 9 mois', 'Environ 6 mois'], bonne: 0,
+        note: 'Près de deux ans, la plus longue de tous les mammifères. Le petit naît debout en quelques minutes, et pèse déjà cent kilos.',
+      },
+      {
+        texte: 'Quel gaz les plantes absorbent-elles pour fabriquer leur matière ?',
+        reponses: ['Le dioxyde de carbone', 'L’oxygène', 'L’azote', 'L’hydrogène'], bonne: 0,
+        note: 'Un arbre est fait d’air, pour l’essentiel : le carbone de son bois vient du CO₂, pas du sol.',
+      },
+      {
+        texte: 'Quel est l’organe le plus lourd du corps humain ?',
+        reponses: ['La peau', 'Le foie', 'Le cerveau', 'Les poumons'], bonne: 0,
+        note: 'La peau, entre trois et cinq kilos. Le foie n’est que le plus lourd des organes internes.',
+      },
+      {
+        texte: 'Que mesure l’échelle de Scoville ?',
+        reponses: ['La force des piments', 'La dureté des minéraux', 'L’acidité d’un sol', 'La puissance d’un séisme'], bonne: 0,
+        note: 'À l’origine, on diluait le piment dans de l’eau sucrée jusqu’à ce qu’un jury ne sente plus rien. Le nombre de dilutions donnait la note.',
+      },
+      {
+        texte: 'Quel animal possède le plus gros cerveau ?',
+        reponses: ['Le cachalot', 'L’éléphant', 'La baleine bleue', 'L’homme'], bonne: 0,
+        note: 'Près de huit kilos, cinq fois le nôtre. Rapporté au poids du corps, le classement s’inverse complètement.',
+      },
+      {
+        texte: 'Combien de cavités compte le cœur d’un poisson ?',
+        reponses: ['2', '4', '3', '1'], bonne: 0,
+        note: 'Une oreillette, un ventricule. Le sang fait un seul circuit, là où le nôtre en fait deux — d’où nos quatre cavités.',
+      },
+      {
+        texte: 'Quel est le plus grand organisme vivant connu ?',
+        reponses: ['Un champignon', 'Un séquoia', 'Une baleine bleue', 'Un récif de corail'], bonne: 0,
+        note: 'Une armillaire de l’Oregon : son mycélium s’étend sous près de dix kilomètres carrés de forêt, et il aurait plus de deux mille ans.',
+      },
+      {
+        texte: 'Quel animal est capable de revenir à un stade juvénile pour recommencer sa vie ?',
+        reponses: ['Une méduse', 'Une étoile de mer', 'Un axolotl', 'Un homard'], bonne: 0,
+        note: 'Turritopsis dohrnii, dite « méduse immortelle » : en cas de blessure ou de faim, elle repasse au stade polype et repart de zéro.',
       },
     ],
   },

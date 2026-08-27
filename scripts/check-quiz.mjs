@@ -1033,10 +1033,19 @@ test('aucun énoncé n’est posé deux fois', () => {
   // disque rayé. Le tirage ne peut pas s'en rendre compte : ce sont deux
   // entrées distinctes, avec deux identifiants distincts.
   const vus = new Map();
-  for (const q of QUESTIONS) {
-    const cle = q.texte.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, '');
-    assert.ok(!vus.has(cle), `${q.id} répète l’énoncé de ${vus.get(cle)}`);
-    vus.set(cle, q.id);
+  // Les dix niveaux d'une carte TTMC comptent comme dix énoncés : ils se jouent
+  // dans les mêmes parties que le reste de la banque, et rien n'empêche d'y
+  // recopier une question déjà posée ailleurs.
+  const enonces = QUESTIONS.flatMap((q) => (
+    q.type === 'ttmc'
+      ? q.niveaux.map((n, i) => [`${q.id} niveau ${i + 1}`, n.texte])
+      : [[q.id, q.texte]]
+  ));
+
+  for (const [ou, texte] of enonces) {
+    const cle = texte.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, '');
+    assert.ok(!vus.has(cle), `${ou} répète l’énoncé de ${vus.get(cle)}`);
+    vus.set(cle, ou);
   }
 });
 
@@ -1051,6 +1060,22 @@ test('deux questions d’un même thème n’ont pas la même bonne réponse', (
       assert.ok(!vus.has(bonne), `${theme.nom} : ${q.id} et ${vus.get(bonne)} répondent « ${bonne} »`);
       vus.set(bonne, q.id);
     }
+  }
+});
+
+test('deux niveaux d’une même carte ne répondent pas la même chose', () => {
+  // Dix questions d'affilée sur un thème étroit, et l'on recopie sans le voir :
+  // « Marlon Brando » était la réponse des niveaux 3 et 7 de la carte Cinéma.
+  for (const carte of QUESTIONS.filter((q) => q.type === 'ttmc')) {
+    const vus = new Map();
+    carte.niveaux.forEach((n, i) => {
+      const bonne = n.reponses[n.bonne].toLowerCase();
+      assert.ok(
+        !vus.has(bonne),
+        `${carte.id} : niveaux ${vus.get(bonne)} et ${i + 1} répondent « ${bonne} »`,
+      );
+      vus.set(bonne, i + 1);
+    });
   }
 });
 
