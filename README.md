@@ -218,6 +218,47 @@ mémoire, qui ne convient qu'au serveur Node autonome.
 npm run check:quiz            # barème, jokers, déroulé d'une partie, relais
 ```
 
+### Les packs de questions
+
+Le modèle tient en une phrase : **dans une partie, un seul joueur paie**. Les
+invités tapent un code, ne créent aucun compte et n'installent rien — chaque
+partie est donc une démonstration gratuite à toute la table, et c'est le seul
+canal de distribution réel. On ne vend jamais un mécanisme du jeu, seulement du
+contenu : ce qui s'épuise, c'est la banque.
+
+```
+packs/                   les packs, HORS de web/ — jamais servis en statique
+lib/packs.js             catalogue, licences, contrôle d'accès
+api/packs.mjs            la même chose, en fonction Vercel
+web/quiz/js/packs.js     côté pupitre : téléchargement et cache hors-ligne
+```
+
+**Le point qui commande tout** : un fichier posé sous `web/` est servi à qui le
+demande. Les packs vivent donc ailleurs et ne sortent que par l'API, après
+vérification. Le catalogue, lui, est public — il faut bien montrer ce qu'on
+vend. Une fois téléchargé, un pack est rangé dans le navigateur : **la promesse
+hors-ligne vaut aussi pour ce qu'on a acheté**.
+
+```bash
+QUIZROOM_PACKS_OFFERTS=noel npm start     # débloque un pack sans paiement
+```
+
+Cette variable sert à trois choses : développer avec la mécanique complète,
+offrir un pack en promotion, et vérifier la chaîne de bout en bout.
+
+**Ce qui n'est pas ici, et volontairement** : l'encaissement. Prendre un
+paiement demande un prestataire, un compte et des mentions légales, et rien de
+tout cela n'a sa place dans un dépôt. Ce qui est branché, c'est ce qui vient
+après : `accorder(licence, packId)` dans `lib/packs.js` est le seul point
+d'entrée qu'un webhook de paiement doit appeler, une fois la transaction
+confirmée. L'écriture par l'API exige `QUIZROOM_SECRET_ACHAT` ; sans cette
+variable, elle est refusée — mieux vaut une boutique fermée qu'une boutique où
+l'on se sert.
+
+**Ajouter un pack** : un fichier JSON dans `packs/` (`id`, `nom`, `emoji`,
+`resume`, `prix`, `questions`). Les questions suivent exactement le format de la
+banque de base, types compris.
+
 ### La voix de l'animateur
 
 `speechSynthesis` ne donne accès qu'aux voix **installées sur l'appareil**. Un

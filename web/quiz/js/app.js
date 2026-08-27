@@ -10,8 +10,10 @@ import * as net from './net.js';
 import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
 import { vueDe } from './vues.js';
 import {
-  THEMES, QUESTIONS, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
+  THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
+  ajouterQuestions, toutesLesQuestions,
 } from './questions.js';
+import * as packs from './packs.js';
 import { PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
@@ -705,7 +707,7 @@ function calculerMasque() {
   const publiee = etat?.question;
   // Il n'y a de mauvaises réponses à retirer que sur un QCM.
   if (publiee?.type !== 'qcm') return null;
-  const source = QUESTIONS.find((q) => q.id === publiee.id);
+  const source = toutesLesQuestions().find((q) => q.id === publiee.id);
   if (!source?.reponses) return null;
 
   const bonne = publiee.reponses.indexOf(source.reponses[source.bonne]);
@@ -833,6 +835,8 @@ function rendreReglages() {
     }, libelle));
   }
 
+  rendrePacks();
+
   const types = clear($('#choix-types'));
   for (const type of typesDisponibles(reglages.themes)) {
     const actif = !reglages.types.length || reglages.types.includes(type.id);
@@ -894,6 +898,65 @@ function rendreReglages() {
       el('span', { class: 'persona-desc', text: persona.desc }),
     ]));
   }
+}
+
+/**
+ * La boutique de packs, dans les réglages de la partie.
+ *
+ * Elle ne prend pas de paiement : encaisser demande un prestataire, un compte
+ * et des mentions légales, et rien de tout cela n'a sa place dans le dépôt. Ce
+ * qui est branché ici, c'est ce qui vient après — vérifier qu'une licence
+ * ouvre un pack, le télécharger, le garder hors-ligne.
+ */
+async function rendrePacks() {
+  const hote = $('#liste-packs');
+  if (!hote) return;
+
+  const disponibles = await packs.catalogue().catch(() => []);
+  clear(hote);
+
+  if (!disponibles.length) {
+    $('#note-packs').textContent = 'Aucun pack disponible. Le jeu de base suffit largement pour commencer.';
+    return;
+  }
+
+  for (const pack of disponibles) {
+    const etat = pack.installe ? 'Installé'
+      : pack.possede ? 'À télécharger'
+        : (pack.prix ?? 'Verrouillé');
+
+    hote.append(el('div', { class: `carte-pack${pack.installe ? ' est-installe' : ''}` }, [
+      el('div', { class: 'pack-tete' }, [
+        el('span', { class: 'pack-nom', text: `${pack.emoji ?? '🎁'} ${pack.nom}` }),
+        el('span', { class: `pack-etat${pack.possede ? ' est-acquis' : ''}`, text: etat }),
+      ]),
+      el('p', { class: 'pack-resume muted small', text: pack.resume ?? '' }),
+      el('p', { class: 'muted small', text: `${pack.nombre} questions` }),
+      pack.possede && !pack.installe
+        ? el('button', {
+            class: 'btn btn-primary btn-block',
+            type: 'button',
+            onclick: async (event) => {
+              event.target.disabled = true;
+              try {
+                const installe = await packs.installer(pack.id);
+                ajouterQuestions(installe.questions);
+                toast(`${installe.nom} installé.`);
+                rendreReglages();
+              } catch (erreur) {
+                toast(erreur.message ?? 'Téléchargement impossible.', 'warn');
+                event.target.disabled = false;
+              }
+            },
+          }, '⬇ Télécharger')
+        : null,
+    ]));
+  }
+
+  const verrouilles = disponibles.filter((p) => !p.possede).length;
+  $('#note-packs').textContent = verrouilles
+    ? 'Les packs verrouillés s’achètent une fois et restent acquis. Le jeu de base, lui, ne s’épuise pas.'
+    : 'Tous les packs sont débloqués sur cet appareil.';
 }
 
 async function ouvrirSalon() {
@@ -1090,6 +1153,16 @@ function brancher() {
   // rappel, la liste resterait vide sur la plupart des navigateurs.
   window.speechSynthesis?.addEventListener?.('voiceschanged', rendreChoixVoix);
   chargerLesClips().then(rendreChoixVoix);
+
+  // Les packs déjà téléchargés sont disponibles immédiatement, avant même que
+  // le réseau réponde : c'est tout l'intérêt de les garder en local.
+  ajouterQuestions(packs.questionsInstallees());
+  packs.synchroniser().then((nouveaux) => {
+    if (nouveaux) {
+      ajouterQuestions(packs.questionsInstallees());
+      toast(`${nouveaux} pack${nouveaux > 1 ? 's' : ''} téléchargé${nouveaux > 1 ? 's' : ''}.`);
+    }
+  });
 
   const champRelais = $('#relay-url');
   champRelais.value = net.relayBase();

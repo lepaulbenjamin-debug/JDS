@@ -665,6 +665,28 @@ export function filRougeTrouve(fil, propose) {
   return fil.motsCles.some((mot) => propre.includes(normaliser(mot)));
 }
 
+/**
+ * Les questions venues des packs achetés.
+ *
+ * Le jeu de base reste embarqué — il doit fonctionner sans réseau dès la
+ * première ouverture — et les packs viennent s'y ajouter à chaud, une fois
+ * téléchargés. Tout le reste du module ne voit qu'une seule banque.
+ */
+let supplement = [];
+
+export function ajouterQuestions(liste) {
+  const connus = new Set([...QUESTIONS, ...supplement].map((q) => q.id));
+  supplement = [...supplement, ...(liste ?? []).filter((q) => q?.id && !connus.has(q.id))];
+  return supplement.length;
+}
+
+export function oublierLesPacks() {
+  supplement = [];
+}
+
+/** La banque complète : le jeu de base plus ce qui a été installé. */
+export const toutesLesQuestions = () => [...QUESTIONS, ...supplement];
+
 function melangeur(aleatoire) {
   return (liste) => {
     const copie = liste.slice();
@@ -676,7 +698,7 @@ function melangeur(aleatoire) {
   };
 }
 
-const poolDe = (themes, types) => QUESTIONS.filter((q) => {
+const poolDe = (themes, types) => toutesLesQuestions().filter((q) => {
   if (themes?.length && !themes.includes(q.theme)) return false;
   if (types?.length && !types.includes(q.type ?? 'qcm')) return false;
   return true;
@@ -698,7 +720,7 @@ export function tirerQuestions({
   const melange = melangeur(aleatoire);
   const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
 
-  const duFil = fil ? QUESTIONS.filter((q) => q.fil === fil) : [];
+  const duFil = fil ? toutesLesQuestions().filter((q) => q.fil === fil) : [];
   const reste = melange(poolDe(themes, types).filter((q) => !q.fil))
     .slice(0, Math.max(0, nombre - duFil.length));
 

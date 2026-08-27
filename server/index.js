@@ -16,6 +16,7 @@ import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runScan, MAX_BODY } from '../lib/scan.js';
 import { handleRoomRequest } from '../lib/rooms.js';
+import { handlePackRequest } from '../lib/packs.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const PORT = Number(process.env.PORT ?? 8080);
@@ -91,6 +92,26 @@ async function handleRoom(req, res) {
   return sendJson(res, status, payload);
 }
 
+async function handlePacks(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  let body;
+  if (req.method === 'POST') {
+    try {
+      const raw = await readBody(req);
+      body = raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
+    }
+  }
+  const { status, body: payload } = await handlePackRequest({
+    method: req.method,
+    query: Object.fromEntries(url.searchParams),
+    body,
+  });
+  res.setHeader('cache-control', 'private, no-store');
+  return sendJson(res, status, payload);
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const requested = decodeURIComponent(url.pathname);
@@ -143,6 +164,9 @@ createServer((req, res) => {
   }
   if (req.url?.startsWith('/api/room')) {
     return handleRoom(req, res);
+  }
+  if (req.url?.startsWith('/api/packs')) {
+    return handlePacks(req, res);
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405).end('Méthode non autorisée');

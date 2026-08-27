@@ -14,7 +14,9 @@ import {
 } from '../web/quiz/js/engine.js';
 import {
   QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
+  ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
+import { handlePackRequest, accorder } from '../lib/packs.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 
@@ -723,6 +725,96 @@ test('chaque joker a une description lisible', () => {
   for (const joker of JOKERS) {
     assert.ok(joker.nom && joker.emoji && joker.desc.length > 20);
   }
+});
+
+/* --- La boutique de packs ------------------------------------------------- */
+
+const boutique = (method, query, body) => handlePackRequest({ method, query, body });
+
+test('le catalogue est public, le contenu ne l’est pas', async () => {
+  const vitrine = await boutique('GET', { licence: 'inconnue' });
+  assert.equal(vitrine.status, 200);
+  assert.ok(vitrine.body.packs.length > 0, 'au moins un pack installé');
+
+  for (const pack of vitrine.body.packs) {
+    assert.ok(pack.nom && pack.nombre > 0, `${pack.id} : vitrine incomplète`);
+    assert.equal(pack.questions, undefined, `${pack.id} : les questions ont fuité dans le catalogue`);
+    assert.equal(pack.possede, false);
+  }
+
+  const vol = await boutique('GET', { id: vitrine.body.packs[0].id, licence: 'inconnue' });
+  assert.equal(vol.status, 402, 'un pack non acheté doit être refusé');
+  assert.equal(vol.body.questions, undefined);
+});
+
+test('une licence qui a le pack en obtient le contenu', async () => {
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  const cible = vitrine[0].id;
+
+  await accorder('licence-de-test', cible);
+  const achat = await boutique('GET', { id: cible, licence: 'licence-de-test' });
+
+  assert.equal(achat.status, 200);
+  assert.ok(achat.body.questions.length > 0);
+  // Et le catalogue le sait désormais.
+  const apres = await boutique('GET', { licence: 'licence-de-test' });
+  assert.equal(apres.body.packs.find((p) => p.id === cible).possede, true);
+  // Sans changer quoi que ce soit pour les autres.
+  const autre = await boutique('GET', { licence: 'quelqu-un-d-autre' });
+  assert.equal(autre.body.packs.find((p) => p.id === cible).possede, false);
+});
+
+test('on ne s’accorde pas un pack tout seul par l’API', async () => {
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  const tentative = await boutique('POST', { id: vitrine[0].id }, { licence: 'pirate' });
+  assert.equal(tentative.status, 403);
+
+  const verif = await boutique('GET', { id: vitrine[0].id, licence: 'pirate' });
+  assert.equal(verif.status, 402);
+});
+
+test('un pack inconnu répond 404, pas 402', async () => {
+  const absent = await boutique('GET', { id: 'pack-qui-nexiste-pas', licence: 'peu-importe' });
+  assert.equal(absent.status, 404);
+});
+
+test('les questions des packs sont valides comme celles de la banque', async () => {
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  for (const { id } of vitrine) {
+    await accorder('verification', id);
+    const { body } = await boutique('GET', { id, licence: 'verification' });
+
+    for (const q of body.questions) {
+      const type = typeDeManche(q.type);
+      assert.ok(q.texte?.length > 3, `${q.id} : énoncé manquant`);
+      assert.ok(q.note?.length > 10, `${q.id} : explication manquante`);
+      assert.ok(THEMES.some((t) => t.id === q.theme), `${q.id} : thème inconnu`);
+      // Préparable et notable, sinon la manche planterait en pleine soirée.
+      const manche = type.preparer(q, (l) => l);
+      assert.ok(type.solutionTexte(manche).length > 0, `${q.id} : pas de solution lisible`);
+    }
+  }
+});
+
+test('un pack ajouté entre dans le tirage sans toucher au jeu de base', () => {
+  const avant = tailleDuPool([]);
+  ajouterQuestions([{
+    id: 'pack-essai-01',
+    theme: 'culture',
+    texte: 'Question venue d’un pack ?',
+    reponses: ['Oui', 'Non', 'Peut-être', 'Sans avis'],
+    bonne: 0,
+    note: 'Elle vient bien d’un pack téléchargé.',
+  }]);
+
+  assert.equal(tailleDuPool([]), avant + 1);
+  assert.ok(toutesLesQuestions().some((q) => q.id === 'pack-essai-01'));
+  // Deux fois le même pack ne double pas la banque.
+  ajouterQuestions([{ id: 'pack-essai-01', theme: 'culture', texte: 'x', reponses: [], bonne: 0 }]);
+  assert.equal(tailleDuPool([]), avant + 1);
+
+  oublierLesPacks();
+  assert.equal(tailleDuPool([]), avant);
 });
 
 /* --- Relais -------------------------------------------------------------- */
