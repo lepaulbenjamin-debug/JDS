@@ -508,10 +508,47 @@ test('le chrono s’allonge sur les types qui demandent plus de gestes', () => {
 
 /* --- Le fil rouge --------------------------------------------------------- */
 
-const FIL = FILS_ROUGES[0];
+const FIL = FILS_ROUGES.find((f) => f.id === 'rouge');
+
+test('chaque fil rouge a de quoi se jouer : un mot, un indice, sa révélation', () => {
+  const ids = FILS_ROUGES.map((f) => f.id);
+  assert.equal(new Set(ids).size, ids.length, 'identifiants de fils en double');
+
+  for (const fil of FILS_ROUGES) {
+    const siennes = QUESTIONS.filter((q) => q.fil === fil.id);
+    assert.ok(siennes.length >= 4, `${fil.id} : ${siennes.length} questions, il en faut au moins quatre`);
+    assert.ok(fil.solution && fil.indice && fil.revelation, `${fil.id} : texte manquant`);
+    assert.ok(filRougeTrouve(fil, fil.solution), `${fil.id} : sa propre solution devrait passer`);
+
+    // La bonne réponse doit vraiment porter le mot, sinon le fil est insoluble.
+    for (const q of siennes) {
+      const bonne = q.reponses[q.bonne];
+      assert.ok(filRougeTrouve(fil, bonne), `${q.id} : « ${bonne} » ne contient pas le mot du fil`);
+    }
+    // Et une mauvaise réponse qui le porterait aussi vendrait la mèche.
+    for (const q of siennes) {
+      for (const [i, texte] of q.reponses.entries()) {
+        if (i === q.bonne) continue;
+        assert.ok(!filRougeTrouve(fil, texte), `${q.id} : le leurre « ${texte} » porte le mot du fil`);
+      }
+    }
+  }
+});
+
+test('deux fils rouges ne se répondent jamais l’un pour l’autre', () => {
+  for (const fil of FILS_ROUGES) {
+    for (const autre of FILS_ROUGES) {
+      if (autre.id === fil.id) continue;
+      assert.ok(
+        !filRougeTrouve(fil, autre.solution),
+        `« ${autre.solution} » gagnerait la prime du fil « ${fil.id} »`,
+      );
+    }
+  }
+});
 
 test('le fil rouge se reconnaît malgré la casse, les accents et les articles', () => {
-  for (const essai of ['rouge', 'Le Rouge', 'LE ROUGE !', 'la couleur rouge', '  rouge  ']) {
+  for (const essai of ['rouge', 'Le Rouge', 'LE ROUGE !', 'la couleur rouge', '  rouge  ', 'lerouge']) {
     assert.ok(filRougeTrouve(FIL, essai), `« ${essai} » aurait dû passer`);
   }
   for (const essai of ['bleu', '', 'vert pomme', null]) {
@@ -519,18 +556,33 @@ test('le fil rouge se reconnaît malgré la casse, les accents et les articles',
   }
 });
 
+test('le mot du fil doit être proposé entier, pas caché dans un autre', () => {
+  // Avec une comparaison en sous-chaîne, « le château » raflait la prime du
+  // fil « chat ». C'est la raison d'être de la comparaison mot à mot.
+  const chat = FILS_ROUGES.find((f) => f.id === 'chat');
+  for (const essai of ['chat', 'le chat', 'les chats', 'un chat noir']) {
+    assert.ok(filRougeTrouve(chat, essai), `« ${essai} » aurait dû passer`);
+  }
+  for (const essai of ['le château', 'un achat', 'chatouille']) {
+    assert.ok(!filRougeTrouve(chat, essai), `« ${essai} » n’aurait pas dû passer`);
+  }
+});
+
 test('les questions du fil rouge sont réparties dans la partie, jamais groupées', () => {
   // Y compris sur une partie courte, où le fil pèse la moitié des manches.
-  for (const nombre of [8, 12, 16, 20]) {
-    const tirage = tirerQuestions({ themes: [], nombre, fil: FIL.id });
-    const positions = tirage
-      .map((q, i) => (QUESTIONS.find((e) => e.id === q.id)?.fil ? i : -1))
-      .filter((i) => i >= 0);
+  for (const fil of FILS_ROUGES) {
+    const siennes = QUESTIONS.filter((q) => q.fil === fil.id).length;
+    for (const nombre of [8, 12, 16, 20]) {
+      const tirage = tirerQuestions({ themes: [], nombre, fil: fil.id });
+      const positions = tirage
+        .map((q, i) => (QUESTIONS.find((e) => e.id === q.id)?.fil ? i : -1))
+        .filter((i) => i >= 0);
 
-    assert.equal(positions.length, 4, `${nombre} manches : les quatre questions du fil`);
-    assert.ok(positions[0] >= 1, `${nombre} manches : jamais en toute première`);
-    const ecarts = positions.slice(1).map((p, i) => p - positions[i]);
-    assert.ok(ecarts.every((e) => e >= 2), `${nombre} manches, groupées : ${positions.join(', ')}`);
+      assert.equal(positions.length, siennes, `${fil.id}, ${nombre} manches : toutes les questions du fil`);
+      assert.ok(positions[0] >= 1, `${fil.id}, ${nombre} manches : jamais en toute première`);
+      const ecarts = positions.slice(1).map((p, i) => p - positions[i]);
+      assert.ok(ecarts.every((e) => e >= 2), `${fil.id}, ${nombre} manches, groupées : ${positions.join(', ')}`);
+    }
   }
 });
 

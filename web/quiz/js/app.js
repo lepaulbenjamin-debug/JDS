@@ -75,7 +75,7 @@ let reglages = {
   dureeMs: 15000,
   persona: 'classique',
   jokers: JOKERS.map((j) => j.id),
-  fil: FILS_ROUGES[0]?.id ?? null,
+  avecFil: FILS_ROUGES.length > 0,
 };
 
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
@@ -856,16 +856,19 @@ function rendreReglages() {
     }, `${type.emoji} ${type.nom}`));
   }
 
+  // Un bouton par fil trahirait le fil : celui qui crée la partie joue aussi.
+  // On ne propose donc que l'énigme ou pas d'énigme — le fil lui-même est tiré
+  // au sort à l'ouverture du salon, et personne ne sait lequel est tombé.
   const fils = clear($('#choix-fil'));
-  for (const option of [{ id: null, nom: 'Sans fil rouge' }, ...FILS_ROUGES.map((f) => ({ id: f.id, nom: 'Avec un fil rouge' }))]) {
+  for (const option of [{ actif: true, nom: 'Avec un fil rouge' }, { actif: false, nom: 'Sans fil rouge' }]) {
     fils.append(el('button', {
-      class: `chip${reglages.fil === option.id ? ' est-actif' : ''}`,
+      class: `chip${reglages.avecFil === option.actif ? ' est-actif' : ''}`,
       type: 'button',
-      onclick: () => { reglages.fil = option.id; rendreReglages(); },
+      onclick: () => { reglages.avecFil = option.actif; rendreReglages(); },
     }, option.nom));
   }
-  $('#note-fil').textContent = reglages.fil
-    ? 'Un même mot relie les bonnes réponses de plusieurs manches. Le premier à le nommer rafle une grosse prime — et plus il trouve tôt, plus elle est grosse. Le fil apporte ses propres questions, en plus des thèmes et des types choisis.'
+  $('#note-fil').textContent = reglages.avecFil
+    ? `Un même mot relie les bonnes réponses de plusieurs manches. Le premier à le nommer rafle une grosse prime — et plus il trouve tôt, plus elle est grosse. Le fil apporte ses propres questions, en plus des thèmes et des types choisis. ${FILS_ROUGES.length} énigmes existent : celle de la partie est tirée au sort, y compris pour toi.`
     : 'Aucune énigme de fond : on enchaîne les manches, c’est tout.';
 
   const jokers = clear($('#choix-jokers'));
@@ -960,7 +963,11 @@ async function rendrePacks() {
 }
 
 async function ouvrirSalon() {
-  const fil = FILS_ROUGES.find((f) => f.id === reglages.fil) ?? null;
+  // Le tirage au sort tient ici, et nulle part ailleurs : il doit tomber à
+  // chaque nouvelle partie, y compris derrière « Une autre ! ».
+  const fil = reglages.avecFil
+    ? FILS_ROUGES[Math.floor(Math.random() * FILS_ROUGES.length)] ?? null
+    : null;
   const questions = tirerQuestions({
     themes: reglages.themes,
     types: reglages.types,

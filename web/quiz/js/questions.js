@@ -619,6 +619,93 @@ export const QUESTIONS = [
     bonne: 0,
     note: 'Chez Perrault, en 1697, le loup gagne : il n’y a pas de chasseur, et l’histoire s’arrête là.',
   },
+
+  {
+    id: 'cha-01', theme: 'culture', fil: 'chat',
+    texte: 'Chez Lewis Carroll, quel personnage s’efface en ne laissant que son sourire ?',
+    reponses: ['Le Chat du Cheshire', 'Le Lièvre de Mars', 'Le Loir', 'La Chenille'],
+    bonne: 0,
+    note: 'Alice le résume mieux que personne : elle a souvent vu un félin sans sourire, jamais un sourire sans félin.',
+  },
+  {
+    id: 'cha-02', theme: 'culture', fil: 'chat',
+    texte: 'Quelle expérience de pensée enferme un animal dans une boîte avec une fiole de poison ?',
+    reponses: ['Le chat de Schrödinger', 'Le démon de Maxwell', 'Le paradoxe des jumeaux', 'Le singe de Borel'],
+    bonne: 0,
+    note: 'Schrödinger l’a imaginée en 1935 pour se moquer de l’interprétation qu’on donnait alors à la physique quantique — pas pour l’illustrer.',
+  },
+  {
+    id: 'cha-03', theme: 'culture', fil: 'chat',
+    texte: 'Dans quel conte de Perrault un animal rusé fait-il la fortune de son maître ?',
+    reponses: ['Le Chat botté', 'Peau d’âne', 'Riquet à la houppe', 'Le Petit Poucet'],
+    bonne: 0,
+    note: 'Le marquis de Carabas n’existe pas : c’est un titre inventé de toutes pièces, en chemin, par un animal en bottes.',
+  },
+  {
+    id: 'cha-04', theme: 'insolite', fil: 'chat',
+    texte: 'Quel fouet servait à punir les marins de la marine britannique ?',
+    reponses: ['Le chat à neuf queues', 'Le martinet', 'La schlague', 'La corde à nœuds'],
+    bonne: 0,
+    note: 'Neuf lanières nouées : les marques laissées sur le dos évoquaient des griffures, et le nom est resté.',
+  },
+
+  {
+    id: 'roi-01', theme: 'culture', fil: 'roi',
+    texte: 'Où Toutânkhamon et Ramsès II ont-ils été enterrés ?',
+    reponses: ['La Vallée des Rois', 'La pyramide de Khéops', 'Le temple d’Abou Simbel', 'La nécropole de Gizeh'],
+    bonne: 0,
+    note: 'Soixante et quelques tombes creusées dans la falaise, en face de Louxor. Celle de Toutânkhamon est la seule retrouvée presque intacte.',
+  },
+  {
+    id: 'roi-02', theme: 'culture', fil: 'roi',
+    texte: 'Comment surnommait-on Louis XIV ?',
+    reponses: ['Le Roi-Soleil', 'Le Bien-Aimé', 'Le Grand Dauphin', 'Le Sage'],
+    bonne: 0,
+    note: 'Le surnom vient d’un ballet de cour où il dansait, adolescent, le rôle du Soleil levant. « Le Bien-Aimé », c’était Louis XV.',
+  },
+  {
+    id: 'roi-03', theme: 'bouffe', fil: 'roi',
+    texte: 'Quel gâteau se partage traditionnellement le 6 janvier ?',
+    reponses: ['La galette des rois', 'Le kouglof', 'La bûche', 'Le pain d’épices'],
+    bonne: 0,
+    note: 'Pour l’Épiphanie. La fève était une vraie fève, remplacée par de la porcelaine à la fin du XIXᵉ siècle.',
+  },
+  {
+    id: 'roi-04', theme: 'culture', fil: 'roi',
+    texte: 'Quelle pièce d’échecs n’est jamais capturée ?',
+    reponses: ['Le roi', 'La dame', 'Le fou', 'Le cavalier'],
+    bonne: 0,
+    note: 'La partie s’arrête avant : l’échec et mat, c’est le moment où il ne lui reste plus une seule case où fuir.',
+  },
+
+  {
+    id: 'pom-01', theme: 'culture', fil: 'pomme',
+    texte: 'Comment surnomme-t-on la ville de New York ?',
+    reponses: ['La Grosse Pomme', 'La Cité des anges', 'La Ville Lumière', 'La Cité du Vent'],
+    bonne: 0,
+    note: 'Le surnom vient des champs de courses des années 1920 : le gros lot que tous les jockeys visaient.',
+  },
+  {
+    id: 'pom-02', theme: 'insolite', fil: 'pomme',
+    texte: 'Comment appelle-t-on la saillie du cartilage du larynx, bien visible chez l’homme ?',
+    reponses: ['La pomme d’Adam', 'La luette', 'La glotte', 'L’épiglotte'],
+    bonne: 0,
+    note: 'C’est le cartilage thyroïde. Le nom vient de la légende du fruit resté coincé dans la gorge d’Adam.',
+  },
+  {
+    id: 'pom-03', theme: 'bouffe', fil: 'pomme',
+    texte: 'Quel aliment Parmentier a-t-il fait adopter aux Français ?',
+    reponses: ['La pomme de terre', 'La tomate', 'Le maïs', 'Le topinambour'],
+    bonne: 0,
+    note: 'Il aurait fait garder ses champs le jour et laissé les voleurs se servir la nuit, le temps de rendre le tubercule désirable.',
+  },
+  {
+    id: 'pom-04', theme: 'culture', fil: 'pomme',
+    texte: 'Dans la mythologie grecque, quel objet gravé « à la plus belle » déclenche la guerre de Troie ?',
+    reponses: ['Une pomme d’or', 'Un miroir', 'Une couronne', 'Une flèche'],
+    bonne: 0,
+    note: 'Jetée par Éris au milieu d’un mariage. Pâris l’attribue à Aphrodite, qui lui promet Hélène en échange — et la guerre commence.',
+  },
 ];
 
 /**
@@ -633,14 +720,40 @@ export const QUESTIONS = [
  * aucun secret par joueur — donc rien à filtrer côté relais. Tout tient dans
  * le tirage et dans une poignée de mots-clés.
  */
+// L'indice est volontairement le même pour tous : il dit qu'il y a quelque
+// chose à chercher, jamais quoi. Un indice propre à chaque fil finirait par
+// désigner la famille de réponses, et le fil ne tiendrait plus une manche.
+const INDICE = 'Un même mot se cache derrière plusieurs bonnes réponses de cette partie.';
+
 export const FILS_ROUGES = [
   {
     id: 'rouge',
     solution: 'le rouge',
     // On accepte large : en soirée, personne ne tape « le rouge » proprement.
-    motsCles: ['rouge', 'rouges', 'lerouge'],
-    indice: 'Un même mot se cache derrière plusieurs bonnes réponses de cette partie.',
+    motsCles: ['rouge', 'rouges'],
+    indice: INDICE,
     revelation: 'La mer Rouge, la Croix-Rouge, la planète rouge, le Petit Chaperon rouge : c’était le rouge.',
+  },
+  {
+    id: 'chat',
+    solution: 'le chat',
+    motsCles: ['chat', 'chats'],
+    indice: INDICE,
+    revelation: 'Le Chat du Cheshire, le chat de Schrödinger, le Chat botté, le chat à neuf queues : c’était le chat.',
+  },
+  {
+    id: 'roi',
+    solution: 'le roi',
+    motsCles: ['roi', 'rois', 'royal', 'royale'],
+    indice: INDICE,
+    revelation: 'La Vallée des Rois, le Roi-Soleil, la galette des rois, la pièce qu’on ne prend jamais aux échecs : c’était le roi.',
+  },
+  {
+    id: 'pomme',
+    solution: 'la pomme',
+    motsCles: ['pomme', 'pommes'],
+    indice: INDICE,
+    revelation: 'La Grosse Pomme, la pomme d’Adam, la pomme de terre, la pomme de discorde : c’était la pomme.',
   },
 ];
 
@@ -649,9 +762,15 @@ export const filRougeDe = (id) => FILS_ROUGES.find((f) => f.id === id) ?? null;
 /**
  * Une réponse au fil rouge est-elle bonne ?
  *
- * Comparaison très tolérante : on retire les accents, la ponctuation, les
- * espaces et les articles. « Le Rouge ! », « rouge » et « la couleur rouge »
- * doivent tous passer — on joue avec un téléphone dans une main.
+ * Comparaison très tolérante sur la forme : on retire les accents, la casse et
+ * la ponctuation. « Le Rouge ! », « rouge » et « la couleur rouge » doivent
+ * tous passer — on joue avec un téléphone dans une main.
+ *
+ * Mais on compare mot à mot, pas en sous-chaîne. Avec un seul fil « rouge » la
+ * différence ne se voyait pas ; avec « chat » dans la liste, chercher le mot
+ * n'importe où offrait la prime à qui proposait « le château ». On accepte donc
+ * aussi la proposition collée en un seul mot — « lerouge » — parce que ça, ça
+ * arrive vraiment.
  */
 export function filRougeTrouve(fil, propose) {
   const normaliser = (texte) => String(texte ?? '')
@@ -660,9 +779,16 @@ export function filRougeTrouve(fil, propose) {
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
-  const propre = normaliser(propose);
+  const brut = String(propose ?? '');
+  const propre = normaliser(brut);
   if (!propre) return false;
-  return fil.motsCles.some((mot) => propre.includes(normaliser(mot)));
+
+  const mots = brut.split(/[^\p{L}\p{N}]+/u).map(normaliser).filter(Boolean);
+  const articles = ['le', 'la', 'les', 'l', 'un', 'une', 'du', 'de', 'des'];
+  return fil.motsCles.some((cle) => {
+    const mot = normaliser(cle);
+    return mots.includes(mot) || articles.some((article) => propre === article + mot);
+  });
 }
 
 /**

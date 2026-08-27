@@ -123,9 +123,11 @@ tout le monde joue.
 - **Un fil rouge, en option.** Un même mot relie les bonnes réponses de
   plusieurs manches, sans que rien ne l'annonce. Chacun peut le nommer à tout
   moment : le premier à trouver rafle une prime qui fond au fil de la partie, et
-  se tromper coûte deux manches de silence. C'est la seule chose qui traverse
-  les manches — et elle ne demande aucun secret par joueur, donc rien à filtrer
-  côté relais.
+  se tromper coûte deux manches de silence. Les réglages ne proposent que
+  l'énigme ou pas d'énigme : laquelle des quatre tombe est tiré au sort à
+  l'ouverture du salon, sinon celui qui crée la partie connaîtrait la réponse.
+  C'est la seule chose qui traverse les manches — et elle ne demande aucun
+  secret par joueur, donc rien à filtrer côté relais.
 - **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches, lit
   l'énoncé, révèle la bonne réponse et son explication, et clôt sur le podium —
   avec trois personnalités au choix : classique, chambreur, pince-sans-rire.
