@@ -1172,6 +1172,185 @@ export const QUESTIONS = [
     note: 'Adolphe Sax était né à Dinant. Il a passé sa vie en procès contre les fabricants qui copiaient son invention, et il est mort ruiné.',
   },
 
+  /* --- Tu te mets combien ? ------------------------------------------------ */
+  //
+  // Une carte = un thème et dix questions, de la plus facile à la plus coriace.
+  // L'ordre EST le barème : `niveaux[0]` doit se répondre à la table du café du
+  // commerce, `niveaux[9]` doit faire douter celui qui s'y connaît. Une carte
+  // mal graduée casse le jeu — se mettre à 8 doit faire peur.
+
+  {
+    id: 'ttm-01', theme: 'cinema', type: 'ttmc',
+    texte: 'Cinéma & séries — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'Dans « Le Roi Lion », comment s’appelle le père de Simba ?',
+        reponses: ['Mufasa', 'Scar', 'Rafiki', 'Zazu'], bonne: 0,
+        note: 'Mufasa. Son nom vient du swahili, comme la plupart des noms du film.',
+      },
+      {
+        texte: 'Dans quel film Leonardo DiCaprio crie-t-il « Je suis le roi du monde » ?',
+        reponses: ['Titanic', 'Gatsby le Magnifique', 'Inception', 'Le Loup de Wall Street'], bonne: 0,
+        note: 'La réplique a été improvisée sur le tournage, et le réalisateur a failli la couper au montage.',
+      },
+      {
+        texte: 'Qui incarne Vito Corleone dans le premier « Parrain » ?',
+        reponses: ['Marlon Brando', 'Al Pacino', 'Robert De Niro', 'James Caan'], bonne: 0,
+        note: 'Brando. De Niro joue le même personnage jeune, mais dans le deuxième film — et décroche l’Oscar pour ça.',
+      },
+      {
+        texte: 'Quelle série met en scène un professeur de chimie devenu fabricant de drogue ?',
+        reponses: ['Breaking Bad', 'Dexter', 'The Wire', 'Ozark'], bonne: 0,
+        note: 'Le créateur a résumé son idée en une phrase : transformer Monsieur Tout-le-Monde en Scarface.',
+      },
+      {
+        texte: 'Quel film sud-coréen a remporté l’Oscar du meilleur film en 2020 ?',
+        reponses: ['Parasite', 'Old Boy', 'Memories of Murder', 'Burning'], bonne: 0,
+        note: 'Le premier film non anglophone à décrocher la statuette suprême, quatre-vingt-douze ans après la création des Oscars.',
+      },
+      {
+        texte: 'Quel est le prénom du docteur House ?',
+        reponses: ['Gregory', 'James', 'Robert', 'Eric'], bonne: 0,
+        note: 'Gregory House. Le personnage est calqué sur Sherlock Holmes : même adresse au 221B, même addiction, même ami médecin.',
+      },
+      {
+        texte: 'Quel acteur a refusé son Oscar pour « Le Parrain » ?',
+        reponses: ['Marlon Brando', 'Al Pacino', 'Dustin Hoffman', 'Paul Newman'], bonne: 0,
+        note: 'Il a envoyé une militante amérindienne le refuser à sa place, en direct, pour protester contre la façon dont Hollywood dépeignait les Amérindiens.',
+      },
+      {
+        texte: 'Quel film de Stanley Kubrick est sorti après sa mort ?',
+        reponses: ['Eyes Wide Shut', 'Shining', 'Full Metal Jacket', 'Barry Lyndon'], bonne: 0,
+        note: 'Il est mort quelques jours après avoir montré le montage final au studio, en 1999.',
+      },
+      {
+        texte: 'Dans quel film de Godard, sorti en 1960, Jean-Paul Belmondo tient-il le premier rôle ?',
+        reponses: ['À bout de souffle', 'Pierrot le fou', 'Le Mépris', 'Alphaville'], bonne: 0,
+        note: 'Tourné en quatre semaines, caméra à l’épaule, sans autorisation — et le montage sec en a fait le manifeste de la Nouvelle Vague.',
+      },
+      {
+        texte: 'Quel film a reçu la toute première Palme d’or, en 1955 ?',
+        reponses: ['Marty', 'Le Salaire de la peur', 'Le Troisième Homme', 'Orfeu Negro'], bonne: 0,
+        note: 'Avant 1955, Cannes remettait un Grand Prix. La Palme est née cette année-là, et elle est allée à une petite histoire d’amour entre un boucher et une institutrice.',
+      },
+    ],
+  },
+  {
+    id: 'ttm-02', theme: 'monde', type: 'ttmc',
+    texte: 'Le monde — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'Quelle est la capitale de l’Italie ?',
+        reponses: ['Rome', 'Milan', 'Naples', 'Turin'], bonne: 0,
+        note: 'Rome. Milan est pourtant le moteur économique du pays, et Turin en fut la première capitale.',
+      },
+      {
+        texte: 'Quel océan sépare l’Europe de l’Amérique ?',
+        reponses: ['L’Atlantique', 'Le Pacifique', 'L’océan Indien', 'L’océan Arctique'], bonne: 0,
+        note: 'L’Atlantique, du nom du mont Atlas — les Grecs pensaient que l’océan commençait juste derrière.',
+      },
+      {
+        texte: 'Dans quel pays se trouve le Machu Picchu ?',
+        reponses: ['Le Pérou', 'La Bolivie', 'L’Équateur', 'Le Mexique'], bonne: 0,
+        note: 'À 2 400 mètres d’altitude. Le site n’a jamais été trouvé par les conquistadors, ce qui explique son état.',
+      },
+      {
+        texte: 'Quelle mer borde la Croatie ?',
+        reponses: ['L’Adriatique', 'La mer Égée', 'La mer Noire', 'La mer Ionienne'], bonne: 0,
+        note: 'L’Adriatique, et plus de mille îles côté croate — dont une cinquantaine seulement sont habitées.',
+      },
+      {
+        texte: 'Quel fleuve traverse Vienne, Budapest et Belgrade ?',
+        reponses: ['Le Danube', 'Le Rhin', 'L’Elbe', 'La Vistule'], bonne: 0,
+        note: 'Le Danube arrose quatre capitales, plus que n’importe quel autre fleuve au monde — Bratislava est la quatrième.',
+      },
+      {
+        texte: 'Quelle est la capitale de l’Australie ?',
+        reponses: ['Canberra', 'Sydney', 'Melbourne', 'Brisbane'], bonne: 0,
+        note: 'Bâtie de toutes pièces entre Sydney et Melbourne, précisément parce qu’aucune des deux ne voulait céder à l’autre.',
+      },
+      {
+        texte: 'Quel pays a pour capitale Astana ?',
+        reponses: ['Le Kazakhstan', 'L’Ouzbékistan', 'La Mongolie', 'Le Kirghizistan'], bonne: 0,
+        note: 'La ville a changé de nom plusieurs fois en trente ans, au gré des présidents — elle s’est même appelée Noursoultan.',
+      },
+      {
+        texte: 'Quel détroit sépare l’Alaska de la Russie ?',
+        reponses: ['Le détroit de Béring', 'Le détroit de Magellan', 'Le détroit de Torres', 'Le détroit de Davis'], bonne: 0,
+        note: 'Quatre-vingts kilomètres d’eau, et deux îles au milieu : l’une américaine, l’autre russe, séparées de quatre kilomètres et d’une journée entière de décalage horaire.',
+      },
+      {
+        texte: 'Quelle est la seule ville au monde située sur deux continents ?',
+        reponses: ['Istanbul', 'Le Caire', 'Suez', 'Bakou'], bonne: 0,
+        note: 'Le Bosphore la coupe en deux. On y prend un ferry pour aller travailler d’Europe en Asie.',
+      },
+      {
+        texte: 'Quel est le pays le plus densément peuplé du monde ?',
+        reponses: ['Monaco', 'Singapour', 'Malte', 'Le Bangladesh'], bonne: 0,
+        note: 'Monaco : deux kilomètres carrés, et près de vingt mille habitants au kilomètre carré. Singapour, bien plus vaste, arrive derrière.',
+      },
+    ],
+  },
+  {
+    id: 'ttm-03', theme: 'musique', type: 'ttmc',
+    texte: 'Musique — tu te mets combien ?',
+    note: 'Chacun a répondu à sa propre question : la correction est sur votre écran.',
+    niveaux: [
+      {
+        texte: 'Combien de Beatles y avait-il ?',
+        reponses: ['4', '3', '5', '6'], bonne: 0,
+        note: 'Quatre à partir de 1962, quand Ringo remplace Pete Best juste avant le premier disque.',
+      },
+      {
+        texte: 'Qui chante « Like a Rolling Stone » ?',
+        reponses: ['Bob Dylan', 'Bruce Springsteen', 'Neil Young', 'Lou Reed'], bonne: 0,
+        note: 'Six minutes en 1965, quand les radios refusaient tout ce qui dépassait trois. Elle est passée quand même.',
+      },
+      {
+        texte: 'De quel pays vient le groupe AC/DC ?',
+        reponses: ['L’Australie', 'Le Royaume-Uni', 'Les États-Unis', 'L’Irlande'], bonne: 0,
+        note: 'Fondé à Sydney par deux frères nés en Écosse. Le nom vient d’une plaque au dos d’une machine à coudre.',
+      },
+      {
+        texte: 'Quel instrument Django Reinhardt jouait-il ?',
+        reponses: ['La guitare', 'Le violon', 'L’accordéon', 'Le piano'], bonne: 0,
+        note: 'Avec deux doigts brûlés et paralysés par un incendie de roulotte : il a refait toute sa technique autour de ce handicap.',
+      },
+      {
+        texte: 'Qui a composé « Les Quatre Saisons » ?',
+        reponses: ['Vivaldi', 'Bach', 'Haendel', 'Corelli'], bonne: 0,
+        note: 'Vivaldi, prêtre roux et professeur dans un orphelinat de filles à Venise, pour qui il écrivait la plupart de ses concertos.',
+      },
+      {
+        texte: 'Quel groupe a enregistré l’album « Nevermind » ?',
+        reponses: ['Nirvana', 'Pearl Jam', 'Soundgarden', 'Alice in Chains'], bonne: 0,
+        note: '1991. Le bébé de la pochette a été payé deux cents dollars, et a passé sa vie d’adulte à s’en expliquer.',
+      },
+      {
+        texte: 'Quel chanteur français a écrit « Les Copains d’abord » ?',
+        reponses: ['Georges Brassens', 'Jacques Brel', 'Léo Ferré', 'Charles Trenet'], bonne: 0,
+        note: 'Écrite pour un film, sur commande, et devenue malgré lui l’hymne de toutes les tablées de France.',
+      },
+      {
+        texte: 'Quel producteur a inventé le « mur du son » ?',
+        reponses: ['Phil Spector', 'Quincy Jones', 'George Martin', 'Brian Eno'], bonne: 0,
+        note: 'Empiler les instruments jusqu’à ce qu’on ne les distingue plus : une trentaine de musiciens dans un studio, pour un seul mono compact.',
+      },
+      {
+        texte: 'De quel style musical le « bebop » est-il une révolution, dans les années 1940 ?',
+        reponses: ['Le jazz', 'Le blues', 'La country', 'Le gospel'], bonne: 0,
+        note: 'Contre le jazz de danse : des tempos impossibles et des harmonies tordues, pour que les amateurs ne puissent plus suivre sur scène.',
+      },
+      {
+        texte: 'Quel compositeur a écrit l’opéra « Le Vaisseau fantôme » ?',
+        reponses: ['Richard Wagner', 'Giuseppe Verdi', 'Giacomo Puccini', 'Richard Strauss'], bonne: 0,
+        note: 'Wagner en 1843, inspiré d’une traversée où son bateau a manqué sombrer. La légende du navire condamné à errer, il l’a vécue de près.',
+      },
+    ],
+  },
+
   /* --- Le mix ------------------------------------------------------------- */
   //
   // Une carte = un thème et la liste de ce que l'appli accepte. Ces listes ne

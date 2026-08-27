@@ -151,6 +151,7 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
       // dit pas avec `correct: false` tout seul.
       titre: note.titre,
       dejaCite: note.dejaCite,
+      niveau: note.niveau,
       elapsedMs: reponse.elapsedMs,
       joker: reponse.joker ?? null,
       points,
@@ -250,12 +251,17 @@ function commentaire({ detail, joueurs, manche, persona }) {
         : (bonnes.length === notes.length && notes.length > 1) ? 'tous'
           : 'plusieurs';
 
+  // Qui la réplique doit nommer. Par défaut le premier de la liste, mais un
+  // type peut avoir son propre héros : sur un « tu te mets combien ? », la
+  // phrase parle de celui qui a osé le plus haut, pas du premier venu.
+  const heros = type.heros?.(Object.entries(detail)) ?? bonnes[0]?.[0] ?? null;
+
   return {
     cle,
     texte: repliqueDe(persona, cle, {
       reponse,
       nb: bonnes.length,
-      nom: bonnes.length >= 1 ? nomDe(bonnes[0][0]) : '',
+      nom: heros ? nomDe(heros) : '',
     }),
   };
 }
@@ -301,6 +307,7 @@ export function creerRegie({
     persona,
     dureeMs,
     startAt: 0,
+    niveaux: {},
     deadline: 0,
     finPhase: 0,
     question: null,
@@ -348,10 +355,38 @@ export function creerRegie({
     return true;
   }
 
+  /** Les règles d'annonce du type en cours, s'il en a. */
+  function pariDeLaManche() {
+    return etat.question ? typeDeManche(etat.question.type).paris ?? null : null;
+  }
+
+  /**
+   * L'annonce de niveau, avant de voir sa question.
+   *
+   * Le verrou réel est côté pupitre : c'est lui qui n'affiche l'énoncé qu'une
+   * fois la fenêtre passée. Ici on vérifie seulement qu'on ne change pas son
+   * pari APRÈS avoir répondu — le reste relève de la même limite que le 50/50,
+   * à savoir qu'un appareil de la table a de toute façon la banque en local.
+   */
+  function poserLePari(playerId, round, niveau) {
+    const regles = pariDeLaManche();
+    if (!regles) return false;
+    if (etat.phase !== 'manche' || round !== etat.manche) return false;
+    if (etat.reponses[playerId]) return false;
+
+    const propre = Math.min(regles.max, Math.max(regles.min, Math.round(Number(niveau))));
+    if (!Number.isFinite(propre)) return false;
+    if (etat.niveaux[playerId] === propre) return false;
+
+    etat.niveaux[playerId] = propre;
+    return true;
+  }
+
   function prepareManche(numero, now) {
     etat.manche = numero;
     etat.question = questions[numero - 1];
     etat.reponses = {};
+    etat.niveaux = {};
     etat.resultat = null;
     etat.phase = 'manche';
     etat.startAt = now + DUREE_JOKERS_MS;
@@ -453,6 +488,11 @@ export function creerRegie({
           continue;
         }
 
+        if (entree.niveau != null) {
+          if (poserLePari(entree.playerId, entree.round, entree.niveau)) nouvelle = true;
+          continue;
+        }
+
         if (etat.phase !== 'manche' || entree.round !== etat.manche) continue;
         if (etat.reponses[entree.playerId]) continue;          // premier tap seulement
 
@@ -462,6 +502,9 @@ export function creerRegie({
         etat.reponses[entree.playerId] = {
           valeur,
           elapsedMs: entree.elapsedMs,
+          // Le niveau annoncé pendant la fenêtre, ou le plancher pour qui n'a
+          // rien dit. C'est lui qui décide de ce que vaut la manche.
+          ...(pariDeLaManche() ? { niveau: etat.niveaux[entree.playerId] ?? pariDeLaManche().defaut } : {}),
           // Un joker écarté des réglages est ignoré, même si un pupitre bricolé
           // en renvoie un : le réglage de la partie fait loi ici, pas là-bas.
           joker: autorises.includes(entree.joker) ? entree.joker : null,
@@ -555,6 +598,10 @@ export function creerRegie({
         jokers: Object.fromEntries(joueurs.map((j) => [j.id, jokersRestants(j.id)])),
         // Sert au pupitre à afficher « 3 sur 5 ont répondu » sans révéler quoi.
         ontRepondu: Object.keys(etat.reponses),
+        // Les niveaux annoncés sont publics, et c'est voulu : au TTMC de
+        // plateau on annonce à voix haute, et « Ana s'est mise à 9 » est la
+        // moitié du plaisir de la manche.
+        niveaux: etat.niveaux ?? {},
         fil: etat.fil && {
           indice: fil.indice,
           // La solution ne part qu'une fois trouvée, ou à la toute fin.

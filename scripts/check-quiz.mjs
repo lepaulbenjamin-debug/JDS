@@ -19,6 +19,7 @@ import {
 import { handlePackRequest, accorder } from '../lib/packs.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
+import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 
 const QUESTION = {
@@ -507,6 +508,166 @@ test('le chrono s’allonge sur les types qui demandent plus de gestes', () => {
   }
 });
 
+
+/* --- Tu te mets combien ? -------------------------------------------------- */
+
+const CARTE_TTMC = {
+  id: 'ttm-test', theme: 'culture', type: 'ttmc',
+  texte: 'Test — tu te mets combien ?',
+  note: 'Chacun sa question.',
+  niveaux: Array.from({ length: NIVEAU_MAX }, (_, i) => ({
+    texte: `Question de niveau ${i + 1} ?`,
+    reponses: [`Bonne ${i + 1}`, 'Fausse', 'Fausse aussi', 'Encore fausse'],
+    bonne: 0,
+    note: `Explication du niveau ${i + 1}.`,
+  })),
+};
+const carteTtmc = () => ttmc.preparer(CARTE_TTMC, (l) => l);
+
+test('le barème du TTMC suit le niveau annoncé, pas la difficulté réelle', () => {
+  const carte = carteTtmc();
+  const notes = ttmc.noter(carte, {
+    prudent: { valeur: carte.niveaux[0].bonne, niveau: 1, elapsedMs: 0 },
+    culotte: { valeur: carte.niveaux[9].bonne, niveau: 10, elapsedMs: 0 },
+  });
+  assert.equal(notes.prudent.fraction, 0.1);
+  assert.equal(notes.culotte.fraction, 1);
+  assert.ok(notes.culotte.fraction > notes.prudent.fraction);
+});
+
+test('deux joueurs d’une même manche répondent à deux questions différentes', () => {
+  // C'est toute la particularité du type : la bonne réponse de l'un n'est pas
+  // celle de l'autre, alors qu'ils jouent la même manche.
+  const carte = carteTtmc();
+  const notes = ttmc.noter(carte, {
+    a: { valeur: carte.niveaux[2].bonne, niveau: 3, elapsedMs: 0 },
+    b: { valeur: carte.niveaux[2].bonne, niveau: 7, elapsedMs: 0 },
+  });
+  assert.equal(notes.a.correct, true, 'la réponse du niveau 3 vaut pour qui s’y est mis');
+  // Le mélange étant neutralisé ici, une réponse juste au niveau 3 ne l'est au
+  // niveau 7 que par coïncidence d'index — on vérifie donc l'énoncé servi.
+  assert.notEqual(carte.niveaux[2].texte, carte.niveaux[6].texte);
+});
+
+test('se tromper ne rapporte rien, quel que soit le niveau annoncé', () => {
+  const carte = carteTtmc();
+  const notes = ttmc.noter(carte, {
+    a: { valeur: (carte.niveaux[9].bonne + 1) % 4, niveau: 10, elapsedMs: 0 },
+  });
+  assert.equal(notes.a.correct, false);
+  assert.equal(notes.a.fraction, 0);
+});
+
+test('un niveau farfelu est ramené dans les clous', () => {
+  const carte = carteTtmc();
+  for (const [envoye, attendu] of [[0, 1], [99, NIVEAU_MAX], [-5, 1], [3.6, 4]]) {
+    const notes = ttmc.noter(carte, { a: { valeur: 0, niveau: envoye, elapsedMs: 0 } });
+    assert.equal(notes.a.niveau, attendu, `niveau ${envoye}`);
+  }
+});
+
+test('qui n’annonce rien joue le niveau le plus facile', () => {
+  const carte = carteTtmc();
+  const notes = ttmc.noter(carte, { a: { valeur: carte.niveaux[0].bonne, elapsedMs: 0 } });
+  assert.equal(notes.a.niveau, NIVEAU_DEFAUT);
+  assert.equal(notes.a.correct, true);
+});
+
+test('les dix énoncés partent dès l’ouverture, les dix solutions non', () => {
+  // Les énoncés doivent partir : un pupitre qui n'a pas le pack d'où vient la
+  // carte ne pourrait pas afficher sa question autrement.
+  const carte = carteTtmc();
+  const ouverte = ttmc.publier(carte, false);
+  assert.equal(ouverte.niveaux.length, NIVEAU_MAX);
+  assert.ok(ouverte.niveaux.every((n) => n.texte && n.reponses.length === 4));
+  assert.ok(ouverte.niveaux.every((n) => n.bonne === undefined), 'une solution a fuité');
+  assert.ok(ouverte.niveaux.every((n) => n.note === undefined), 'une explication a fuité');
+
+  const revelee = ttmc.publier(carte, true);
+  assert.ok(revelee.niveaux.every((n) => n.bonne !== undefined && n.note));
+});
+
+test('le mélange garde chaque bonne réponse alignée sur son texte, niveau par niveau', () => {
+  const carte = ttmc.preparer(CARTE_TTMC, (l) => l.slice().reverse());
+  carte.niveaux.forEach((n, i) => {
+    assert.equal(n.reponses[n.bonne], CARTE_TTMC.niveaux[i].reponses[CARTE_TTMC.niveaux[i].bonne]);
+  });
+});
+
+test('le pari s’annonce, se corrige, puis se ferme dès qu’on a répondu', () => {
+  const regie = creerRegie({ questions: [carteTtmc()], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(10_000, JOUEURS);          // au-delà de l'intro : la manche 1 existe
+  assert.equal(regie.etatPublic(JOUEURS).phase, 'manche');
+
+  regie.encaisser([{ playerId: 'a', round: 1, niveau: 7 }]);
+  assert.equal(regie.etatPublic(JOUEURS).niveaux.a, 7);
+
+  // On a le droit d'hésiter tant que la question n'est pas ouverte.
+  regie.encaisser([{ playerId: 'a', round: 1, niveau: 4 }]);
+  assert.equal(regie.etatPublic(JOUEURS).niveaux.a, 4);
+
+  // Mais plus une fois qu'on a répondu : ce serait choisir son barème après coup.
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 0, elapsedMs: 500 }]);
+  regie.encaisser([{ playerId: 'a', round: 1, niveau: 10 }]);
+  assert.equal(regie.etatPublic(JOUEURS).niveaux.a, 4);
+});
+
+test('les niveaux annoncés sont publics — c’est la moitié du plaisir', () => {
+  const regie = creerRegie({ questions: [carteTtmc()], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(10_000, JOUEURS);
+  regie.encaisser([
+    { playerId: 'a', round: 1, niveau: 9 },
+    { playerId: 'b', round: 1, niveau: 2 },
+  ]);
+  assert.deepEqual(regie.etatPublic(JOUEURS).niveaux, { a: 9, b: 2 });
+});
+
+test('un pari annoncé sur un type qui n’en a pas est ignoré', () => {
+  const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(10_000, JOUEURS);
+  assert.equal(regie.etatPublic(JOUEURS).question.type, 'qcm');
+  assert.equal(regie.encaisser([{ playerId: 'a', round: 1, niveau: 8 }]), false);
+  assert.deepEqual(regie.etatPublic(JOUEURS).niveaux, {});
+});
+
+test('l’animateur nomme celui qui a osé, pas le premier de la liste', () => {
+  // La réplique félicitait le premier joueur correct — en général celui qui
+  // s'était mis à 2, pendant qu'un autre tenait un 10.
+  const carte = carteTtmc();
+  const { detail } = resoudreManche({
+    manche: carte,
+    reponses: {
+      a: { valeur: carte.niveaux[1].bonne, niveau: 2, elapsedMs: 0 },
+      c: { valeur: carte.niveaux[9].bonne, niveau: 10, elapsedMs: 0 },
+    },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+  });
+  assert.ok(detail.a.correct && detail.c.correct);
+  assert.equal(ttmc.heros(Object.entries(detail)), 'c');
+});
+
+test('gros pari tenu : l’animateur a sa réplique, distincte du cas ordinaire', () => {
+  const jouer = (niveau) => jouerUnePartie({
+    questions: [carteTtmc()],
+    repondre: (vue, horloge) => {
+      if (vue.phase !== 'manche') return [];
+      if (horloge - vue.startAt === -1000) return [{ playerId: 'a', round: vue.manche, niveau }];
+      if (horloge - vue.startAt === 100) {
+        return [{ playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 500 }];
+      }
+      return [];
+    },
+  }).vues.find((v) => v.phase === 'revelation');
+
+  assert.equal(jouer(9).resultat.commentaireCle, 'ttmcGrosPari');
+  assert.equal(jouer(2).resultat.commentaireCle, 'ttmcTrouve');
+});
+
 /* --- Le mix --------------------------------------------------------------- */
 
 const CARTE = {
@@ -837,6 +998,17 @@ test('chaque entrée de banque est complète pour son type', () => {
       assert.equal(q.elements.length, 4, `${q.id} : quatre éléments attendus`);
       assert.equal(new Set(q.elements).size, 4, `${q.id} : éléments en double`);
     }
+    if (type === 'ttmc') {
+      assert.equal(q.niveaux.length, NIVEAU_MAX, `${q.id} : il faut ${NIVEAU_MAX} niveaux`);
+      q.niveaux.forEach((n, i) => {
+        assert.equal(n.reponses.length, 4, `${q.id} niveau ${i + 1} : quatre réponses`);
+        assert.equal(new Set(n.reponses).size, 4, `${q.id} niveau ${i + 1} : réponses en double`);
+        assert.ok(n.bonne >= 0 && n.bonne < 4, `${q.id} niveau ${i + 1} : index de bonne réponse`);
+        assert.ok(n.texte && n.note, `${q.id} niveau ${i + 1} : énoncé ou explication manquant`);
+      });
+      const enonces = q.niveaux.map((n) => n.texte);
+      assert.equal(new Set(enonces).size, enonces.length, `${q.id} : deux niveaux posent la même question`);
+    }
     if (type === 'mix') {
       assert.ok(q.acceptees.length >= 10, `${q.id} : ${q.acceptees.length} titres, il en faut au moins dix`);
       const titres = q.acceptees.map((t) => t.titre.toLowerCase());
@@ -1111,6 +1283,12 @@ test('le relais laisse passer toutes les formes de réponse, texte compris', asy
     const { body } = await appel('POST', { code }, { hostToken });
     assert.deepEqual(body.answers[0]?.reponse, reponse, `${type} : réponse perdue par le relais`);
   }
+
+  // L'annonce de niveau voyage seule, sans réponse : c'est son propre champ, et
+  // il s'était fait jeter en silence exactement comme le texte du mix.
+  await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, niveau: 7 });
+  const { body } = await appel('POST', { code }, { hostToken });
+  assert.equal(body.answers[0]?.niveau, 7, 'ttmc : niveau perdu par le relais');
 });
 
 test('un titre trop long est tronqué, jamais jeté', async () => {

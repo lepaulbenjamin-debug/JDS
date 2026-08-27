@@ -31,8 +31,9 @@ import estimation from './estimation.js';
 import ordre from './ordre.js';
 import rafale from './rafale.js';
 import mix from './mix.js';
+import ttmc from './ttmc.js';
 
-export const TYPES = [qcm, estimation, ordre, rafale, mix];
+export const TYPES = [qcm, estimation, ordre, rafale, mix, ttmc];
 
 const PAR_ID = Object.fromEntries(TYPES.map((t) => [t.id, t]));
 

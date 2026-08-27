@@ -398,6 +398,29 @@ body {
 .mix-titre { font-weight: 700; }
 .mix-artiste { color: var(--muted); }
 
+/* --- Tu te mets combien ? ------------------------------------------------ */
+
+.pari { display: grid; gap: 10px; margin: 4px 0 14px; }
+.pari-titre { margin: 0; font-size: 19px; font-weight: 800; }
+/* Dix crans sur une largeur de téléphone : cinq par ligne, assez gros pour le
+   pouce. Une seule ligne de dix donnerait des cibles de 30 px. */
+.pari-grille { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.pari-cran {
+  padding: 14px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 800 20px/1 inherit;
+  cursor: pointer;
+}
+.pari-cran.est-actif { border-color: var(--accent); background: var(--accent); color: #fff; }
+.pari-cran:disabled { opacity: 0.45; cursor: default; }
+.pari-cran.est-actif:disabled { opacity: 1; }
+.ttmc { display: grid; gap: 14px; }
+.ttmc-enonce { margin: 0; font-size: 21px; line-height: 1.25; }
+.ttmc-correction:empty { display: none; }
+
 /* --- Dans l'ordre -------------------------------------------------------- */
 
 .ordre { display: grid; gap: 10px; }

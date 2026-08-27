@@ -117,7 +117,7 @@ tout le monde joue.
   séries, années 2000, bouffe, insolite, sport, le monde, marques & pubs, mots &
   expressions. Chacun tient une partie entière à lui seul — une vérification s'en
   assure — et rien n'empêche de tout cocher pour piocher partout.
-- **Cinq formes de manche**, mêlées dans la même partie et cochables dans les
+- **Six formes de manche**, mêlées dans la même partie et cochables dans les
   réglages. **Question** : quatre réponses, le plus rapide marque le plus.
   **Estimation** : un nombre à avancer, le plus proche rafle la manche et la
   vitesse ne compte plus — on réfléchit au lieu de dégainer. **Dans l'ordre** :
@@ -126,8 +126,20 @@ tout le monde joue.
   « une chanson avec un animal dans le titre » — et la course à celui qui sort
   un titre valable ; toute proposition reconnue marque, mais un titre déjà cité
   ne compte plus, ce qui force à chercher au lieu de converger vers l'évidence.
-  Chaque type ajuste son chrono : taper un titre prend bien plus de temps que
-  toucher un bouton.
+  **Tu te mets combien ?** : une carte porte dix questions d'un même thème, de
+  la plus facile à la plus coriace ; chacun annonce son niveau avant de voir
+  quoi que ce soit, puis chaque téléphone affiche LA question de son niveau —
+  cinq joueurs, cinq questions différentes dans la même manche. Se mettre à 10
+  et trouver rapporte dix fois se mettre à 1 et trouver. Chaque type ajuste son
+  chrono : taper un titre prend bien plus de temps que toucher un bouton.
+
+  Le « tu te mets combien ? » reprend le principe de **TTMC**. Deux
+  conséquences dont il faut avoir conscience : l'animateur ne peut pas lire la
+  question à voix haute, puisqu'il y en a dix en cours en même temps — il
+  annonce la carte, se tait, et commente à la révélation, les énoncés restant
+  sur les écrans ; et le chrono est commun alors que les questions ne le sont
+  pas, si bien que celui qui s'est mis à 10 a le même temps que celui qui s'est
+  mis à 1. C'est une part du risque, pas un oubli.
 
   Le mix reprend le fonctionnement de **DJ Set** sans sa musique : les droits
   sur des extraits enregistrés ne se contournent pas, et un QR code qui lance

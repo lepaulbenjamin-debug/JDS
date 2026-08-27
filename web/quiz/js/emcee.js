@@ -59,6 +59,18 @@ const BANQUE = {
       'Aucun titre trouvé. Pourtant, regardez la liste.',
       'Personne. Et il y avait de quoi faire, jugez plutôt.',
     ],
+    ttmcTrouve: [
+      'Chacun avait sa question, et sa correction. Bonnes réponses : {nb}.',
+      'Autant de questions que de joueurs. Bonnes réponses : {nb}. Regardez vos écrans.',
+    ],
+    ttmcGrosPari: [
+      'Quelqu’un a joué gros et l’a emporté. {nom}, chapeau.',
+      'Un gros pari tenu par {nom}. C’est comme ça qu’on renverse une partie.',
+    ],
+    ttmcPersonne: [
+      'Personne. Vous vous êtes tous surestimés.',
+      'Pas une bonne réponse. Le niveau était peut-être un peu haut.',
+    ],
     personne: [
       'Personne. Pas un seul. La réponse était {reponse}.',
       'Aucune bonne réponse. C’était {reponse}.',
@@ -131,6 +143,18 @@ const BANQUE = {
       'Rien. Le vide. Et il y avait toute cette liste.',
       'Pas un titre. Je vous laisse méditer là-dessus.',
     ],
+    ttmcTrouve: [
+      'Rescapés : {nb}. Les autres, vous vous connaissez mal.',
+      'Ceux qui savaient de quoi ils parlaient : {nb}. Les autres, non.',
+    ],
+    ttmcGrosPari: [
+      '{nom} s’est mis très haut. Et {nom} avait raison. Insupportable.',
+      'Gros pari, gros gain. {nom} vient de vous passer devant.',
+    ],
+    ttmcPersonne: [
+      'Rien. Vous vous êtes tous mis trop haut, et ça se voit.',
+      'Pas un seul. L’humilité, ça se travaille.',
+    ],
     personne: [
       'Alors là, rien. Zéro. Le néant. C’était {reponse}, bande de touristes.',
       'Personne n’a trouvé. {reponse}. Vous me faites de la peine.',
@@ -190,6 +214,9 @@ const BANQUE = {
     ],
     mixTrouve: ['{nb} réponse(s) recevable(s). La liste complète suit.'],
     mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
+    ttmcTrouve: ['Bonnes réponses : {nb}, pour autant de questions distinctes.'],
+    ttmcGrosPari: ['{nom} s’est placé haut, et l’a assumé. C’est notable.'],
+    ttmcPersonne: ['Aucune bonne réponse. L’auto-évaluation est un art difficile.'],
     personne: [
       'Aucune bonne réponse. C’était {reponse}. Je note.',
       'Rien. La réponse était {reponse}. Nous poursuivons.',
@@ -234,6 +261,9 @@ const DIT = {
     derniereManche: ['Dernière manche, et elle vaut double. Tout peut encore basculer.'],
     mixTrouve: ['Voici tout ce que j’acceptais.'],
     mixPersonne: ['Aucun titre trouvé. Pourtant, regardez la liste.'],
+    ttmcTrouve: ['Chacun avait sa question. Regardez vos écrans.'],
+    ttmcGrosPari: ['Quelqu’un a joué gros et l’a emporté. Chapeau.'],
+    ttmcPersonne: ['Personne. Vous vous êtes tous surestimés.'],
     personne: ['Personne. Pas un seul.', 'Aucune bonne réponse.'],
     tous: ['Tout le monde a trouvé.', 'Sans faute pour tout le monde.'],
     unSeul: ['Une seule bonne réponse. Chapeau.'],
@@ -255,6 +285,9 @@ const DIT = {
     derniereManche: ['Dernière question, elle vaut double. C’est le moment de trahir vos amis.'],
     mixTrouve: ['Et maintenant, la liste de tout ce que vous avez raté.'],
     mixPersonne: ['Rien. Le vide. Et il y avait toute cette liste.'],
+    ttmcTrouve: ['Quelques rescapés. Les autres, vous vous connaissez mal.'],
+    ttmcGrosPari: ['Gros pari, gros gain. Insupportable.'],
+    ttmcPersonne: ['Rien. Vous vous êtes tous mis trop haut, et ça se voit.'],
     personne: ['Alors là, rien. Zéro. Le néant.', 'Personne n’a trouvé. Vous me faites de la peine.'],
     tous: ['Tout le monde a bon. Trop facile, je vais corser ça.'],
     unSeul: ['Une seule bonne réponse. Les autres, vous étiez où ?'],
@@ -276,6 +309,9 @@ const DIT = {
     derniereManche: ['Dernière manche, points doublés. Rien n’est joué, hélas.'],
     mixTrouve: ['La liste complète suit.'],
     mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
+    ttmcTrouve: ['Autant de questions que de joueurs. Les corrections sont à l’écran.'],
+    ttmcGrosPari: ['Un pari haut, tenu. C’est notable.'],
+    ttmcPersonne: ['Aucune bonne réponse. L’auto-évaluation est un art difficile.'],
     personne: ['Aucune bonne réponse. Je note.'],
     tous: ['Tout le monde a trouvé. J’ajusterai la difficulté.'],
     unSeul: ['Une seule bonne réponse. Intéressant.'],

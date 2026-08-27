@@ -9,6 +9,7 @@ import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
 import { vueDe } from './vues.js';
+import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
 import {
   THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
   ajouterQuestions, toutesLesQuestions,
@@ -85,6 +86,7 @@ let cleRendue = '';            // phase + manche : sert à ne reconstruire que l
 let derniereVoix = '';
 let vueManche = null;          // la vue construite pour la manche en cours
 let filEnvoye = false;         // une tentative de fil rouge part sans écho immédiat
+let monNiveau = null;          // { manche, niveau } — le pari du TTMC, écho local
 
 const estRegie = () => Boolean(salon?.hostToken);
 
@@ -203,6 +205,7 @@ function appliquer(nouvel) {
       jokerArme = null;
       masque = null;
       filEnvoye = false;
+      monNiveau = null;
       // L'énoncé sera lu au top : on le met en cache pendant la fenêtre de
       // jokers, pour qu'il parte pile à l'heure et non après un aller-retour.
       if (etat.question?.id) {
@@ -322,15 +325,80 @@ function rendreJeu() {
     $('#jeu-annonce').textContent = etat.phase === 'revelation'
       ? (etat.resultat?.commentaire ?? '')
       : (etat.annonce ?? '');
-    $('#jeu-question').textContent = question?.texte ?? '';
+    // Sur un TTMC, `texte` est l'annonce de la carte ; l'énoncé joué dépend du
+    // niveau et vit dans la vue, qui est seule à savoir lequel a été choisi.
+    $('#jeu-question').textContent = question?.type === 'ttmc' ? '' : (question?.texte ?? '');
     construireSaisie(question);
   }
 
+  rendrePari();
   peindreReponses();
   rendreJokers();
   rendreEtatManche();
   rendreFilRouge();
   rafraichirChrono();
+}
+
+/**
+ * Le niveau auquel je me suis mis sur cette manche.
+ *
+ * L'écho local prime tant que la régie ne l'a pas repris, sinon le bouton
+ * choisi clignote le temps d'un aller-retour. Sans rien d'annoncé, c'est le
+ * plancher : personne ne doit rester spectateur pour une hésitation.
+ */
+function niveauCourant() {
+  if (monNiveau?.manche === etat.manche) return monNiveau.niveau;
+  return etat.niveaux?.[moi.id] ?? NIVEAU_DEFAUT;
+}
+
+/**
+ * Le pari du TTMC : on annonce sa difficulté avant de voir sa question.
+ *
+ * Le verrou est ici, et nulle part ailleurs : la régie accepte encore une
+ * annonce après l'ouverture, mais l'énoncé est déjà à l'écran — c'est la même
+ * limite que le 50/50, la banque étant de toute façon embarquée sur chaque
+ * appareil.
+ */
+function rendrePari() {
+  const zone = $('#jeu-pari');
+  const estTtmc = etat.question?.type === 'ttmc';
+  const ouvert = etat.phase === 'manche' && net.serverNow() < etat.startAt;
+  zone.hidden = !estTtmc || etat.phase === 'revelation';
+  if (zone.hidden) return;
+
+  const choisi = niveauCourant();
+  clear(zone);
+  zone.append(el('p', { class: 'pari-titre', text: ouvert ? 'Tu te mets combien ?' : `Tu t’es mis à ${choisi}.` }));
+
+  const grille = el('div', { class: 'pari-grille' });
+  for (let n = NIVEAU_MIN; n <= NIVEAU_MAX; n += 1) {
+    grille.append(el('button', {
+      class: `pari-cran${n === choisi ? ' est-actif' : ''}`,
+      type: 'button',
+      disabled: !ouvert,
+      'aria-label': `Niveau ${n}`,
+      onclick: () => annoncerLeNiveau(n),
+    }, String(n)));
+  }
+  zone.append(grille);
+  zone.append(el('p', {
+    class: 'muted small',
+    text: ouvert
+      ? '1 : facile, peu de points. 10 : coriace, gros points. Tu ne verras ta question qu’après.'
+      : 'Verrouillé pour cette manche.',
+  }));
+}
+
+async function annoncerLeNiveau(niveau) {
+  if (etat.phase !== 'manche' || net.serverNow() >= etat.startAt) return;
+  monNiveau = { manche: etat.manche, niveau };
+  sons.bip();
+  rendrePari();
+  try {
+    await net.sendAnswer(salon.code, { playerId: moi.id, round: etat.manche, niveau });
+  } catch {
+    toast('Niveau non transmis — le relais n’a pas répondu.', 'warn');
+  }
 }
 
 /** La zone de saisie, reconstruite une seule fois par manche. */
@@ -353,6 +421,7 @@ function peindreReponses() {
     ouvert: etat.phase === 'manche' && net.serverNow() >= etat.startAt && !monChoix,
     revele: etat.phase === 'revelation',
     masque: etat.phase === 'manche' && masque?.manche === etat.manche ? masque.caches : [],
+    niveau: niveauCourant(),
   });
 }
 
@@ -436,7 +505,9 @@ function rendreEtatManche() {
         text: 'Ton joker t’est rendu : il n’a rien pu faire cette manche.',
       }));
     }
-    if (etat.question?.note) {
+    // Sur un TTMC, l'explication appartient au niveau joué et s'affiche déjà
+    // dans la vue, juste sous la question : la note de la carte ferait double.
+    if (etat.question?.note && etat.question.type !== 'ttmc') {
       hote.append(el('p', { class: 'note', text: etat.question.note }));
     }
     for (const evenement of etat.resultat?.evenements ?? []) {
@@ -475,6 +546,11 @@ function detailDeLaManche(mien) {
   if (type === 'ordre') return `${mien.justes ?? 0} position${(mien.justes ?? 0) > 1 ? 's' : ''} sur 4 dans le bon ordre.`;
   if (type === 'rafale') return `${mien.justes ?? 0} bonne${(mien.justes ?? 0) > 1 ? 's' : ''} réponse${(mien.justes ?? 0) > 1 ? 's' : ''} sur 5.`;
   if (type === 'estimation' && mien.correct) return 'Estimation la plus proche de la table.';
+  if (type === 'ttmc') {
+    return mien.correct
+      ? `Niveau ${mien.niveau} annoncé, et trouvé.`
+      : `Niveau ${mien.niveau} annoncé, et raté.`;
+  }
   if (type === 'mix') {
     // Trois issues, et la troisième est la plus frustrante des trois : c'est
     // celle qu'il faut nommer, sinon « 0 point » ressemble à une erreur.

@@ -297,7 +297,69 @@ const mix = {
   },
 };
 
-const VUES = { qcm, estimation, ordre, rafale, mix };
+
+/* --- Tu te mets combien ? -------------------------------------------------- */
+
+const ttmc = {
+  // Les boutons ne peuvent pas être fabriqués ici : on ne sait pas encore à
+  // quel niveau le joueur va se mettre. On prépare la coquille, et la première
+  // peinture qui connaît le niveau la remplit — une seule fois, puisque le
+  // niveau est verrouillé dès que la question s'ouvre.
+  construire(manche, ctx) {
+    const enonce = el('h3', { class: 'ttmc-enonce' });
+    const boutons = el('div', { class: 'reponses' });
+    const correction = el('div', { class: 'ttmc-correction' });
+    return {
+      racine: el('div', { class: 'ttmc' }, [enonce, boutons, correction]),
+      enonce,
+      boutons,
+      correction,
+      ctx,
+      rendus: [],
+      niveauRendu: null,
+    };
+  },
+
+  peindre(vue, { manche, monChoix, ouvert, revele, niveau }) {
+    const ligne = manche.niveaux?.[niveau - 1];
+    if (!ligne) return;
+
+    if (vue.niveauRendu !== niveau) {
+      vue.niveauRendu = niveau;
+      vue.enonce.textContent = ligne.texte;
+      clear(vue.boutons);
+      vue.rendus = ligne.reponses.map((texte, index) => el('button', {
+        class: 'reponse',
+        type: 'button',
+        onclick: () => vue.ctx.repondre(index),
+      }, [
+        el('span', { class: 'reponse-lettre', text: 'ABCD'[index] }),
+        el('span', { class: 'reponse-texte', text: texte }),
+        el('span', { class: 'reponse-marque' }),
+      ]));
+      for (const bouton of vue.rendus) vue.boutons.append(bouton);
+    }
+
+    vue.rendus.forEach((bouton, index) => {
+      bouton.disabled = !ouvert;
+      bouton.classList.toggle('est-choisi', monChoix === index);
+      bouton.classList.toggle('est-juste', revele && ligne.bonne === index);
+      bouton.classList.toggle(
+        'est-faux',
+        revele && monChoix === index && ligne.bonne !== index,
+      );
+    });
+
+    clear(vue.correction);
+    // L'explication est propre à la question qu'on a tirée : l'animateur ne
+    // peut pas la lire, dix corrections différentes tournent en même temps.
+    if (revele && ligne.note) {
+      vue.correction.append(el('p', { class: 'note', text: ligne.note }));
+    }
+  },
+};
+
+const VUES = { qcm, estimation, ordre, rafale, mix, ttmc };
 
 export function vueDe(type) {
   return VUES[type] ?? qcm;

@@ -44,6 +44,12 @@ export function inventaire() {
     const manche = type.preparer(entree, (liste) => liste);
 
     clips.push({ id: `question/${entree.id}`, texte: entree.texte });
+
+    // Un TTMC n'a pas de réponse commune : dix corrections différentes tournent
+    // en même temps, et chacune s'affiche sur son propre écran. L'animateur
+    // annonce la carte, puis se tait.
+    if (!type.solutionTexte(manche)) continue;
+
     clips.push({
       id: `reponse/${entree.id}`,
       texte: {
