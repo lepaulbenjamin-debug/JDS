@@ -151,6 +151,41 @@ tout le monde joue.
 - **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
   personne n'est éliminé avant la fin.
 
+### Mettre la Quiz Room en ligne
+
+Le jeu tourne en local avec `npm start`, mais il n'est vraiment « accessible sur
+le web » qu'une fois déployé — et le HTTPS n'est pas cosmétique : sur une
+adresse `http://192.168.x.x`, le navigateur désactive `crypto.randomUUID`, le
+verrou de veille, le presse-papiers et le service worker. Les quatre reviennent
+en ligne, dont le verrou de veille, qui est précisément ce qui empêche la partie
+de se figer quand l'écran de la régie s'éteint.
+
+Trois choses à faire, dans cet ordre :
+
+1. **Un stockage partagé.** En serverless, deux requêtes tombent sur deux
+   instances différentes : sans lui, un salon paraît introuvable une fois sur
+   deux et une licence achetée disparaît. Créez une base Upstash Redis et
+   renseignez `UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN`. Le code
+   les lit déjà, pour les salons comme pour les licences.
+2. **Les enregistrements de l'animateur.** `node scripts/generate-audio.mjs`
+   avec une clé, puis on versionne le dossier `web/quiz/audio/` : quelques
+   mégaoctets de MP3, servis par le CDN. Sans eux, l'animateur retombe sur la
+   voix de synthèse de chaque appareil.
+3. **Le déploiement.** Importer le dépôt sur Vercel, ajouter les variables. Rien
+   d'autre : `vercel.json` dit déjà tout, y compris de joindre `packs/` au
+   paquet de la fonction.
+
+Vérifier après coup, sans ouvrir l'interface :
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://…/quiz/            # 200
+curl -s https://…/api/packs                                          # le catalogue
+curl -s -o /dev/null -w '%{http_code}\n' https://…/packs/noel.json   # 404, impérativement
+```
+
+Ce dernier compte plus que les deux autres : un 200 signifierait qu'un pack
+payant est téléchargeable par n'importe qui.
+
 ### Faire une première partie
 
 ```bash

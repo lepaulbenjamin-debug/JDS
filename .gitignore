@@ -9,7 +9,9 @@ dist/
 # Sortie de scripts/generate-questions.mjs : un brouillon à relire, pas une source.
 scripts/questions-brouillon.json
 
-# Sortie de scripts/generate-audio.mjs : des binaires lourds, régénérables à
-# l'identique depuis la banque de questions. Sans eux, l'appli retombe sur la
-# synthèse du navigateur, donc rien ne casse.
-web/quiz/audio/
+# Les clips d'essai de `generate-audio.mjs --blanc` : du silence, lourd et sans
+# intérêt. Les vrais enregistrements, eux, sont versionnés — quelques mégaoctets
+# de MP3 servis par le CDN, et surtout la certitude que la voix est là en
+# production. Un déploiement sans clips retomberait sur la synthèse du
+# navigateur, c'est-à-dire sur le défaut qu'on a passé une soirée à corriger.
+web/quiz/audio/**/*.wav
