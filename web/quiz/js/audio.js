@@ -23,13 +23,30 @@ let encours = null;      // l'élément <audio> qui joue, pour pouvoir le couper
 /**
  * Charge le manifeste, une seule fois. Son absence n'est pas une erreur :
  * c'est simplement une installation où les clips n'ont pas été générés.
+ *
+ * Le manifeste ne suffit pas : on vérifie qu'un clip répond vraiment. Il est
+ * versionné alors que les fichiers, eux, peuvent ne pas l'être — c'est le cas
+ * des essais à blanc, ignorés par git. Déployé tel quel, le manifeste faisait
+ * croire à l'appli qu'elle avait une voix : elle tentait un fichier absent
+ * avant chaque phrase, se rabattait sur la synthèse après un aller-retour
+ * perdu, et masquait le choix de voix système au motif qu'il ne servait plus.
+ * Une requête au démarrage évite tout ça, et couvre aussi le cas d'un envoi
+ * incomplet.
  */
 export function charger() {
   if (chargement) return chargement;
   chargement = fetch(MANIFESTE, { cache: 'force-cache' })
     .then((res) => (res.ok ? res.json() : null))
-    .then((json) => {
-      manifeste = json?.clips ? json : null;
+    .then(async (json) => {
+      if (!json?.clips) return null;
+      const premier = Object.keys(json.clips)[0];
+      if (!premier) return null;
+      const sonde = await fetch(`${RACINE}/${premier}.${json.format ?? 'mp3'}`, { method: 'HEAD' })
+        .catch(() => null);
+      return sonde?.ok ? json : null;
+    })
+    .then((valide) => {
+      manifeste = valide;
       return manifeste;
     })
     .catch(() => {
