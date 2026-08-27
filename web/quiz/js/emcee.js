@@ -337,6 +337,22 @@ export function paroleDe(persona, cle) {
   return { id: `emcee/${nom}/${cle}/${index}`, texte: liste[index] };
 }
 
+/**
+ * La durée de la plus longue variante d'une réplique.
+ *
+ * C'est bien le maximum qu'il faut, et non la moyenne : chaque appareil tire sa
+ * variante au sort, et la régie doit laisser le temps à celui qui a tiré la
+ * plus longue. Rend 0 si les clips ne sont pas générés — la partie retombe
+ * alors sur le plancher, ce qui est le bon comportement.
+ */
+export function dureeDeLaReplique(persona, cle) {
+  const liste = DIT[persona]?.[cle] ? DIT[persona][cle] : DIT.classique[cle];
+  if (!liste?.length) return 0;
+  const nom = DIT[persona]?.[cle] ? persona : 'classique';
+  const durees = liste.map((_, i) => audio.duree(`emcee/${nom}/${cle}/${i}`));
+  return Math.max(0, ...durees);
+}
+
 /** Tout ce qui doit être prononcé, pour le script de génération. */
 export function inventaireDesParoles() {
   const clips = [];
@@ -438,11 +454,18 @@ export const voix = {
    * le temps de lire l'explication de la réponse — c'est le meilleur moment de
    * la manche. Avec une voix de synthèse, ce même passage est celui qui lasse
    * le plus, donc le repli s'en tient au commentaire.
+   *
+   * Une règle en plus : une partie a UNE voix. Dès que la banque est là, un clip
+   * qui manque ou qu'on n'a pas pu jouer laisse le silence — jamais la synthèse
+   * du navigateur. Sinon l'animateur change de timbre en pleine soirée, et le
+   * repli dit en plus autre chose que le clip (« Manche 3 sur 12 » là où la voix
+   * enregistrée dit « On enchaîne »), ce qui s'entend immédiatement.
    */
   async enoncer({ clips = [], repli = [] } = {}) {
     if (!this.active) return;
     speech.stop();
     if (await audio.jouer(clips)) return;
+    if (audio.disponible()) return;              // banque présente : silence plutôt qu'un autre timbre
     this.dire(repli);
   },
 

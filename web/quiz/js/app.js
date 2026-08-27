@@ -15,7 +15,9 @@ import {
   ajouterQuestions, toutesLesQuestions,
 } from './questions.js';
 import * as packs from './packs.js';
-import { PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip } from './emcee.js';
+import {
+  PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip, dureeDeLaReplique,
+} from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
 const BATTEMENT_REGIE_MS = 450;
@@ -86,6 +88,7 @@ let cleRendue = '';            // phase + manche : sert à ne reconstruire que l
 let derniereVoix = '';
 let vueManche = null;          // la vue construite pour la manche en cours
 let filEnvoye = false;         // une tentative de fil rouge part sans écho immédiat
+let filRendu = '';             // ce que la boîte du fil rouge affiche déjà, pour ne pas la reconstruire sous les doigts
 let monNiveau = null;          // { manche, niveau } — le pari du TTMC, écho local
 
 const estRegie = () => Boolean(salon?.hostToken);
@@ -98,6 +101,10 @@ function montrer(nom) {
   // d'un salon qui a mal tourné. La confirmation évite le départ par accident.
   $('#btn-back').hidden = nom === 'accueil';
 }
+
+// Le blanc laissé après la dernière phrase de l'animateur : le temps de lire
+// son score et de souffler avant l'énoncé suivant.
+const RESPIRATION_S = 4;
 
 const ECRAN_DE_PHASE = {
   lobby: 'lobby',
@@ -574,6 +581,25 @@ function rendreFilRouge() {
   zone.hidden = !fil || etat.manche < 2;
   if (zone.hidden) return;
 
+  // Ne reconstruire que sur une vraie nouvelle.
+  //
+  // La zone se redessinait à chaque battement du relais, soit plusieurs fois par
+  // manche : le `<details>` repartait fermé et le champ vidé, et il devenait
+  // impossible de taper un mot avant qu'il ne disparaisse.
+  //
+  // Le changement de manche ne fait délibérément pas partie de la signature. Le
+  // fil rouge se cherche en travers de la partie, sur plusieurs manches — la
+  // boîte doit survivre au rythme du jeu, pas se refermer à chaque tour.
+  const bloqueJusqu = fil.bloques?.[moi.id] ?? 0;
+  const bloque = bloqueJusqu > etat.manche;
+  const signature = [
+    fil.trouve ? `trouve:${fil.trouve.playerId}` : '',
+    bloque ? `bloque:${bloqueJusqu - etat.manche}` : '',
+    filEnvoye ? 'envoye' : '',
+  ].join('|');
+  if (signature === filRendu) return;
+  filRendu = signature;
+
   clear(zone);
 
   if (fil.trouve) {
@@ -584,8 +610,7 @@ function rendreFilRouge() {
     return;
   }
 
-  const bloqueJusqu = fil.bloques?.[moi.id] ?? 0;
-  if (bloqueJusqu > etat.manche) {
+  if (bloque) {
     const reste = bloqueJusqu - etat.manche;
     zone.append(el('p', {
       class: 'muted small',
@@ -613,14 +638,29 @@ function rendreFilRouge() {
   };
   champ.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyer(); });
 
+  // La règle du jeu, et pas seulement l'indice.
+  //
+  // Seul celui qui crée la partie lit les réglages : les autres voyaient
+  // apparaître cette boîte à la manche 2 sans savoir ce qu'était un fil rouge,
+  // ni qu'ils avaient le droit de tenter à tout moment. On l'explique donc là où
+  // la question se pose, sur l'écran de chacun.
   const ouvrir = el('details', { class: 'fil-boite' }, [
     el('summary', { text: '🧵 Je crois avoir le fil rouge' }),
-    el('p', { class: 'muted small', text: fil.indice }),
+    el('p', {
+      class: 'muted small',
+      text: 'Un même mot se cache dans les bonnes réponses de plusieurs manches. '
+        + 'Le premier à le nommer rafle une grosse prime — et plus tôt il trouve, plus elle est grosse.',
+    }),
+    el('p', { class: 'fil-indice', text: `Indice : ${fil.indice}` }),
     el('div', { class: 'fil-ligne' }, [
       champ,
       el('button', { class: 'btn btn-primary', type: 'button', onclick: envoyer }, 'Proposer'),
     ]),
-    el('p', { class: 'muted small', text: 'Une erreur coûte deux manches de silence.' }),
+    el('p', {
+      class: 'muted small',
+      text: 'Tu peux tenter quand tu veux, même pendant une question — prends ton temps, '
+        + 'ce que tu écris ici ne s’efface pas. Mais une erreur coûte deux manches de silence.',
+    }),
   ]);
   zone.append(ouvrir);
 }
@@ -1077,10 +1117,18 @@ async function ouvrirSalon() {
       // Le moteur ne connaît pas les fichiers audio : c'est ici qu'on lui dit
       // combien de temps il faut pour lire la réponse et son explication, sans
       // quoi la phase se termine au milieu de la phrase.
-      dureeRevelation: (question) => {
+      // Exactement ce que `parler()` va enchaîner, dans le même ordre : le
+      // commentaire, la réplique de l'action marquante s'il y en a une, puis la
+      // réponse et son explication. Un « + 6 secondes » forfaitaire ne suffisait
+      // pas — il ignorait la réplique de joker, et coupait donc l'explication à
+      // chaque manche où il se passait quelque chose.
+      dureeRevelation: (question, resultat) => {
         const lu = dureeDuClip(`reponse/${question.id}`) + dureeDuClip(`note/${question.id}`);
-        // + la réplique de l'animateur, + le temps de regarder son score.
-        return lu ? (lu + 6) * 1000 : 0;
+        if (!lu) return 0;                       // pas de clips : le plancher suffit
+        const commente = dureeDeLaReplique(reglages.persona, resultat?.commentaireCle);
+        const marquant = dureeDeLaReplique(reglages.persona, resultat?.evenements?.[0]?.cle);
+        // + le temps de lire son score et de souffler avant la manche suivante.
+        return (lu + commente + marquant + RESPIRATION_S) * 1000;
       },
     });
     const arrivee = await net.joinRoom(code, moi);
@@ -1181,6 +1229,7 @@ async function quitter() {
   joueurs = [];
   version = -1;
   cleRendue = '';
+  filRendu = '';
   derniereVoix = '';
   location.hash = '';
   montrer('accueil');
@@ -1225,6 +1274,7 @@ function brancher() {
     etat = null;
     version = -1;
     cleRendue = '';
+  filRendu = '';
     derniereVoix = '';
     rendreReglages();
     montrer('reglages');

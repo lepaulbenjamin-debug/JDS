@@ -493,6 +493,13 @@ body {
 }
 .fil-boite summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .fil-boite p { margin: 8px 0 0; }
+/* L'indice est ce qu'on relit à chaque tentative : il ressort du mode d'emploi
+   qui l'entoure, lequel ne se lit qu'une fois. */
+.fil-indice {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold);
+}
 .fil-ligne { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
 .fil-champ {
   min-width: 0;

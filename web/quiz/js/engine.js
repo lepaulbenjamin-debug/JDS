@@ -64,7 +64,12 @@ const DUREE_INTRO_MS = 5500;
 // qu'on enchaîne une deuxième partie.
 const DUREE_REVELATION_MS = 9500;
 const DUREE_REVELATION_FINALE_MS = 11000;
-const PLAFOND_REVELATION_MS = 22000;   // au-delà, l'explication casse le rythme
+// Un garde-fou contre un pack tiers aux explications interminables, pas une
+// coupure de confort : il doit rester au-dessus de la plus longue révélation de
+// la banque (≈ 34 s : commentaire + joker + réponse + explication). Le fixer en
+// dessous, c'est couper l'animateur en pleine phrase — précisément ce qu'on
+// cherche à éviter.
+export const PLAFOND_REVELATION_MS = 40000;
 const ABSENCES_AVANT_SOMMEIL = 2;      // au-delà, on n'attend plus ce pupitre
 
 // La prime du fil rouge fond au fil de la partie : trouver à la deuxième manche
@@ -292,10 +297,16 @@ export function creerRegie({
    * la phrase — et la fin de la phrase, c'est justement le « ah bon, tiens » qui
    * fait la valeur de la manche. `dureeRevelation` est fourni par l'appli, qui
    * seule connaît la longueur des clips.
+   *
+   * On lui passe le résultat, et pas seulement la question : l'animateur dit
+   * aussi son commentaire et, s'il s'en est passé une, la réplique de l'action
+   * marquante. Ne budgéter que la réponse et l'explication coupait la phrase
+   * dès qu'un joker sortait — c'est-à-dire à toutes les manches où il se passe
+   * justement quelque chose.
    */
-  const tempsDeRevelation = (manche, finale) => {
+  const tempsDeRevelation = (manche, finale, resultat) => {
     const plancher = finale ? DUREE_REVELATION_FINALE_MS : DUREE_REVELATION_MS;
-    const audio = Math.min(dureeRevelation?.(manche) ?? 0, PLAFOND_REVELATION_MS);
+    const audio = Math.min(dureeRevelation?.(manche, resultat) ?? 0, PLAFOND_REVELATION_MS);
     return Math.max(plancher, audio);
   };
 
@@ -454,7 +465,7 @@ export function creerRegie({
         : null,
       leader: tete && tete.score > 0 ? { nom: tete.name, points: tete.score } : null,
     };
-    etat.finPhase = now + tempsDeRevelation(etat.question, finale);
+    etat.finPhase = now + tempsDeRevelation(etat.question, finale, etat.resultat);
   }
 
   return {

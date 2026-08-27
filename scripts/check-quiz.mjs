@@ -11,7 +11,9 @@ import assert from 'node:assert/strict';
 
 import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
+  PLAFOND_REVELATION_MS,
 } from '../web/quiz/js/engine.js';
+import { dureeDeLaReplique } from '../web/quiz/js/emcee.js';
 import {
   QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
@@ -1410,4 +1412,84 @@ test('ce qui s’affiche garde ses chiffres', () => {
   // lit d'un coup d'œil, « quarante-deux mille cent quatre-vingt-quinze » non.
   const avecChiffres = QUESTIONS.filter((q) => /\d/.test(`${q.texte} ${q.note ?? ''}`));
   assert.ok(avecChiffres.length > 20, 'la banque devrait encore écrire en chiffres');
+});
+
+/* --- Le temps laissé à l'animateur ---------------------------------------- */
+//
+// Après une partie à deux, l'explication se faisait couper par l'annonce de la
+// manche suivante. La cause : le budget de la révélation ne comptait que la
+// réponse et l'explication, alors que l'animateur dit aussi son commentaire et,
+// s'il s'en est passé une, la réplique de l'action marquante. Dès qu'un joker
+// sortait, la phrase sautait — c'est-à-dire à toutes les manches intéressantes.
+
+test('la révélation laisse le temps de tout ce que l’animateur enchaîne', () => {
+  // Ce que l'appli fournit au moteur : la somme réelle des clips à jouer.
+  const clip = { reponse: 4, note: 9, commentaire: 2.5, marquant: 4.5 };
+  const appele = [];
+  const regie = creerRegie({
+    questions: troisQuestions(),
+    dureeMs: DUREE,
+    dureeRevelation: (question, resultat) => {
+      appele.push(resultat);
+      return (clip.reponse + clip.note + clip.commentaire + clip.marquant) * 1000;
+    },
+  });
+
+  let horloge = 1_000_000;
+  regie.lancer(horloge, [{ id: 'a', name: 'Ana' }]);
+  for (let pas = 0; pas < 400 && regie.phase !== 'revelation'; pas += 1) {
+    horloge += 100;
+    regie.avancer(horloge, [{ id: 'a', name: 'Ana' }]);
+  }
+  assert.equal(regie.phase, 'revelation', 'la partie devait atteindre une révélation');
+
+  // Le moteur passe bien le résultat : sans lui, l'appli ne peut pas connaître
+  // la réplique de commentaire ni celle du joker, et sous-estime le passage.
+  assert.ok(appele.length, 'dureeRevelation n’a pas été appelé');
+  assert.ok(appele[0]?.commentaireCle, 'le résultat doit accompagner la question');
+
+  const etat = regie.etatPublic([{ id: 'a', name: 'Ana' }]);
+  const creneau = etat.finPhase - horloge;
+  const aDire = (clip.reponse + clip.note + clip.commentaire + clip.marquant) * 1000;
+  assert.ok(creneau >= aDire, `révélation de ${creneau} ms pour ${aDire} ms d’audio`);
+});
+
+test('le plafond de révélation couvre la plus longue explication de la banque', async () => {
+  // Le plafond est un garde-fou contre un pack tiers, pas une coupure de
+  // confort : le fixer sous le pire cas réel, c'est couper l'animateur en
+  // pleine phrase — le bug qu'on vient de corriger.
+  const { readFileSync } = await import('node:fs');
+  let manifeste;
+  try {
+    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+  } catch {
+    return;                                  // clips non générés : rien à vérifier
+  }
+  const duree = (id) => manifeste.clips[id] ?? 0;
+  const maxDeLaCle = (cle) => {
+    const ids = Object.keys(manifeste.clips).filter((i) => i.startsWith(`emcee/classique/${cle}/`));
+    return ids.length ? Math.max(...ids.map(duree)) : 0;
+  };
+  // Le pire enchaînement : le commentaire le plus long, la réplique d'événement
+  // la plus longue, puis la réponse et l'explication les plus longues.
+  const pireCommentaire = Math.max(...['personne', 'tous', 'unSeul', 'plusieurs', 'plusProche',
+    'partiel', 'mixTrouve', 'ttmcTrouve'].map(maxDeLaCle));
+  const pireEvenement = Math.max(...['vol', 'sabotage', 'doubleReussi', 'doubleRate',
+    'filTrouve'].map(maxDeLaCle));
+  const pireQuestion = Math.max(...QUESTIONS
+    .map((q) => duree(`reponse/${q.id}`) + duree(`note/${q.id}`)));
+
+  const pire = (pireCommentaire + pireEvenement + pireQuestion) * 1000;
+  assert.ok(
+    PLAFOND_REVELATION_MS >= pire,
+    `plafond de ${PLAFOND_REVELATION_MS} ms pour ${Math.round(pire)} ms d’audio au pire`,
+  );
+});
+
+test('une réplique se budgète sur sa variante la plus longue', () => {
+  // Chaque appareil tire sa variante au sort : la régie doit laisser le temps à
+  // celui qui a tiré la plus longue, pas au premier venu.
+  assert.equal(dureeDeLaReplique('classique', 'cleQuiNExistePas'), 0);
+  assert.equal(dureeDeLaReplique('classique', undefined), 0,
+    'une manche sans action marquante ne budgète rien');
 });

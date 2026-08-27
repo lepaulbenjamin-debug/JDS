@@ -72,19 +72,42 @@ const url = (id) => `${RACINE}/${id}.${manifeste?.format ?? 'mp3'}`;
  * Met des clips en cache avant d'en avoir besoin. Appelé pendant la fenêtre de
  * jokers pour que l'énoncé démarre à l'instant précis du top, sans attendre le
  * réseau — même local, un aller-retour se voit sur un départ de manche.
+ *
+ * On passe par `fetch` et non par un élément `<audio>` : iOS plafonne le nombre
+ * d'éléments audio d'une page, et en fabriquer deux par manche sans jamais les
+ * libérer finissait par faire échouer les lectures en fin de soirée. Le cache
+ * HTTP rend le même service et ne coûte aucun élément.
  */
 export function precharger(ids) {
   for (const id of [].concat(ids)) {
     if (!existe(id)) continue;
-    const element = new Audio();
-    element.preload = 'auto';
-    element.src = url(id);
+    fetch(url(id), { cache: 'force-cache' }).catch(() => {});
   }
 }
 
+/**
+ * Un seul lecteur pour toute la partie, réutilisé d'un clip à l'autre.
+ *
+ * C'est la condition d'une lecture fiable sur mobile : le droit de jouer du son
+ * s'acquiert au premier geste de l'utilisateur et reste attaché à CET élément.
+ * Un `new Audio()` par clip repart sans ce droit, et se fait refuser au milieu
+ * de la partie — ce qui faisait basculer l'annonce de manche sur la voix de
+ * synthèse alors que le reste passait encore.
+ */
+let lecteur = null;
+// Chaque passage reçoit un numéro. Couper, c'est incrémenter : la boucle qui
+// tournait le voit au réveil et rend la main sans se battre pour le lecteur.
+let passage = 0;
+
+function obtenirLecteur() {
+  if (!lecteur) lecteur = new Audio();
+  return lecteur;
+}
+
 export function taire() {
-  if (!encours) return;
-  encours.pause();
+  passage += 1;
+  if (!lecteur) return;
+  lecteur.pause();
   encours = null;
 }
 
@@ -98,23 +121,39 @@ export async function jouer(ids) {
   if (!liste.length || !liste.every(existe)) return false;
 
   taire();
+  const lemien = passage;
+  const element = obtenirLecteur();
+
   for (const id of liste) {
-    const element = new Audio(url(id));
+    if (passage !== lemien) return true;        // coupé entre-temps : c'est voulu
     encours = element;
     try {
       await new Promise((resolve, reject) => {
-        element.addEventListener('ended', resolve, { once: true });
-        element.addEventListener('error', () => reject(new Error(id)), { once: true });
-        element.play().catch(reject);
+        const finir = () => { nettoyer(); resolve(); };
+        const rater = () => { nettoyer(); reject(new Error(id)); };
+        function nettoyer() {
+          element.removeEventListener('ended', finir);
+          element.removeEventListener('error', rater);
+          clearInterval(garde);
+        }
+        // Une pause ne déclenche pas `ended` : sans ce garde, la boucle d'un
+        // passage coupé resterait suspendue pour toujours.
+        const garde = setInterval(() => {
+          if (passage !== lemien) finir();
+        }, 120);
+        element.addEventListener('ended', finir, { once: true });
+        element.addEventListener('error', rater, { once: true });
+        element.src = url(id);
+        element.play().catch(rater);
       });
     } catch {
       // Lecture refusée (aucun geste utilisateur encore) ou fichier illisible :
       // on s'arrête là plutôt que d'enchaîner dans le vide.
+      if (passage === lemien) encours = null;
       return false;
     }
-    if (encours !== element) return true;      // coupé entre-temps : c'est voulu
   }
-  encours = null;
+  if (passage === lemien) encours = null;
   return true;
 }
 
