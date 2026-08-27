@@ -21,6 +21,8 @@ import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
 import { handleRoomRequest } from '../lib/rooms.js';
+import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
+import { inventaire } from './generate-audio.mjs';
 
 const QUESTION = {
   id: 'test', theme: 'culture', type: 'qcm',
@@ -1335,4 +1337,77 @@ test('un prénom vide est refusé', async () => {
   const { body: { code } } = await appel('POST', {}, {});
   const refus = await appel('POST', { code, action: 'join' }, { playerId: 'a', name: '   ' });
   assert.equal(refus.status, 400);
+});
+
+/* --- Les nombres dits à voix haute ---------------------------------------- */
+//
+// Le modèle a lu « 1665 marches » comme une année : « seize soixante-cinq ».
+// La correction n'est pas dans la banque — l'écran doit garder ses chiffres —
+// mais sur le seul chemin de l'audio. Ces tests gardent les deux bouts : que
+// les nombres partent bien en lettres, et qu'on n'écorche pas au passage les
+// noms qui contiennent des chiffres.
+
+test('les nombres s’écrivent en lettres, avec les règles françaises', () => {
+  const cas = [
+    [1665, 'mille six cent soixante-cinq'],   // le bug d'origine
+    [0, 'zéro'],
+    [21, 'vingt et un'],
+    [71, 'soixante et onze'],
+    [80, 'quatre-vingts'],                    // le s tout seul
+    [81, 'quatre-vingt-un'],                  // et pas « quatre-vingt et un »
+    [200, 'deux cents'],
+    [201, 'deux cent un'],                    // le s tombe dès qu'il suit quelque chose
+    [1000, 'mille'],                          // jamais « un mille »
+    [80000, 'quatre-vingt mille'],
+    [42195, 'quarante-deux mille cent quatre-vingt-quinze'],
+    [550000, 'cinq cent cinquante mille'],
+  ];
+  for (const [n, attendu] of cas) {
+    assert.equal(entierEnLettres(n), attendu, `${n} mal écrit`);
+  }
+});
+
+test('les séparateurs de milliers et les décimales passent', () => {
+  assert.equal(direLesNombres('42 195 mètres'), 'quarante-deux mille cent quatre-vingt-quinze mètres');
+  assert.equal(direLesNombres('1 600 marches'), 'mille six cents marches');
+  assert.equal(direLesNombres('0,44 km²'), 'zéro virgule quarante-quatre km²');
+  // Une virgule suivie d'une espace sépare deux nombres, elle n'est pas décimale.
+  assert.equal(direLesNombres('1789, 1914'), 'mille sept cent quatre-vingt-neuf, mille neuf cent quatorze');
+});
+
+test('un chiffre collé à des lettres est un nom, pas une quantité', () => {
+  // Tous vus dans la banque : les écrire donnerait « Udeux », « UBquarante »,
+  // « B-cinquante-deux », « deux cent vingt et unB ».
+  for (const nom of ['U2', 'UB40', 'The B-52s', 'PS2', 'MP3', '221B', 'Summer of ’69']) {
+    assert.equal(direLesNombres(nom), nom, `${nom} ne devait pas être réécrit`);
+  }
+  // Mais un tiret entre deux nombres reste deux nombres.
+  assert.equal(direLesNombres('Apollo 14'), 'Apollo quatorze');
+});
+
+test('les ordinaux se disent premier, cinquième, quatre-vingtième', () => {
+  assert.equal(direLesNombres('Le 1ᵉʳ janvier'), 'Le premier janvier');
+  assert.equal(direLesNombres('la 1ʳᵉ fois'), 'la première fois');
+  assert.equal(direLesNombres('le 5ᵉ élément'), 'le cinquième élément');
+  assert.equal(ordinalEnLettres(9), 'neuvième');
+  assert.equal(ordinalEnLettres(21), 'vingt et unième');
+  assert.equal(ordinalEnLettres(80), 'quatre-vingtième');   // le s tombe devant ième
+});
+
+test('l’inventaire audio ne laisse partir aucun chiffre, sauf les noms propres', () => {
+  const restants = inventaire().filter((clip) => /\d/.test(clip.texte));
+  // Ce qui reste doit être un nom : soit un chiffre collé à des lettres, soit
+  // une liste de titres (le mix), jamais une quantité en toutes lettres.
+  for (const clip of restants) {
+    const nomPropre = clip.titres === true
+      || /[\p{L}’'-]\d|\d[\p{L}]/u.test(clip.texte);
+    assert.ok(nomPropre, `${clip.id} part au modèle avec un chiffre nu : ${clip.texte}`);
+  }
+});
+
+test('ce qui s’affiche garde ses chiffres', () => {
+  // La correction ne doit jamais avoir touché la banque : « 42 195 mètres » se
+  // lit d'un coup d'œil, « quarante-deux mille cent quatre-vingt-quinze » non.
+  const avecChiffres = QUESTIONS.filter((q) => /\d/.test(`${q.texte} ${q.note ?? ''}`));
+  assert.ok(avecChiffres.length > 20, 'la banque devrait encore écrire en chiffres');
 });

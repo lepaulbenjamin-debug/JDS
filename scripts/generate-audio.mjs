@@ -20,11 +20,12 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { QUESTIONS, nomDuTheme } from '../web/quiz/js/questions.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { inventaireDesParoles } from '../web/quiz/js/emcee.js';
+import { direLesNombres } from './nombres.mjs';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz', 'audio');
 
@@ -57,11 +58,19 @@ export function inventaire() {
         // Vingt titres valables : « la bonne réponse » n'a pas de sens ici.
         mix: () => `Il y avait par exemple : ${type.solutionTexte(manche)}.`,
       }[type.id]?.() ?? `La bonne réponse était : ${type.solutionTexte(manche)}.`,
+      // Une liste de titres, pas une phrase : 99 Luftballons, 9 to 5, 19-2000.
+      // Ces chiffres-là font partie du nom et se disent tels quels.
+      titres: type.id === 'mix',
     });
     clips.push({ id: `note/${entree.id}`, texte: entree.note });
   }
 
-  return clips;
+  // Les chiffres partent en lettres au modèle, jamais à l'écran : c'est la
+  // seule façon qu'il lise « 1665 marches » comme une quantité et non comme
+  // une année. La banque, elle, continue d'écrire 1665.
+  return clips.map((clip) => (
+    clip.titres ? clip : { ...clip, texte: direLesNombres(clip.texte) }
+  ));
 }
 
 /* --- Fournisseurs --------------------------------------------------------- */
@@ -276,7 +285,12 @@ async function main() {
   console.log(`\nThèmes couverts : ${[...new Set(QUESTIONS.map((q) => nomDuTheme(q.theme)))].join(', ')}\n`);
 }
 
-main().catch((erreur) => {
-  console.error(`\nÉchec : ${erreur.message}\n`);
-  process.exit(1);
-});
+// Seulement quand on lance le script pour de bon. `inventaire` est exporté pour
+// que les tests puissent vérifier ce qui part au modèle ; les importer ne doit
+// pas déclencher une génération ni réclamer une clé.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((erreur) => {
+    console.error(`\nÉchec : ${erreur.message}\n`);
+    process.exit(1);
+  });
+}
