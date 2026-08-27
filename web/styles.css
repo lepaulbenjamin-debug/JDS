@@ -429,6 +429,9 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   margin-bottom: 4px;
 }
 .tie-field { display: grid; gap: 4px; font-size: 14px; }
+/* Quota épuisé : l'information doit se voir sans crier. */
+.quota-vide { color: var(--warn); }
+
 .tie-field input {
   width: 100%;
   padding: 10px;

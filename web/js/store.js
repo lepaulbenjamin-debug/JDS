@@ -29,8 +29,24 @@ const DEFAULT_STATE = {
   lastPlayers: [],
   settings: {
     ai: { mode: 'server', serverUrl: '', apiKey: '' },
+    // Version complète : aujourd'hui un interrupteur manuel, demain alimenté
+    // par le reçu du store. Un seul point d'entrée, pour n'avoir qu'une chose
+    // à brancher le jour de l'empaquetage.
+    premium: false,
   },
+  // Consommation du mois en cours pour la lecture photo — la seule fonction
+  // qui coûte de l'argent à chaque usage.
+  quota: { mois: null, lectures: 0 },
 };
+
+/**
+ * Lectures photo offertes chaque mois sans la version complète.
+ *
+ * Le chiffre se règle sur le coût réel d'une lecture : il doit rester assez
+ * généreux pour que la fonction se découvre et serve vraiment, assez borné
+ * pour qu'un usage intensif ne coûte pas plus qu'il ne rapporte.
+ */
+export const LECTURES_OFFERTES = 10;
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -63,6 +79,7 @@ export function migrer(etat) {
   out.history = out.history.map((h) => ({ ...h, updatedAt: h.updatedAt ?? h.createdAt ?? 0 }));
   out.people = out.people.map((p) => ({ ...p, updatedAt: p.updatedAt ?? p.createdAt ?? 0 }));
 
+  out.quota = { mois: null, lectures: 0, ...(etat.quota ?? {}) };
   out.v = SCHEMA_DONNEES;
   return out;
 }
@@ -255,6 +272,48 @@ export function makeDraft(game, players, rounds = [], mode = null) {
 
 export function makeRoundId() {
   return uid();
+}
+
+// --- Quota de lecture photo ------------------------------------------------
+
+/** Le mois courant, sous une forme comparable : « 2026-08 ». */
+function moisCourant(maintenant = new Date()) {
+  return `${maintenant.getFullYear()}-${String(maintenant.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Ce qu'il reste de lectures photo ce mois-ci.
+ *
+ * Le renouvellement se fait à la lecture plutôt que par une tâche de fond :
+ * un compteur posé sur un mois révolu vaut un compteur remis à zéro.
+ *
+ * @returns {{premium: boolean, restantes: number, offertes: number, utilisees: number}}
+ */
+export function quotaPhoto(state, maintenant = new Date()) {
+  const premium = Boolean(state.settings?.premium);
+  const q = state.quota ?? {};
+  const utilisees = q.mois === moisCourant(maintenant) ? Number(q.lectures) || 0 : 0;
+  return {
+    premium,
+    offertes: LECTURES_OFFERTES,
+    utilisees,
+    restantes: premium ? Infinity : Math.max(0, LECTURES_OFFERTES - utilisees),
+  };
+}
+
+/**
+ * Décompte une lecture. À n'appeler qu'une fois la lecture réussie : une
+ * erreur réseau ou un refus du serveur ne doit pas coûter une lecture à
+ * quelqu'un qui n'a rien obtenu.
+ */
+export function consommerLecture(state, maintenant = new Date()) {
+  if (state.settings?.premium) return;
+  const mois = moisCourant(maintenant);
+  const memeMois = state.quota?.mois === mois;
+  state.quota = {
+    mois,
+    lectures: (memeMois ? Number(state.quota.lectures) || 0 : 0) + 1,
+  };
 }
 
 // --- Export et import ------------------------------------------------------

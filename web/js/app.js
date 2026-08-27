@@ -3,6 +3,7 @@ import {
   store, makePlayer, makePerson, playerFromPerson, makeMatch, makeDraft, makeRoundId,
   totals, standings, winners, isOver, replay, PLAYER_COLORS,
   archives, carnet, supprimer, exporter, importer,
+  quotaPhoto, consommerLecture, LECTURES_OFFERTES,
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
@@ -1314,8 +1315,20 @@ function renderScan() {
   if (scanState.image) preview.src = scanState.image.dataUrl;
   $('#scan-label').textContent = scanState.image ? 'Changer de photo' : 'Prendre la photo';
 
+  // Ce qu'il reste de lectures, dit avant la photo plutôt qu'après : personne
+  // ne doit cadrer une grille pour apprendre ensuite qu'il ne peut pas la lire.
+  const quota = quotaPhoto(store.state);
+  const note = $('#scan-quota');
+  note.hidden = quota.premium;
+  if (!quota.premium) {
+    note.textContent = quota.restantes > 0
+      ? `Il vous reste ${quota.restantes} lecture${quota.restantes > 1 ? 's' : ''} sur ${quota.offertes} ce mois-ci.`
+      : `Vos ${quota.offertes} lectures du mois sont utilisées. Le compteur repart le mois prochain — la version complète les débloque tout de suite.`;
+    note.classList.toggle('quota-vide', quota.restantes === 0);
+  }
+
   const run = $('#btn-run-scan');
-  run.disabled = !scanState.image || scanState.busy;
+  run.disabled = !scanState.image || scanState.busy || quota.restantes === 0;
   run.textContent = scanState.busy ? 'Lecture en cours…' : 'Lire les cartes et calculer';
 
   renderScanResult(match);
@@ -1417,6 +1430,9 @@ async function runScan() {
   const match = store.state.match;
   const game = getGame(match.gameId);
   if (!scanState.image) return;
+  if (quotaPhoto(store.state).restantes === 0) {
+    return toast(`Vos ${LECTURES_OFFERTES} lectures du mois sont utilisées.`, 'warn');
+  }
 
   scanState.busy = true;
   scanState.result = null;
@@ -1431,6 +1447,9 @@ async function runScan() {
       settings: store.state.settings.ai,
     });
     scanState.result = result;
+    // Une lecture n'est décomptée qu'une fois obtenue : une panne de réseau ou
+    // un refus du serveur ne doit rien coûter à quelqu'un qui n'a rien reçu.
+    store.update((st) => consommerLecture(st));
   } catch (error) {
     toast(error.message, 'warn');
   } finally {
@@ -1727,6 +1746,41 @@ function renderSettings() {
   $('#ai-direct-fields').hidden = ai.mode !== 'direct';
   $('#ai-server-url').value = ai.serverUrl ?? '';
   $('#ai-key').value = ai.apiKey ?? '';
+  renderPremium();
+}
+
+/**
+ * L'état de la version complète, et ce qu'il reste du mois.
+ *
+ * L'interrupteur est provisoire : il tient la place du reçu du store, qui ne
+ * peut exister qu'une fois l'appli empaquetée. Tout le reste de l'appli lit
+ * `settings.premium` sans savoir d'où il vient — le jour venu, il n'y aura que
+ * cette source à remplacer.
+ */
+function renderPremium() {
+  const host = clear($('#premium-state'));
+  const quota = quotaPhoto(store.state);
+
+  host.append(
+    el('p', {
+      class: 'muted small',
+      text: quota.premium
+        ? 'Version complète active : lecture photo sans limite.'
+        : `Version gratuite : ${quota.offertes} lectures photo par mois, dont ${quota.utilisees} utilisée${quota.utilisees > 1 ? 's' : ''} ce mois-ci. Tout le reste de l’appli est sans limite.`,
+    }),
+    el('button', {
+      class: 'btn btn-ghost btn-block',
+      type: 'button',
+      onclick: () => {
+        store.update((st) => { st.settings.premium = !st.settings.premium; });
+        toast(store.state.settings.premium ? 'Version complète activée.' : 'Version gratuite rétablie.', 'ok');
+      },
+    }, quota.premium ? 'Revenir à la version gratuite' : 'Activer la version complète'),
+    el('p', {
+      class: 'muted small',
+      text: 'Cet interrupteur est provisoire : il tiendra lieu d’achat tant que l’appli n’est pas publiée sur les stores.',
+    }),
+  );
 }
 
 // --- Câblage ---------------------------------------------------------------

@@ -295,6 +295,38 @@ disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
 
+## La frontière gratuit / version complète
+
+Une seule chose coûte de l'argent à chaque usage : la lecture photo. C'est donc
+la seule chose qui soit limitée. Compter les points, les règles, la voix, le
+carnet et les statistiques sont sans limite et le resteront — verrouiller ce
+qui ne coûte rien à servir ferait ressentir la version payante comme une
+rançon, et abîmerait ce qui fait recommander l'appli.
+
+| | Gratuit | Version complète |
+| --- | --- | --- |
+| Compter les points, les dix jeux, les règles, la voix, le carnet | sans limite | sans limite |
+| Lecture photo | `LECTURES_OFFERTES` par mois (10 aujourd'hui) | sans limite |
+
+**Le compteur.** `state.quota = { mois, lectures }`, renouvelé à la lecture
+plutôt que par une tâche de fond : un compteur posé sur un mois révolu vaut un
+compteur remis à zéro. Une lecture n'est décomptée qu'une fois **obtenue** —
+une panne de réseau ou un refus du serveur ne coûte rien à qui n'a rien reçu.
+Ce qu'il reste est affiché avant de prendre la photo, jamais après : personne
+ne doit cadrer une grille pour apprendre ensuite qu'il ne peut pas la lire.
+
+**Le statut.** `state.settings.premium`, un booléen, lu partout ailleurs sans
+que rien ne sache d'où il vient. Aujourd'hui un interrupteur dans les Réglages
+tient lieu d'achat ; le jour de l'empaquetage, il n'y aura que cette source à
+remplacer par le reçu du store. Ni le quota ni le statut ne figurent dans
+l'export : ils appartiennent à l'appareil et à son compte de store, et les
+emporter dans un fichier qu'on s'envoie par mail reviendrait à distribuer la
+version payante.
+
+**Le chiffre de 10 est provisoire** : il doit se régler sur le coût réel d'une
+lecture, qui dépend du modèle employé. Il tient dans une constante unique,
+`LECTURES_OFFERTES` dans `store.js`.
+
 ## Les données : export, import, et ce qu'il faut pour synchroniser un jour
 
 Tout est enregistré dans le `localStorage` de l'appareil. Rien ne part sur un
