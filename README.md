@@ -226,6 +226,11 @@ partie est donc une démonstration gratuite à toute la table, et c'est le seul
 canal de distribution réel. On ne vend jamais un mécanisme du jeu, seulement du
 contenu : ce qui s'épuise, c'est la banque.
 
+Les fichiers de `packs/` sont lus au moment de la requête, pas importés : sur
+Vercel, il faut donc les joindre explicitement au paquet de la fonction, ce que
+fait la clé `includeFiles` de `vercel.json`. Sans elle, le catalogue est vide en
+production alors que tout marche en local.
+
 ```
 packs/                   les packs, HORS de web/ — jamais servis en statique
 lib/packs.js             catalogue, licences, contrôle d'accès

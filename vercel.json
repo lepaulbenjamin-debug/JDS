@@ -4,6 +4,9 @@
   "functions": {
     "api/scan.mjs": {
       "maxDuration": 60
+    },
+    "api/packs.mjs": {
+      "includeFiles": "packs/**"
     }
   }
 }
