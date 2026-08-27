@@ -104,15 +104,28 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
 Deuxième appli du dépôt, sous `web/quiz/`, servie à **`/quiz/`**. Elle ne compte
 pas les points d'un jeu de plateau : elle *est* le jeu.
 
-Le principe est celui des salles de quiz : une question et quatre réponses, tout
-le monde répond en même temps, et **plus on répond vite, plus on marque**. La
-différence, c'est qu'il n'y a **pas d'animateur humain**. Personne ne pilote
-l'écran, personne n'annonce les points, personne ne reste sur la touche : la
-partie se déroule toute seule et tout le monde joue.
+Le principe est celui des salles de quiz : tout le monde répond en même temps,
+et **plus on répond vite, plus on marque**. La différence, c'est qu'il n'y a
+**pas d'animateur humain**. Personne ne pilote l'écran, personne n'annonce les
+points, personne ne reste sur la touche : la partie se déroule toute seule et
+tout le monde joue.
 
 - **Chaque téléphone est un pupitre.** Un joueur crée le salon, les autres
   tapent un code à quatre lettres (ou suivent le lien partagé). Aucune install :
   c'est une page web.
+- **Quatre formes de manche**, mêlées dans la même partie et cochables dans les
+  réglages. **Question** : quatre réponses, le plus rapide marque le plus.
+  **Estimation** : un nombre à avancer, le plus proche rafle la manche et la
+  vitesse ne compte plus — on réfléchit au lieu de dégainer. **Dans l'ordre** :
+  quatre éléments à classer, des points par position juste. **Rafale** : cinq
+  vrai-faux d'un coup, barème plat. Chaque type ajuste son chrono : taper un
+  nombre prend plus de temps que toucher un bouton.
+- **Un fil rouge, en option.** Un même mot relie les bonnes réponses de
+  plusieurs manches, sans que rien ne l'annonce. Chacun peut le nommer à tout
+  moment : le premier à trouver rafle une prime qui fond au fil de la partie, et
+  se tromper coûte deux manches de silence. C'est la seule chose qui traverse
+  les manches — et elle ne demande aucun secret par joueur, donc rien à filtrer
+  côté relais.
 - **L'animateur, c'est l'appli.** Il ouvre la soirée, annonce les manches, lit
   l'énoncé, révèle la bonne réponse et son explication, et clôt sur le podium —
   avec trois personnalités au choix : classique, chambreur, pince-sans-rire.
@@ -241,8 +254,15 @@ durée de la phase de révélation s'ajuste d'elle-même à la longueur des clip
 sinon la phrase serait coupée en plein milieu de l'explication, c'est-à-dire
 juste avant le moment intéressant.
 
-**Ajouter des questions** : `web/quiz/js/questions.js`, la bonne réponse en
-premier (le jeu mélange au tirage), avec l'explication lue à la révélation.
+**Ajouter des questions** : `web/quiz/js/questions.js`. Sans `type`, c'est un
+QCM et la bonne réponse va en premier — le jeu mélange au tirage. Les autres
+formes portent leur `type` et leurs champs : `valeur` pour une estimation,
+`elements` dans le bon ordre pour un classement, `affirmations` pour une rafale.
+Dans tous les cas, l'explication lue à la révélation est obligatoire.
+
+**Ajouter un type de manche** : un module dans `web/quiz/js/manches/`
+(préparer, publier, lire, noter, solutionTexte) et sa vue dans `vues.js`. Le
+moteur n'a pas à être touché — il ne sait pas ce qu'est un QCM.
 Pour s'aider d'un modèle :
 
 ```bash
@@ -376,8 +396,14 @@ web/                     PWA statique, sans build ni dépendance
       engine.js          LA RÈGLE DU JEU : barème, jokers, déroulé d'une partie
       net.js             appels au relais + calage d'horloge entre pupitres
       emcee.js           l'animateur : répliques, voix, jingles synthétisés
-      questions.js       la banque de questions et le tirage
+      questions.js       la banque, le tirage et les fils rouges
       audio.js           lecture des clips pré-générés, repli sur la synthèse
+      vues.js            la saisie à l'écran, une vue par type de manche
+      manches/           un module par type : préparer, publier, lire, noter
+        qcm.js           quatre réponses, points à la rapidité
+        estimation.js    un nombre, le plus proche gagne
+        ordre.js         quatre éléments à classer, points partiels
+        rafale.js        cinq vrai-faux, barème plat
 lib/scan.js              lecture d'une photo : validation, appel, erreurs
 lib/rooms.js             relais de salons : état publié, réponses, horloge
 api/scan.mjs             la même chose, en fonction Vercel

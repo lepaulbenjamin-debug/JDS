@@ -7,8 +7,11 @@
 
 import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
 import * as net from './net.js';
-import { creerRegie, JOKERS } from './engine.js';
-import { THEMES, QUESTIONS, tirerQuestions, tailleDuPool, nomDuTheme } from './questions.js';
+import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
+import { vueDe } from './vues.js';
+import {
+  THEMES, QUESTIONS, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
+} from './questions.js';
 import { PERSONAS, voix, sons, paroleDe, chargerLesClips, dureeDuClip } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
@@ -65,10 +68,12 @@ let erreurs = 0;
 
 let reglages = {
   themes: [],
+  types: [],                   // vide = tous les types de manche
   nombre: 12,
   dureeMs: 15000,
   persona: 'classique',
   jokers: JOKERS.map((j) => j.id),
+  fil: FILS_ROUGES[0]?.id ?? null,
 };
 
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
@@ -76,7 +81,8 @@ let jokerArme = null;
 let masque = null;             // { manche, caches } — les réponses retirées par le 50/50
 let cleRendue = '';            // phase + manche : sert à ne reconstruire que le nécessaire
 let derniereVoix = '';
-let boutonsReponse = [];
+let vueManche = null;          // la vue construite pour la manche en cours
+let filEnvoye = false;         // une tentative de fil rouge part sans écho immédiat
 
 const estRegie = () => Boolean(salon?.hostToken);
 
@@ -194,6 +200,7 @@ function appliquer(nouvel) {
       monChoix = null;
       jokerArme = null;
       masque = null;
+      filEnvoye = false;
       // L'énoncé sera lu au top : on le met en cache pendant la fenêtre de
       // jokers, pour qu'il parte pile à l'heure et non après un aller-retour.
       if (etat.question?.id) {
@@ -305,63 +312,45 @@ function rendreJeu() {
   $('#jeu-theme').textContent = question ? nomDuTheme(question.theme) : '';
   $('#jeu-theme').hidden = !question;
 
+  $('#jeu-consigne').textContent = question?.consigne ?? '';
+  $('#jeu-consigne').hidden = !question || etat.phase === 'revelation';
+
   if (cle !== cleRendue) {
     cleRendue = cle;
     $('#jeu-annonce').textContent = etat.phase === 'revelation'
       ? (etat.resultat?.commentaire ?? '')
       : (etat.annonce ?? '');
     $('#jeu-question').textContent = question?.texte ?? '';
-    construireReponses(question);
+    construireSaisie(question);
   }
 
   peindreReponses();
   rendreJokers();
   rendreEtatManche();
+  rendreFilRouge();
   rafraichirChrono();
 }
 
-function construireReponses(question) {
+/** La zone de saisie, reconstruite une seule fois par manche. */
+function construireSaisie(manche) {
   const hote = clear($('#jeu-reponses'));
-  boutonsReponse = [];
-  if (!question) return;
-
-  question.reponses.forEach((texte, index) => {
-    const bouton = el('button', {
-      class: 'reponse',
-      type: 'button',
-      dataset: { index: String(index) },
-      onclick: () => repondre(index),
-    }, [
-      el('span', { class: 'reponse-lettre', text: 'ABCD'[index] }),
-      el('span', { class: 'reponse-texte', text: texte }),
-      el('span', { class: 'reponse-marque' }),
-    ]);
-    boutonsReponse.push(bouton);
-    hote.append(bouton);
-  });
+  vueManche = null;
+  if (!manche) return;
+  const vue = vueDe(manche.type);
+  vueManche = { type: manche.type, ...vue.construire(manche, { repondre }) };
+  hote.append(vueManche.racine);
 }
 
 function peindreReponses() {
-  const question = etat.question;
-  if (!question) return;
-  const ouvert = etat.phase === 'manche'
-    && net.serverNow() >= etat.startAt
-    && !monChoix;
-  const caches = etat.phase === 'manche' && masque?.manche === etat.manche
-    ? masque.caches
-    : [];
+  const manche = etat.question;
+  if (!manche || !vueManche) return;
 
-  boutonsReponse.forEach((bouton, index) => {
-    const retiree = caches.includes(index);
-    bouton.disabled = !ouvert || retiree;
-    bouton.classList.toggle('est-retiree', retiree);
-    bouton.classList.toggle('est-choisi', monChoix?.choix === index);
-    const revele = etat.phase === 'revelation' && question.bonne != null;
-    bouton.classList.toggle('est-juste', revele && index === question.bonne);
-    bouton.classList.toggle('est-faux', revele && monChoix?.choix === index && index !== question.bonne);
-    $('.reponse-marque', bouton).textContent = revele
-      ? (index === question.bonne ? '✔' : (monChoix?.choix === index ? '✘' : ''))
-      : '';
+  vueDe(vueManche.type).peindre(vueManche, {
+    manche,
+    monChoix: monChoix?.valeur ?? null,
+    ouvert: etat.phase === 'manche' && net.serverNow() >= etat.startAt && !monChoix,
+    revele: etat.phase === 'revelation',
+    masque: etat.phase === 'manche' && masque?.manche === etat.manche ? masque.caches : [],
   });
 }
 
@@ -390,7 +379,11 @@ function rendreJokers() {
   // repart pas sur un autre joker en gardant l'information.
   const verrouille = jokerArme === 'cinquante';
 
-  for (const joker of JOKERS.filter((j) => actifs.includes(j.id))) {
+  // Le moteur retire déjà les jokers qui n'ont aucun sens sur ce type de manche
+  // — le 50/50 n'a rien à masquer sur une estimation.
+  const possibles = jokersPossibles(etat.question?.type ?? 'qcm');
+
+  for (const joker of JOKERS.filter((j) => actifs.includes(j.id) && possibles.includes(j.id))) {
     const utilise = !restants.includes(joker.id);
     const cible = joker.id === 'vol' || joker.id === 'sabotage';
     const inutile = cible && (sansCible || jeSuisLeader);
@@ -432,6 +425,9 @@ function rendreEtatManche() {
         ? 'Trop tard : rien pour toi cette manche.'
         : `${gain > 0 ? '+' : ''}${gain} point${Math.abs(gain) > 1 ? 's' : ''}`,
     }));
+    const precision = detailDeLaManche(mien);
+    if (precision) hote.append(el('p', { class: 'muted small', text: precision }));
+
     if (mien?.jokerRendu) {
       hote.append(el('p', {
         class: 'evenement',
@@ -463,6 +459,96 @@ function rendreEtatManche() {
     if (total > 1) {
       hote.append(el('p', { class: 'muted small', text: `${repondu} sur ${total} ont répondu.` }));
     }
+  }
+}
+
+/**
+ * La ligne qui explique le score sur les manches à points partiels. Sur un QCM
+ * on a bon ou faux et le bouton vert suffit ; sur un classement ou une rafale,
+ * « +430 points » sans explication laisse le joueur perplexe.
+ */
+function detailDeLaManche(mien) {
+  if (!mien || mien.absent) return '';
+  const type = etat.question?.type;
+  if (type === 'ordre') return `${mien.justes ?? 0} position${(mien.justes ?? 0) > 1 ? 's' : ''} sur 4 dans le bon ordre.`;
+  if (type === 'rafale') return `${mien.justes ?? 0} bonne${(mien.justes ?? 0) > 1 ? 's' : ''} réponse${(mien.justes ?? 0) > 1 ? 's' : ''} sur 5.`;
+  if (type === 'estimation' && mien.correct) return 'Estimation la plus proche de la table.';
+  return '';
+}
+
+/* --- Le fil rouge --------------------------------------------------------- */
+
+/**
+ * La course parallèle : un mot que les bonnes réponses de plusieurs manches ont
+ * en commun. On peut tenter sa chance à tout moment, y compris pendant une
+ * révélation — c'est justement là qu'on a le temps de réfléchir.
+ */
+function rendreFilRouge() {
+  const zone = $('#fil-rouge');
+  const fil = etat.fil;
+  zone.hidden = !fil || etat.manche < 2;
+  if (zone.hidden) return;
+
+  clear(zone);
+
+  if (fil.trouve) {
+    zone.append(el('p', { class: 'fil-trouve' }, [
+      el('strong', { text: `🧵 ${fil.trouve.nom} a trouvé le fil rouge` }),
+      el('span', { text: ` — ${fil.solution ?? ''} (+${fil.trouve.prime} pts, manche ${fil.trouve.manche})` }),
+    ]));
+    return;
+  }
+
+  const bloqueJusqu = fil.bloques?.[moi.id] ?? 0;
+  if (bloqueJusqu > etat.manche) {
+    const reste = bloqueJusqu - etat.manche;
+    zone.append(el('p', {
+      class: 'muted small',
+      text: `🧵 Raté. Encore ${reste} manche${reste > 1 ? 's' : ''} avant de retenter le fil rouge.`,
+    }));
+    return;
+  }
+
+  if (filEnvoye) {
+    zone.append(el('p', { class: 'muted small', text: '🧵 Proposition envoyée…' }));
+    return;
+  }
+
+  const champ = el('input', {
+    class: 'fil-champ',
+    type: 'text',
+    autocomplete: 'off',
+    placeholder: 'Le fil rouge, c’est…',
+    enterkeyhint: 'send',
+    'aria-label': 'Ta proposition pour le fil rouge',
+  });
+  const envoyer = () => {
+    const propose = champ.value.trim();
+    if (propose) tenterLeFil(propose);
+  };
+  champ.addEventListener('keydown', (e) => { if (e.key === 'Enter') envoyer(); });
+
+  const ouvrir = el('details', { class: 'fil-boite' }, [
+    el('summary', { text: '🧵 Je crois avoir le fil rouge' }),
+    el('p', { class: 'muted small', text: fil.indice }),
+    el('div', { class: 'fil-ligne' }, [
+      champ,
+      el('button', { class: 'btn btn-primary', type: 'button', onclick: envoyer }, 'Proposer'),
+    ]),
+    el('p', { class: 'muted small', text: 'Une erreur coûte deux manches de silence.' }),
+  ]);
+  zone.append(ouvrir);
+}
+
+async function tenterLeFil(propose) {
+  filEnvoye = true;
+  rendreFilRouge();
+  try {
+    await net.sendAnswer(salon.code, { playerId: moi.id, round: 0, reponse: null, fil: propose });
+  } catch {
+    toast('Proposition non transmise.', 'warn');
+    filEnvoye = false;
+    rendreFilRouge();
   }
 }
 
@@ -617,8 +703,10 @@ function rendreChoixVoix() {
  */
 function calculerMasque() {
   const publiee = etat?.question;
-  const source = QUESTIONS.find((q) => q.id === publiee?.id);
-  if (!source) return null;
+  // Il n'y a de mauvaises réponses à retirer que sur un QCM.
+  if (publiee?.type !== 'qcm') return null;
+  const source = QUESTIONS.find((q) => q.id === publiee.id);
+  if (!source?.reponses) return null;
 
   const bonne = publiee.reponses.indexOf(source.reponses[source.bonne]);
   if (bonne < 0) return null;
@@ -655,14 +743,19 @@ function armerJoker(id) {
   peindreReponses();
 }
 
-async function repondre(index) {
+/**
+ * Envoie une réponse, quelle que soit sa forme : un index pour un QCM, un
+ * nombre pour une estimation, une liste pour un classement ou une rafale. La
+ * régie validera — ici on se contente de l'écho local.
+ */
+async function repondre(valeur) {
   if (!etat || etat.phase !== 'manche' || monChoix) return;
   const maintenant = net.serverNow();
   if (maintenant < etat.startAt || maintenant > etat.deadline) return;
 
   // Écho local immédiat : le tap doit se voir tout de suite, sans attendre que
   // le relais confirme. La régie reste seule juge du score.
-  monChoix = { manche: etat.manche, choix: index, joker: jokerArme };
+  monChoix = { manche: etat.manche, valeur, joker: jokerArme };
   sons.bip();
   peindreReponses();
   rendreJokers();
@@ -672,7 +765,7 @@ async function repondre(index) {
     await net.sendAnswer(salon.code, {
       playerId: moi.id,
       round: etat.manche,
-      choice: index,
+      reponse: valeur,
       joker: jokerArme,
       elapsedMs: Math.max(0, maintenant - etat.startAt),
     });
@@ -716,7 +809,7 @@ function rendreReglages() {
   // Décocher un thème peut faire passer le pool sous le nombre demandé : on
   // rabote avant d'afficher les pastilles, sinon celle qui paraît active ne
   // correspond plus à ce qui sera joué.
-  const dispo = tailleDuPool(reglages.themes);
+  const dispo = tailleDuPool(reglages.themes, reglages.types);
   reglages.nombre = Math.min(reglages.nombre, dispo);
 
   const nombres = clear($('#choix-nombre'));
@@ -739,6 +832,37 @@ function rendreReglages() {
       onclick: () => { reglages.dureeMs = ms; rendreReglages(); },
     }, libelle));
   }
+
+  const types = clear($('#choix-types'));
+  for (const type of typesDisponibles(reglages.themes)) {
+    const actif = !reglages.types.length || reglages.types.includes(type.id);
+    types.append(el('button', {
+      class: `chip${actif ? ' est-actif' : ''}`,
+      type: 'button',
+      title: type.consigne,
+      onclick: () => {
+        const courant = reglages.types.length
+          ? reglages.types
+          : typesDisponibles(reglages.themes).map((t) => t.id);
+        const suivant = actif ? courant.filter((t) => t !== type.id) : [...courant, type.id];
+        // Tout décocher n'aurait aucun sens : on remet tout.
+        reglages.types = suivant.length ? suivant : [];
+        rendreReglages();
+      },
+    }, `${type.emoji} ${type.nom}`));
+  }
+
+  const fils = clear($('#choix-fil'));
+  for (const option of [{ id: null, nom: 'Sans fil rouge' }, ...FILS_ROUGES.map((f) => ({ id: f.id, nom: 'Avec un fil rouge' }))]) {
+    fils.append(el('button', {
+      class: `chip${reglages.fil === option.id ? ' est-actif' : ''}`,
+      type: 'button',
+      onclick: () => { reglages.fil = option.id; rendreReglages(); },
+    }, option.nom));
+  }
+  $('#note-fil').textContent = reglages.fil
+    ? 'Un même mot relie les bonnes réponses de plusieurs manches. Le premier à le nommer rafle une grosse prime — et plus il trouve tôt, plus elle est grosse. Le fil apporte ses propres questions, en plus des thèmes et des types choisis.'
+    : 'Aucune énigme de fond : on enchaîne les manches, c’est tout.';
 
   const jokers = clear($('#choix-jokers'));
   for (const joker of JOKERS) {
@@ -773,7 +897,13 @@ function rendreReglages() {
 }
 
 async function ouvrirSalon() {
-  const questions = tirerQuestions({ themes: reglages.themes, nombre: reglages.nombre });
+  const fil = FILS_ROUGES.find((f) => f.id === reglages.fil) ?? null;
+  const questions = tirerQuestions({
+    themes: reglages.themes,
+    types: reglages.types,
+    nombre: reglages.nombre,
+    fil: fil?.id ?? null,
+  });
   if (!questions.length) {
     toast('Aucune question sur ces thèmes.', 'warn');
     return;
@@ -790,6 +920,7 @@ async function ouvrirSalon() {
       persona: reglages.persona,
       themes: reglages.themes,
       jokers: reglages.jokers,
+      fil,
       // Le moteur ne connaît pas les fichiers audio : c'est ici qu'on lui dit
       // combien de temps il faut pour lire la réponse et son explication, sans
       // quoi la phase se termine au milieu de la phrase.
@@ -976,6 +1107,12 @@ function brancher() {
     // Le verrouillage des jokers tombe sur une heure, pas sur un état publié :
     // c'est ici qu'on le voit passer. Et c'est le même instant que le top, donc
     // celui où l'énoncé peut enfin être lu.
+    // Une rafale à moitié cochée vaut mieux que rien : on l'envoie juste avant
+    // que le chrono ne la rende caduque.
+    if (!monChoix && vueManche?.envoyerPartiel && net.serverNow() > etat.deadline - 400) {
+      vueManche.envoyerPartiel();
+    }
+
     const ouverts = net.serverNow() < etat.startAt;
     if (ouverts !== jokersOuverts) {
       const etaitOuvert = jokersOuverts;

@@ -6,10 +6,18 @@
 // `scripts/generate-questions.mjs`, qui écrit un brouillon à relire avant de
 // l'ajouter ici — jamais directement dans le jeu.
 //
-// Une question tient en cinq champs : le thème, l'énoncé, quatre réponses, la
-// bonne, et la petite phrase que l'animateur lit à la révélation. Cette
-// dernière n'est pas décorative : c'est ce qui transforme « tu as faux » en
-// « ah oui, tiens », et c'est elle qui fait durer une soirée.
+// Toute entrée porte un thème, un énoncé, et la petite phrase que l'animateur
+// lit à la révélation. Cette dernière n'est pas décorative : c'est ce qui
+// transforme « tu as faux » en « ah oui, tiens », et c'est elle qui fait durer
+// une soirée.
+//
+// Le reste dépend du `type` de manche — quatre réponses et un index pour un
+// QCM, une valeur pour une estimation, quatre éléments pour un classement,
+// cinq affirmations pour une rafale. Sans `type`, c'est un QCM : les soixante
+// premières entrées ont été écrites avant que les autres formes existent, et
+// il n'y avait aucune raison de toutes les réécrire.
+
+import { TYPES, typeDeManche } from './manches/index.js';
 
 export const THEMES = [
   { id: 'culture', nom: 'Culture générale', emoji: '🧠' },
@@ -424,19 +432,241 @@ export const QUESTIONS = [
     bonne: 0,
     note: 'Le guépard, autour de cent kilomètres-heure — mais seulement sur quelques centaines de mètres.',
   },
+
+  /* --- Estimations ------------------------------------------------------- */
+
+  {
+    id: 'est-01', theme: 'culture', type: 'estimation',
+    texte: 'Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?',
+    valeur: 1665, unite: 'marches',
+    note: 'Mille six cent soixante-cinq. L’ascenseur existe, et c’est une bonne nouvelle.',
+  },
+  {
+    id: 'est-02', theme: 'insolite', type: 'estimation',
+    texte: 'Combien d’os compte le squelette d’un adulte ?',
+    valeur: 206, unite: 'os',
+    note: 'Deux cent six. Un bébé en a près de trois cents : certains fusionnent en grandissant.',
+  },
+  {
+    id: 'est-03', theme: 'culture', type: 'estimation',
+    texte: 'Combien de pays sont membres de l’ONU ?',
+    valeur: 193, unite: 'pays',
+    note: 'Cent quatre-vingt-treize. Le Soudan du Sud est le dernier arrivé, en 2011.',
+  },
+  {
+    id: 'est-04', theme: 'insolite', type: 'estimation',
+    texte: 'Quelle profondeur atteint la fosse des Mariannes, en mètres ?',
+    valeur: 10994, unite: 'mètres',
+    note: 'Près de onze kilomètres. L’Everest y tiendrait tout entier, avec deux kilomètres d’eau au-dessus.',
+  },
+  {
+    id: 'est-05', theme: 'insolite', type: 'estimation',
+    texte: 'Combien de secondes met la lumière du Soleil pour nous parvenir ?',
+    valeur: 500, unite: 'secondes',
+    note: 'Environ cinq cents, soit huit minutes vingt. Le Soleil que vous voyez date d’il y a huit minutes.',
+  },
+  {
+    id: 'est-06', theme: 'culture', type: 'estimation',
+    texte: 'Combien de kilomètres fait le tour de la Terre à l’équateur ?',
+    valeur: 40075, unite: 'km',
+    note: 'Quarante mille et des poussières. Le mètre a d’ailleurs été défini pour que ce soit un chiffre rond.',
+  },
+  {
+    id: 'est-07', theme: 'culture', type: 'estimation',
+    texte: 'Combien de cartes compte un jeu de tarot ?',
+    valeur: 78, unite: 'cartes',
+    note: 'Soixante-dix-huit : cinquante-six cartes classiques, vingt et un atouts, et l’excuse.',
+  },
+  {
+    id: 'est-08', theme: 'bouffe', type: 'estimation',
+    texte: 'Combien de litres de sang circulent dans un corps adulte ?',
+    valeur: 5, unite: 'litres',
+    note: 'Environ cinq. Une prise de sang classique en prélève à peine un centième.',
+  },
+
+  /* --- Dans l'ordre ------------------------------------------------------- */
+
+  {
+    id: 'ord-01', theme: 'culture', type: 'ordre',
+    texte: 'Du plus ancien au plus récent',
+    elements: [
+      'La Révolution française',
+      'La Première Guerre mondiale',
+      'Le premier pas sur la Lune',
+      'La chute du mur de Berlin',
+    ],
+    note: '1789, 1914, 1969, 1989. Deux siècles exactement entre le premier et le dernier.',
+  },
+  {
+    id: 'ord-02', theme: 'insolite', type: 'ordre',
+    texte: 'De la plus petite à la plus grande',
+    elements: ['Mercure', 'Mars', 'La Terre', 'Jupiter'],
+    note: 'Jupiter est si grande que toutes les autres planètes tiendraient à l’intérieur.',
+  },
+  {
+    id: 'ord-03', theme: 'culture', type: 'ordre',
+    texte: 'De l’invention la plus ancienne à la plus récente',
+    elements: ['L’imprimerie', 'La machine à vapeur', 'Le téléphone', 'La télévision'],
+    note: 'Vers 1450, 1712, 1876, puis les années 1920. Quatre siècles pour les deux premières, cinquante ans pour les deux dernières.',
+  },
+  {
+    id: 'ord-04', theme: 'cinema', type: 'ordre',
+    texte: 'Du film le plus ancien au plus récent',
+    elements: ['Le Parrain', 'Star Wars', 'Titanic', 'Avatar'],
+    note: '1972, 1977, 1997, 2009. Les deux derniers sont du même réalisateur.',
+  },
+  {
+    id: 'ord-05', theme: 'culture', type: 'ordre',
+    texte: 'Du continent le moins peuplé au plus peuplé',
+    elements: ['L’Océanie', 'L’Amérique du Sud', 'L’Europe', 'L’Asie'],
+    note: 'L’Asie à elle seule rassemble plus de la moitié de l’humanité.',
+  },
+
+  /* --- Rafales ------------------------------------------------------------ */
+
+  {
+    id: 'raf-01', theme: 'insolite', type: 'rafale',
+    texte: 'Le corps humain',
+    affirmations: [
+      { texte: 'Un adulte a trente-deux dents.', vrai: true },
+      { texte: 'Nous n’utilisons que 10 % de notre cerveau.', vrai: false },
+      { texte: 'Les ongles continuent de pousser après la mort.', vrai: false },
+      { texte: 'L’estomac produit de l’acide chlorhydrique.', vrai: true },
+      { texte: 'Le cœur se trouve légèrement à gauche de la poitrine.', vrai: true },
+    ],
+    note: 'Les ongles ne poussent pas : c’est la peau qui se rétracte et donne cette impression.',
+  },
+  {
+    id: 'raf-02', theme: 'insolite', type: 'rafale',
+    texte: 'Les animaux',
+    affirmations: [
+      { texte: 'Le koala est un marsupial.', vrai: true },
+      { texte: 'Les chauves-souris sont aveugles.', vrai: false },
+      { texte: 'Un poisson rouge a trois secondes de mémoire.', vrai: false },
+      { texte: 'Un escargot peut dormir trois ans d’affilée.', vrai: true },
+      { texte: 'Les dauphins dorment un hémisphère du cerveau à la fois.', vrai: true },
+    ],
+    note: 'Un poisson rouge retient des choses pendant des mois. La légende des trois secondes n’a aucun fondement.',
+  },
+  {
+    id: 'raf-03', theme: 'culture', type: 'rafale',
+    texte: 'La France',
+    affirmations: [
+      { texte: 'La Marseillaise a été écrite à Strasbourg.', vrai: true },
+      { texte: 'La France a une frontière commune avec le Brésil.', vrai: true },
+      { texte: 'Le mont Blanc est le plus haut sommet d’Europe occidentale.', vrai: true },
+      { texte: 'Paris est la capitale de la France sans interruption depuis Clovis.', vrai: false },
+      { texte: 'Les trois bandes du drapeau ont toujours été de largeur égale.', vrai: false },
+    ],
+    note: 'La frontière avec le Brésil passe par la Guyane — c’est même la plus longue frontière terrestre française.',
+  },
+  {
+    id: 'raf-04', theme: 'insolite', type: 'rafale',
+    texte: 'L’espace',
+    affirmations: [
+      { texte: 'La Lune s’éloigne un peu de la Terre chaque année.', vrai: true },
+      { texte: 'Vénus tourne sur elle-même à l’envers des autres planètes.', vrai: true },
+      { texte: 'Sur Vénus, un jour dure plus longtemps qu’une année.', vrai: true },
+      { texte: 'Il n’y a pas de gravité dans l’espace.', vrai: false },
+      { texte: 'Saturne est la seule planète à posséder des anneaux.', vrai: false },
+    ],
+    note: 'En orbite, on ne flotte pas faute de gravité : on tombe en permanence, et on rate la Terre.',
+  },
+  {
+    id: 'raf-05', theme: 'bouffe', type: 'rafale',
+    texte: 'À table',
+    affirmations: [
+      { texte: 'La tomate est un fruit.', vrai: true },
+      { texte: 'Le miel ne se périme jamais.', vrai: true },
+      { texte: 'Le wasabi des restaurants est rarement du vrai wasabi.', vrai: true },
+      { texte: 'Les carottes ont toujours été orange.', vrai: false },
+      { texte: 'Le chocolat blanc ne contient pas de beurre de cacao.', vrai: false },
+    ],
+    note: 'Les carottes étaient blanches ou violettes ; l’orange est une sélection néerlandaise du XVIIᵉ siècle.',
+  },
+
+  /* --- Les questions du fil rouge ----------------------------------------- */
+  //
+  // Elles se jouent comme n'importe quelle autre. Leur particularité tient
+  // ailleurs : leurs bonnes réponses partagent toutes un même mot, et c'est ce
+  // mot que les joueurs cherchent en parallèle de la partie.
+
+  {
+    id: 'rou-01', theme: 'culture', fil: 'rouge',
+    texte: 'Quelle mer sépare l’Afrique de la péninsule Arabique ?',
+    reponses: ['La mer Rouge', 'La mer Noire', 'La mer Morte', 'La mer Égée'],
+    bonne: 0,
+    note: 'Son nom viendrait des algues qui la teintent parfois, ou simplement d’une convention où le rouge désignait le sud.',
+  },
+  {
+    id: 'rou-02', theme: 'culture', fil: 'rouge',
+    texte: 'Quelle organisation humanitaire Henry Dunant a-t-il fondée ?',
+    reponses: ['La Croix-Rouge', 'Médecins sans frontières', 'L’UNICEF', 'Le Secours populaire'],
+    bonne: 0,
+    note: 'Après avoir vu le champ de bataille de Solférino en 1859. Il en reçut le premier prix Nobel de la paix.',
+  },
+  {
+    id: 'rou-03', theme: 'insolite', fil: 'rouge',
+    texte: 'Comment surnomme-t-on la planète Mars ?',
+    reponses: ['La planète rouge', 'La planète bleue', 'L’étoile du berger', 'La géante'],
+    bonne: 0,
+    note: 'Sa couleur vient de l’oxyde de fer : Mars est littéralement rouillée.',
+  },
+  {
+    id: 'rou-04', theme: 'culture', fil: 'rouge',
+    texte: 'Quel conte met en scène une fillette, sa grand-mère et un loup ?',
+    reponses: ['Le Petit Chaperon rouge', 'Hansel et Gretel', 'Boucle d’or', 'Pierre et le Loup'],
+    bonne: 0,
+    note: 'Chez Perrault, en 1697, le loup gagne : il n’y a pas de chasseur, et l’histoire s’arrête là.',
+  },
 ];
 
 /**
- * Un tirage pour une partie. La bonne réponse est toujours en première position
- * dans la banque, parce qu'une liste relue à l'œil est plus facile à vérifier
- * qu'une liste où il faut compter les index : c'est ici qu'on mélange, une fois
- * par partie et par question.
+ * Les fils rouges.
+ *
+ * Un fil rouge est un mot que les bonnes réponses de plusieurs manches ont en
+ * commun, sans que rien ne l'annonce. Pendant que la partie se joue, chacun
+ * peut à tout moment tenter de le nommer : le premier à trouver rafle une
+ * grosse prime, et plus il trouve tôt, plus elle est grosse.
+ *
+ * C'est le seul élément du jeu qui traverse les manches, et il ne demande
+ * aucun secret par joueur — donc rien à filtrer côté relais. Tout tient dans
+ * le tirage et dans une poignée de mots-clés.
  */
-export function tirerQuestions({ themes, nombre, aleatoire = Math.random }) {
-  const choisis = themes?.length ? new Set(themes) : null;
-  const pool = QUESTIONS.filter((q) => !choisis || choisis.has(q.theme));
+export const FILS_ROUGES = [
+  {
+    id: 'rouge',
+    solution: 'le rouge',
+    // On accepte large : en soirée, personne ne tape « le rouge » proprement.
+    motsCles: ['rouge', 'rouges', 'lerouge'],
+    indice: 'Un même mot se cache derrière plusieurs bonnes réponses de cette partie.',
+    revelation: 'La mer Rouge, la Croix-Rouge, la planète rouge, le Petit Chaperon rouge : c’était le rouge.',
+  },
+];
 
-  const melange = (liste) => {
+export const filRougeDe = (id) => FILS_ROUGES.find((f) => f.id === id) ?? null;
+
+/**
+ * Une réponse au fil rouge est-elle bonne ?
+ *
+ * Comparaison très tolérante : on retire les accents, la ponctuation, les
+ * espaces et les articles. « Le Rouge ! », « rouge » et « la couleur rouge »
+ * doivent tous passer — on joue avec un téléphone dans une main.
+ */
+export function filRougeTrouve(fil, propose) {
+  const normaliser = (texte) => String(texte ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  const propre = normaliser(propose);
+  if (!propre) return false;
+  return fil.motsCles.some((mot) => propre.includes(normaliser(mot)));
+}
+
+function melangeur(aleatoire) {
+  return (liste) => {
     const copie = liste.slice();
     for (let i = copie.length - 1; i > 0; i -= 1) {
       const j = Math.floor(aleatoire() * (i + 1));
@@ -444,26 +674,67 @@ export function tirerQuestions({ themes, nombre, aleatoire = Math.random }) {
     }
     return copie;
   };
-
-  return melange(pool)
-    .slice(0, nombre)
-    .map((q) => {
-      const ordre = melange(q.reponses.map((_, i) => i));
-      return {
-        id: q.id,
-        theme: q.theme,
-        texte: q.texte,
-        reponses: ordre.map((i) => q.reponses[i]),
-        bonne: ordre.indexOf(q.bonne),
-        note: q.note,
-      };
-    });
 }
 
-/** Combien de questions un thème peut fournir : sert à borner les réglages. */
-export function tailleDuPool(themes) {
-  const choisis = themes?.length ? new Set(themes) : null;
-  return QUESTIONS.filter((q) => !choisis || choisis.has(q.theme)).length;
+const poolDe = (themes, types) => QUESTIONS.filter((q) => {
+  if (themes?.length && !themes.includes(q.theme)) return false;
+  if (types?.length && !types.includes(q.type ?? 'qcm')) return false;
+  return true;
+});
+
+/**
+ * Le tirage d'une partie.
+ *
+ * Chaque entrée passe par son type de manche, qui sait la préparer — mélanger
+ * les réponses d'un QCM, brouiller l'ordre d'un classement, et ainsi de suite.
+ *
+ * Quand un fil rouge est demandé, ses questions sont réparties dans la partie
+ * plutôt que tirées au hasard : groupées, elles se verraient tout de suite ; en
+ * fin de partie seulement, plus personne n'aurait le temps de chercher.
+ */
+export function tirerQuestions({
+  themes, types, nombre, aleatoire = Math.random, fil = null,
+}) {
+  const melange = melangeur(aleatoire);
+  const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
+
+  const duFil = fil ? QUESTIONS.filter((q) => q.fil === fil) : [];
+  const reste = melange(poolDe(themes, types).filter((q) => !q.fil))
+    .slice(0, Math.max(0, nombre - duFil.length));
+
+  if (!duFil.length) return reste.map(preparer);
+
+  // Fusion à cadence régulière. Un simple `splice` à intervalle fixe suffit
+  // tant que le fil ne pèse pas lourd, mais sur une partie de huit manches dont
+  // quatre appartiennent au fil, il les collait les unes aux autres — et un fil
+  // rouge qui se voit n'est plus un fil rouge.
+  const aPlacer = melange(duFil);
+  const longueur = reste.length + aPlacer.length;
+  const tirage = [];
+  let poses = 0;
+  let suivante = 0;
+
+  for (let position = 0; position < longueur; position += 1) {
+    const attendus = Math.floor(((position + 1) * aPlacer.length) / longueur);
+    // Jamais en première manche : celle-là sert à comprendre comment on joue,
+    // pas à chercher un fil dont personne ne soupçonne encore l'existence.
+    const auTour = position > 0 && poses < attendus && poses < aPlacer.length;
+    if (auTour || suivante >= reste.length) tirage.push(aPlacer[poses++]);
+    else tirage.push(reste[suivante++]);
+  }
+
+  return tirage.slice(0, nombre).map(preparer);
+}
+
+/** Combien de questions un tirage peut fournir : sert à borner les réglages. */
+export function tailleDuPool(themes, types) {
+  return poolDe(themes, types).filter((q) => !q.fil).length;
+}
+
+/** Les types réellement représentés dans les thèmes choisis. */
+export function typesDisponibles(themes) {
+  const presents = new Set(poolDe(themes).map((q) => q.type ?? 'qcm'));
+  return TYPES.filter((t) => presents.has(t.id));
 }
 
 export const nomDuTheme = (id) => THEMES.find((t) => t.id === id)?.nom ?? id;

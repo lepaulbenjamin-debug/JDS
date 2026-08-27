@@ -12,11 +12,14 @@ import assert from 'node:assert/strict';
 import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
 } from '../web/quiz/js/engine.js';
-import { QUESTIONS, tirerQuestions, tailleDuPool } from '../web/quiz/js/questions.js';
+import {
+  QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
+} from '../web/quiz/js/questions.js';
+import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 
 const QUESTION = {
-  id: 'test', theme: 'culture',
+  id: 'test', theme: 'culture', type: 'qcm',
   texte: 'Question de test ?',
   reponses: ['Bonne', 'Fausse', 'Fausse aussi', 'Encore fausse'],
   bonne: 0,
@@ -32,7 +35,7 @@ const JOUEURS = [
 const DUREE = 15000;
 
 const manche = (reponses, scores = {}, options = {}) => resoudreManche({
-  question: QUESTION,
+  manche: QUESTION,
   reponses,
   scores,
   joueurs: JOUEURS,
@@ -58,8 +61,8 @@ test('une réponse arrivée après le chrono ne descend pas sous le plancher', (
 
 test('une bonne réponse rapide rapporte plus qu’une bonne réponse lente', () => {
   const { detail } = manche({
-    a: { choice: 0, elapsedMs: 1000, joker: null },
-    b: { choice: 0, elapsedMs: 12000, joker: null },
+    a: { valeur: 0, elapsedMs: 1000, joker: null },
+    b: { valeur: 0, elapsedMs: 12000, joker: null },
   });
   assert.ok(detail.a.points > detail.b.points);
   assert.ok(detail.a.correct && detail.b.correct);
@@ -67,7 +70,7 @@ test('une bonne réponse rapide rapporte plus qu’une bonne réponse lente', ()
 
 test('une mauvaise réponse ne rapporte rien, et n’enlève rien', () => {
   const { detail, scores } = manche(
-    { a: { choice: 2, elapsedMs: 1000, joker: null } },
+    { a: { valeur: 2, elapsedMs: 1000, joker: null } },
     { a: 500 },
   );
   assert.equal(detail.a.correct, false);
@@ -76,7 +79,7 @@ test('une mauvaise réponse ne rapporte rien, et n’enlève rien', () => {
 });
 
 test('un joueur qui n’a pas répondu est marqué absent', () => {
-  const { detail } = manche({ a: { choice: 0, elapsedMs: 500, joker: null } });
+  const { detail } = manche({ a: { valeur: 0, elapsedMs: 500, joker: null } });
   assert.equal(detail.b.absent, true);
   assert.equal(detail.b.points, 0);
 });
@@ -85,8 +88,8 @@ test('un joueur qui n’a pas répondu est marqué absent', () => {
 
 test('le sang-froid annule le barème dégressif', () => {
   const { detail } = manche({
-    a: { choice: 0, elapsedMs: 14000, joker: 'sangfroid' },
-    b: { choice: 0, elapsedMs: 14000, joker: null },
+    a: { valeur: 0, elapsedMs: 14000, joker: 'sangfroid' },
+    b: { valeur: 0, elapsedMs: 14000, joker: null },
   });
   assert.equal(detail.a.points, 1000);
   assert.ok(detail.a.points > detail.b.points);
@@ -94,24 +97,24 @@ test('le sang-froid annule le barème dégressif', () => {
 
 test('le 50/50 divise les points de la manche par deux', () => {
   const { detail } = manche({
-    a: { choice: 0, elapsedMs: 0, joker: 'cinquante' },
-    b: { choice: 0, elapsedMs: 0, joker: null },
+    a: { valeur: 0, elapsedMs: 0, joker: 'cinquante' },
+    b: { valeur: 0, elapsedMs: 0, joker: null },
   });
   assert.equal(detail.b.points, 1000);
   assert.equal(detail.a.points, 500);
 });
 
 test('le 50/50 ne rapporte rien si on se trompe quand même', () => {
-  const { detail } = manche({ a: { choice: 1, elapsedMs: 0, joker: 'cinquante' } });
+  const { detail } = manche({ a: { valeur: 1, elapsedMs: 0, joker: 'cinquante' } });
   assert.equal(detail.a.points, 0);
 });
 
 test('quitte ou double : doublé si juste, moitié perdue si faux', () => {
-  const juste = manche({ a: { choice: 0, elapsedMs: 0, joker: 'double' } });
+  const juste = manche({ a: { valeur: 0, elapsedMs: 0, joker: 'double' } });
   assert.equal(juste.detail.a.points, 2000);
 
   const rate = manche(
-    { a: { choice: 1, elapsedMs: 0, joker: 'double' } },
+    { a: { valeur: 1, elapsedMs: 0, joker: 'double' } },
     { a: 900 },
   );
   assert.equal(rate.detail.a.points, -500);
@@ -120,7 +123,7 @@ test('quitte ou double : doublé si juste, moitié perdue si faux', () => {
 
 test('un total ne descend jamais sous zéro', () => {
   const { scores } = manche(
-    { a: { choice: 1, elapsedMs: 0, joker: 'double' } },
+    { a: { valeur: 1, elapsedMs: 0, joker: 'double' } },
     { a: 100 },
   );
   assert.equal(scores.a, 0);
@@ -130,8 +133,8 @@ test('le vol prend la moitié des points que le leader gagne sur la manche', () 
   // Bo mène. Ana vole : Bo gagnerait 1000, il n'en garde que 500.
   const { detail, scores } = manche(
     {
-      a: { choice: 0, elapsedMs: 3000, joker: 'vol' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
+      a: { valeur: 0, elapsedMs: 3000, joker: 'vol' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
     },
     { a: 0, b: 2000 },
   );
@@ -144,8 +147,8 @@ test('le vol prend la moitié des points que le leader gagne sur la manche', () 
 test('le vol ne marche pas si le voleur s’est trompé', () => {
   const { detail } = manche(
     {
-      a: { choice: 3, elapsedMs: 1000, joker: 'vol' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
+      a: { valeur: 3, elapsedMs: 1000, joker: 'vol' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
     },
     { b: 2000 },
   );
@@ -156,8 +159,8 @@ test('le vol ne marche pas si le voleur s’est trompé', () => {
 test('le sabotage efface ce que le leader gagne', () => {
   const { detail, scores } = manche(
     {
-      a: { choice: 0, elapsedMs: 2000, joker: 'sabotage' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
+      a: { valeur: 0, elapsedMs: 2000, joker: 'sabotage' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
     },
     { b: 2000 },
   );
@@ -170,9 +173,9 @@ test('vol puis sabotage se cumulent sur la même manche', () => {
   // Ana vole la moitié, Cé efface le reste : le leader ne garde rien.
   const { detail } = manche(
     {
-      a: { choice: 0, elapsedMs: 2000, joker: 'vol' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
-      c: { choice: 0, elapsedMs: 2000, joker: 'sabotage' },
+      a: { valeur: 0, elapsedMs: 2000, joker: 'vol' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
+      c: { valeur: 0, elapsedMs: 2000, joker: 'sabotage' },
     },
     { b: 3000 },
   );
@@ -182,8 +185,8 @@ test('vol puis sabotage se cumulent sur la même manche', () => {
 
 test('sans leader, vol et sabotage n’ont aucune cible — et le joker est rendu', () => {
   const { detail } = manche({
-    a: { choice: 0, elapsedMs: 1000, joker: 'vol' },
-    b: { choice: 0, elapsedMs: 0, joker: null },
+    a: { valeur: 0, elapsedMs: 1000, joker: 'vol' },
+    b: { valeur: 0, elapsedMs: 0, joker: null },
   });
   assert.equal(detail.a.vol, undefined);
   assert.equal(detail.a.jokerRendu, true);
@@ -193,9 +196,9 @@ test('sans leader, vol et sabotage n’ont aucune cible — et le joker est rend
 test('un seul vol par manche : le plus rapide sert, l’autre récupère son joker', () => {
   const { detail } = manche(
     {
-      a: { choice: 0, elapsedMs: 5000, joker: 'vol' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
-      c: { choice: 0, elapsedMs: 2000, joker: 'vol' },
+      a: { valeur: 0, elapsedMs: 5000, joker: 'vol' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
+      c: { valeur: 0, elapsedMs: 2000, joker: 'vol' },
     },
     { b: 4000 },
   );
@@ -211,9 +214,9 @@ test('un seul vol par manche : le plus rapide sert, l’autre récupère son jok
 test('un seul sabotage par manche', () => {
   const { detail } = manche(
     {
-      a: { choice: 0, elapsedMs: 4000, joker: 'sabotage' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
-      c: { choice: 0, elapsedMs: 1000, joker: 'sabotage' },
+      a: { valeur: 0, elapsedMs: 4000, joker: 'sabotage' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
+      c: { valeur: 0, elapsedMs: 1000, joker: 'sabotage' },
     },
     { b: 4000 },
   );
@@ -226,8 +229,8 @@ test('un seul sabotage par manche', () => {
 test('un vol raté sur une mauvaise réponse est bien perdu', () => {
   const { detail } = manche(
     {
-      a: { choice: 2, elapsedMs: 1000, joker: 'vol' },
-      b: { choice: 0, elapsedMs: 0, joker: null },
+      a: { valeur: 2, elapsedMs: 1000, joker: 'vol' },
+      b: { valeur: 0, elapsedMs: 0, joker: null },
     },
     { b: 2000 },
   );
@@ -236,7 +239,7 @@ test('un vol raté sur une mauvaise réponse est bien perdu', () => {
 
 test('on ne peut pas se voler ni se saboter soi-même', () => {
   const { detail } = manche(
-    { a: { choice: 0, elapsedMs: 0, joker: 'vol' } },
+    { a: { valeur: 0, elapsedMs: 0, joker: 'vol' } },
     { a: 5000 },
   );
   assert.equal(detail.a.vol, undefined);
@@ -245,7 +248,7 @@ test('on ne peut pas se voler ni se saboter soi-même', () => {
 
 test('la manche finale vaut le double', () => {
   const { detail } = manche(
-    { a: { choice: 0, elapsedMs: 0, joker: null } },
+    { a: { valeur: 0, elapsedMs: 0, joker: null } },
     {},
     { finale: true },
   );
@@ -306,12 +309,12 @@ test('répondre juste et vite gagne la partie', () => {
       const depuis = horloge - vue.startAt;
       if (depuis === 100) {
         return [
-          { playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 100 },
-          { playerId: 'c', round: vue.manche, choice: 1, elapsedMs: 100 },
+          { playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 100 },
+          { playerId: 'c', round: vue.manche, reponse: 1, elapsedMs: 100 },
         ];
       }
       if (depuis === 9000) {
-        return [{ playerId: 'b', round: vue.manche, choice: 0, elapsedMs: 9000 }];
+        return [{ playerId: 'b', round: vue.manche, reponse: 0, elapsedMs: 9000 }];
       }
       return [];
     },
@@ -333,7 +336,7 @@ test('une manche se clôt d’elle-même dès que tout le monde a répondu', () 
       if (vue.phase !== 'manche' || horloge < vue.startAt) return [];
       if (vue.manche === 1) mancheVueA = Math.max(mancheVueA, horloge - vue.startAt);
       return horloge - vue.startAt === 100
-        ? [{ playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 100 }]
+        ? [{ playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 100 }]
         : [];
     },
   });
@@ -348,7 +351,7 @@ test('un joker rendu reste disponible pour les manches suivantes', () => {
     questions: troisQuestions(),
     repondre: (vue, horloge) => (vue.phase === 'manche' && horloge - vue.startAt === 100
       ? [{
-          playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 100,
+          playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 100,
           joker: vue.manche === 1 ? 'vol' : null,
         }]
       : []),
@@ -364,7 +367,7 @@ test('un joker n’est consommé qu’une fois, et seulement s’il a été jou�
     repondre: (vue, horloge) => {
       if (vue.phase !== 'manche' || horloge - vue.startAt !== 100) return [];
       return [{
-        playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 100,
+        playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 100,
         joker: vue.manche === 1 ? 'sangfroid' : null,
       }];
     },
@@ -379,7 +382,7 @@ test('une réponse qui arrive après la fin de la manche est ignorée', () => {
   const { etatFinal } = jouerUnePartie({
     questions: [{ ...QUESTION, id: 'q1' }],
     repondre: (vue, horloge) => (vue.phase === 'revelation' && horloge % 500 === 0
-      ? [{ playerId: 'a', round: 1, choice: 0, elapsedMs: 0 }]
+      ? [{ playerId: 'a', round: 1, reponse: 0, elapsedMs: 0 }]
       : []),
   });
   assert.equal(etatFinal.podium.every((j) => j.score === 0), true);
@@ -398,11 +401,188 @@ test('la fenêtre de jokers précède la question', () => {
   assert.equal(vue.deadline - vue.startAt, DUREE);
 });
 
+/* --- Les autres types de manche ------------------------------------------ */
+
+const noterAvec = (typeId, entree, reponses) => {
+  const type = typeDeManche(typeId);
+  const prepare = type.preparer(entree, (l) => l);   // sans mélange : lisible
+  return { prepare, notes: type.noter(prepare, reponses) };
+};
+
+test('estimation : le plus proche rafle la manche, les autres marquent à proportion', () => {
+  const { notes } = noterAvec('estimation', { id: 'e', valeur: 100 }, {
+    a: { valeur: 98, elapsedMs: 9000 },
+    b: { valeur: 130, elapsedMs: 100 },
+    c: { valeur: 400, elapsedMs: 100 },
+  });
+  assert.equal(notes.a.correct, true, 'le plus proche gagne, même lent');
+  assert.equal(notes.a.fraction, 1);
+  assert.equal(notes.b.correct, false);
+  assert.ok(notes.b.fraction > 0 && notes.b.fraction < 1, 'être proche rapporte un peu');
+  assert.equal(notes.c.fraction, 0, 'très loin ne rapporte rien');
+});
+
+test('estimation : à égalité parfaite, la rapidité départage', () => {
+  const { notes } = noterAvec('estimation', { id: 'e', valeur: 50 }, {
+    a: { valeur: 60, elapsedMs: 5000 },
+    b: { valeur: 40, elapsedMs: 900 },
+  });
+  assert.equal(notes.b.correct, true);
+  assert.equal(notes.a.correct, false);
+});
+
+test('estimation : la rapidité ne pèse rien dans les points', () => {
+  const lent = manche(
+    { a: { valeur: 100, elapsedMs: 14000, joker: null } },
+    {},
+    { manche: typeDeManche('estimation').preparer({ id: 'e', valeur: 100 }) },
+  );
+  assert.equal(lent.detail.a.points, 1000, 'répondre au dernier moment ne coûte rien');
+});
+
+test('classement : les points suivent le nombre de positions justes', () => {
+  const entree = { id: 'o', elements: ['A', 'B', 'C', 'D'] };
+  const { notes } = noterAvec('ordre', entree, {
+    a: { valeur: [0, 1, 2, 3], elapsedMs: 0 },     // parfait
+    b: { valeur: [0, 1, 3, 2], elapsedMs: 0 },     // deux justes
+    c: { valeur: [3, 2, 1, 0], elapsedMs: 0 },     // tout à l'envers
+  });
+  assert.equal(notes.a.correct, true);
+  assert.equal(notes.a.fraction, 1);
+  assert.equal(notes.b.justes, 2);
+  assert.equal(notes.b.fraction, 0.5);
+  assert.equal(notes.c.justes, 0);
+});
+
+test('classement : une réponse qui n’est pas une permutation est refusée', () => {
+  const type = typeDeManche('ordre');
+  assert.equal(type.lire([0, 0, 0, 0]), null, 'répondre quatre fois le même');
+  assert.equal(type.lire([0, 1, 2]), null, 'liste trop courte');
+  assert.equal(type.lire([0, 1, 2, 9]), null, 'index hors bornes');
+  assert.deepEqual(type.lire([3, 0, 2, 1]), [3, 0, 2, 1]);
+});
+
+test('rafale : chaque affirmation juste compte pour un cinquième', () => {
+  const entree = {
+    id: 'r',
+    affirmations: [
+      { texte: '1', vrai: true }, { texte: '2', vrai: false }, { texte: '3', vrai: true },
+      { texte: '4', vrai: false }, { texte: '5', vrai: true },
+    ],
+  };
+  const { notes } = noterAvec('rafale', entree, {
+    a: { valeur: [true, false, true, false, true], elapsedMs: 0 },
+    b: { valeur: [true, false, true, true, null], elapsedMs: 0 },
+  });
+  assert.equal(notes.a.correct, true);
+  assert.equal(notes.b.justes, 3);
+  assert.equal(notes.b.fraction, 0.6);
+});
+
+test('rafale : une affirmation laissée vide compte comme fausse, pas comme une erreur', () => {
+  const type = typeDeManche('rafale');
+  assert.deepEqual(type.lire([true, null, false, null, true]), [true, null, false, null, true]);
+  assert.equal(type.lire([true, true]), null, 'il en faut cinq');
+});
+
+test('chaque type sait dire sa solution en clair', () => {
+  const cas = [
+    ['qcm', QUESTION, 'Bonne'],
+    ['estimation', { id: 'e', valeur: 206, unite: 'os' }, '206 os'],
+    ['ordre', { id: 'o', elements: ['A', 'B', 'C', 'D'] }, 'A, puis B, puis C, puis D'],
+  ];
+  for (const [typeId, entree, attendu] of cas) {
+    const type = typeDeManche(typeId);
+    assert.equal(type.solutionTexte(type.preparer(entree, (l) => l)), attendu);
+  }
+});
+
+test('le chrono s’allonge sur les types qui demandent plus de gestes', () => {
+  assert.equal(typeDeManche('qcm').facteurDuree, 1);
+  for (const id of ['estimation', 'ordre', 'rafale']) {
+    assert.ok(typeDeManche(id).facteurDuree > 1, `${id} devrait laisser plus de temps`);
+  }
+});
+
+/* --- Le fil rouge --------------------------------------------------------- */
+
+const FIL = FILS_ROUGES[0];
+
+test('le fil rouge se reconnaît malgré la casse, les accents et les articles', () => {
+  for (const essai of ['rouge', 'Le Rouge', 'LE ROUGE !', 'la couleur rouge', '  rouge  ']) {
+    assert.ok(filRougeTrouve(FIL, essai), `« ${essai} » aurait dû passer`);
+  }
+  for (const essai of ['bleu', '', 'vert pomme', null]) {
+    assert.ok(!filRougeTrouve(FIL, essai), `« ${essai} » n’aurait pas dû passer`);
+  }
+});
+
+test('les questions du fil rouge sont réparties dans la partie, jamais groupées', () => {
+  // Y compris sur une partie courte, où le fil pèse la moitié des manches.
+  for (const nombre of [8, 12, 16, 20]) {
+    const tirage = tirerQuestions({ themes: [], nombre, fil: FIL.id });
+    const positions = tirage
+      .map((q, i) => (QUESTIONS.find((e) => e.id === q.id)?.fil ? i : -1))
+      .filter((i) => i >= 0);
+
+    assert.equal(positions.length, 4, `${nombre} manches : les quatre questions du fil`);
+    assert.ok(positions[0] >= 1, `${nombre} manches : jamais en toute première`);
+    const ecarts = positions.slice(1).map((p, i) => p - positions[i]);
+    assert.ok(ecarts.every((e) => e >= 2), `${nombre} manches, groupées : ${positions.join(', ')}`);
+  }
+});
+
+test('trouver le fil rouge rapporte une prime, et une seule fois', () => {
+  const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE, fil: FIL });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(0, JOUEURS);
+
+  regie.encaisser([{ playerId: 'a', fil: 'le rouge' }]);
+  const vue = regie.etatPublic(JOUEURS);
+  assert.equal(vue.fil.trouve.nom, 'Ana');
+  assert.ok(vue.fil.trouve.prime > 0);
+  assert.equal(vue.classement.find((j) => j.id === 'a').score, vue.fil.trouve.prime);
+
+  // Bo arrive après la bataille : plus rien à gagner.
+  regie.encaisser([{ playerId: 'b', fil: 'le rouge' }]);
+  assert.equal(regie.etatPublic(JOUEURS).fil.trouve.nom, 'Ana');
+  assert.equal(regie.etatPublic(JOUEURS).classement.find((j) => j.id === 'b').score, 0);
+});
+
+test('se tromper sur le fil rouge coûte deux manches de silence', () => {
+  const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE, fil: FIL });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(0, JOUEURS);
+
+  regie.encaisser([{ playerId: 'a', fil: 'bleu' }]);
+  const vue = regie.etatPublic(JOUEURS);
+  assert.equal(vue.fil.trouve, null);
+  assert.equal(vue.fil.bloques.a, vue.manche + 2);
+
+  // Même la bonne réponse ne passe pas tant que le blocage tient.
+  regie.encaisser([{ playerId: 'a', fil: 'rouge' }]);
+  assert.equal(regie.etatPublic(JOUEURS).fil.trouve, null);
+});
+
+test('la solution du fil rouge n’est publiée qu’une fois trouvée', () => {
+  const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE, fil: FIL });
+  regie.lancer(0, JOUEURS);
+  regie.avancer(0, JOUEURS);
+  assert.equal(regie.etatPublic(JOUEURS).fil.solution, undefined);
+  regie.encaisser([{ playerId: 'a', fil: 'rouge' }]);
+  assert.equal(regie.etatPublic(JOUEURS).fil.solution, FIL.solution);
+});
+
+test('sans fil rouge demandé, l’état n’en parle pas', () => {
+  const { vues } = jouerUnePartie({ questions: troisQuestions() });
+  assert.equal(vues[0].fil, null);
+});
+
 /* --- Jokers choisis à la partie ------------------------------------------ */
 
 const repondAvec = (joker) => (vue, horloge) => (
   vue.phase === 'manche' && horloge - vue.startAt === 100
-    ? [{ playerId: 'a', round: vue.manche, choice: 0, elapsedMs: 12000, joker }]
+    ? [{ playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 12000, joker }]
     : []
 );
 
@@ -463,12 +643,30 @@ test('un joker écarté n’est pas consommé non plus', () => {
 
 /* --- Banque de questions ------------------------------------------------- */
 
-test('chaque question a quatre réponses et une bonne valide', () => {
-  for (const question of QUESTIONS) {
-    assert.equal(question.reponses.length, 4, `${question.id} : quatre réponses attendues`);
-    assert.ok(question.bonne >= 0 && question.bonne < 4, `${question.id} : index de bonne réponse`);
-    assert.ok(question.note?.length > 10, `${question.id} : explication manquante`);
-    assert.equal(new Set(question.reponses).size, 4, `${question.id} : réponses en double`);
+test('chaque entrée de banque est complète pour son type', () => {
+  for (const q of QUESTIONS) {
+    const type = q.type ?? 'qcm';
+    assert.ok(q.texte?.length > 3, `${q.id} : énoncé manquant`);
+    assert.ok(q.note?.length > 10, `${q.id} : explication manquante`);
+    assert.ok(THEMES.some((t) => t.id === q.theme), `${q.id} : thème inconnu`);
+
+    if (type === 'qcm') {
+      assert.equal(q.reponses.length, 4, `${q.id} : quatre réponses attendues`);
+      assert.ok(q.bonne >= 0 && q.bonne < 4, `${q.id} : index de bonne réponse`);
+      assert.equal(new Set(q.reponses).size, 4, `${q.id} : réponses en double`);
+    }
+    if (type === 'estimation') {
+      assert.ok(Number.isFinite(q.valeur), `${q.id} : valeur attendue`);
+    }
+    if (type === 'ordre') {
+      assert.equal(q.elements.length, 4, `${q.id} : quatre éléments attendus`);
+      assert.equal(new Set(q.elements).size, 4, `${q.id} : éléments en double`);
+    }
+    if (type === 'rafale') {
+      assert.equal(q.affirmations.length, 5, `${q.id} : cinq affirmations attendues`);
+      assert.ok(q.affirmations.some((a) => a.vrai), `${q.id} : que des fausses`);
+      assert.ok(q.affirmations.some((a) => !a.vrai), `${q.id} : que des vraies`);
+    }
   }
 });
 
@@ -478,9 +676,34 @@ test('les identifiants de questions sont uniques', () => {
 });
 
 test('le mélange conserve le lien entre la bonne réponse et son texte', () => {
-  const attendu = new Map(QUESTIONS.map((q) => [q.id, q.reponses[q.bonne]]));
-  for (const question of tirerQuestions({ themes: [], nombre: QUESTIONS.length })) {
-    assert.equal(question.reponses[question.bonne], attendu.get(question.id));
+  const qcms = QUESTIONS.filter((q) => (q.type ?? 'qcm') === 'qcm');
+  const attendu = new Map(qcms.map((q) => [q.id, q.reponses[q.bonne]]));
+  const tirage = tirerQuestions({ themes: [], types: ['qcm'], nombre: qcms.length });
+  assert.ok(tirage.length > 0);
+  for (const manche of tirage) {
+    assert.equal(manche.reponses[manche.bonne], attendu.get(manche.id));
+  }
+});
+
+test('le mélange d’un classement garde la solution alignée sur les éléments', () => {
+  const source = QUESTIONS.filter((q) => q.type === 'ordre');
+  const tirage = tirerQuestions({ themes: [], types: ['ordre'], nombre: source.length });
+  for (const manche of tirage) {
+    const attendu = source.find((q) => q.id === manche.id).elements;
+    assert.deepEqual(manche.solution.map((i) => manche.elements[i]), attendu);
+  }
+});
+
+test('le mélange d’une rafale garde chaque verdict avec son affirmation', () => {
+  const source = QUESTIONS.filter((q) => q.type === 'rafale');
+  const tirage = tirerQuestions({ themes: [], types: ['rafale'], nombre: source.length });
+  for (const manche of tirage) {
+    const verite = new Map(
+      source.find((q) => q.id === manche.id).affirmations.map((a) => [a.texte, a.vrai]),
+    );
+    manche.affirmations.forEach((texte, i) => {
+      assert.equal(manche.solution[i], verite.get(texte), `${manche.id} : ${texte}`);
+    });
   }
 });
 
@@ -529,10 +752,10 @@ test('un salon se crée, s’ouvre aux pupitres et transmet les réponses', asyn
   assert.equal(inchange.body.changed, false);
   assert.equal(inchange.body.state, undefined);
 
-  await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, choice: 2, elapsedMs: 900 });
+  await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, reponse: 2, elapsedMs: 900 });
   const battement = await appel('POST', { code }, { hostToken });
   assert.equal(battement.body.answers.length, 1);
-  assert.equal(battement.body.answers[0].choice, 2);
+  assert.equal(battement.body.answers[0].reponse, 2);
 
   // Les réponses relevées ne reviennent pas au battement suivant.
   const suivant = await appel('POST', { code }, { hostToken });

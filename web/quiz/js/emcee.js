@@ -28,6 +28,16 @@ export const PERSONAS = [
 
 const BANQUE = {
   classique: {
+    plusProche: [
+      'Le plus proche, c’est {nom}. La réponse exacte : {reponse}.',
+      'C’est {nom} qui s’en approche le plus. C’était {reponse}.',
+    ],
+    partiel: [
+      'Personne n’a tout juste, mais il y a des points à ramasser.',
+      'Pas de sans-faute. Des points quand même pour les plus proches.',
+    ],
+    filTrouve: ['Le fil rouge est tombé ! {nom} l’a démasqué.'],
+    filManque: ['Et personne n’a vu le fil rouge de la soirée.'],
     ouverture: [
       'Bonsoir à tous, et bienvenue. {nb} candidats ce soir, et une seule place sur la première marche.',
       'Mesdames, messieurs, bonsoir. Vous êtes {nb} ce soir. Dans un quart d’heure, il n’en restera qu’un.',
@@ -82,6 +92,16 @@ const BANQUE = {
   },
 
   chambreur: {
+    plusProche: [
+      '{nom} est le plus proche. C’était {reponse}, pour les autres.',
+      'Le moins mauvais, c’est {nom}. La vraie réponse : {reponse}.',
+    ],
+    partiel: [
+      'Aucun sans-faute. On prend ce qu’il y a.',
+      'Personne n’a tout bon. J’ai vu pire. Rarement.',
+    ],
+    filTrouve: ['Et voilà, {nom} a trouvé le fil rouge. Les autres cherchent encore.'],
+    filManque: ['Le fil rouge vous est passé sous le nez toute la soirée.'],
     ouverture: [
       'Bon, vous êtes {nb}. Statistiquement, il y en a au moins deux qui vont le regretter.',
       'Salut la compagnie ! {nb} joueurs, un seul gagnant, et beaucoup d’excuses à préparer.',
@@ -136,6 +156,10 @@ const BANQUE = {
   },
 
   pincesansrire: {
+    plusProche: ['{nom} s’en approche le plus. C’était {reponse}.'],
+    partiel: ['Aucun sans-faute. Nous ferons avec.'],
+    filTrouve: ['{nom} a trouvé le fil rouge. Il fallait bien quelqu’un.'],
+    filManque: ['Le fil rouge n’a été trouvé par personne. Dommage.'],
     ouverture: [
       'Bonsoir. Vous êtes {nb}. Nous verrons bien.',
       'Bien. {nb} participants. Commençons, tant que la motivation est là.',
@@ -183,6 +207,10 @@ const BANQUE = {
  */
 const DIT = {
   classique: {
+    plusProche: ['Voici la réponse exacte.'],
+    partiel: ['Aucun sans-faute, mais des points tout de même.'],
+    filTrouve: ['Le fil rouge est tombé !'],
+    filManque: ['Et personne n’a vu le fil rouge de la soirée.'],
     ouverture: ['Bonsoir à tous, et bienvenue. Dans un quart d’heure, il n’en restera qu’un.'],
     avantManche: ['Question suivante.', 'On enchaîne.'],
     derniereManche: ['Dernière manche, et elle vaut double. Tout peut encore basculer.'],
@@ -198,6 +226,10 @@ const DIT = {
   },
 
   chambreur: {
+    plusProche: ['Le moins mauvais l’emporte. Voici la vraie réponse.'],
+    partiel: ['Aucun sans-faute. On prend ce qu’il y a.'],
+    filTrouve: ['Et voilà, le fil rouge est démasqué. Les autres cherchent encore.'],
+    filManque: ['Le fil rouge vous est passé sous le nez toute la soirée.'],
     ouverture: ['Bon. Statistiquement, il y en a au moins deux qui vont le regretter.'],
     avantManche: ['Allez, on se réveille.', 'Celle-là, elle est cadeau. Enfin, normalement.'],
     derniereManche: ['Dernière question, elle vaut double. C’est le moment de trahir vos amis.'],
@@ -213,6 +245,10 @@ const DIT = {
   },
 
   pincesansrire: {
+    plusProche: ['Voici la réponse exacte.'],
+    partiel: ['Aucun sans-faute. Nous ferons avec.'],
+    filTrouve: ['Le fil rouge a été trouvé. Il fallait bien quelqu’un.'],
+    filManque: ['Le fil rouge n’a été trouvé par personne. Dommage.'],
     ouverture: ['Bonsoir. Nous verrons bien.'],
     avantManche: ['Question suivante.', 'Prenez votre temps. Enfin, non.'],
     derniereManche: ['Dernière manche, points doublés. Rien n’est joué, hélas.'],

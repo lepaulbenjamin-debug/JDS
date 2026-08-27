@@ -22,6 +22,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { QUESTIONS, nomDuTheme } from '../web/quiz/js/questions.js';
+import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { inventaireDesParoles } from '../web/quiz/js/emcee.js';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz', 'audio');
@@ -35,13 +36,20 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz'
 export function inventaire() {
   const clips = inventaireDesParoles();
 
-  for (const question of QUESTIONS) {
-    clips.push({ id: `question/${question.id}`, texte: question.texte });
+  for (const entree of QUESTIONS) {
+    const type = typeDeManche(entree.type);
+    // On prépare sans mélanger : la solution ne dépend pas de l'ordre dans
+    // lequel une partie donnée affichera les réponses.
+    const manche = type.preparer(entree, (liste) => liste);
+
+    clips.push({ id: `question/${entree.id}`, texte: entree.texte });
     clips.push({
-      id: `reponse/${question.id}`,
-      texte: `La bonne réponse était : ${question.reponses[question.bonne]}.`,
+      id: `reponse/${entree.id}`,
+      texte: type.id === 'rafale'
+        ? type.solutionTexte(manche)
+        : `La bonne réponse était : ${type.solutionTexte(manche)}.`,
     });
-    clips.push({ id: `note/${question.id}`, texte: question.note });
+    clips.push({ id: `note/${entree.id}`, texte: entree.note });
   }
 
   return clips;

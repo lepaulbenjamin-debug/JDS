@@ -311,6 +311,123 @@ body {
 .reponse.est-retiree { opacity: 0.22; }
 .reponse.est-retiree .reponse-texte { text-decoration: line-through; }
 
+.consigne { margin: -8px 0 16px; color: var(--gold); font-size: 14px; font-weight: 600; }
+
+/* --- Estimation ---------------------------------------------------------- */
+
+.estimation { display: grid; gap: 12px; }
+.estimation-ligne { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
+.estimation-champ {
+  width: 100%;
+  max-width: 260px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 800 34px/1.1 ui-monospace, "SF Mono", Menlo, monospace;
+  text-align: center;
+}
+.estimation-champ:disabled { opacity: 0.7; }
+.estimation-unite { color: var(--muted); font-size: 15px; white-space: nowrap; }
+.estimation-resultat { display: grid; gap: 4px; }
+.estimation-solution {
+  display: flex; align-items: baseline; gap: 10px; justify-content: center;
+  margin: 0; font-size: 26px;
+}
+.estimation-solution strong { color: var(--ok); }
+
+/* --- Dans l'ordre -------------------------------------------------------- */
+
+.ordre { display: grid; gap: 10px; }
+.elements { display: grid; gap: 8px; }
+.element {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center; gap: 12px;
+  min-height: 56px;
+  padding: 10px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit; font-size: 16px;
+  cursor: pointer;
+}
+.element:disabled { cursor: default; }
+.element-rang {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 800;
+}
+.element.est-place { border-color: var(--accent); background: var(--accent-soft); }
+.element.est-place .element-rang { background: var(--accent); color: #fff; }
+.element.est-juste { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
+.element.est-juste .element-rang { background: var(--ok); color: #10221c; }
+.element.est-faux { border-color: var(--danger); }
+.element.est-faux .element-rang { background: var(--danger); color: #2a1414; }
+
+/* --- Rafale -------------------------------------------------------------- */
+
+.rafale { display: grid; gap: 8px; }
+.affirmation {
+  display: grid; gap: 8px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.affirmation-texte { margin: 0; font-size: 15px; line-height: 1.35; }
+.vf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vf {
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit; font-weight: 700;
+  cursor: pointer;
+}
+.vf:disabled { cursor: default; }
+.vf.est-choisi { background: var(--accent); border-color: transparent; color: #fff; }
+.vf.est-juste { border-color: var(--ok); color: var(--ok); }
+.vf.est-choisi.est-juste { background: var(--ok); color: #10221c; }
+.vf.est-faux { border-color: var(--danger); color: var(--danger); }
+
+/* --- Le fil rouge -------------------------------------------------------- */
+
+.fil-rouge { margin-top: 18px; }
+.fil-boite {
+  border: 1px dashed var(--gold);
+  border-radius: var(--radius);
+  padding: 11px 14px;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+.fil-boite summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.fil-boite p { margin: 8px 0 0; }
+.fil-ligne { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
+.fil-champ {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.fil-trouve {
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+  background: var(--surface);
+  font-size: 14px;
+}
+
 .jeu-etat { display: grid; gap: 8px; margin-top: 18px; }
 .atteinte { margin: 0; font-weight: 600; color: var(--ok); }
 .gain { margin: 0; font-size: 30px; font-weight: 800; }

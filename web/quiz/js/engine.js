@@ -2,14 +2,19 @@
 //
 // Il tourne sur l'appareil qui a créé le salon, et lui seul. Les autres
 // pupitres n'ont aucune logique de jeu : ils affichent l'état publié et
-// renvoient des réponses. C'est ce qui permet au relais de rester bête, et
-// c'est aussi ce qui garantit qu'un pupitre bricolé ne peut pas s'attribuer
-// des points — il n'a même pas la bonne réponse avant la révélation.
+// renvoient des réponses. C'est ce qui permet au relais de rester bête.
+//
+// Le moteur ne sait pas ce qu'est un QCM, une estimation ou une rafale : il
+// orchestre le temps, les scores et les jokers, et délègue à `manches/` tout ce
+// qui dépend de la forme d'une manche. Ajouter un type de jeu ne demande donc
+// pas d'y toucher.
 //
 // Aucun accès au réseau ni au DOM ici : on entre du temps et des réponses, on
 // sort un état. `app.js` s'occupe de faire tourner la boucle.
 
 import { repliqueDe } from './emcee.js';
+import { typeDeManche } from './manches/index.js';
+import { filRougeTrouve } from './questions.js';
 
 export const JOKERS = [
   {
@@ -34,15 +39,19 @@ export const JOKERS = [
   },
 ];
 
+/** Les jokers qu'un type de manche peut accueillir. */
+export function jokersPossibles(type) {
+  // Le 50/50 n'a rien à retirer ailleurs que sur un QCM : sur une estimation ou
+  // une rafale, il n'y a pas de mauvaises réponses à masquer.
+  return JOKERS.filter((j) => j.id !== 'cinquante' || type === 'qcm').map((j) => j.id);
+}
+
 // Le 50/50 se calcule sur le pupitre, pas ici : la banque de questions est
 // embarquée dans la PWA, donc chaque appareil connaît déjà la bonne réponse et
-// n'a besoin de rien demander à la régie. Retirer `bonne` de l'état publié
+// n'a besoin de rien demander à la régie. Retirer la solution de l'état publié
 // reste utile — ça évite de l'avoir sous les yeux dans l'onglet réseau — mais
 // ce n'est pas une protection : entre amis sur un canapé, la banque en local
 // vaut mieux qu'un jeu qui s'arrête quand le Wi-Fi tombe.
-//
-// Si la banque partait un jour sur un serveur, ce joker devrait changer de
-// camp : ce serait alors à la régie de publier un masque par joueur.
 
 // La fenêtre d'avant-question. C'est le temps de poser son verre, mais surtout
 // le seul moment où l'on peut sortir un joker : on parie sans avoir vu
@@ -56,12 +65,30 @@ const DUREE_INTRO_MS = 5500;
 const DUREE_REVELATION_MS = 9500;
 const DUREE_REVELATION_FINALE_MS = 11000;
 const PLAFOND_REVELATION_MS = 22000;   // au-delà, l'explication casse le rythme
-const ABSENCES_AVANT_SOMMEIL = 2;         // au-delà, on n'attend plus ce pupitre
+const ABSENCES_AVANT_SOMMEIL = 2;      // au-delà, on n'attend plus ce pupitre
 
-/** Barème dégressif : 100 % à l'instant zéro, 20 % à la dernière seconde. */
-export function pointsDeRapidite(elapsedMs, dureeMs, base) {
+// La prime du fil rouge fond au fil de la partie : trouver à la deuxième manche
+// relève du flair, trouver à la dixième relève de la patience.
+const PRIME_FIL_DEPART = 2000;
+const PRIME_FIL_DECROISSANCE = 150;
+const PRIME_FIL_PLANCHER = 500;
+const MANCHES_BLOQUEES_APRES_ERREUR = 2;
+
+/**
+ * Le coefficient de rapidité : 1 à l'instant zéro, 0,2 à la dernière seconde.
+ *
+ * `poids` dit combien la vitesse compte pour ce type de manche. À 1 on retrouve
+ * le barème du QCM ; à 0 la rapidité ne joue plus aucun rôle, ce qu'il faut
+ * pour une estimation où l'on veut que les gens réfléchissent.
+ */
+export function facteurDeRapidite(elapsedMs, dureeMs, poids = 1) {
   const ratio = Math.min(1, Math.max(0, elapsedMs / dureeMs));
-  return Math.round(base * (1 - 0.8 * ratio));
+  return 1 - poids * 0.8 * ratio;
+}
+
+/** Le barème d'un QCM, conservé tel quel : 100 % au top, 20 % à la fin. */
+export function pointsDeRapidite(elapsedMs, dureeMs, base) {
+  return Math.round(base * facteurDeRapidite(elapsedMs, dureeMs, 1));
 }
 
 /**
@@ -70,8 +97,9 @@ export function pointsDeRapidite(elapsedMs, dureeMs, base) {
  * Fonction pure, exportée à part parce que c'est la règle du jeu — l'endroit
  * qu'on relit quand quelqu'un conteste un score en fin de soirée.
  */
-export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, finale, persona }) {
+export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, finale, persona }) {
   const base = finale ? 2000 : 1000;
+  const type = typeDeManche(manche.type);
   const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
 
   // Le leader *avant* la manche : c'est lui que visent le vol et le sabotage.
@@ -83,6 +111,10 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
     .sort((a, b) => b.score - a.score);
   const leader = classement[0]?.score > 0 ? classement[0].id : null;
 
+  // Le type note tout le monde d'un coup : certaines manches se jugent les unes
+  // par rapport aux autres — au plus proche, par exemple.
+  const notes = type.noter(manche, reponses);
+
   const detail = {};
   const gains = {};
 
@@ -92,21 +124,28 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
       detail[joueur.id] = { absent: true, points: 0 };
       continue;
     }
-    const correct = reponse.choice === question.bonne;
+
+    const note = notes[joueur.id] ?? { correct: false, fraction: 0 };
     // Le sang-froid neutralise le barème dégressif : on marque comme si la
     // réponse était partie à l'instant zéro.
-    const brut = reponse.joker === 'sangfroid'
-      ? base
-      : pointsDeRapidite(reponse.elapsedMs, dureeMs, base);
-    let points = correct ? brut : 0;
+    const vitesse = reponse.joker === 'sangfroid'
+      ? 1
+      : facteurDeRapidite(reponse.elapsedMs, dureeMs, type.poidsVitesse);
+    const brut = Math.round(base * note.fraction * vitesse);
+    let points = brut;
 
-    if (reponse.joker === 'cinquante' && correct) points = Math.round(points / 2);
-    if (reponse.joker === 'double') points = correct ? brut * 2 : -Math.round(brut / 2);
+    if (reponse.joker === 'cinquante') points = Math.round(points / 2);
+    if (reponse.joker === 'double') {
+      points = note.correct ? brut * 2 : -Math.round(base * vitesse / 2);
+    }
 
     gains[joueur.id] = points;
     detail[joueur.id] = {
-      choix: reponse.choice,
-      correct,
+      valeur: reponse.valeur,
+      correct: note.correct,
+      fraction: note.fraction,
+      justes: note.justes,
+      ecart: note.ecart,
       elapsedMs: reponse.elapsedMs,
       joker: reponse.joker ?? null,
       points,
@@ -130,8 +169,6 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
 
     const gagnant = candidats.find(([id]) => leader && leader !== id) ?? null;
     for (const [, r] of candidats) if (r !== gagnant?.[1]) r.jokerRendu = true;
-    // Sans cible, personne ne consomme quoi que ce soit.
-    if (!gagnant) return null;
     return gagnant;
   };
 
@@ -191,36 +228,40 @@ export function resoudreManche({ question, reponses, scores, joueurs, dureeMs, f
  *
  * Rend aussi sa clé : c'est elle qui désigne le clip audio à jouer côté régie,
  * le texte affiché contenant des prénoms qu'aucun fichier pré-généré ne peut
- * prononcer.
+ * prononcer. Le type de manche a son mot à dire — « personne n'a trouvé » ne
+ * veut rien dire sur une estimation, où quelqu'un est forcément le plus proche.
  */
-function commentaire({ detail, joueurs, question, persona }) {
+function commentaire({ detail, joueurs, manche, persona }) {
+  const type = typeDeManche(manche.type);
   const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
-  const bonnes = Object.entries(detail).filter(([, r]) => r.correct);
-  const reponse = question.reponses[question.bonne];
-  const repondants = Object.values(detail).filter((r) => !r.absent).length;
+  const notes = Object.entries(detail).filter(([, r]) => !r.absent);
+  const bonnes = notes.filter(([, r]) => r.correct);
+  const reponse = type.solutionTexte(manche);
 
-  const cle = bonnes.length === 0 ? 'personne'
-    : bonnes.length === 1 ? 'unSeul'
-      : (bonnes.length === repondants && repondants > 1) ? 'tous'
-        : 'plusieurs';
+  const cle = type.cleCommentaire
+    ? type.cleCommentaire(notes.map(([, r]) => r))
+    : bonnes.length === 0 ? 'personne'
+      : bonnes.length === 1 ? 'unSeul'
+        : (bonnes.length === notes.length && notes.length > 1) ? 'tous'
+          : 'plusieurs';
 
   return {
     cle,
     texte: repliqueDe(persona, cle, {
       reponse,
       nb: bonnes.length,
-      nom: bonnes.length === 1 ? nomDe(bonnes[0][0]) : '',
+      nom: bonnes.length >= 1 ? nomDe(bonnes[0][0]) : '',
     }),
   };
 }
 
 /**
- * Crée une régie. `questions` est déjà tiré et mélangé, `dureeMs` est le temps
- * laissé pour répondre.
+ * Crée une régie. `manches` est déjà tiré et préparé, `dureeMs` est le temps de
+ * référence laissé pour répondre — chaque type l'ajuste à sa façon.
  */
 export function creerRegie({
   questions, dureeMs = 15000, persona = 'classique', themes = [], dureeRevelation,
-  jokers = JOKERS.map((j) => j.id),
+  jokers = JOKERS.map((j) => j.id), fil = null,
 }) {
   const total = questions.length;
 
@@ -228,6 +269,9 @@ export function creerRegie({
   // vide est un mode à part entière — pas de filet, c'est le plus rapide qui
   // gagne — et non une erreur de réglage.
   const autorises = JOKERS.map((j) => j.id).filter((id) => jokers.includes(id));
+
+  /** Le chrono d'une manche : un classement demande plus de temps qu'un tap. */
+  const tempsDeReponse = (manche) => Math.round(dureeMs * typeDeManche(manche.type).facteurDuree);
 
   /**
    * Combien de temps laisser sur la révélation.
@@ -238,10 +282,9 @@ export function creerRegie({
    * fait la valeur de la manche. `dureeRevelation` est fourni par l'appli, qui
    * seule connaît la longueur des clips.
    */
-  const tempsDeRevelation = (question, finale) => {
+  const tempsDeRevelation = (manche, finale) => {
     const plancher = finale ? DUREE_REVELATION_FINALE_MS : DUREE_REVELATION_MS;
-    // Plafonné : une explication à rallonge ne doit pas casser le rythme.
-    const audio = Math.min(dureeRevelation?.(question) ?? 0, PLAFOND_REVELATION_MS);
+    const audio = Math.min(dureeRevelation?.(manche) ?? 0, PLAFOND_REVELATION_MS);
     return Math.max(plancher, audio);
   };
 
@@ -264,6 +307,8 @@ export function creerRegie({
     jokers: {},          // id → jokers déjà consommés
     absences: {},        // id → manches consécutives sans réponse
     reponses: {},        // manche en cours seulement
+    // Le fil rouge est le seul état qui traverse les manches.
+    fil: fil ? { id: fil.id, trouve: null, bloques: {}, annonce: false } : null,
   };
 
   const jokersRestants = (id) => autorises
@@ -273,6 +318,31 @@ export function creerRegie({
     .map((j) => ({ id: j.id, name: j.name, score: etat.scores[j.id] ?? 0 }))
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'fr'));
 
+  /**
+   * Une tentative sur le fil rouge. Elle peut tomber à n'importe quel moment de
+   * la partie, y compris pendant une révélation : c'est une course parallèle,
+   * pas une réponse de manche.
+   */
+  function tenterLeFil(playerId, propose) {
+    if (!etat.fil || etat.fil.trouve) return false;
+    if ((etat.fil.bloques[playerId] ?? 0) > etat.manche) return false;
+
+    if (!filRougeTrouve(fil, propose)) {
+      // Se tromper coûte deux manches de silence : sans ça, on tape tous les
+      // mots du dictionnaire jusqu'à tomber juste.
+      etat.fil.bloques[playerId] = etat.manche + MANCHES_BLOQUEES_APRES_ERREUR;
+      return true;
+    }
+
+    const prime = Math.max(
+      PRIME_FIL_PLANCHER,
+      PRIME_FIL_DEPART - PRIME_FIL_DECROISSANCE * Math.max(0, etat.manche - 1),
+    );
+    etat.scores[playerId] = (etat.scores[playerId] ?? 0) + prime;
+    etat.fil.trouve = { playerId, manche: etat.manche, prime };
+    return true;
+  }
+
   function prepareManche(numero, now) {
     etat.manche = numero;
     etat.question = questions[numero - 1];
@@ -280,7 +350,7 @@ export function creerRegie({
     etat.resultat = null;
     etat.phase = 'manche';
     etat.startAt = now + DUREE_JOKERS_MS;
-    etat.deadline = etat.startAt + dureeMs;
+    etat.deadline = etat.startAt + tempsDeReponse(etat.question);
     etat.finPhase = etat.deadline;
     etat.annonceCle = numero === total ? 'derniereManche' : 'avantManche';
     etat.annonce = repliqueDe(persona, etat.annonceCle, { manche: numero, total });
@@ -289,11 +359,11 @@ export function creerRegie({
   function cloreManche(joueurs, now) {
     const finale = etat.manche === total;
     const { detail, scores, evenements } = resoudreManche({
-      question: etat.question,
+      manche: etat.question,
       reponses: etat.reponses,
       scores: etat.scores,
       joueurs,
-      dureeMs,
+      dureeMs: tempsDeReponse(etat.question),
       finale,
       persona,
     });
@@ -309,6 +379,17 @@ export function creerRegie({
 
     etat.scores = scores;
 
+    // Le fil rouge trouvé entre deux manches s'annonce ici, une seule fois.
+    if (etat.fil?.trouve && !etat.fil.annonce) {
+      etat.fil.annonce = true;
+      const nom = joueurs.find((j) => j.id === etat.fil.trouve.playerId)?.name ?? '—';
+      evenements.unshift({
+        type: 'fil',
+        cle: 'filTrouve',
+        texte: `${nom} a trouvé le fil rouge : ${fil.solution}. ${etat.fil.trouve.prime} points.`,
+      });
+    }
+
     // Le plus rapide parmi ceux qui ont trouvé : c'est la ligne qui donne envie
     // de répondre vite plutôt que de répondre sûr.
     const bonnes = Object.entries(detail)
@@ -317,7 +398,7 @@ export function creerRegie({
     const rapide = bonnes[0];
     const tete = classement(joueurs)[0];
 
-    const mot = commentaire({ detail, joueurs, question: etat.question, persona });
+    const mot = commentaire({ detail, joueurs, manche: etat.question, persona });
 
     etat.phase = 'revelation';
     etat.resultat = {
@@ -352,22 +433,33 @@ export function creerRegie({
     },
 
     /**
-     * Range les réponses arrivées du relais. Une réponse qui ne concerne pas la
-     * manche en cours est jetée : c'est le cas normal d'un pupitre qui a répondu
-     * juste après la fin du chrono.
+     * Range ce qui arrive du relais : les réponses de la manche en cours, et les
+     * tentatives sur le fil rouge, qui elles ne dépendent d'aucune manche.
+     *
+     * Une réponse hors manche est jetée sans bruit — c'est le cas normal d'un
+     * pupitre qui a tapé juste après la fin du chrono.
      */
-    encaisser(reponses) {
+    encaisser(entrees) {
       let nouvelle = false;
-      for (const reponse of reponses ?? []) {
-        if (etat.phase !== 'manche' || reponse.round !== etat.manche) continue;
-        if (etat.reponses[reponse.playerId]) continue;          // premier tap seulement
-        if (reponse.choice == null) continue;
-        etat.reponses[reponse.playerId] = {
-          choice: reponse.choice,
-          elapsedMs: reponse.elapsedMs,
+
+      for (const entree of entrees ?? []) {
+        if (typeof entree.fil === 'string') {
+          if (tenterLeFil(entree.playerId, entree.fil)) nouvelle = true;
+          continue;
+        }
+
+        if (etat.phase !== 'manche' || entree.round !== etat.manche) continue;
+        if (etat.reponses[entree.playerId]) continue;          // premier tap seulement
+
+        const valeur = typeDeManche(etat.question.type).lire(entree.reponse);
+        if (valeur == null) continue;
+
+        etat.reponses[entree.playerId] = {
+          valeur,
+          elapsedMs: entree.elapsedMs,
           // Un joker écarté des réglages est ignoré, même si un pupitre bricolé
           // en renvoie un : le réglage de la partie fait loi ici, pas là-bas.
-          joker: autorises.includes(reponse.joker) ? reponse.joker : null,
+          joker: autorises.includes(entree.joker) ? entree.joker : null,
         };
         nouvelle = true;
       }
@@ -419,19 +511,21 @@ export function creerRegie({
     },
 
     /**
-     * L'état tel qu'il part sur le relais. La bonne réponse et l'explication
-     * n'y figurent qu'à partir de la révélation : tant que le chrono tourne,
-     * elles ne sont sur aucun autre appareil que celui-ci.
+     * L'état tel qu'il part sur le relais. La solution et l'explication n'y
+     * figurent qu'à partir de la révélation : tant que le chrono tourne, elles
+     * ne sont sur aucun autre appareil que celui-ci.
      */
     etatPublic(joueurs) {
+      const revele = etat.phase === 'revelation';
+      const type = etat.question && typeDeManche(etat.question.type);
       const question = etat.question && {
         id: etat.question.id,
+        type: type.id,
         theme: etat.question.theme,
         texte: etat.question.texte,
-        reponses: etat.question.reponses,
-        ...(etat.phase === 'revelation'
-          ? { bonne: etat.question.bonne, note: etat.question.note }
-          : {}),
+        consigne: type.consigne,
+        ...type.publier(etat.question, revele),
+        ...(revele ? { note: etat.question.note, solution: type.solutionTexte(etat.question) } : {}),
       };
 
       return {
@@ -440,7 +534,7 @@ export function creerRegie({
         total,
         themes: etat.themes,
         persona,
-        dureeMs,
+        dureeMs: etat.question ? tempsDeReponse(etat.question) : dureeMs,
         startAt: etat.startAt,
         deadline: etat.deadline,
         finPhase: etat.finPhase,
@@ -452,10 +546,22 @@ export function creerRegie({
         resultat: etat.resultat,
         podium: etat.podium ?? null,
         classement: classement(joueurs),
-        jokersActifs: autorises,
+        jokersActifs: autorises.filter((j) => !etat.question || jokersPossibles(type.id).includes(j)),
         jokers: Object.fromEntries(joueurs.map((j) => [j.id, jokersRestants(j.id)])),
         // Sert au pupitre à afficher « 3 sur 5 ont répondu » sans révéler quoi.
         ontRepondu: Object.keys(etat.reponses),
+        fil: etat.fil && {
+          indice: fil.indice,
+          // La solution ne part qu'une fois trouvée, ou à la toute fin.
+          solution: etat.fil.trouve || etat.phase === 'podium' ? fil.solution : undefined,
+          revelation: etat.phase === 'podium' ? fil.revelation : undefined,
+          trouve: etat.fil.trouve && {
+            nom: joueurs.find((j) => j.id === etat.fil.trouve.playerId)?.name ?? '—',
+            manche: etat.fil.trouve.manche,
+            prime: etat.fil.trouve.prime,
+          },
+          bloques: etat.fil.bloques,
+        },
       };
     },
   };
