@@ -729,6 +729,50 @@ test('les identifiants de questions sont uniques', () => {
   assert.equal(new Set(ids).size, ids.length);
 });
 
+test('aucun énoncé n’est posé deux fois', () => {
+  // Deux questions identiques dans la même soirée, et l'animateur a l'air d'un
+  // disque rayé. Le tirage ne peut pas s'en rendre compte : ce sont deux
+  // entrées distinctes, avec deux identifiants distincts.
+  const vus = new Map();
+  for (const q of QUESTIONS) {
+    const cle = q.texte.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, '');
+    assert.ok(!vus.has(cle), `${q.id} répète l’énoncé de ${vus.get(cle)}`);
+    vus.set(cle, q.id);
+  }
+});
+
+test('deux questions d’un même thème n’ont pas la même bonne réponse', () => {
+  // Sinon la seconde se devine : « le golf » venait déjà de servir dix minutes
+  // plus tôt, et il suffisait d'avoir suivi.
+  for (const theme of THEMES) {
+    const vus = new Map();
+    for (const q of QUESTIONS) {
+      if (q.theme !== theme.id || (q.type ?? 'qcm') !== 'qcm') continue;
+      const bonne = q.reponses[q.bonne].toLowerCase();
+      assert.ok(!vus.has(bonne), `${theme.nom} : ${q.id} et ${vus.get(bonne)} répondent « ${bonne} »`);
+      vus.set(bonne, q.id);
+    }
+  }
+});
+
+test('chaque thème a de quoi tenir une partie entière', () => {
+  // Un thème choisi seul doit pouvoir remplir la plus longue partie proposée
+  // dans les réglages. En dessous, le tirage rend moins de manches que promis.
+  const PLUS_LONGUE_PARTIE = 12;
+  for (const theme of THEMES) {
+    const n = tailleDuPool([theme.id]);
+    assert.ok(n >= PLUS_LONGUE_PARTIE, `${theme.nom} : ${n} questions, il en faut ${PLUS_LONGUE_PARTIE}`);
+  }
+});
+
+test('un thème joué seul rend bien le nombre de manches demandé', () => {
+  for (const theme of THEMES) {
+    const tirage = tirerQuestions({ themes: [theme.id], nombre: 12 });
+    assert.equal(tirage.length, 12, `${theme.nom} : ${tirage.length} manches sur 12`);
+    assert.ok(tirage.every((q) => q.theme === theme.id), `${theme.nom} : une question d’un autre thème`);
+  }
+});
+
 test('le mélange conserve le lien entre la bonne réponse et son texte', () => {
   const qcms = QUESTIONS.filter((q) => (q.type ?? 'qcm') === 'qcm');
   const attendu = new Map(qcms.map((q) => [q.id, q.reponses[q.bonne]]));

@@ -113,6 +113,10 @@ tout le monde joue.
 - **Chaque téléphone est un pupitre.** Un joueur crée le salon, les autres
   tapent un code à quatre lettres (ou suivent le lien partagé). Aucune install :
   c'est une page web.
+- **Dix thèmes**, cochables à volonté : culture générale, musique, cinéma &
+  séries, années 2000, bouffe, insolite, sport, le monde, marques & pubs, mots &
+  expressions. Chacun tient une partie entière à lui seul — une vérification s'en
+  assure — et rien n'empêche de tout cocher pour piocher partout.
 - **Quatre formes de manche**, mêlées dans la même partie et cochables dans les
   réglages. **Question** : quatre réponses, le plus rapide marque le plus.
   **Estimation** : un nombre à avancer, le plus proche rafle la manche et la
@@ -321,9 +325,11 @@ surtout : on peut **écouter chaque prise avant de la livrer**. Trois clips par
 question — l'énoncé, la bonne réponse, l'explication — plus les répliques de
 l'animateur. Comptez une quinzaine de minutes d'audio pour soixante questions.
 
-Une relance ne refait que ce qui manque (`--tout` pour tout regénérer), et
-`web/quiz/audio/` est ignoré par git : ce sont des binaires lourds, régénérables
-à l'identique depuis la banque.
+Une relance ne refait que ce qui manque **ou ce qui a changé de texte**
+(`--tout` pour tout regénérer). Le manifeste garde l'empreinte de chaque phrase :
+sans elle, reformuler une question laissait l'animateur lire l'ancienne version
+indéfiniment — invisible avec des clips muets, embarrassant en soirée. Les `.wav`
+d'essai sont ignorés par git ; les vrais enregistrements, eux, sont versionnés.
 
 **La contrainte à connaître** : un fichier pré-généré ne peut pas dire « Ana ».
 Les répliques prononcées ne contiennent donc **ni prénom, ni score, ni bonne

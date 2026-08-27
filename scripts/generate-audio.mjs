@@ -18,6 +18,7 @@
 // démarrage. Sans ce dossier, l'appli retombe sur la synthèse du navigateur.
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -134,14 +135,34 @@ function fournisseurOpenAI(voixDemandee) {
 
 /* --- Génération ----------------------------------------------------------- */
 
-/** Ne pas refaire ce qui existe déjà : une relance ne doit rien coûter. */
-async function dejaFait(chemin) {
+/**
+ * L'empreinte d'un texte, notée dans le manifeste à côté de sa durée.
+ *
+ * Sans elle, le cache ne regardait que l'existence du fichier — et reformuler
+ * une question laissait l'animateur lire l'ancienne version jusqu'à la fin des
+ * temps. C'est le genre de bug qu'on ne voit pas en développant avec des clips
+ * muets, et qu'on découvre en soirée.
+ */
+const empreinteDe = (texte) => createHash('sha1').update(texte).digest('hex').slice(0, 12);
+
+/** Le manifeste précédent, s'il y en a un : c'est lui qui porte les empreintes. */
+async function manifestePrecedent() {
+  try {
+    return JSON.parse(await readFile(join(RACINE, 'manifeste.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/** Ne pas refaire ce qui existe déjà, et seulement si le texte n'a pas bougé. */
+async function dejaFait(chemin, id, texte, anciennesEmpreintes) {
   try {
     await readFile(chemin);
-    return true;
   } catch {
     return false;
   }
+  // Un manifeste d'avant les empreintes ne peut rien affirmer : on refait.
+  return anciennesEmpreintes?.[id] === empreinteDe(texte);
 }
 
 async function main() {
@@ -157,19 +178,27 @@ async function main() {
   console.log(`${clips.length} clips à produire (${QUESTIONS.length} questions).`);
   if (!blanc && !tout) console.log('Les clips déjà présents sont conservés (--tout pour tout refaire).\n');
 
-  const manifeste = { voix: fournisseur.nom, format: fournisseur.extension, clips: {} };
+  const ancien = await manifestePrecedent();
+  const manifeste = {
+    voix: fournisseur.nom, format: fournisseur.extension, clips: {}, empreintes: {},
+  };
   let produits = 0;
   let reutilises = 0;
+  let refaits = 0;
 
   for (const [index, clip] of clips.entries()) {
     const chemin = join(RACINE, `${clip.id}.${fournisseur.extension}`);
     await mkdir(dirname(chemin), { recursive: true });
+    manifeste.empreintes[clip.id] = empreinteDe(clip.texte);
 
-    if (!tout && await dejaFait(chemin)) {
-      manifeste.clips[clip.id] = Number(Math.max(1, clip.texte.length / 14).toFixed(2));
+    if (!tout && await dejaFait(chemin, clip.id, clip.texte, ancien?.empreintes)) {
+      manifeste.clips[clip.id] = ancien?.clips?.[clip.id]
+        ?? Number(Math.max(1, clip.texte.length / 14).toFixed(2));
       reutilises += 1;
       continue;
     }
+    // Un clip déjà là mais dont le texte a bougé : c'est une reformulation.
+    if (ancien?.clips?.[clip.id] !== undefined) refaits += 1;
 
     const { donnees, secondes } = await fournisseur.rendre(clip.texte);
     await writeFile(chemin, donnees);
@@ -189,6 +218,7 @@ async function main() {
 
   const duree = Object.values(manifeste.clips).reduce((t, s) => t + s, 0);
   console.log(`\n\n${produits} clips produits, ${reutilises} réutilisés.`);
+  if (refaits) console.log(`dont ${refaits} refaits : le texte avait changé depuis.`);
   console.log(`≈ ${Math.round(duree / 60)} minutes d’audio, dans web/quiz/audio/`);
   console.log('\nÉcoutez quelques clips avant de livrer, en particulier les explications :');
   console.log(`  ${join('web', 'quiz', 'audio', 'note', `${QUESTIONS[0].id}.${fournisseur.extension}`)}`);
