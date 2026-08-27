@@ -46,9 +46,11 @@ export function inventaire() {
     clips.push({ id: `question/${entree.id}`, texte: entree.texte });
     clips.push({
       id: `reponse/${entree.id}`,
-      texte: type.id === 'rafale'
-        ? type.solutionTexte(manche)
-        : `La bonne réponse était : ${type.solutionTexte(manche)}.`,
+      texte: {
+        rafale: () => type.solutionTexte(manche),
+        // Vingt titres valables : « la bonne réponse » n'a pas de sens ici.
+        mix: () => `Il y avait par exemple : ${type.solutionTexte(manche)}.`,
+      }[type.id]?.() ?? `La bonne réponse était : ${type.solutionTexte(manche)}.`,
     });
     clips.push({ id: `note/${entree.id}`, texte: entree.note });
   }

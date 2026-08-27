@@ -117,13 +117,26 @@ tout le monde joue.
   séries, années 2000, bouffe, insolite, sport, le monde, marques & pubs, mots &
   expressions. Chacun tient une partie entière à lui seul — une vérification s'en
   assure — et rien n'empêche de tout cocher pour piocher partout.
-- **Quatre formes de manche**, mêlées dans la même partie et cochables dans les
+- **Cinq formes de manche**, mêlées dans la même partie et cochables dans les
   réglages. **Question** : quatre réponses, le plus rapide marque le plus.
   **Estimation** : un nombre à avancer, le plus proche rafle la manche et la
   vitesse ne compte plus — on réfléchit au lieu de dégainer. **Dans l'ordre** :
   quatre éléments à classer, des points par position juste. **Rafale** : cinq
-  vrai-faux d'un coup, barème plat. Chaque type ajuste son chrono : taper un
-  nombre prend plus de temps que toucher un bouton.
+  vrai-faux d'un coup, barème plat. **Le mix** : un thème, une réponse libre —
+  « une chanson avec un animal dans le titre » — et la course à celui qui sort
+  un titre valable ; toute proposition reconnue marque, mais un titre déjà cité
+  ne compte plus, ce qui force à chercher au lieu de converger vers l'évidence.
+  Chaque type ajuste son chrono : taper un titre prend bien plus de temps que
+  toucher un bouton.
+
+  Le mix reprend le fonctionnement de **DJ Set** sans sa musique : les droits
+  sur des extraits enregistrés ne se contournent pas, et un QR code qui lance
+  un service de streaming supposerait un abonnement chez chaque joueur. Ce qui
+  se transpose, c'est le reste — le thème annoncé, la réponse ouverte, la
+  course. Sa limite est assumée : l'appli juge sur une liste, elle ne connaît
+  pas toute la musique du monde. La révélation affiche donc tout ce qu'elle
+  acceptait, et c'est là que la table découvre les vingt titres auxquels
+  personne n'avait pensé.
 - **Un fil rouge, en option.** Un même mot relie les bonnes réponses de
   plusieurs manches, sans que rien ne l'annonce. Chacun peut le nommer à tout
   moment : le premier à trouver rafle une prime qui fond au fil de la partie, et

@@ -51,6 +51,14 @@ const BANQUE = {
       'Dernière manche, et elle vaut double. Tout peut encore basculer.',
       'Voici la dernière question. Points doublés : accrochez-vous.',
     ],
+    mixTrouve: [
+      '{nb} d’entre vous ont sorti un titre valable. Voici tout ce que j’acceptais.',
+      'Bien joué. Et il y avait beaucoup d’autres réponses possibles — les voici.',
+    ],
+    mixPersonne: [
+      'Aucun titre trouvé. Pourtant, regardez la liste.',
+      'Personne. Et il y avait de quoi faire, jugez plutôt.',
+    ],
     personne: [
       'Personne. Pas un seul. La réponse était {reponse}.',
       'Aucune bonne réponse. C’était {reponse}.',
@@ -115,6 +123,14 @@ const BANQUE = {
       'Dernière question, elle vaut double, et là c’est chacun pour soi.',
       'Dernière manche, points doublés. C’est le moment de trahir vos amis.',
     ],
+    mixTrouve: [
+      '{nb} bonnes pioches. Et maintenant, la liste de tout ce que vous avez raté.',
+      'Pas mal, {nom}. Les autres, lisez bien ce qui suit.',
+    ],
+    mixPersonne: [
+      'Rien. Le vide. Et il y avait toute cette liste.',
+      'Pas un titre. Je vous laisse méditer là-dessus.',
+    ],
     personne: [
       'Alors là, rien. Zéro. Le néant. C’était {reponse}, bande de touristes.',
       'Personne n’a trouvé. {reponse}. Vous me faites de la peine.',
@@ -172,6 +188,8 @@ const BANQUE = {
       'Dernière question. Elle vaut double, ce qui devrait suffire à réveiller le fond de la salle.',
       'Dernière manche, points doublés. Rien n’est joué, hélas.',
     ],
+    mixTrouve: ['{nb} réponse(s) recevable(s). La liste complète suit.'],
+    mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
     personne: [
       'Aucune bonne réponse. C’était {reponse}. Je note.',
       'Rien. La réponse était {reponse}. Nous poursuivons.',
@@ -214,6 +232,8 @@ const DIT = {
     ouverture: ['Bonsoir à tous, et bienvenue. Dans un quart d’heure, il n’en restera qu’un.'],
     avantManche: ['Question suivante.', 'On enchaîne.'],
     derniereManche: ['Dernière manche, et elle vaut double. Tout peut encore basculer.'],
+    mixTrouve: ['Voici tout ce que j’acceptais.'],
+    mixPersonne: ['Aucun titre trouvé. Pourtant, regardez la liste.'],
     personne: ['Personne. Pas un seul.', 'Aucune bonne réponse.'],
     tous: ['Tout le monde a trouvé.', 'Sans faute pour tout le monde.'],
     unSeul: ['Une seule bonne réponse. Chapeau.'],
@@ -233,6 +253,8 @@ const DIT = {
     ouverture: ['Bon. Statistiquement, il y en a au moins deux qui vont le regretter.'],
     avantManche: ['Allez, on se réveille.', 'Celle-là, elle est cadeau. Enfin, normalement.'],
     derniereManche: ['Dernière question, elle vaut double. C’est le moment de trahir vos amis.'],
+    mixTrouve: ['Et maintenant, la liste de tout ce que vous avez raté.'],
+    mixPersonne: ['Rien. Le vide. Et il y avait toute cette liste.'],
     personne: ['Alors là, rien. Zéro. Le néant.', 'Personne n’a trouvé. Vous me faites de la peine.'],
     tous: ['Tout le monde a bon. Trop facile, je vais corser ça.'],
     unSeul: ['Une seule bonne réponse. Les autres, vous étiez où ?'],
@@ -252,6 +274,8 @@ const DIT = {
     ouverture: ['Bonsoir. Nous verrons bien.'],
     avantManche: ['Question suivante.', 'Prenez votre temps. Enfin, non.'],
     derniereManche: ['Dernière manche, points doublés. Rien n’est joué, hélas.'],
+    mixTrouve: ['La liste complète suit.'],
+    mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
     personne: ['Aucune bonne réponse. Je note.'],
     tous: ['Tout le monde a trouvé. J’ajusterai la difficulté.'],
     unSeul: ['Une seule bonne réponse. Intéressant.'],

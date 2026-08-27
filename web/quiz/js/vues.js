@@ -241,7 +241,63 @@ const rafale = {
   },
 };
 
-const VUES = { qcm, estimation, ordre, rafale };
+/* --- Le mix --------------------------------------------------------------- */
+
+const mix = {
+  construire(manche, ctx) {
+    const champ = el('input', {
+      class: 'mix-champ',
+      type: 'text',
+      autocomplete: 'off',
+      autocapitalize: 'none',
+      spellcheck: 'false',
+      placeholder: 'Un titre…',
+      enterkeyhint: 'send',
+      'aria-label': 'Ta proposition',
+    });
+    const valider = el('button', {
+      class: 'btn btn-primary btn-block',
+      type: 'button',
+      onclick: () => {
+        const propose = champ.value.trim();
+        if (propose) ctx.repondre(propose);
+      },
+    }, 'Proposer');
+
+    champ.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') valider.click();
+    });
+
+    const resultat = el('div', { class: 'mix-resultat' });
+    return {
+      racine: el('div', { class: 'mix' }, [champ, valider, resultat]),
+      champ,
+      valider,
+      resultat,
+    };
+  },
+
+  peindre(vue, { manche, monChoix, ouvert, revele }) {
+    vue.champ.disabled = !ouvert;
+    vue.valider.disabled = !ouvert;
+    vue.valider.hidden = revele;
+    if (monChoix != null) vue.champ.value = String(monChoix);
+
+    clear(vue.resultat);
+    if (!revele) return;
+
+    // Le palmarès : ce que l'appli acceptait. C'est là que la table découvre
+    // les quinze titres auxquels personne n'a pensé — et le seul endroit où
+    // l'on voit que sa proposition n'était pas si bête.
+    vue.resultat.append(el('p', { class: 'muted small', text: `Les titres acceptés (${manche.acceptees.length})` }));
+    vue.resultat.append(el('ul', { class: 'mix-liste' }, manche.acceptees.map((t) => el('li', {}, [
+      el('span', { class: 'mix-titre', text: t.titre }),
+      t.artiste ? el('span', { class: 'mix-artiste', text: ` — ${t.artiste}` }) : null,
+    ]))));
+  },
+};
+
+const VUES = { qcm, estimation, ordre, rafale, mix };
 
 export function vueDe(type) {
   return VUES[type] ?? qcm;

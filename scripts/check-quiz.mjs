@@ -18,6 +18,7 @@ import {
 } from '../web/quiz/js/questions.js';
 import { handlePackRequest, accorder } from '../lib/packs.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
+import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 
 const QUESTION = {
@@ -506,6 +507,126 @@ test('le chrono s’allonge sur les types qui demandent plus de gestes', () => {
   }
 });
 
+/* --- Le mix --------------------------------------------------------------- */
+
+const CARTE = {
+  id: 'mix-test', theme: 'musique', type: 'mix',
+  texte: 'Une chanson avec un animal dans le titre',
+  acceptees: [
+    { titre: 'Eye of the Tiger', artiste: 'Survivor' },
+    { titre: 'Blackbird', artiste: 'The Beatles' },
+    { titre: 'One', artiste: 'U2' },
+  ],
+  note: 'Note de test.',
+};
+const carteMix = () => mix.preparer(CARTE);
+
+test('un titre est reconnu malgré la casse, les accents et la ponctuation', () => {
+  const { acceptees } = carteMix();
+  for (const essai of ['Eye of the Tiger', 'eye of the tiger', 'EYE OF THE TIGER !', '  blackbird  ']) {
+    assert.ok(reconnu(acceptees, essai), `« ${essai} » aurait dû passer`);
+  }
+});
+
+test('un fragment suffit, à condition de commencer sur un début de mot', () => {
+  const { acceptees } = carteMix();
+  // Personne ne tape un titre entier avec un verre dans l'autre main.
+  assert.equal(reconnu(acceptees, 'tiger')?.titre, 'Eye of the Tiger');
+  // Mais un fragment pris au milieu d'un mot, non : ce serait du hasard.
+  assert.equal(reconnu(acceptees, 'ackbird'), null);
+  // Et des mots vides ne désignent rien, même en nombre suffisant de lettres :
+  // « of the » raflait le premier titre de la liste où ces deux mots se suivent.
+  assert.equal(reconnu(acceptees, 'of th'), null);
+  assert.equal(reconnu(acceptees, 'of the'), null);
+  // Un titre entier reste reconnu quelle que soit sa longueur.
+  assert.equal(reconnu(acceptees, 'one')?.titre, 'One');
+});
+
+test('une proposition vide ou hors sujet ne rapporte rien', () => {
+  const { acceptees } = carteMix();
+  for (const essai of ['', '   ', null, 'Bohemian Rhapsody']) {
+    assert.equal(reconnu(acceptees, essai), null, `« ${essai} » n’aurait pas dû passer`);
+  }
+});
+
+test('toute proposition reconnue marque, pas seulement la première', () => {
+  const notes = mix.noter(carteMix(), {
+    a: { valeur: 'Eye of the Tiger', elapsedMs: 3000 },
+    b: { valeur: 'Blackbird', elapsedMs: 9000 },
+  });
+  assert.ok(notes.a.correct && notes.b.correct);
+  assert.equal(notes.a.fraction, 1);
+  assert.equal(notes.b.fraction, 1);
+});
+
+test('un titre déjà cité ne compte plus, et c’est le plus rapide qui l’emporte', () => {
+  const notes = mix.noter(carteMix(), {
+    lent: { valeur: 'eye of the tiger', elapsedMs: 8000 },
+    rapide: { valeur: 'Eye of the Tiger', elapsedMs: 2000 },
+  });
+  assert.equal(notes.rapide.correct, true);
+  assert.equal(notes.lent.correct, false);
+  assert.equal(notes.lent.dejaCite, true);
+  // Le perdant garde le titre reconnu : l'écran doit pouvoir dire pourquoi.
+  assert.equal(notes.lent.titre, 'Eye of the Tiger');
+});
+
+test('sur le mix, le premier marque plus que le second à titre égal', () => {
+  // C'est la course de DJ Set : deux bonnes réponses, deux scores différents.
+  const carte = carteMix();
+  const resultat = resoudreManche({
+    manche: carte,
+    reponses: {
+      a: { valeur: 'Eye of the Tiger', elapsedMs: 1000 },
+      b: { valeur: 'Blackbird', elapsedMs: 14000 },
+    },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+  });
+  assert.ok(resultat.detail.a.points > resultat.detail.b.points);
+  assert.ok(resultat.detail.b.points > 0);
+});
+
+test('l’annonce d’un mix ne présente jamais trois titres comme « la » réponse', () => {
+  // Le gabarit commun dit « {nb} d’entre vous ont trouvé : {reponse} », et
+  // {reponse} valait les trois premiers titres de la carte. À l'écran, ça
+  // donnait trois chansons que personne n'avait citées, présentées comme la
+  // solution. Le mix a donc ses propres répliques.
+  const jouer = (valeur) => jouerUnePartie({
+    questions: [mix.preparer(CARTE)],
+    repondre: (vue, horloge) => (
+      vue.phase === 'manche' && horloge - vue.startAt === 100
+        ? [{ playerId: 'a', round: vue.manche, reponse: valeur, elapsedMs: 1000 }]
+        : []
+    ),
+  });
+
+  for (const [cas, valeur, cle] of [
+    ['trouvé', 'Blackbird', 'mixTrouve'],
+    ['bredouille', 'Bohemian Rhapsody', 'mixPersonne'],
+  ]) {
+    const vue = jouer(valeur).vues.find((v) => v.phase === 'revelation');
+    assert.equal(vue.resultat.commentaireCle, cle, `${cas} : mauvaise réplique`);
+    for (const titre of CARTE.acceptees.map((t) => t.titre)) {
+      assert.ok(
+        !vue.resultat.commentaire.includes(titre),
+        `${cas} : « ${titre} » est annoncé comme la bonne réponse`,
+      );
+    }
+  }
+});
+
+test('la liste des titres ne part qu’à la révélation', () => {
+  const carte = carteMix();
+  assert.equal(mix.publier(carte, false).acceptees, undefined);
+  assert.equal(mix.publier(carte, true).acceptees.length, 3);
+});
+
+test('le mix laisse plus de temps qu’un QCM : il faut taper', () => {
+  assert.ok(mix.facteurDuree > typeDeManche('qcm').facteurDuree);
+});
+
 /* --- Le fil rouge --------------------------------------------------------- */
 
 const FIL = FILS_ROUGES.find((f) => f.id === 'rouge');
@@ -715,6 +836,12 @@ test('chaque entrée de banque est complète pour son type', () => {
     if (type === 'ordre') {
       assert.equal(q.elements.length, 4, `${q.id} : quatre éléments attendus`);
       assert.equal(new Set(q.elements).size, 4, `${q.id} : éléments en double`);
+    }
+    if (type === 'mix') {
+      assert.ok(q.acceptees.length >= 10, `${q.id} : ${q.acceptees.length} titres, il en faut au moins dix`);
+      const titres = q.acceptees.map((t) => t.titre.toLowerCase());
+      assert.equal(new Set(titres).size, titres.length, `${q.id} : titre en double`);
+      assert.ok(q.acceptees.every((t) => t.titre && t.artiste), `${q.id} : titre ou artiste manquant`);
     }
     if (type === 'rafale') {
       assert.equal(q.affirmations.length, 5, `${q.id} : cinq affirmations attendues`);
@@ -961,6 +1088,39 @@ test('un pupitre ne peut pas publier l’état à la place de la régie', async 
   const { body: { code } } = await appel('POST', {}, {});
   const refus = await appel('POST', { code }, { hostToken: 'faux', state: { phase: 'podium' } });
   assert.equal(refus.status, 403);
+});
+
+test('le relais laisse passer toutes les formes de réponse, texte compris', async () => {
+  // Le filtre du relais est le seul endroit qui puisse faire disparaître une
+  // réponse en silence : une forme non prévue devient `null` et le joueur est
+  // compté absent. C'est ce qui est arrivé au mix, dont les réponses sont du
+  // texte. Un type de manche par ligne, et le jour où il en manque un, ça se voit.
+  const { body: salon } = await appel('POST', {}, {});
+  const { code, hostToken } = salon;
+  await appel('POST', { code, action: 'join' }, { playerId: 'a', name: 'Ana' });
+
+  const formes = [
+    ['qcm', 2],
+    ['estimation', 42195],
+    ['ordre', [2, 0, 3, 1]],
+    ['rafale', [true, false, true, true, false]],
+    ['mix', 'Eye of the Tiger'],
+  ];
+  for (const [type, reponse] of formes) {
+    await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, reponse, elapsedMs: 900 });
+    const { body } = await appel('POST', { code }, { hostToken });
+    assert.deepEqual(body.answers[0]?.reponse, reponse, `${type} : réponse perdue par le relais`);
+  }
+});
+
+test('un titre trop long est tronqué, jamais jeté', async () => {
+  const { body: salon } = await appel('POST', {}, {});
+  const { code, hostToken } = salon;
+  await appel('POST', { code, action: 'join' }, { playerId: 'a', name: 'Ana' });
+  await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, reponse: 'x'.repeat(500) });
+  const { body } = await appel('POST', { code }, { hostToken });
+  assert.equal(typeof body.answers[0].reponse, 'string');
+  assert.ok(body.answers[0].reponse.length <= 120);
 });
 
 test('un code inconnu répond 404 plutôt que d’ouvrir un salon vide', async () => {

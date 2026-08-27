@@ -475,6 +475,13 @@ function detailDeLaManche(mien) {
   if (type === 'ordre') return `${mien.justes ?? 0} position${(mien.justes ?? 0) > 1 ? 's' : ''} sur 4 dans le bon ordre.`;
   if (type === 'rafale') return `${mien.justes ?? 0} bonne${(mien.justes ?? 0) > 1 ? 's' : ''} réponse${(mien.justes ?? 0) > 1 ? 's' : ''} sur 5.`;
   if (type === 'estimation' && mien.correct) return 'Estimation la plus proche de la table.';
+  if (type === 'mix') {
+    // Trois issues, et la troisième est la plus frustrante des trois : c'est
+    // celle qu'il faut nommer, sinon « 0 point » ressemble à une erreur.
+    if (mien.dejaCite) return `« ${mien.titre} » : bien vu, mais quelqu’un t’a devancé.`;
+    if (mien.correct) return `« ${mien.titre} » : accepté.`;
+    return 'Pas dans la liste de l’appli — ce qui ne veut pas dire que tu avais tort.';
+  }
   return '';
 }
 

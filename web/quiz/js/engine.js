@@ -146,6 +146,11 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
       fraction: note.fraction,
       justes: note.justes,
       ecart: note.ecart,
+      // Propres au mix : ce que la proposition a été reconnue être, et si
+      // quelqu'un avait déjà pris ce titre — « juste mais trop tard » ne se
+      // dit pas avec `correct: false` tout seul.
+      titre: note.titre,
+      dejaCite: note.dejaCite,
       elapsedMs: reponse.elapsedMs,
       joker: reponse.joker ?? null,
       points,
