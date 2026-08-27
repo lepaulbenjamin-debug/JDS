@@ -231,6 +231,9 @@
 
     <h3 class="section-title">Données</h3>
     <button id="btn-export" class="btn btn-ghost btn-block" type="button">Exporter mes parties (JSON)</button>
+    <label class="btn btn-ghost btn-block" for="import-input">Importer un export</label>
+    <input id="import-input" type="file" accept="application/json,.json" hidden>
+    <p class="muted small">L'import ajoute les parties et les joueurs du fichier sans rien écraser&nbsp;: à partie identique, la version la plus récente est gardée. Les réglages et la partie en cours ne sont pas touchés.</p>
     <button id="btn-wipe" class="btn btn-ghost btn-block btn-danger-text" type="button">Tout effacer</button>
 
     <p class="muted small footer-note">Les parties sont enregistrées sur cet appareil uniquement.</p>

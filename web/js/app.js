@@ -2,6 +2,7 @@ import { GAMES, getGame } from './games/index.js';
 import {
   store, makePlayer, makePerson, playerFromPerson, makeMatch, makeDraft, makeRoundId,
   totals, standings, winners, isOver, replay, PLAYER_COLORS,
+  archives, carnet, supprimer, exporter, importer,
 } from './store.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
@@ -112,7 +113,8 @@ function gameArt(game) {
 // --- Accueil ---------------------------------------------------------------
 
 function renderHome() {
-  const { match, history } = store.state;
+  const { match } = store.state;
+  const history = archives(store.state);
 
   const resume = clear($('#home-resume'));
   if (match) {
@@ -163,7 +165,7 @@ function startSetup(game) {
   // carnet, où l'on retrouve les habitués d'une partie à l'autre.
   const parEquipes = Boolean(game.defaultNames);
   const derniers = store.state.lastPlayers;
-  const connus = store.state.people;
+  const connus = carnet(store.state);
   const preselection = connus
     .filter((p) => derniers.includes(p.name))
     .slice(0, game.maxPlayers)
@@ -185,12 +187,12 @@ function startSetup(game) {
 function addPerson(name, { select = false } = {}) {
   const propre = name.trim();
   if (!propre) return null;
-  const existe = store.state.people.find((p) => p.name.toLowerCase() === propre.toLowerCase());
+  const existe = carnet(store.state).find((p) => p.name.toLowerCase() === propre.toLowerCase());
   if (existe) {
     toast(`${existe.name} est déjà dans le carnet.`, 'warn');
     return existe;
   }
-  const person = makePerson(propre, store.state.people.length);
+  const person = makePerson(propre, carnet(store.state).length);
   store.update((s) => { s.people.push(person); });
   if (select && setupDraft) setupDraft.selected.push(person.id);
   return person;
@@ -429,7 +431,7 @@ function startMatch() {
     players = names.map((n, i) => makePlayer(n, i));
   } else {
     const choisis = setupDraft.selected
-      .map((id) => store.state.people.find((p) => p.id === id))
+      .map((id) => carnet(store.state).find((p) => p.id === id))
       .filter(Boolean);
     if (choisis.length < game.minPlayers) {
       toast(`Il faut au moins ${game.minPlayers} joueurs à ce jeu.`, 'warn');
@@ -1593,8 +1595,8 @@ function stopSpeech() {
 // --- Carnet de joueurs -----------------------------------------------------
 
 function renderPeople() {
-  const { people, history } = store.state;
-  const records = recordsByPerson(history);
+  const people = carnet(store.state);
+  const records = recordsByPerson(archives(store.state));
   const host = clear($('#people-list'));
 
   if (people.length === 0) {
@@ -1643,7 +1645,7 @@ function renderPeople() {
               { okLabel: 'Retirer', danger: true },
             );
             if (!ok) return;
-            store.update((s) => { s.people = s.people.filter((x) => x.id !== person.id); });
+            store.update((s) => { supprimer(s.people, person.id); });
           },
         }, '×'),
       ]),
@@ -1677,7 +1679,7 @@ function matchRow(past) {
 
 function renderHistory() {
   const host = clear($('#history-full'));
-  const { history } = store.state;
+  const history = archives(store.state);
   if (history.length === 0) {
     host.append(el('p', { class: 'muted small', text: 'Aucune partie archivée pour le moment.' }));
     return;
@@ -1686,7 +1688,7 @@ function renderHistory() {
 }
 
 function renderMatchDetail() {
-  const past = store.state.history.find((h) => h.id === detailId);
+  const past = archives(store.state).find((h) => h.id === detailId);
   if (!past) return show('history', { push: false });
   const game = getGame(past.gameId);
   const board = standings(past, game);
@@ -1815,14 +1817,69 @@ function wire() {
     toast('Clé enregistrée sur cet appareil.', 'ok');
   });
 
+  /** Copie de travail, pour simuler un import sans rien changer. */
+  const clonerDonnees = (state) => ({
+    history: JSON.parse(JSON.stringify(state.history)),
+    people: JSON.parse(JSON.stringify(state.people)),
+  });
+
+  /** « 2 parties ajoutées », « 1 joueur ajouté » : le genre du mot compte. */
+  const bilanPhrase = (bilan, singulier, pluriel, feminin = false) => {
+    const bouts = [];
+    const s_ = bilan.ajoutes > 1 ? 's' : '';
+    const e_ = feminin ? 'e' : '';
+    if (bilan.ajoutes) bouts.push(`${bilan.ajoutes} ${bilan.ajoutes > 1 ? pluriel : singulier} ajouté${e_}${s_}`);
+    if (bilan.remplaces) bouts.push(`${bilan.remplaces} mis à jour`);
+    if (bilan.ignores) bouts.push(`${bilan.ignores} déjà à jour`);
+    return bouts.length ? `${bouts.join(', ')}.` : '';
+  };
+
   $('#btn-export').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(store.state, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(exporter(store.state), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = el('a', { href: url, download: 'scores-jeux-de-societe.json' });
     document.body.append(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  });
+
+  $('#import-input').addEventListener('change', async (e) => {
+    const fichier = e.target.files?.[0];
+    // Le champ garde le fichier choisi : sans ça, réimporter le même deux fois
+    // de suite ne déclencherait rien la seconde.
+    e.target.value = '';
+    if (!fichier) return;
+
+    let contenu;
+    try {
+      contenu = JSON.parse(await fichier.text());
+    } catch {
+      return toast('Fichier illisible : ce n’est pas du JSON.', 'warn');
+    }
+
+    // On calcule d'abord ce que ça changerait, on le montre, et on n'applique
+    // qu'après accord : un import silencieux sur des données qu'on ne peut pas
+    // annuler serait une mauvaise surprise.
+    const essai = importer(contenu, clonerDonnees(store.state));
+    if (!essai.ok) return toast(essai.message, 'warn');
+
+    const total = essai.parties.ajoutes + essai.parties.remplaces
+      + essai.joueurs.ajoutes + essai.joueurs.remplaces;
+    if (total === 0) return toast('Rien de nouveau dans ce fichier.', 'ok');
+
+    const resume = [
+      bilanPhrase(essai.parties, 'partie', 'parties', true),
+      bilanPhrase(essai.joueurs, 'joueur', 'joueurs'),
+    ].filter(Boolean).join('\n');
+
+    if (!(await confirmDialog(`Importer ce fichier ?\n\n${resume}`, { okLabel: 'Importer' }))) return;
+
+    let bilan;
+    store.update((s) => { bilan = importer(contenu, s); });
+    toast(`Import terminé : ${bilan.parties.ajoutes + bilan.parties.remplaces} partie(s), `
+      + `${bilan.joueurs.ajoutes + bilan.joueurs.remplaces} joueur(s).`, 'ok');
+    show('home', { push: false });
   });
 
   $('#btn-wipe').addEventListener('click', async () => {
@@ -1850,7 +1907,7 @@ function wire() {
   $('#btn-delete-match').addEventListener('click', async () => {
     const ok = await confirmDialog("Supprimer cette partie de l'historique ?", { okLabel: 'Supprimer', danger: true });
     if (!ok) return;
-    store.update((s) => { s.history = s.history.filter((h) => h.id !== detailId); });
+    store.update((s) => { supprimer(s.history, detailId); });
     back();
   });
 

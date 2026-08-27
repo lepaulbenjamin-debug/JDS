@@ -4,13 +4,23 @@
 
 const KEY = 'jds.state.v1';
 
+/**
+ * Version du schéma enregistré. À incrémenter dès que la forme des données
+ * change, avec la reprise correspondante dans `migrer()`.
+ *
+ * 1 → 2 : horodatage sur chaque enregistrement et suppression par marqueur,
+ *         pour qu'une synchronisation devienne possible sans ressusciter ce
+ *         qu'on avait effacé.
+ */
+export const SCHEMA_DONNEES = 2;
+
 export const PLAYER_COLORS = [
   '#f5c518', '#60a5fa', '#f472b6', '#34d399',
   '#fb923c', '#a78bfa', '#22d3ee', '#f87171',
 ];
 
 const DEFAULT_STATE = {
-  v: 1,
+  v: SCHEMA_DONNEES,
   match: null,
   history: [],
   // Carnet des joueurs habituels : une identité stable d'une partie à
@@ -30,22 +40,43 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+/**
+ * Amène un état enregistré au schéma courant. Ne détruit rien : ce qui manque
+ * est ajouté, ce qui existe est laissé tel quel.
+ */
+export function migrer(etat) {
+  const out = {
+    ...clone(DEFAULT_STATE),
+    ...etat,
+    settings: { ...clone(DEFAULT_STATE.settings), ...(etat.settings ?? {}) },
+  };
+
+  // Reprise des versions antérieures : les derniers noms utilisés
+  // constituent le carnet de départ, plutôt que de repartir de zéro.
+  if (out.people.length === 0 && out.lastPlayers.length > 0) {
+    out.people = out.lastPlayers.map(makePerson);
+  }
+
+  // Schéma 2 : chaque enregistrement porte une date de dernière modification.
+  // C'est elle qui départagera deux versions d'une même partie le jour où
+  // l'appli synchronisera ; sans elle, impossible de savoir laquelle garder.
+  out.history = out.history.map((h) => ({ ...h, updatedAt: h.updatedAt ?? h.createdAt ?? 0 }));
+  out.people = out.people.map((p) => ({ ...p, updatedAt: p.updatedAt ?? p.createdAt ?? 0 }));
+
+  out.v = SCHEMA_DONNEES;
+  return out;
+}
+
+/** Vrai quand l'état lu venait d'un schéma antérieur et a dû être repris. */
+let repris = false;
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return clone(DEFAULT_STATE);
     const parsed = JSON.parse(raw);
-    const merged = {
-      ...clone(DEFAULT_STATE),
-      ...parsed,
-      settings: { ...clone(DEFAULT_STATE.settings), ...(parsed.settings ?? {}) },
-    };
-    // Reprise des versions antérieures : les derniers noms utilisés
-    // constituent le carnet de départ, plutôt que de repartir de zéro.
-    if (merged.people.length === 0 && merged.lastPlayers.length > 0) {
-      merged.people = merged.lastPlayers.map(makePerson);
-    }
-    return merged;
+    repris = parsed.v !== SCHEMA_DONNEES;
+    return migrer(parsed);
   } catch {
     return clone(DEFAULT_STATE);
   }
@@ -65,6 +96,11 @@ function persist() {
 function emit() {
   for (const fn of listeners) fn(state);
 }
+
+// Un schéma repris doit être réenregistré tout de suite. Sinon un appareil sur
+// lequel on ne joue pas garde indéfiniment l'ancienne forme sur le disque, et
+// la prochaine version de l'appli la croirait déjà convertie.
+if (repris) persist();
 
 export const store = {
   get state() {
@@ -116,7 +152,46 @@ export function makePerson(name, index = 0) {
     name: String(name).trim(),
     color: PLAYER_COLORS[index % PLAYER_COLORS.length],
     createdAt: Date.now(),
+    updatedAt: Date.now(),
+    deletedAt: null,
   };
+}
+
+// --- Suppressions et lectures ---------------------------------------------
+
+/**
+ * Ce qui reste après les suppressions.
+ *
+ * Effacer pour de bon suffirait tant que les données ne quittent pas
+ * l'appareil. Le jour où deux appareils se parlent, une suppression qui ne
+ * laisse aucune trace est indistinguable d'un enregistrement jamais reçu : la
+ * partie effacée d'un côté revient de l'autre. On garde donc l'enregistrement,
+ * marqué d'une date de suppression, et on le cache partout à la lecture.
+ */
+export function vivants(liste) {
+  return (liste ?? []).filter((x) => !x.deletedAt);
+}
+
+/** Les parties archivées encore visibles. */
+export function archives(state) {
+  return vivants(state.history);
+}
+
+/** Le carnet de joueurs encore visible. */
+export function carnet(state) {
+  return vivants(state.people);
+}
+
+/**
+ * Marque un enregistrement comme supprimé, dans la liste où il se trouve.
+ * La date de modification bouge aussi : c'est elle qui fera gagner la
+ * suppression sur une version plus ancienne du même enregistrement.
+ */
+export function supprimer(liste, id) {
+  const cible = (liste ?? []).find((x) => x.id === id);
+  if (!cible) return;
+  cible.deletedAt = Date.now();
+  cible.updatedAt = Date.now();
 }
 
 /** Un joueur de partie construit à partir d'une entrée du carnet. */
@@ -180,6 +255,92 @@ export function makeDraft(game, players, rounds = [], mode = null) {
 
 export function makeRoundId() {
   return uid();
+}
+
+// --- Export et import ------------------------------------------------------
+
+const FORMAT = 'jds.export';
+
+/**
+ * Le fichier qu'on emporte. Enveloppé et versionné : un export nu ne dit pas
+ * de quelle appli ni de quelle époque il vient, et se relit mal des années
+ * plus tard.
+ */
+export function exporter(state) {
+  return {
+    format: FORMAT,
+    v: SCHEMA_DONNEES,
+    exportedAt: Date.now(),
+    state: {
+      history: state.history,
+      people: state.people,
+      lastPlayers: state.lastPlayers,
+    },
+  };
+}
+
+/** Reconnaît un export, enveloppé ou non (les premiers ne l'étaient pas). */
+function contenuDe(fichier) {
+  if (!fichier || typeof fichier !== 'object') return null;
+  if (fichier.format === FORMAT && fichier.state) return fichier.state;
+  // Les tout premiers exports étaient l'état brut de l'appli.
+  if (Array.isArray(fichier.history) || Array.isArray(fichier.people)) return fichier;
+  return null;
+}
+
+function dateDe(enregistrement) {
+  return Number(enregistrement?.updatedAt ?? enregistrement?.createdAt ?? 0) || 0;
+}
+
+/**
+ * Fusionne une liste importée dans une liste locale, enregistrement par
+ * enregistrement : à identifiant égal, la version la plus récemment modifiée
+ * gagne. Une suppression est une modification comme une autre, donc effacer
+ * sur un appareil puis importer un vieux fichier ne ressuscite rien.
+ */
+function fusionner(locaux, importes) {
+  const par_id = new Map((locaux ?? []).map((x) => [x.id, x]));
+  const bilan = { ajoutes: 0, remplaces: 0, ignores: 0 };
+
+  for (const venu of importes ?? []) {
+    if (!venu?.id) { bilan.ignores += 1; continue; }
+    const ici = par_id.get(venu.id);
+    if (!ici) {
+      par_id.set(venu.id, venu);
+      bilan.ajoutes += 1;
+    } else if (dateDe(venu) > dateDe(ici)) {
+      par_id.set(venu.id, venu);
+      bilan.remplaces += 1;
+    } else {
+      bilan.ignores += 1;
+    }
+  }
+
+  return { liste: [...par_id.values()], bilan };
+}
+
+/**
+ * Applique un fichier d'export à l'état courant.
+ *
+ * Ni les réglages ni la partie en cours ne sont importés : la clé API et
+ * l'adresse du serveur appartiennent à cet appareil-ci, et écraser une partie
+ * commencée par celle d'un fichier ferait perdre la table en train de jouer.
+ *
+ * @returns {{ok: boolean, message?: string, parties?: object, joueurs?: object}}
+ */
+export function importer(fichier, state) {
+  const contenu = contenuDe(fichier);
+  if (!contenu) return { ok: false, message: "Ce fichier n'est pas un export de l'appli." };
+
+  const propre = migrer({ ...clone(DEFAULT_STATE), ...contenu });
+  const parties = fusionner(state.history, propre.history);
+  const joueurs = fusionner(state.people, propre.people);
+
+  // Les parties les plus anciennes d'abord, comme l'appli les attend.
+  state.history = parties.liste.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+  state.people = joueurs.liste;
+
+  return { ok: true, parties: parties.bilan, joueurs: joueurs.bilan };
 }
 
 // --- Calculs ---------------------------------------------------------------

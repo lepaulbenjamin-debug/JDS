@@ -295,6 +295,45 @@ disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
 
+## Les données : export, import, et ce qu'il faut pour synchroniser un jour
+
+Tout est enregistré dans le `localStorage` de l'appareil. Rien ne part sur un
+serveur, hormis les photos envoyées explicitement depuis l'écran de scan.
+
+**Export.** Le fichier est enveloppé et versionné :
+
+```json
+{ "format": "jds.export", "v": 2, "exportedAt": 1756..., "state": { "history": [...], "people": [...] } }
+```
+
+Les réglages n'y sont pas : la clé API et l'adresse du serveur appartiennent à
+cet appareil-là, et un export qu'on s'envoie par mail ne doit pas les emporter.
+
+**Import.** Fusion enregistrement par enregistrement, jamais un remplacement en
+bloc : à identifiant égal, la version la plus récemment modifiée gagne. Ce qui
+est déjà à jour est ignoré, donc réimporter deux fois le même fichier ne
+duplique rien. La partie en cours n'est pas touchée — écraser une partie
+commencée ferait perdre la table en train de jouer. Ce que l'import changerait
+est montré avant d'être appliqué.
+
+**Suppressions par marqueur.** Supprimer une partie ou retirer quelqu'un du
+carnet ne détruit pas l'enregistrement : il reçoit une date de suppression et
+disparaît de tous les écrans. Effacer pour de bon suffirait tant que les
+données restent sur un seul appareil ; le jour où deux appareils se parlent,
+une suppression sans trace est indistinguable d'un enregistrement jamais reçu,
+et la partie effacée d'un côté revient de l'autre. C'est le défaut classique
+des premières synchronisations, et il se corrige mal après coup.
+
+**Version de schéma.** `SCHEMA_DONNEES` dans `store.js`, avec sa reprise dans
+`migrer()`. Un état lu dans une version antérieure est repris puis réenregistré
+tout de suite, sans quoi un appareil sur lequel on ne joue pas garderait
+indéfiniment l'ancienne forme sur le disque.
+
+Ces trois choses — horodatage par enregistrement, suppression par marqueur,
+version de schéma — sont ce qu'il faut pour qu'une synchronisation devienne
+possible sans migration douloureuse. Le reste (compte, serveur) n'est pas fait,
+et n'a pas à l'être tant que l'appli tient sur un appareil.
+
 ## Quand la partie s'arrête, livret par livret
 
 Même principe que pour le départage : ce que dit le livret est proposé en
