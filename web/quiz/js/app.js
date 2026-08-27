@@ -1,4 +1,4 @@
-// Quiz Room — l'appli de pupitre.
+// Quiz entre amis — l'appli de pupitre.
 //
 // Le même code tourne sur tous les téléphones. La seule différence, c'est que
 // l'appareil qui a créé le salon fait tourner la régie en plus (`engine.js`) :
@@ -1056,7 +1056,7 @@ function rendreLienPartage() {
       // Le dernier repli sélectionne le lien pour qu'il reste copiable à la main.
       try {
         if (navigator.share) {
-          await navigator.share({ title: 'Quiz Room', text: 'On joue ?', url: lien });
+          await navigator.share({ title: 'Quiz entre amis', text: 'On joue ?', url: lien });
           return;
         }
         if (navigator.clipboard) {

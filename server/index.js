@@ -126,11 +126,11 @@ async function serveStatic(req, res) {
   try {
     let info = await stat(filePath);
     // `/quiz` doit ouvrir `/quiz/index.html` : l'appli n'est plus seule à la
-    // racine depuis que la Quiz Room vit dans son propre dossier.
+    // racine depuis que Quiz entre amis vit dans son propre dossier.
     if (info.isDirectory()) {
       // La barre finale n'est pas cosmétique : sans elle, le navigateur résout
       // `js/app.js` en `/js/app.js` et charge le compteur de points à la place
-      // de la Quiz Room.
+      // de Quiz entre amis.
       if (!requested.endsWith('/')) {
         res.writeHead(301, { location: `${requested}/${url.search}` }).end();
         return;
@@ -175,12 +175,12 @@ createServer((req, res) => {
   return serveStatic(req, res);
 }).listen(PORT, () => {
   console.log(`Appli disponible sur http://localhost:${PORT}`);
-  // La Quiz Room ne sert à rien si les invités ne savent pas où se connecter :
+  // Quiz entre amis ne sert à rien si les invités ne savent pas où se connecter :
   // le serveur écoute sur toutes les interfaces, autant afficher lesquelles.
   for (const address of lanAddresses()) {
     // La barre finale compte : tapée telle quelle sur un téléphone, une adresse
     // sans elle passe par une redirection qu'on peut s'épargner.
-    console.log(`  Quiz Room, depuis les téléphones : http://${address}:${PORT}/quiz/`);
+    console.log(`  Quiz entre amis, depuis les téléphones : http://${address}:${PORT}/quiz/`);
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('ANTHROPIC_API_KEY non définie : /api/scan échouera tant qu\'aucune clé n\'est configurée.');

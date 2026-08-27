@@ -1,6 +1,6 @@
 {
-  "name": "Quiz Room",
-  "short_name": "Quiz Room",
+  "name": "Quiz entre amis",
+  "short_name": "Quiz entre amis",
   "description": "Quiz de soirée où chaque téléphone devient un pupitre, et où l'animateur c'est l'appli.",
   "lang": "fr",
   "start_url": ".",

@@ -3,7 +3,7 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 avec une lecture des scores par IA à partir d'une photo.
 
-Le dépôt héberge aussi **Quiz Room** (`/quiz/`), un quiz de soirée où chaque
+Le dépôt héberge aussi **Quiz entre amis** (`/quiz/`), un quiz de soirée où chaque
 téléphone devient un pupitre et où l'animateur, c'est l'appli — [voir plus
 bas](#quiz-room--le-quiz-de-soirée).
 
@@ -99,7 +99,7 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
   (`localStorage`). Rien n'est envoyé nulle part, à part les photos que vous
   soumettez à l'IA.
 
-## Quiz Room — le quiz de soirée
+## Quiz entre amis — le quiz de soirée
 
 Deuxième appli du dépôt, sous `web/quiz/`, servie à **`/quiz/`**. Elle ne compte
 pas les points d'un jeu de plateau : elle *est* le jeu.
@@ -151,7 +151,7 @@ tout le monde joue.
 - **La dernière manche vaut double**, et un score ne descend jamais sous zéro :
   personne n'est éliminé avant la fin.
 
-### Mettre la Quiz Room en ligne
+### Mettre Quiz entre amis en ligne
 
 Le jeu tourne en local avec `npm start`, mais il n'est vraiment « accessible sur
 le web » qu'une fois déployé — et le HTTPS n'est pas cosmétique : sur une
@@ -467,7 +467,7 @@ web/                     PWA statique, sans build ni dépendance
     games/aventuriers-du-rail.js  idem + trois éditions, chacune son décompte
     games/common.js      le peu que plusieurs jeux partagent
     games/index.js       registre des jeux
-  quiz/                  la Quiz Room : PWA séparée, servie à /quiz/
+  quiz/                  Quiz entre amis : PWA séparée, servie à /quiz/
     index.html           ses écrans (accueil, réglages, lobby, manche, podium)
     styles.css           mêmes jetons de couleur, cibles plus grandes
     manifest.webmanifest

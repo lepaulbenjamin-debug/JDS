@@ -1,11 +1,11 @@
-// Service worker de la Quiz Room.
+// Service worker de Quiz entre amis.
 //
 // La coquille et la banque de questions sont mises en cache : une fois la page
 // ouverte, elle se relance sans réseau. Le relais, lui, n'est jamais caché —
 // c'est la seule chose qui doit être fraîche, et une réponse de salon servie
 // depuis le cache figerait la partie.
 
-const CACHE = 'quizroom-shell-v1';
+const CACHE = 'quizroom-shell-v2';
 const SHELL = [
   './',
   'index.html',

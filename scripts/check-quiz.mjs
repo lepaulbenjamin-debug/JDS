@@ -1,4 +1,4 @@
-// Vérifie les règles de la Quiz Room et le relais de salons.
+// Vérifie les règles de Quiz entre amis et le relais de salons.
 //
 //   npm run check:quiz
 //

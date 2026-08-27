@@ -1,4 +1,4 @@
-/* Quiz Room.
+/* Quiz entre amis.
    Mêmes jetons de couleur que le compteur de points : les deux applis vivent
    sous le même toit et doivent se ressembler. Ce qui change ici, c'est la
    taille des cibles — on joue une main occupée, souvent debout, parfois avec un
@@ -51,7 +51,13 @@ body {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
-.topbar h1 { margin: 0; font-size: 17px; font-weight: 600; text-align: center; }
+.topbar h1 {
+  margin: 0;
+  font-size: 17px; font-weight: 600;
+  text-align: center;
+  /* Un nom long ne doit pas faire grandir la barre : il se réduit. */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 .icon-btn {
   width: 40px; height: 40px;
@@ -61,6 +67,10 @@ body {
   font-size: 20px; cursor: pointer;
 }
 .icon-btn:active { background: var(--surface-2); }
+/* Masqué, le bouton retour doit garder sa colonne : sans ça il sort de la
+   grille, le titre glisse dans la colonne de 44 px et se casse en trois
+   lignes. */
+.icon-btn[hidden] { visibility: hidden; display: grid !important; }
 
 /* --- Structure ----------------------------------------------------------- */
 
@@ -151,9 +161,10 @@ body {
 .hero-title { margin: 0 0 6px; font-size: 24px; line-height: 1.25; }
 .hero-sub { margin: 0; color: var(--muted); font-size: 14px; }
 
-.join-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.join-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .code-input {
-  padding: 13px 14px;
+  min-width: 0;
+  padding: 13px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);

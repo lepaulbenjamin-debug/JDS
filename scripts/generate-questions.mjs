@@ -1,4 +1,4 @@
-// Écrit un brouillon de questions pour la Quiz Room.
+// Écrit un brouillon de questions pour Quiz entre amis.
 //
 //   ANTHROPIC_API_KEY=sk-ant-... node scripts/generate-questions.mjs musique 10
 //
