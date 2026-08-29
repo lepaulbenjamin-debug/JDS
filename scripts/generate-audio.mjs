@@ -144,6 +144,14 @@ const DIRECTIONS = {
   pincesansrire: 'Tu animes avec un flegme absolu. Débit lent et posé, aucune '
     + 'emphase, comme si rien ne pouvait te surprendre. C’est le décalage entre '
     + 'ton calme et l’agitation de la table qui fait l’effet.',
+
+  // Le même registre que le chambreur, monté d'un cran. La direction insiste sur
+  // l'amusement audible : lues à froid, ces répliques deviendraient blessantes,
+  // alors que dites avec le sourire elles restent une vanne entre amis.
+  clasheur: 'Tu démolis la table, et ça t’amuse énormément. Ton mordant, '
+    + 'assumé, énergique. Tu balances la vanne franchement, sans la mâcher, mais '
+    + 'le sourire s’entend toujours derrière : c’est un ami qui charrie fort, pas '
+    + 'quelqu’un qui méprise. Appuie les chutes, savoure-les.',
 };
 
 /** Les clips d'un animateur portent son nom : `emcee/<persona>/<clé>/<n>`. */

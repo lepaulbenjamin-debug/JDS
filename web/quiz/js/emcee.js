@@ -24,6 +24,7 @@ export const PERSONAS = [
   { id: 'classique', nom: 'Classique', desc: 'Le ton du plateau télé, sérieux et chaleureux.' },
   { id: 'chambreur', nom: 'Chambreur', desc: 'Il commente, il charrie, il n’épargne personne.' },
   { id: 'pincesansrire', nom: 'Pince-sans-rire', desc: 'Poli, lent, et légèrement méprisant.' },
+  { id: 'clasheur', nom: 'Clasheur', desc: 'Il ne chambre pas, il démolit. À réserver aux bons amis.' },
 ];
 
 const BANQUE = {
@@ -235,6 +236,97 @@ const BANQUE = {
       'Vainqueur : {nom}, {points} points. Merci d’être venus.',
     ],
   },
+
+  // Le chambreur qui a cessé de se retenir. Le registre est celui de l'expression
+  // toute faite — pas le couteau le plus aiguisé du tiroir, la lumière allumée
+  // mais personne à la maison : ça vise le niveau au quiz, jamais la personne.
+  // On reste donc à l'écart de tout ce qui touche au physique, aux origines ou à
+  // quoi que ce soit qu'on ne choisit pas ; le seul sujet, c'est la réponse qui
+  // vient d'être donnée. C'est aussi pour ça que le réglage annonce « à réserver
+  // aux bons amis » : le ton se choisit en connaissance de cause.
+  clasheur: {
+    plusProche: [
+      'Le moins catastrophique, c’est {nom}. La vraie réponse : {reponse}.',
+      '{nom} s’en approche. De très loin, mais s’en approche. C’était {reponse}.',
+    ],
+    partiel: [
+      'Personne n’a tout bon. J’ai connu des tables pires. Une fois.',
+      'Aucun sans-faute. On va faire semblant que c’était difficile.',
+    ],
+    filTrouve: ['{nom} a trouvé le fil rouge pendant que les autres regardaient le plafond.'],
+    filManque: ['Le fil rouge est passé devant vous toute la soirée. Vous avez regardé ailleurs.'],
+    ouverture: [
+      'Vous êtes {nb}. Ça fait {nb} occasions de se ridiculiser. Profitez-en.',
+      'Bonsoir. {nb} joueurs, et déjà des doutes sur au moins la moitié.',
+    ],
+    avantManche: [
+      'Question {manche}. Essayez de viser la bonne case.',
+      'Manche {manche} sur {total}. On verra bien qui suit encore.',
+      'Question {manche}. Celle-là va faire du dégât.',
+    ],
+    derniereManche: [
+      'Dernière question, points doublés. Dernière chance de sauver l’honneur.',
+      'Dernière manche, elle vaut double. Autant finir en beauté, ou en fanfare de casseroles.',
+    ],
+    mixTrouve: [
+      '{nb} titres corrects. Le reste, c’était du vent. Voici la vraie liste.',
+      'Bon, {nb} bonnes pioches. Maintenant, regardez tout ce qui vous est passé au-dessus.',
+    ],
+    mixPersonne: [
+      'Zéro titre. Vous écoutez quoi, au juste ? Voici la liste.',
+      'Rien. Pas un. Et il y avait tout ça.',
+    ],
+    ttmcTrouve: [
+      'Bonnes réponses : {nb}. Les autres se sont surestimés, comme d’habitude.',
+      '{nb} rescapés. Le reste de la table s’est envoyé des fleurs pour rien.',
+    ],
+    ttmcGrosPari: [
+      '{nom} a misé haut et l’a tenu. Voilà quelqu’un qui se connaît, pour une fois.',
+      'Gros pari tenu par {nom}. Prenez des notes, ça n’arrivera pas deux fois.',
+    ],
+    ttmcPersonne: [
+      'Personne. Vous vous êtes tous mis très haut pour finir très bas.',
+      'Pas une bonne réponse. L’écart entre ce que vous croyez savoir et la réalité fait peur.',
+    ],
+    personne: [
+      'Rien. Le néant complet. C’était {reponse}, et ce n’était pas si dur.',
+      'Personne. Pas le tiroir le mieux garni en couteaux, cette table. C’était {reponse}.',
+    ],
+    tous: [
+      'Tout le monde a bon. Voilà, c’est fait, je peux corser la suite.',
+      'Sans faute général. Je note la date, ça ne se reproduira pas.',
+    ],
+    unSeul: [
+      '{nom} a trouvé. Un sur toute la table. La lumière était allumée chez une seule personne.',
+      'Une seule bonne réponse : {nom}. Les autres, la question était pourtant écrite en français.',
+    ],
+    plusieurs: [
+      '{nb} bonnes réponses. C’était {reponse}, pour ceux qui étaient réveillés.',
+      'On en a {nb}. Les autres ont visé à côté de la plaque, et de la table.',
+    ],
+    rapide: [
+      '{nom}, {secondes} secondes. Soit le temps qu’il a fallu aux autres pour finir de lire.',
+      'Plus rapide : {nom} en {secondes} secondes. Le reste de la table rame encore.',
+    ],
+    leader: [
+      '{nom} mène avec {points} points, et va devenir invivable.',
+      'Toujours {nom} en tête, {points} points. Quelqu’un compte réagir ?',
+    ],
+    vol: [
+      '{nom} braque {cible} en plein jour. Aucun remords, aucun témoin utile.',
+      'Et voilà, {nom} rafle les points de {cible}. L’amitié aura duré une manche.',
+    ],
+    sabotage: [
+      '{nom} sabote {cible}. Ça va se régler dehors, apparemment.',
+      'Sabotage de {nom} sur {cible}. On vous laisse en discuter au dessert.',
+    ],
+    doubleReussi: ['{nom} a doublé et ça passe. Insupportable, mais mérité.'],
+    doubleRate: ['{nom} a doublé et s’écrase en beauté. C’était magnifique à voir.'],
+    podium: [
+      '{nom} gagne avec {points} points. Les autres, il y a de la marge. Beaucoup de marge.',
+      'Victoire de {nom}, {points} points. Le reste du classement, on va éviter d’en parler.',
+    ],
+  },
 };
 
 /**
@@ -360,6 +452,66 @@ const DIT = {
     doubleReussi: ['Doublé. Bien vu.'],
     doubleRate: ['Doublé. C’était audacieux.'],
     podium: ['Voilà. Le classement final est à l’écran. Merci d’être venus.'],
+  },
+
+  clasheur: {
+    plusProche: [
+      'Le moins catastrophique l’emporte. Voici la vraie réponse.',
+      'Quelqu’un s’en est approché. De très loin. La réponse exacte, la voici.',
+    ],
+    partiel: [
+      'Personne n’a tout bon. On va faire semblant que c’était difficile.',
+      'Aucun sans-faute. J’ai connu des tables pires. Une fois.',
+    ],
+    filTrouve: ['Le fil rouge est tombé, pendant que les autres regardaient le plafond.'],
+    filManque: ['Le fil rouge est passé devant vous toute la soirée. Vous avez regardé ailleurs.'],
+    ouverture: ['Bonsoir. Autant d’occasions de se ridiculiser que de joueurs. Profitez-en.'],
+    avantManche: [
+      'Visez la bonne case.',
+      'On verra qui suit encore.',
+      'Celle-là va faire du dégât.',
+      'Attention, ça se corse.',
+      'Un peu de tenue.',
+      'Réveillez-vous.',
+      'Concentration. Ça aiderait.',
+      'Celle-là, on l’écoute en entier.',
+    ],
+    derniereManche: [
+      'Dernière question, points doublés. Dernière chance de sauver l’honneur.',
+      'Dernière manche, elle vaut double. Autant finir en beauté.',
+      'La dernière, et elle vaut double. Il était temps.',
+    ],
+    mixTrouve: ['Voici la vraie liste. Regardez tout ce qui vous est passé au-dessus.'],
+    mixPersonne: ['Zéro titre. Vous écoutez quoi, au juste ? Voici la liste.'],
+    ttmcTrouve: ['Quelques rescapés. Le reste s’est envoyé des fleurs pour rien.'],
+    ttmcGrosPari: ['Un gros pari, tenu. Voilà quelqu’un qui se connaît, pour une fois.'],
+    ttmcPersonne: [
+      'Personne. Vous vous êtes tous mis très haut pour finir très bas.',
+      'Pas une bonne réponse. L’écart avec ce que vous croyez savoir fait peur.',
+    ],
+    personne: [
+      'Rien. Le néant complet. Et ce n’était pas si dur.',
+      'Personne. Pas le tiroir le mieux garni en couteaux, cette table.',
+    ],
+    tous: [
+      'Tout le monde a bon. Voilà, c’est fait. Je corse la suite.',
+      'Sans faute général. Je note la date, ça ne se reproduira pas.',
+    ],
+    unSeul: [
+      'Une seule bonne réponse. La lumière était allumée chez une seule personne.',
+      'Un sur toute la table. La question était pourtant écrite en français.',
+    ],
+    plusieurs: [
+      'Quelques bonnes réponses, pour ceux qui étaient réveillés.',
+      'Quelques-uns ont trouvé. Les autres ont visé à côté de la plaque.',
+    ],
+    vol: ['Braquage en plein jour. Aucun remords, aucun témoin utile.'],
+    sabotage: ['Sabotage en règle. Ça va se régler dehors, apparemment.'],
+    doubleReussi: ['Doublé, et ça passe. Insupportable, mais mérité.'],
+    doubleRate: ['Doublé, et écrasé en beauté. C’était magnifique à voir.'],
+    // « C'est fini » s'entend « ces filles » quand c'est dit vite : à éviter dans
+    // une banque qui se garde de tout accord sur les joueurs.
+    podium: ['Terminé. Le classement est à l’écran, et il y a de la marge. Beaucoup de marge.'],
   },
 };
 

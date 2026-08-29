@@ -13,7 +13,9 @@ import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
   PLAFOND_REVELATION_MS,
 } from '../web/quiz/js/engine.js';
-import { dureeDeLaReplique, annonceDeManche } from '../web/quiz/js/emcee.js';
+import {
+  dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS,
+} from '../web/quiz/js/emcee.js';
 import {
   QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
@@ -1510,7 +1512,7 @@ test('l’annonce dit le numéro de la manche, puis une formule', () => {
 });
 
 test('chaque persona a de quoi ne pas se répéter sur douze manches', () => {
-  for (const persona of ['classique', 'chambreur', 'pincesansrire']) {
+  for (const { id: persona } of PERSONAS) {
     const variantes = new Set();
     for (let i = 0; i < 400; i += 1) {
       variantes.add(annonceDeManche(persona, 'avantManche', 1)[1]);
@@ -1548,12 +1550,42 @@ test('l’annonce tient dans la fenêtre de jokers', async () => {
   // vraie partie. Le compter change tout : sans lui, l'annonce paraît tenir
   // alors qu'elle se fait couper par son propre énoncé.
   const ENCHAINEMENT_S = 1.4;
-  for (const persona of ['classique', 'chambreur', 'pincesansrire']) {
+  for (const { id: persona } of PERSONAS) {
     const numero = maxSous(`emcee/${persona}/manche/`);
     const formule = maxSous(`emcee/${persona}/avantManche/`);
     if (!numero || !formule) continue;       // clips pas encore régénérés
     const pire = numero + ENCHAINEMENT_S + formule;
     assert.ok(pire * 1000 <= DUREE_JOKERS_MS,
       `${persona} : annonce de ${pire.toFixed(1)} s pour une fenêtre de ${DUREE_JOKERS_MS / 1000} s`);
+  }
+});
+
+test('chaque animateur sait tout dire', () => {
+  // Une clé oubliée ne casse rien de visible : `paroleDe` retombe en silence sur
+  // le classique, et l'animateur change de personnage en pleine manche. C'est
+  // exactement le genre de défaut qu'on ne voit qu'en jouant, d'où ce test.
+  const parPersona = new Map();
+  for (const clip of inventaireDesParoles()) {
+    const [, persona, cle] = clip.id.split('/');
+    if (!parPersona.has(persona)) parPersona.set(persona, new Set());
+    parPersona.get(persona).add(cle);
+  }
+  const reference = parPersona.get('classique');
+  assert.ok(reference?.size > 15, 'le classique sert de référence');
+
+  for (const { id } of PERSONAS) {
+    const siennes = parPersona.get(id);
+    assert.ok(siennes, `${id} n’a aucune réplique`);
+    const manquantes = [...reference].filter((cle) => !siennes.has(cle));
+    assert.deepEqual(manquantes, [], `${id} ne sait pas dire : ${manquantes.join(', ')}`);
+  }
+});
+
+test('aucune réplique prononcée ne contient de prénom', () => {
+  // Les clips sont fabriqués une fois pour toutes : un gabarit `{nom}` y partirait
+  // tel quel au modèle, qui prononcerait « accolade nom accolade ». Les prénoms
+  // et les points restent à l'écran, c'est la règle de toute la banque parlée.
+  for (const clip of inventaireDesParoles()) {
+    assert.doesNotMatch(clip.texte, /\{\w+\}/, `${clip.id} contient un gabarit`);
   }
 });
