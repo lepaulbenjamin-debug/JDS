@@ -101,17 +101,40 @@ livrerait une application qui a l'air de marcher.**
 
 À vérifier en premier sur un vrai iPhone, interrupteur sur silencieux.
 
-### 1 bis. Vérifier que les deux fichiers Swift sont bien dans la cible
+### 1 bis. Ajouter les deux fichiers Swift au projet Xcode
 
-Copier un `.swift` dans le dossier ne suffit pas toujours : selon la version
-d'Xcode, il faut qu'il apparaisse dans le navigateur de projet **et** qu'il soit
-coché pour la cible « App » (inspecteur de droite, *Target Membership*). Sans
-ça, il n'est simplement pas compilé — et `Capacitor.Plugins.Achats` reste
-introuvable, donc la boutique se croit sur le web.
+**C'est l'étape qui manque le plus souvent, et son symptôme ne la désigne pas :**
+`Cannot find 'SessionAudio' in scope`, alors que le fichier est bien sur le
+disque.
 
-Le sync ne les mentionne pas : `Found 1 Capacitor plugin` ne compte que les
-paquets npm. Un plugin local se déclare au démarrage de l'application, pas à la
-synchronisation.
+Copier un `.swift` dans `ios/App/App/` ne l'ajoute pas au projet. Le gabarit de
+Capacitor utilise un groupe Xcode classique, où l'appartenance à la cible se
+déclare explicitement : un fichier posé à côté des autres n'est simplement pas
+compilé.
+
+Dans Xcode, une fois pour toutes :
+
+1. Sélectionner le groupe **App › App** dans le navigateur de gauche (celui qui
+   contient `AppDelegate.swift`).
+2. Menu **File › Add Files to "App"…**
+3. Choisir `AchatsPlugin.swift` et `SessionAudio.swift` dans `ios/App/App/`.
+4. **Décocher « Copy items if needed »** — ils y sont déjà — et **cocher la cible
+   « App »** dans *Add to targets*.
+
+Les deux fichiers doivent alors apparaître dans le navigateur, à côté de
+`AppDelegate.swift`. S'ils n'y sont pas, ils ne sont pas compilés.
+
+Un glisser-déposer depuis le Finder vers le groupe **App › App** fait la même
+chose, avec les mêmes cases à régler dans la boîte de dialogue.
+
+Tant que `AchatsPlugin.swift` n'est pas dans la cible, `Capacitor.Plugins.Achats`
+reste introuvable au démarrage : la boutique se croit alors sur le web et
+n'affiche aucun bouton d'achat, **sans rien signaler**. C'est un défaut muet,
+comme celui de la session audio.
+
+Le sync ne le dira pas non plus : « Found 1 Capacitor plugin » ne compte que les
+paquets npm. Un plugin local se déclare au démarrage de l'application, jamais à
+la synchronisation.
 
 ### 2. Le manifeste de confidentialité
 
