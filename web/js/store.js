@@ -2,6 +2,8 @@
 // Aucune donnée ne quitte l'appareil, sauf les photos envoyées explicitement
 // à l'IA depuis l'écran de scan.
 
+import { lireCoffre, ecrireCoffre, viderEnAttente, enNatif } from './coffre.js';
+
 const KEY = 'jds.state.v1';
 
 /**
@@ -103,11 +105,14 @@ let state = load();
 const listeners = new Set();
 
 function persist() {
+  const json = JSON.stringify(state);
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY, json);
   } catch {
     /* quota plein ou mode privé : on continue en mémoire */
   }
+  // Copie durable, que la sauvegarde du téléphone emporte. Sans effet sur le web.
+  ecrireCoffre(KEY, json);
 }
 
 function emit() {
@@ -148,6 +153,42 @@ export const store = {
     emit();
   },
 };
+
+/**
+ * Remet en place les données du coffre quand le WebView est vide.
+ *
+ * C'est le cas au premier lancement après un changement de téléphone : le
+ * système a restauré ses préférences, mais le WebView repart de zéro. On ne
+ * touche à rien si le `localStorage` contient déjà quelque chose — les données
+ * en cours d'usage priment toujours sur une copie.
+ *
+ * @returns {Promise<boolean>} vrai si l'état a été repris, donc à réafficher.
+ */
+export async function reprendreDepuisLeCoffre() {
+  if (!enNatif()) return false;
+  try {
+    if (localStorage.getItem(KEY)) return false;
+  } catch {
+    return false;
+  }
+
+  const json = await lireCoffre(KEY);
+  if (!json) return false;
+
+  try {
+    state = migrer(JSON.parse(json));
+  } catch {
+    return false;
+  }
+  persist();
+  emit();
+  return true;
+}
+
+/** À appeler quand l'appli passe en arrière-plan : le système peut la suspendre. */
+export function mettreAuCoffreMaintenant() {
+  viderEnAttente(KEY);
+}
 
 // --- Fabriques -------------------------------------------------------------
 

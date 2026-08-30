@@ -297,6 +297,33 @@ disparaissent et les étapes restent lisibles. S'il a l'API mais aucune voix
 installée (le cas de certains Linux de bureau), un garde-fou débloque
 l'interface au bout de quelques secondes avec un message clair.
 
+## Empaquetage iOS et Android
+
+Le dossier `mobile/` contient la coquille Capacitor : les squelettes Android et
+iOS sont en place, le code reste dans `web/` et y est recopié par `cap sync`.
+Voir `mobile/README.md` pour les commandes et ce qui demande un Mac ou le SDK
+Android.
+
+Deux effets sur le code de l'appli :
+
+- **Un coffre durable** (`web/js/coffre.js`). Le `localStorage` d'un WebView
+  n'entre pas de façon garantie dans la sauvegarde du téléphone. En natif,
+  chaque enregistrement est donc recopié dans les préférences du système, qui
+  sont reprises par la sauvegarde iCloud et l'Auto Backup Android. Le
+  `localStorage` reste la source de vérité pendant l'exécution — synchrone et
+  instantané ; le coffre est un second étage, écrit en différé et groupé pour
+  ne pas produire une écriture par chiffre tapé. Au démarrage, si le WebView
+  est vide alors que le coffre contient quelque chose, l'état est remis en
+  place ; **des données déjà présentes ne sont jamais écrasées**.
+- **Pas de service worker en natif.** Les fichiers sont déjà sur l'appareil, et
+  un cache qui s'intercale ferait servir la version précédente après une mise à
+  jour du store.
+
+Sur le web, `web/js/coffre.js` ne fait rien : la globale `window.Capacitor`
+n'existe pas, et tout le module se réduit à des non-opérations. L'accès passe
+d'ailleurs par cette globale plutôt que par un `import` du paquet npm, pour que
+l'appli garde son absence d'étape de compilation.
+
 ## La frontière gratuit / version complète
 
 Une seule chose coûte de l'argent à chaque usage : la lecture photo. C'est donc

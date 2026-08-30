@@ -1,0 +1,20 @@
+# Dépendances de l'empaquetage.
+node_modules/
+
+# Copie de web/ faite par « cap sync » : régénérée à chaque synchronisation,
+# la versionner ferait un doublon de toute l'appli, vite périmé.
+android/app/src/main/assets/public/
+ios/App/App/public/
+
+# Sorties de compilation et outils locaux.
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+*.xcuserstate

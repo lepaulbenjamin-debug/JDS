@@ -4,7 +4,9 @@ import {
   totals, standings, winners, isOver, replay, PLAYER_COLORS,
   archives, carnet, supprimer, exporter, importer,
   quotaPhoto, consommerLecture, LECTURES_OFFERTES,
+  reprendreDepuisLeCoffre, mettreAuCoffreMaintenant,
 } from './store.js';
+import { enNatif } from './coffre.js';
 import { $, $$, el, clear, toast, initials, confirmDialog, formatDate } from './ui.js';
 import { prepareImage, scan, matchPlayer } from './ai.js';
 import { speech } from './speech.js';
@@ -1988,7 +1990,25 @@ function wire() {
 wire();
 show(store.state.match ? 'match' : 'home', { push: false });
 
-if ('serviceWorker' in navigator) {
+// Premier lancement après un changement de téléphone : le WebView est vide,
+// mais le système a restauré nos préférences. On ne bloque pas l'affichage
+// pour autant — sur le web comme sur un appareil déjà garni, c'est immédiat
+// et sans effet.
+reprendreDepuisLeCoffre().then((repris) => {
+  if (repris) show(store.state.match ? 'match' : 'home', { push: false });
+});
+
+// Le système peut suspendre l'appli sans prévenir : on vide ce qui attendait
+// d'être recopié plutôt que de le perdre.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') mettreAuCoffreMaintenant();
+});
+
+// Le service worker sert au web : il rend la PWA utilisable hors ligne. Dans
+// l'appli empaquetée, les fichiers sont déjà sur l'appareil, et un cache qui
+// s'intercale ferait servir la version précédente après une mise à jour du
+// store — un bug pénible à diagnostiquer, pour un gain nul.
+if ('serviceWorker' in navigator && !enNatif()) {
   window.addEventListener('load', () => {
     // Certains contextes (page servie en bac à sable, fichier unique) refusent
     // l'enregistrement de façon synchrone : l'appli doit continuer sans.

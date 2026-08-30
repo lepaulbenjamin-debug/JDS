@@ -24,6 +24,7 @@ const OUT = process.argv[2] ?? join(ROOT, 'dist', 'scores-app.html');
 // La valeur est le nom sous lequel `export default` doit être exposé.
 const MODULES = [
   ['js/ui.js', null],
+  ['js/coffre.js', null],
   ['js/store.js', null],
   ['js/speech.js', null],
   ['js/vision-prompt.js', null],
@@ -70,7 +71,7 @@ const body = html
 
 /** Un fichier unique n'a pas de service worker à côté : inutile de le chercher. */
 function dropServiceWorker(code) {
-  const bloc = /if \('serviceWorker' in navigator\) \{[\s\S]*?\n\}\n?/;
+  const bloc = /if \('serviceWorker' in navigator[^{]*\{[\s\S]*?\n\}\n?/;
   if (!bloc.test(code)) throw new Error("Bloc du service worker introuvable dans app.js.");
   return code.replace(bloc, '');
 }
