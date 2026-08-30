@@ -28,9 +28,10 @@ Trois différences assumées avec la version web, toutes dans le script :
 ## Le projet natif
 
 ```sh
-npm install @capacitor/core @capacitor/cli @capacitor/ios
+npm install @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8
 npm install @capacitor-community/keep-awake
 npx cap add ios
+cp ios/AchatsPlugin.swift ios/AppDelegate-audio.swift ios/App/App/
 npm run build:ios && npx cap sync ios
 npx cap open ios
 ```
@@ -106,21 +107,33 @@ accorde ce qui est valable. Une transaction refusée n'annule pas les autres.
    affichés viennent de l'App Store, pas du champ `prix` — celui-ci n'est plus
    qu'un repli pour le web.
 
-2. **Installer un pont StoreKit.** Le choix vous revient : je n'ai pas pu
-   l'éprouver sans Mac. Le contrat attendu par `web/quiz/js/achats.js` tient en
-   trois méthodes exposées sous `Capacitor.Plugins.InAppPurchase` :
+2. **Déposer le pont natif.** Copier `ios/AchatsPlugin.swift` dans
+   `ios/App/App/`. Capacitor le découvre seul, il n'y a rien à déclarer
+   ailleurs. Régler la cible du projet sur **iOS 15** minimum : StoreKit 2
+   n'existe pas avant.
+
+   Le plugin est écrit ici plutôt que pris sur étagère pour une raison précise :
+   la plupart des plugins d'achat rendent « l'achat a réussi », un booléen qu'un
+   appareil modifié dira tout aussi bien. Un booléen ne se vérifie pas ; le
+   `jwsRepresentation` signé par Apple, si. C'est ce jeton que le plugin rend,
+   et c'est ce que `lib/apple.js` vérifie.
+
+   Le contrat, tenu des deux côtés :
 
    ```
-   getProducts({ productIds })  → { products: [{ id, price }] }
-   purchase({ productId })      → { transaction: '<jws>' }
+   getProducts({ productIds })  → { products: [{ id, price, title }] }
+   purchase({ productId })      → { transaction } | { cancelled } | { pending }
    restorePurchases()           → { transactions: ['<jws>', …] }
    ```
 
-   **Le point à ne pas manquer :** `transaction` doit être le JWS signé de
-   StoreKit 2, pas un booléen « ça s'est bien passé ». Un pont qui ne rendrait
-   qu'un succès rendrait la vérification impossible, donc la boutique
-   falsifiable. Si le plugin retenu expose un autre nom ou une autre forme,
-   c'est `achats.js` qu'il faut adapter — et lui seul.
+   Les trois issues de `purchase` comptent : un abandon n'est pas une panne, et
+   une attente d'autorisation parentale non plus. Les confondre afficherait un
+   message d'échec à quelqu'un qui a simplement changé d'avis.
+
+   Le plugin écoute aussi `Transaction.updates` : autorisation parentale
+   accordée après coup, code promotionnel, achat fait sur un autre appareil,
+   remboursement. Sans cette écoute, ces transactions ne sont jamais closes et
+   reviennent indéfiniment.
 
 3. **Configurer `APPLE_BUNDLE_ID`** sur Vercel s'il diffère de
    `fr.quizentreamis.app`.

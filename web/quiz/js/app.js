@@ -1134,8 +1134,12 @@ async function rendrePacks() {
                 ajouterQuestions(packs.questionsInstallees());
                 rendreReglages();
               } catch (erreur) {
-                // Un achat abandonné n'est pas une erreur : on ne crie pas.
-                if (!/annul|cancel/i.test(erreur?.message ?? '')) {
+                // Renoncer n'est pas échouer : quelqu'un qui referme la feuille
+                // de paiement n'a pas besoin d'un message d'erreur. L'attente
+                // d'autorisation parentale, elle, mérite un mot.
+                if (erreur?.name === 'AchatAbandonne') {
+                  if (erreur.enAttente) toast(erreur.message);
+                } else {
                   toast(erreur.message ?? 'Achat non abouti.', 'warn');
                 }
                 event.target.disabled = false;
