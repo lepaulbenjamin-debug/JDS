@@ -25,6 +25,36 @@ Trois différences assumées avec la version web, toutes dans le script :
 - **Pas de réglage « adresse du relais ».** Utile en développement, c'est dans
   une application publiée un bouton pour tout casser.
 
+## Avant tout : le dépôt ne doit pas être dans iCloud
+
+Si le dossier est sous `~/Documents` ou `~/Desktop` et qu'iCloud Drive
+synchronise ces emplacements, **rien ne marchera de façon fiable**. iCloud
+dématérialise les fichiers peu consultés, et un dépôt git comme un projet Xcode
+en comptent des milliers.
+
+Les symptômes ne désignent jamais la cause :
+
+- `fatal: not a git repository` alors que `.git` est bien là ;
+- `error reading from .git/objects/pack/…: Operation timed out`, puis
+  `is far too short to be a packfile` ;
+- `error: Error opening input file '…/CapApp-SPM.swift' (Operation timed out)` ;
+- des « Cannot find X in scope » sur des fichiers du gabarit qu'on n'a jamais
+  touchés — ce sont les reliquats d'un build qui n'aboutit pas ;
+- une étape « Planning Swift module » qui dure huit minutes.
+
+La solution est de sortir le dépôt des dossiers synchronisés :
+
+```sh
+mkdir -p ~/Dev
+mv ~/Documents/JDS ~/Dev/JDS
+cd ~/Dev/JDS
+rm -rf ~/Library/Developer/Xcode/DerivedData/App-*
+```
+
+Tout suit — `ios/`, `node_modules/`, les fichiers ajoutés à la cible. La purge
+des DerivedData est nécessaire : ils contiennent des chemins absolus vers
+l'ancien emplacement.
+
 ## Le projet natif
 
 Les fichiers de ce dossier s'appellent `apple/` et non `ios/`, et ce n'est pas
