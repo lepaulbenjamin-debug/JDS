@@ -27,14 +27,27 @@ Trois différences assumées avec la version web, toutes dans le script :
 
 ## Le projet natif
 
+Capacitor est dans les dépendances du dépôt, et les commandes passent par des
+scripts npm plutôt que par `npx` :
+
 ```sh
-npm install @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8
-npm install @capacitor-community/keep-awake
-npx cap add ios
+node -v                    # doit afficher 22 ou plus (exigence de Capacitor 8)
+npm install
+npm run ios:add
 cp ios/AchatsPlugin.swift ios/AppDelegate-audio.swift ios/App/App/
-npm run build:ios && npx cap sync ios
-npx cap open ios
+npm run ios:sync           # rebâtit le paquet web, puis le synchronise
+npm run ios:open
 ```
+
+**Pourquoi pas `npx cap` :** il existe sur npm un paquet nommé `cap`, sans
+rapport, et **sans aucun exécutable**. Quand `@capacitor/cli` n'est pas installé
+localement, `npx cap add ios` télécharge celui-là, ne trouve rien à lancer, et
+répond `could not determine executable to run`. Les scripts npm, eux, mettent
+`node_modules/.bin` sur le chemin : la confusion devient impossible.
+
+Si `node -v` affiche moins de 22, deux issues : mettre Node à jour, ou
+rétrograder Capacitor en 7 (`npm install -D @capacitor/cli@^7 @capacitor/core@^7
+@capacitor/ios@^7`), qui se contente de Node 20.
 
 `capacitor.config.json` fixe `iosScheme: "capacitor"`, donc l'origine de la page
 est `capacitor://localhost`. **Ce n'est pas un détail** : c'est l'origine que le

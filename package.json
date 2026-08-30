@@ -9,12 +9,21 @@
     "check": "node server/check.mjs",
     "check:quiz": "node --test scripts/check-quiz.mjs",
     "bundle": "node scripts/build-single-file.mjs",
-    "build:ios": "node scripts/build-ios.mjs"
+    "build:ios": "node scripts/build-ios.mjs",
+    "ios:add": "cap add ios",
+    "ios:sync": "npm run build:ios && cap sync ios",
+    "ios:open": "cap open ios"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0"
+  },
+  "devDependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
   }
 }
