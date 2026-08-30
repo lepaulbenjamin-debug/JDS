@@ -42,7 +42,7 @@ node -v                    # doit afficher 22 ou plus (exigence de Capacitor 8)
 npm install
 rm -rf ios                 # seulement si un essai précédent en a laissé un
 npm run ios:add            # c'est cette commande qui crée ios/
-cp apple/AchatsPlugin.swift apple/AppDelegate-audio.swift ios/App/App/
+cp apple/AchatsPlugin.swift apple/SessionAudio.swift ios/App/App/
 npm run ios:sync           # rebâtit le paquet web, puis le synchronise
 npm run ios:open
 ```
@@ -66,8 +66,25 @@ origines couperait le jeu en ligne.
 
 ### 1. La session audio — sans elle, l'animateur est muet
 
-Coller le contenu de `apple/AppDelegate-audio.swift` dans
-`ios/App/App/AppDelegate.swift`.
+`SessionAudio.swift` est copié par la commande ci-dessus. Il ne reste qu'à
+l'appeler : ouvrir `ios/App/App/AppDelegate.swift` et ajouter **deux lignes**.
+
+```swift
+func application(_ application: UIApplication,
+                 didFinishLaunchingWithOptions launchOptions: …) -> Bool {
+    SessionAudio.activer()        // ← à ajouter
+    return true
+}
+
+func applicationDidBecomeActive(_ application: UIApplication) {
+    SessionAudio.reprendre()      // ← à ajouter
+}
+```
+
+Ne remplacez pas l'`AppDelegate` engendré par Capacitor : il contient d'autres
+méthodes qui lui servent. C'est aussi pour ça que `SessionAudio.swift` ne
+définit aucune classe — deux `AppDelegate` dans la même cible, et le projet ne
+compile plus.
 
 Sur iOS, un `<audio>` en WebView appartient à la catégorie « ambiante » : le
 système le coupe dès que l'interrupteur latéral est sur silencieux. Or le
@@ -79,6 +96,18 @@ pas d'exception, juste du silence. **C'est le seul défaut de cette liste qui
 livrerait une application qui a l'air de marcher.**
 
 À vérifier en premier sur un vrai iPhone, interrupteur sur silencieux.
+
+### 1 bis. Vérifier que les deux fichiers Swift sont bien dans la cible
+
+Copier un `.swift` dans le dossier ne suffit pas toujours : selon la version
+d'Xcode, il faut qu'il apparaisse dans le navigateur de projet **et** qu'il soit
+coché pour la cible « App » (inspecteur de droite, *Target Membership*). Sans
+ça, il n'est simplement pas compilé — et `Capacitor.Plugins.Achats` reste
+introuvable, donc la boutique se croit sur le web.
+
+Le sync ne les mentionne pas : `Found 1 Capacitor plugin` ne compte que les
+paquets npm. Un plugin local se déclare au démarrage de l'application, pas à la
+synchronisation.
 
 ### 2. Le manifeste de confidentialité
 

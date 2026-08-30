@@ -112,7 +112,7 @@ async function batir() {
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
   console.log(`  dont audio : ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo`);
   console.log(`  relais     : ${relais}`);
-  console.log('\nEnsuite, sur un Mac :  npx cap sync ios && npx cap open ios\n');
+  console.log('\nEnsuite, sur un Mac :  npm run ios:sync && npm run ios:open\n');
 }
 
 batir().catch((erreur) => {
