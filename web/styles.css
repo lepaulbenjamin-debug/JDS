@@ -308,6 +308,17 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .btn-primary:active:not(:disabled) { background: #4f46e5; }
 .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
 .btn-ghost:active { background: var(--surface-2); }
+
+/* Action d'appoint : disponible sans peser dans la hiérarchie de l'écran. */
+.btn-link {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px;
+}
+.btn-link:active { color: var(--text); }
 .btn-block { display: block; width: 100%; }
 .btn-danger, .btn-danger-text { color: var(--danger); }
 .btn-danger { background: var(--danger); color: #1a0d0d; }

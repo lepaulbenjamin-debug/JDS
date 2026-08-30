@@ -1,7 +1,7 @@
 # Scores — compteur de points pour jeux de société
 
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
-avec une lecture des scores par IA à partir d'une photo.
+en suivant les règles de chaque jeu telles que son livret les écrit.
 
 Dix jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
 **Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders**, **Mölkky**
@@ -74,13 +74,6 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
   jeu — avec pause et reprise, et une étape à la fois si besoin. Le texte
   s'adapte à l'effectif : à 4 joueurs elle dit « 15 cartes chacun, écart de 5 »,
   à 7 elle dit de retirer les quatre 1 d'abord.
-- **Compter en photo.** Photo d'une feuille de scores manuscrite → les manches
-  sont proposées, joueur par joueur. Photo des cartes d'un joueur → le total est
-  calculé : les Payoos ramassés au Papayoo, la grille de fin de manche au Skyjo,
-  le tas ramassé au 6 qui prend. Là, l'IA ne lit que les numéros des cartes et
-  c'est l'appli qui applique le barème — plus fiable que de lui demander de
-  connaître la valeur de chaque carte. Les résultats sont toujours affichés pour
-  relecture avant d'être appliqués.
 - **Un carnet de joueurs.** Les habitués sont enregistrés une fois : au
   démarrage d'une partie on les touche dans l'ordre où ils sont assis, sans
   rien retaper, et chacun garde sa couleur d'une partie à l'autre. Les jeux en
@@ -94,6 +87,15 @@ un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
 - **Local.** Parties, carnet et réglages restent dans le navigateur
   (`localStorage`). Rien n'est envoyé nulle part, à part les photos que vous
   soumettez à l'IA.
+- **Compter en photo, en appoint.** Taper trois nombres va plus vite que cadrer
+  une feuille : la lecture photo n'est pas le mode principal, et l'interface la
+  place en retrait. Elle rend service dans deux cas précis — une feuille de
+  scores déjà remplie, dont les manches sont alors proposées joueur par joueur,
+  et un tas de cartes à additionner : les Payoos ramassés au Papayoo, la grille
+  de fin de manche au Skyjo, le tas du 6 qui prend. Là, l'IA ne lit que les
+  numéros des cartes et c'est l'appli qui applique le barème — plus fiable que
+  de lui demander de connaître la valeur de chaque carte. Les résultats sont
+  toujours affichés pour relecture avant d'être appliqués.
 
 ## Lancer l'appli
 

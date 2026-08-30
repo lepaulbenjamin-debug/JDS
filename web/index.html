@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12141c">
-<meta name="description" content="Compteur de points pour dix jeux de société : saisie rapide, calculs vérifiés, règles lues à voix haute et comptage des cartes en photo.">
+<meta name="description" content="Compteur de points pour dix jeux de société, fidèle à leurs livrets : barèmes, départages et fins de partie appliqués comme la règle les prévoit.">
 <title>Marque-points</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -28,7 +28,7 @@
     <div class="hero">
       <p class="hero-kicker">Compteur de points</p>
       <h2 class="hero-title">Une partie, zéro calcul mental.</h2>
-      <p class="hero-sub">Saisie rapide, calculs vérifiés, règles lues à voix haute — et un compte des cartes fait à partir d'une photo.</p>
+      <p class="hero-sub">Saisie rapide et calculs vérifiés, jeu par jeu : chaque barème, chaque départage et chaque fin de partie suivent le livret. Les règles se lisent à voix haute à la table.</p>
     </div>
 
     <div id="home-resume"></div>
@@ -92,10 +92,13 @@
       <div id="entry-manual" class="entry" hidden></div>
 
       <div class="round-actions">
-        <button id="btn-scan" class="btn btn-ghost" type="button">📷 Compter en photo</button>
         <button id="btn-clear-round" class="btn btn-ghost" type="button">Effacer</button>
         <button id="btn-rules" class="btn btn-ghost" type="button">📖 Règles</button>
       </div>
+      <!-- La lecture photo est un raccourci d'appoint, pas le mode principal :
+           taper trois nombres va plus vite que cadrer une feuille. Elle reste
+           accessible, en retrait. -->
+      <button id="btn-scan" class="btn btn-link btn-block" type="button">Compter en photo</button>
 
       <div class="sticky-actions">
         <p id="round-result" class="round-result" hidden></p>

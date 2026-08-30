@@ -1,7 +1,7 @@
 // Service worker : le comptage des points doit fonctionner sans réseau.
 // Coquille applicative en cache-first, tout le reste en réseau d'abord.
 
-const CACHE = 'jds-shell-v16';
+const CACHE = 'jds-shell-v17';
 const SHELL = [
   './',
   'index.html',
