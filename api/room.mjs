@@ -8,8 +8,15 @@
 // hébergement serverless, ces deux variables ne sont pas une option.
 
 import { handleRoomRequest } from '../lib/rooms.js';
+import { enTetesCors, estPreflight } from '../lib/cors.js';
 
 export default async function handler(request, response) {
+  // L'application native appelle depuis `capacitor://localhost` : sans ces
+  // en-têtes, le navigateur bloque tout et la partie ne démarre jamais.
+  const cors = enTetesCors(request.headers?.origin);
+  if (cors) for (const [nom, valeur] of Object.entries(cors)) response.setHeader(nom, valeur);
+  if (estPreflight(request.method)) return response.status(204).end();
+
   const url = new URL(request.url, 'http://localhost');
   const { status, body } = await handleRoomRequest({
     method: request.method,

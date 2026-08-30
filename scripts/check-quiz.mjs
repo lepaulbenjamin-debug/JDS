@@ -25,6 +25,7 @@ import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
 import { handleRoomRequest } from '../lib/rooms.js';
+import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
 import { inventaire } from './generate-audio.mjs';
 
@@ -1588,4 +1589,85 @@ test('aucune réplique prononcée ne contient de prénom', () => {
   for (const clip of inventaireDesParoles()) {
     assert.doesNotMatch(clip.texte, /\{\w+\}/, `${clip.id} contient un gabarit`);
   }
+});
+
+/* --- L'accès depuis l'application native ---------------------------------- */
+//
+// Emballée dans une app iOS, la page ne s'exécute plus sur le domaine du relais
+// mais sur `capacitor://localhost` : chaque appel devient inter-origine. Sans
+// en-tête d'autorisation, le navigateur les bloque tous et l'application se
+// lance sans jamais pouvoir jouer. Mesuré sur le relais déployé avant
+// correction : il répondait 201, sans un seul en-tête CORS.
+
+test('le relais s’ouvre aux origines de l’application native', () => {
+  for (const origine of ['capacitor://localhost', 'ionic://localhost', 'http://localhost']) {
+    const entetes = enTetesCors(origine);
+    assert.ok(entetes, `${origine} devrait être autorisée`);
+    assert.equal(entetes['access-control-allow-origin'], origine);
+    // Sans `Vary`, un cache pourrait servir à l'app la réponse préparée pour le site.
+    assert.equal(entetes.vary, 'Origin');
+  }
+});
+
+test('le préflight est reconnu, car chaque POST en est précédé', () => {
+  // Le pupitre envoie ses réponses en `application/json`, ce qui suffit à
+  // déclencher un OPTIONS préalable. Sans réponse à celui-là, la vraie requête
+  // n'est jamais émise — et aucune réponse de joueur n'arrive.
+  assert.equal(estPreflight('OPTIONS'), true);
+  assert.equal(estPreflight('options'), true);
+  assert.equal(estPreflight('POST'), false);
+  assert.equal(estPreflight(undefined), false);
+});
+
+test('une origine inconnue n’obtient rien', () => {
+  // La liste est explicite plutôt qu'une étoile : le relais n'a pas de compte à
+  // protéger, mais n'importe quelle page du web pourrait sinon ouvrir des
+  // salons chez nous.
+  for (const origine of ['https://site-pirate.example', 'null', '', undefined]) {
+    assert.equal(enTetesCors(origine), null, `${origine} ne devrait pas passer`);
+  }
+});
+
+test('la fonction déployée pose bien les en-têtes, et pas seulement la librairie', async () => {
+  // Le défaut n'était pas dans le calcul des en-têtes mais dans leur absence
+  // totale du handler : c'est donc le handler qu'on exerce, avec une requête et
+  // une réponse factices, comme Vercel l'appelle.
+  const { default: handler } = await import('../api/room.mjs');
+
+  const fausseReponse = () => {
+    const entetes = {};
+    const sortie = { entetes, code: 0, corps: null, termine: false };
+    const self = {
+      setHeader: (nom, valeur) => { entetes[nom] = valeur; },
+      status: (code) => { sortie.code = code; return self; },
+      json: (corps) => { sortie.corps = corps; return self; },
+      end: () => { sortie.termine = true; return self; },
+    };
+    return { self, sortie };
+  };
+
+  // 1. Le préflight, qui précède chaque envoi de réponse d'un joueur.
+  const pre = fausseReponse();
+  await handler(
+    { method: 'OPTIONS', url: '/api/room', headers: { origin: 'capacitor://localhost' } },
+    pre.self,
+  );
+  assert.equal(pre.sortie.code, 204, 'le préflight doit être répondu');
+  assert.equal(pre.sortie.entetes['access-control-allow-origin'], 'capacitor://localhost');
+
+  // 2. La vraie requête : un salon se crée comme depuis le web.
+  const post = fausseReponse();
+  await handler(
+    { method: 'POST', url: '/api/room', headers: { origin: 'capacitor://localhost' }, body: {} },
+    post.self,
+  );
+  assert.equal(post.sortie.code, 201);
+  assert.ok(post.sortie.corps?.code, 'le salon doit être créé');
+  assert.equal(post.sortie.entetes['access-control-allow-origin'], 'capacitor://localhost');
+
+  // 3. Depuis le web, rien ne change : aucun en-tête inter-origine.
+  const web = fausseReponse();
+  await handler({ method: 'POST', url: '/api/room', headers: {}, body: {} }, web.self);
+  assert.equal(web.sortie.code, 201);
+  assert.equal(web.sortie.entetes['access-control-allow-origin'], undefined);
 });

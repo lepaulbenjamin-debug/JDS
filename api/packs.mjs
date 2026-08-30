@@ -6,8 +6,13 @@
 // `web/`, qui est servi en statique par le CDN.
 
 import { handlePackRequest } from '../lib/packs.js';
+import { enTetesCors, estPreflight } from '../lib/cors.js';
 
 export default async function handler(request, response) {
+  const cors = enTetesCors(request.headers?.origin);
+  if (cors) for (const [nom, valeur] of Object.entries(cors)) response.setHeader(nom, valeur);
+  if (estPreflight(request.method)) return response.status(204).end();
+
   const url = new URL(request.url, 'http://localhost');
   const { status, body } = await handlePackRequest({
     method: request.method,
