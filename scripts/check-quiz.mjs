@@ -302,6 +302,32 @@ test('une partie va du lancement au podium', () => {
   assert.equal(vues.filter((v) => v.phase === 'revelation').length, 3);
 });
 
+test('la régie publie l’annonce et le mot pour mot de ce qu’elle dit', () => {
+  // C'est la régie qui tire, et elle publie les deux. Tiré sur chaque appareil,
+  // le sort donnait une formule par téléphone — et une autre encore à l'écran.
+  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+  const { vues } = jouerUnePartie({ questions: troisQuestions() });
+
+  const annonces = vues.filter((v) => v.phase === 'manche');
+  assert.equal(annonces.length, 3);
+  for (const vue of annonces) {
+    assert.ok(vue.annonceClips.length >= 1, `manche ${vue.manche} : aucun clip publié`);
+    assert.equal(vue.annonceDite, vue.annonceClips.map((id) => textes.get(id)).join(' '),
+      `manche ${vue.manche} : l’écrit ne dit pas ce que la voix dit`);
+    if (vue.annonceCle === 'avantManche') {
+      assert.equal(vue.annonceClips[0], `emcee/classique/manche/${vue.manche}`);
+    }
+  }
+
+  // Au podium, l'écrit COMPLÈTE le clip au lieu de le répéter : l'enregistrement
+  // renvoie à l'écran, l'écran nomme le gagnant. `annonceDite` reste donc vide,
+  // et c'est ce qui fait afficher la phrase qui porte le prénom.
+  const fin = vues.at(-1);
+  assert.equal(fin.phase, 'podium');
+  assert.equal(fin.annonceDite, '');
+  assert.match(fin.annonce, /Ana|Bo|Cé/);
+});
+
 test('la bonne réponse n’est publiée qu’à la révélation', () => {
   const { vues } = jouerUnePartie({ questions: troisQuestions() });
   for (const vue of vues.filter((v) => v.phase === 'manche')) {
@@ -1556,23 +1582,38 @@ test('une réplique se budgète sur sa variante la plus longue', () => {
 /* --- L'annonce de manche -------------------------------------------------- */
 
 test('l’annonce dit le numéro de la manche, puis une formule', () => {
-  const annonce = annonceDeManche('classique', 'avantManche', 7);
-  assert.deepEqual(annonce[0], 'emcee/classique/manche/7', 'le numéro vient en premier');
-  assert.match(annonce[1] ?? '', /^emcee\/classique\/avantManche\/\d+$/);
+  const { clips } = annonceDeManche('classique', 'avantManche', 7);
+  assert.deepEqual(clips[0], 'emcee/classique/manche/7', 'le numéro vient en premier');
+  assert.match(clips[1] ?? '', /^emcee\/classique\/avantManche\/\d+$/);
 
   // Les autres annonces n'ont pas de numéro : une seule réplique.
-  assert.equal(annonceDeManche('classique', 'podium', 3).length, 1);
-  assert.equal(annonceDeManche('classique', 'ouverture', 0).length, 1);
+  assert.equal(annonceDeManche('classique', 'podium', 3).clips.length, 1);
+  assert.equal(annonceDeManche('classique', 'ouverture', 0).clips.length, 1);
 
   // Une manche hors du format le plus grand ne réclame pas un clip inexistant.
-  assert.equal(annonceDeManche('classique', 'avantManche', 99).length, 1);
+  assert.equal(annonceDeManche('classique', 'avantManche', 99).clips.length, 1);
+});
+
+test('l’annonce rend le texte de ses propres clips', () => {
+  // Le point de la fonction : un seul tirage pour l'oreille et pour l'écran.
+  // Tant qu'ils venaient de deux banques séparées, on lisait « Manche 3 sur
+  // 12 » en entendant « troisième question, prêts ? c'est parti ».
+  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+  for (const { id: persona } of PERSONAS) {
+    for (const numero of [1, 4, 12]) {
+      const { clips, texte } = annonceDeManche(persona, 'avantManche', numero);
+      assert.equal(texte, clips.map((id) => textes.get(id)).join(' '),
+        `${persona}, manche ${numero} : le texte annoncé ne dit pas ce que les clips disent`);
+      assert.ok(texte.length, 'une annonce sans texte ne pourrait rien afficher');
+    }
+  }
 });
 
 test('chaque persona a de quoi ne pas se répéter sur douze manches', () => {
   for (const { id: persona } of PERSONAS) {
     const variantes = new Set();
     for (let i = 0; i < 400; i += 1) {
-      variantes.add(annonceDeManche(persona, 'avantManche', 1)[1]);
+      variantes.add(annonceDeManche(persona, 'avantManche', 1).clips[1]);
     }
     assert.ok(variantes.size >= 6,
       `${persona} n’a que ${variantes.size} formules d’annonce`);

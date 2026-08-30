@@ -127,10 +127,13 @@ async function essai(chromium, mode, secondes) {
   await page.click('#btn-solo');
 
   const manches = new Set();
+  const annonces = new Set();
   for (let tic = 0; tic < secondes; tic += 1) {
     await page.waitForTimeout(1000);
     const entete = await page.textContent('#jeu-manche').catch(() => '');
     if (entete) manches.add(entete.trim());
+    const annonce = await page.textContent('#jeu-annonce').catch(() => '');
+    if (annonce?.trim()) annonces.add(annonce.trim());
     // Répondre quand c'est possible, pour que la partie avance vraiment.
     await page.evaluate(() => {
       document.querySelector('#jeu-reponses button:not([disabled])')?.click();
@@ -152,7 +155,7 @@ async function essai(chromium, mode, secondes) {
 
   await nav.close();
   app.close();
-  return { trace, manches, reglages, erreurs };
+  return { trace, manches, annonces, reglages, erreurs };
 }
 
 /**
@@ -191,11 +194,32 @@ function ouvertureEntiere(clips, manifeste) {
 
 // Ce qu'on attend de chaque installation. `clips` et `synthese` disent qui a le
 // droit de parler ; c'est tout l'objet du test.
+//
+// `annonce` vérifie l'accord entre l'écrit et le dit. Avec les enregistrements,
+// l'annonce affichée doit être leur mot pour mot — « 1ʳᵉ question. » et non
+// « Manche 1 sur 12 », qui est la version écrite d'une autre banque. Sans eux,
+// c'est l'inverse : la synthèse dit la version écrite, donc c'est elle qui doit
+// être à l'écran.
+//
+// `annonce` vérifie l'accord entre ce qui est écrit et ce qui est dit, dans les
+// deux sens :
+//
+//   'enregistree'  l'écran doit porter le mot pour mot des clips — « 1ʳᵉ
+//                  question. » et non « Manche 1 sur 12 », qui vient d'une
+//                  autre banque et n'est prononcé nulle part. Le texte des
+//                  clips ne s'observe pas depuis la page, d'où la forme.
+//   'synthetisee'  sans enregistrements, c'est la synthèse qui parle, et là on
+//                  peut comparer au mot près : la phrase affichée doit être
+//                  exactement l'une de celles qu'on lui a passées.
+//
+// `secondes` dit combien de temps on joue : il faut aller jusqu'à la manche 1
+// pour voir une annonce, et l'intro dure plus longtemps que le reste.
+const ORDINAL = /^\d+(?:ʳᵉ|ᵉ) question\./;
 const ATTENDU = {
-  'complet':        { clips: true,  synthese: false, reglages: /Voix enregistrée/ },
-  'manifeste-lent': { clips: true,  synthese: false, reglages: /Voix enregistrée/ },
-  'sans-clips':     { clips: true,  synthese: true,  reglages: /introuvables à la lecture/ },
-  'sans-manifeste': { clips: false, synthese: true,  reglages: /manifeste 404/ },
+  'complet':        { secondes: 55, clips: true,  synthese: false, reglages: /Voix enregistrée/, annonce: 'enregistree' },
+  'manifeste-lent': { secondes: 3,  clips: true,  synthese: false, reglages: /Voix enregistrée/ },
+  'sans-clips':     { secondes: 3,  clips: true,  synthese: true,  reglages: /introuvables à la lecture/ },
+  'sans-manifeste': { secondes: 14, clips: false, synthese: true,  reglages: /manifeste 404/, annonce: 'synthetisee' },
 };
 
 async function main() {
@@ -208,25 +232,33 @@ async function main() {
     process.exit(2);
   }
 
-  // Une partie complète pour la première installation, juste l'ouverture pour
-  // les autres : c'est là que tout se joue, et chaque seconde est réelle.
+  // Chaque seconde est réelle : on ne joue que le temps qu'il faut pour que
+  // l'installation dise ce qu'elle a à dire.
   const manifeste = JSON.parse(
     await readFile(join(RACINE, 'audio', 'manifeste.json'), 'utf8').catch(() => '{"clips":{}}'),
   );
 
   let echecs = 0;
   for (const [mode, attendu] of Object.entries(ATTENDU)) {
-    const { trace, manches, reglages, erreurs } = await essai(chromium, mode, mode === 'complet' ? 55 : 3);
+    const { trace, manches, annonces, reglages, erreurs } = await essai(chromium, mode, attendu.secondes);
     const constate = {
       clips: trace.clips.length > 0,
       synthese: trace.synthese.length > 0,
       reglages: attendu.reglages.test(reglages),
     };
     const ouverture = ouvertureEntiere(trace.clips, manifeste);
+    // L'annonce d'une manche, repérée par le numéro qu'elle porte : l'ouverture
+    // et la révélation, elles, ne se comparent pas de la même façon.
+    const annonceManche = [...annonces].find((a) => /\b1\b|1ʳᵉ/.test(a) && !/^Bonsoir|^Personne|^Aucune/.test(a));
+    const accord = attendu.annonce == null ? null
+      : attendu.annonce === 'enregistree' ? ORDINAL.test(annonceManche ?? '')
+        : Boolean(annonceManche) && trace.synthese.includes(annonceManche);
+
     const ok = constate.clips === attendu.clips
       && constate.synthese === attendu.synthese
       && constate.reglages
       && ouverture.verdict !== false
+      && accord !== false
       && !erreurs.length;
     if (!ok) echecs += 1;
 
@@ -238,6 +270,14 @@ async function main() {
     console.log(`    clips joués   : ${trace.clips.length}  (attendu ${attendu.clips ? '> 0' : '0'})`);
     console.log(`    voix système  : ${trace.synthese.length}  (attendu ${attendu.synthese ? '> 0' : '0'})`);
     if (trace.echecs.length) console.log(`    échecs lecture: ${trace.echecs.join(', ')}`);
+    if (accord != null) {
+      console.log(`    annonce à l’écran : ${JSON.stringify(annonceManche ?? '')}`
+        + `${accord ? '' : '  ← ne dit pas ce qui est joué'}`);
+    }
+    // `VERBEUX=1` sort toutes les phrases vues, ce qui fait gagner un aller-retour
+    // quand la ligne ci-dessus tombe en rouge : la question est toujours de savoir
+    // si l'application a mal affiché, ou si le repérage ci-dessus a mal cherché.
+    if (process.env.VERBEUX) console.log('    annonces vues :', [...annonces]);
     if (manches.size > 1) console.log(`    manches vues  : ${[...manches].join(' · ')}`);
     console.log(`    réglages      : ${reglages.slice(0, 90)}`);
     if (erreurs.length) console.log(`    ERREURS       : ${erreurs.slice(0, 3).join(' | ')}`);

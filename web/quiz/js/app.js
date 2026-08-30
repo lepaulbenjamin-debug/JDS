@@ -17,7 +17,7 @@ import {
 import * as packs from './packs.js';
 import * as achats from './achats.js';
 import {
-  PERSONAS, voix, sons, paroleDe, annonceDeManche, clipsDAnnonce, chargerLesClips,
+  PERSONAS, voix, sons, paroleDe, clipsDAnnonce, chargerLesClips,
   dureeDuClip, dureeDeLaReplique,
 } from './emcee.js';
 
@@ -298,10 +298,12 @@ function parler() {
     }
     if (qid) clips.push(`reponse/${qid}`, `note/${qid}`);
   } else if (etat.annonceCle) {
-    // L'annonce de manche dit son numéro puis une formule : deux clips, et
-    // c'est `annonceDeManche` qui sait lesquels. Les autres annonces (ouverture,
-    // podium) n'en ont qu'un.
-    clips.push(...annonceDeManche(etat.persona, etat.annonceCle, etat.manche));
+    // Les clips viennent de la régie, tirés une fois pour toute la table. Les
+    // tirer ici donnait une phrase par appareil, et une autre encore à l'écran.
+    clips.push(...(etat.annonceClips ?? []));
+    // Le repli reste la version écrite : il ne sert que si la banque est
+    // absente, et là c'est le même texte qui est dit et affiché. Pas de
+    // contradiction possible, et on garde la phrase qui compte les joueurs.
     repli.push(etat.annonce);
   }
 
@@ -372,6 +374,23 @@ function rendreLobby() {
     : 'En attente du lancement…';
 }
 
+/**
+ * La phrase de l'animateur, telle qu'elle doit s'afficher.
+ *
+ * Avec les enregistrements, c'est leur mot pour mot : on lisait « Manche 3 sur
+ * 12 » pendant qu'on entendait « troisième question, prêts ? c'est parti ».
+ * Sans eux, c'est la version écrite — celle qui compte les joueurs et nomme le
+ * gagnant, que la synthèse dira mot pour mot elle aussi.
+ *
+ * Le podium garde toujours sa version écrite : là, le clip renvoie à l'écran au
+ * lieu de le répéter, et c'est l'écran qui nomme le vainqueur. La régie le dit
+ * en laissant `annonceDite` vide.
+ */
+function annonceAffichee() {
+  if (voix.clipsDisponibles && etat?.annonceDite) return etat.annonceDite;
+  return etat?.annonce ?? '';
+}
+
 function rendreJeu() {
   const cle = `${etat.phase}:${etat.manche}`;
   const question = etat.question;
@@ -389,11 +408,14 @@ function rendreJeu() {
   $('#jeu-consigne').textContent = question?.consigne ?? '';
   $('#jeu-consigne').hidden = !question || etat.phase === 'revelation';
 
+  // Hors du garde ci-dessous, et volontairement : la banque de clips arrive de
+  // façon asynchrone, donc la phrase à afficher peut changer après le premier
+  // rendu. Une affectation de texte par battement ne coûte rien.
+  if (etat.phase !== 'revelation') $('#jeu-annonce').textContent = annonceAffichee();
+
   if (cle !== cleRendue) {
     cleRendue = cle;
-    $('#jeu-annonce').textContent = etat.phase === 'revelation'
-      ? (etat.resultat?.commentaire ?? '')
-      : (etat.annonce ?? '');
+    if (etat.phase === 'revelation') $('#jeu-annonce').textContent = etat.resultat?.commentaire ?? '';
     // Sur un TTMC, `texte` est l'annonce de la carte ; l'énoncé joué dépend du
     // niveau et vit dans la vue, qui est seule à savoir lequel a été choisi.
     $('#jeu-question').textContent = question?.type === 'ttmc' ? '' : (question?.texte ?? '');
@@ -804,7 +826,9 @@ function rafraichirChrono() {
 }
 
 function rendreFin() {
-  $('#fin-annonce').textContent = etat.annonce ?? '';
+  // `annonceDite` est vide au podium, donc c'est bien la phrase qui nomme le
+  // gagnant qui s'affiche — celle à laquelle le clip renvoie.
+  $('#fin-annonce').textContent = annonceAffichee();
   const hote = clear($('#fin-podium'));
   (etat.podium ?? etat.classement ?? []).forEach((joueur, rang) => {
     hote.append(el('div', { class: `podium-ligne${joueur.id === moi.id ? ' est-moi' : ''}` }, [

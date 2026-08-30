@@ -565,20 +565,34 @@ const numeroDeManche = (persona, n) => ({
  * formule tirée au sort. Les deux clips bout à bout tiennent largement dans la
  * fenêtre de jokers — c'est elle qui borne l'annonce, puisque l'énoncé part au
  * top et n'attend pas.
+ *
+ * Rend les clips ET ce qu'ils disent, d'un seul tirage. C'est le point de la
+ * fonction, et il vient d'un défaut : l'écran affichait une phrase tirée d'une
+ * banque, la voix en jouait une autre tirée d'une seconde banque, et les deux
+ * tirages étaient indépendants. On lisait « Manche 3 sur 12 » pendant qu'on
+ * entendait « troisième question, prêts ? c'est parti ». Pire, chaque appareil
+ * tirait le sien : deux téléphones dont la voix est activée ne disaient pas la
+ * même chose. Un seul tirage, décidé par la régie et publié, règle les deux.
  */
 export function annonceDeManche(persona, cle, numero) {
   if (cle !== 'avantManche') {
     const seul = paroleDe(persona, cle);
-    return seul ? [seul.id] : [];
+    return { clips: seul ? [seul.id] : [], texte: seul?.texte ?? '' };
   }
   const nom = DIT[persona] ? persona : 'classique';
   const clips = [];
+  const morceaux = [];
   if (Number.isInteger(numero) && numero >= 1 && numero <= MANCHES_MAX) {
-    clips.push(numeroDeManche(nom, numero).id);
+    const compte = numeroDeManche(nom, numero);
+    clips.push(compte.id);
+    morceaux.push(compte.texte);
   }
   const fioriture = paroleDe(persona, 'avantManche');
-  if (fioriture) clips.push(fioriture.id);
-  return clips;
+  if (fioriture) {
+    clips.push(fioriture.id);
+    morceaux.push(fioriture.texte);
+  }
+  return { clips, texte: morceaux.join(' ') };
 }
 
 /**

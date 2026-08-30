@@ -12,7 +12,7 @@
 // Aucun accès au réseau ni au DOM ici : on entre du temps et des réponses, on
 // sort un état. `app.js` s'occupe de faire tourner la boucle.
 
-import { repliqueDe, dureeDeLaReplique } from './emcee.js';
+import { repliqueDe, dureeDeLaReplique, annonceDeManche } from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
 
@@ -319,6 +319,40 @@ export function creerRegie({
   const tempsDIntro = () => budgetDIntro(dureeDeLaReplique(persona, 'ouverture'));
 
   /**
+   * L'annonce, tirée une fois pour toute la table.
+   *
+   * Trois choses en sortent, et elles vont ensemble :
+   *
+   *   annonceClips  les clips à jouer, dans l'ordre
+   *   annonceDite   ce que ces clips disent, mot pour mot
+   *   annonce       la version écrite, qui peut nommer des joueurs et compter
+   *                 des points — ce qu'aucun enregistrement ne saura faire
+   *
+   * Le tirage est ici, et pas sur chaque appareil, pour la même raison que le
+   * reste du moteur : la régie décide, les pupitres appliquent. Tiré en local,
+   * il donnait une phrase différente par téléphone, et une autre encore à
+   * l'écran.
+   *
+   * `cleTexte` existe pour l'ouverture : il n'y a qu'un enregistrement, mais
+   * deux versions écrites selon qu'on joue seul ou à plusieurs.
+   */
+  function poserLAnnonce(cle, {
+    numero = 0, variables = {}, cleTexte = cle, complementaire = false,
+  } = {}) {
+    const dite = annonceDeManche(persona, cle, numero);
+    etat.annonceCle = cle;
+    etat.annonceClips = dite.clips;
+    // Laissé vide quand l'écrit COMPLÈTE l'enregistrement au lieu de le
+    // répéter : au podium, le clip renvoie explicitement à l'écran — « le
+    // classement final est à l'écran » — et c'est l'écran qui nomme le gagnant
+    // et son score. Là, deux textes différents ne se contredisent pas, ils se
+    // répondent. Partout ailleurs, l'écrit doit être le mot pour mot de ce
+    // qu'on entend.
+    etat.annonceDite = complementaire ? '' : dite.texte;
+    etat.annonce = repliqueDe(persona, cleTexte, variables);
+  }
+
+  /**
    * Combien de temps laisser sur la révélation.
    *
    * Le plancher suffit quand l'animateur ne fait que commenter, mais dès qu'il
@@ -435,8 +469,10 @@ export function creerRegie({
     etat.startAt = now + (typeDeManche(etat.question.type).avantQuestionMs ?? DUREE_JOKERS_MS);
     etat.deadline = etat.startAt + tempsDeReponse(etat.question);
     etat.finPhase = etat.deadline;
-    etat.annonceCle = numero === total ? 'derniereManche' : 'avantManche';
-    etat.annonce = repliqueDe(persona, etat.annonceCle, { manche: numero, total });
+    poserLAnnonce(numero === total ? 'derniereManche' : 'avantManche', {
+      numero,
+      variables: { manche: numero, total },
+    });
   }
 
   function cloreManche(joueurs, now) {
@@ -512,16 +548,14 @@ export function creerRegie({
       // Retenu pour pouvoir recalculer la fin : voir `avancer`.
       etat.introAt = now;
       etat.finPhase = now + tempsDIntro();
-      // `annonceCle` reste 'ouverture' quel que soit le nombre de joueurs :
-      // c'est elle qui désigne le clip enregistré, et il n'y en a qu'un. Seul
-      // le texte — affiché, et lu par la synthèse en repli — se décline, parce
-      // qu'il compte les candidats et qu'à un seul il ne veut plus rien dire.
-      etat.annonceCle = 'ouverture';
-      etat.annonce = repliqueDe(
-        persona,
-        joueurs.length === 1 ? 'ouvertureSolo' : 'ouverture',
-        { nb: joueurs.length },
-      );
+      // Un seul enregistrement d'ouverture, quel que soit le nombre de joueurs :
+      // il ne compte personne, faute de savoir combien vous serez. La version
+      // écrite, elle, se décline — elle compte les candidats, et à un seul elle
+      // ne veut plus rien dire.
+      poserLAnnonce('ouverture', {
+        variables: { nb: joueurs.length },
+        cleTexte: joueurs.length === 1 ? 'ouvertureSolo' : 'ouverture',
+      });
       return true;
     },
 
@@ -626,10 +660,11 @@ export function creerRegie({
           etat.phase = 'podium';
           etat.question = null;
           etat.resultat = null;
-          etat.annonceCle = 'podium';
-          etat.annonce = podium[0]
-            ? repliqueDe(persona, 'podium', { nom: podium[0].name, points: podium[0].score })
-            : '';
+          poserLAnnonce('podium', {
+            complementaire: true,
+            variables: { nom: podium[0]?.name ?? '', points: podium[0]?.score ?? 0 },
+          });
+          if (!podium[0]) etat.annonce = '';
           etat.podium = podium;
         }
         return true;
@@ -666,10 +701,17 @@ export function creerRegie({
         startAt: etat.startAt,
         deadline: etat.deadline,
         finPhase: etat.finPhase,
-        // La clé désigne le clip audio ; le texte, lui, porte les prénoms.
+        // La clé dit de quelle annonce il s'agit ; les clips sont tirés une
+        // seule fois, ici, pour que toute la table entende la même chose.
         annonceCle: etat.annonceCle,
+        annonceClips: etat.annonceClips ?? [],
         finale: etat.manche === total,
         question,
+        // `annonceDite` est le mot pour mot des clips — c'est lui qui s'affiche
+        // quand ils sont là. `annonce` est la version écrite, qui porte les
+        // prénoms et les points : le repli de la synthèse, et le texte du
+        // podium.
+        annonceDite: etat.annonceDite ?? '',
         annonce: etat.annonce,
         resultat: etat.resultat,
         podium: etat.podium ?? null,
