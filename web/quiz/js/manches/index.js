@@ -12,6 +12,10 @@
 //   facteurDuree               le chrono par rapport à un QCM : taper un nombre
 //                              ou classer quatre éléments prend plus de temps
 //                              que toucher un bouton
+//   avantQuestionMs            facultatif : la fenêtre d'avant-question, quand
+//                              le défaut ne suffit pas. Elle sert aux jokers
+//                              partout ; un type qui y fait décider autre chose
+//                              doit en demander davantage
 //   poidsVitesse               0 à 1 : combien la rapidité pèse dans les points.
 //                              1 pour un QCM, 0 pour une estimation où c'est la
 //                              justesse qui compte

@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 
 import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
-  PLAFOND_REVELATION_MS,
+  PLAFOND_REVELATION_MS, budgetDIntro,
 } from '../web/quiz/js/engine.js';
 import {
   dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS,
@@ -412,6 +412,60 @@ test('la fenêtre de jokers précède la question', () => {
   const vue = regie.etatPublic(JOUEURS);
   assert.equal(vue.startAt - horloge, DUREE_JOKERS_MS);
   assert.equal(vue.deadline - vue.startAt, DUREE);
+});
+
+test('le TTMC laisse plus de temps avant la question que les autres types', () => {
+  // La même fenêtre sert partout à sortir un joker — une décision binaire, deux
+  // gros boutons. Sur un TTMC il faut en plus lire la consigne, arbitrer, et
+  // viser un cran sur dix : à six secondes, la plupart des gens repartaient au
+  // niveau 1 par défaut, c'est-à-dire au pari le plus prudent, sur le seul type
+  // de manche qui existe pour qu'on ose.
+  const fenetre = (question) => {
+    const regie = creerRegie({ questions: [question], dureeMs: DUREE });
+    regie.lancer(0, JOUEURS);
+    let horloge = 0;
+    while (regie.phase !== 'manche') {
+      horloge += 100;
+      regie.avancer(horloge, JOUEURS);
+    }
+    return regie.etatPublic(JOUEURS).startAt - horloge;
+  };
+
+  const surTtmc = fenetre(carteTtmc());
+  assert.equal(fenetre(QUESTION), DUREE_JOKERS_MS);
+  assert.ok(surTtmc >= DUREE_JOKERS_MS + 5000,
+    `fenêtre TTMC de ${surTtmc} ms, trop courte pour choisir un niveau`);
+});
+
+test('passer coupe la révélation, et rien d’autre', () => {
+  const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+
+  // Pendant l'intro et la manche, il n'y a rien à passer : le bouton n'est pas
+  // affiché, mais la régie doit refuser quand même — c'est elle qui décide.
+  let horloge = 0;
+  assert.equal(regie.passer(horloge), false, 'passer a mordu sur l’intro');
+  while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  assert.equal(regie.passer(horloge), false, 'passer a mordu sur la manche');
+
+  while (regie.phase !== 'revelation') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  const restait = regie.etatPublic(JOUEURS).finPhase - horloge;
+  assert.ok(restait > 1000, 'la révélation était déjà finie, le test ne prouve rien');
+
+  assert.equal(regie.passer(horloge), true);
+  // La manche suivante s'enchaîne au battement d'après, pas dans dix secondes.
+  horloge += 100;
+  assert.equal(regie.avancer(horloge, JOUEURS), true);
+  assert.equal(regie.phase, 'manche');
+  assert.equal(regie.etatPublic(JOUEURS).manche, 2);
+
+  // Et on ne rallonge jamais : repasser sur une phase déjà close ne la rouvre
+  // pas, sans quoi un double tap ramènerait un écran que la table a quitté.
+  while (regie.phase !== 'revelation') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  regie.passer(horloge);
+  const fin = regie.etatPublic(JOUEURS).finPhase;
+  regie.passer(horloge + 5000);
+  assert.equal(regie.etatPublic(JOUEURS).finPhase, fin);
 });
 
 /* --- Les autres types de manche ------------------------------------------ */
@@ -1561,6 +1615,38 @@ test('l’annonce tient dans la fenêtre de jokers', async () => {
     assert.ok(pire * 1000 <= DUREE_JOKERS_MS,
       `${persona} : annonce de ${pire.toFixed(1)} s pour une fenêtre de ${DUREE_JOKERS_MS / 1000} s`);
   }
+});
+
+test('l’ouverture tient dans la fenêtre d’intro', async () => {
+  // Le jumeau du test ci-dessus, pour la toute première phrase de la soirée —
+  // et il manquait. L'ouverture de l'animateur classique dure 5,36 s pour une
+  // intro fixée à 5,5 s : elle se faisait couper par l'annonce de la manche 1,
+  // le temps de rendre l'écran et de lancer la lecture.
+  //
+  // La fenêtre n'est plus fixe : `creerRegie` prend le plancher ou la longueur
+  // du clip plus une respiration, selon ce qui est le plus long. On vérifie ici
+  // que ce budget couvre vraiment le plus bavard des animateurs.
+  const { readFileSync } = await import('node:fs');
+  let manifeste;
+  try {
+    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+  } catch {
+    return;                                  // clips non générés : rien à vérifier
+  }
+  const ENCHAINEMENT_S = 1.4;
+
+  let mesures = 0;
+  for (const { id: persona } of PERSONAS) {
+    const ids = Object.keys(manifeste.clips).filter((i) => i.startsWith(`emcee/${persona}/ouverture/`));
+    if (!ids.length) continue;
+    mesures += 1;
+    const clip = Math.max(...ids.map((i) => manifeste.clips[i]));
+    // La fenêtre du moteur, pas une copie de sa formule.
+    const fenetre = budgetDIntro(clip);
+    assert.ok((clip + ENCHAINEMENT_S) * 1000 <= fenetre,
+      `${persona} : ouverture de ${clip.toFixed(2)} s pour une fenêtre de ${fenetre / 1000} s`);
+  }
+  assert.ok(mesures > 0, 'aucune ouverture mesurée : le test ne prouve rien');
 });
 
 test('chaque animateur sait tout dire', () => {

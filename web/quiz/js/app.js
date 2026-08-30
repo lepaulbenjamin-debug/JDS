@@ -406,6 +406,12 @@ function rendreJeu() {
   rendreEtatManche();
   rendreFilRouge();
   rafraichirChrono();
+
+  // Le bouton n'apparaît que sur la régie : c'est elle qui tient l'horloge, et
+  // c'est elle qui parle. Sur un pupitre, il ne pourrait qu'avancer un écran
+  // sans avancer la partie — et couper l'explication des autres depuis sa
+  // poche n'est de toute façon pas un pouvoir à donner à tout le monde.
+  $('#zone-passer').hidden = !(estRegie() && etat.phase === 'revelation');
 }
 
 /**
@@ -1453,6 +1459,17 @@ function brancher() {
       aPublier = regie.etatPublic(joueurs);
       appliquer(aPublier);
     }
+  });
+
+  $('#btn-passer').addEventListener('click', () => {
+    if (!regie) return;
+    // Taire d'abord : sans ça, l'explication qu'on vient de couper à l'écran
+    // continue de se dire par-dessus l'annonce de la manche suivante.
+    voix.taire();
+    regie.passer(net.serverNow());
+    // Rien de plus : le battement suivant — 450 ms au pire — voit la phase
+    // terminée et enchaîne par le chemin ordinaire. Forcer la main ici
+    // dédoublerait la publication en cours.
   });
 
   $('#btn-rejouer').addEventListener('click', () => {

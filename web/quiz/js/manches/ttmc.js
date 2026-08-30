@@ -46,6 +46,16 @@ export default {
   // et plus personne ne prendrait le moindre risque.
   poidsVitesse: 0.3,
 
+  // La fenêtre d'avant-question, plus longue ici que partout ailleurs.
+  //
+  // Six secondes suffisent à sortir un joker : la décision est binaire et les
+  // boutons sont gros. Sur cette manche il faut en plus lire « tu te mets
+  // combien ? », arbitrer, et viser un cran sur dix. La plupart des gens
+  // n'avaient pas fini d'y penser que l'énoncé s'affichait, et repartaient au
+  // niveau 1 par défaut — c'est-à-dire au pari le plus prudent, sur le seul
+  // type de manche qui existe pour qu'on ose.
+  avantQuestionMs: 12000,
+
   // Déclare au moteur que ce type se joue avec une annonce préalable. C'est ce
   // qui ouvre le canal « niveau » côté régie, sans que le moteur ait à
   // connaître ce type en particulier.

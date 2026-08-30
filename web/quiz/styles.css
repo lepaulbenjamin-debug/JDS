@@ -110,6 +110,11 @@ body {
 .btn-primary { background: var(--accent); border-color: transparent; color: #fff; }
 .btn-ghost { background: transparent; }
 .btn-block { display: block; width: 100%; }
+/* Deux boutons pleine largeur qui se suivent se touchaient : sur un téléphone
+   tenu d'une main, le pouce vise entre les deux et part dans une partie solo
+   au lieu d'en créer une. Ces deux-là ne mènent pas au même endroit — l'écart
+   doit se voir, pas seulement exister. */
+.btn-block + .btn-block { margin-top: 12px; }
 .btn-lg { padding: 16px; font-size: 17px; }
 
 .field { display: grid; gap: 6px; margin: 14px 0; }

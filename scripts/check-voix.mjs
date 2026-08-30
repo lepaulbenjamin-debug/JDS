@@ -81,7 +81,9 @@ const MOUCHARD = () => {
 
   const jouer = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
-    window.__trace.clips.push(this.getAttribute('src') ?? this.src);
+    // L'instant compte autant que l'identifiant : c'est l'écart entre deux
+    // lectures qui dit si la première a eu le temps d'aller au bout.
+    window.__trace.clips.push({ id: this.getAttribute('src') ?? this.src, t: Date.now() });
     return jouer.apply(this, args).catch((erreur) => {
       window.__trace.echecs.push(erreur.name);
       throw erreur;
@@ -153,6 +155,40 @@ async function essai(chromium, mode, secondes) {
   return { trace, manches, reglages, erreurs };
 }
 
+/**
+ * L'ouverture a-t-elle eu le temps d'aller au bout ?
+ *
+ * Le clip suivant coupe le précédent — c'est voulu, une partie n'a qu'une voix.
+ * Donc si l'annonce de la manche 1 démarre avant la fin de l'ouverture, la
+ * première phrase de la soirée est tronquée, et rien ne le signale : on entend
+ * juste l'animateur s'interrompre.
+ *
+ * On compare donc l'écart entre les deux lectures à la durée annoncée par le
+ * manifeste. C'est la mesure exacte du défaut, et elle ne dépend d'aucune
+ * constante recopiée.
+ */
+function ouvertureEntiere(clips, manifeste) {
+  const i = clips.findIndex((c) => c.id.includes('/ouverture/'));
+  if (i === -1) return { verdict: null };
+  // `element.src` peut être absolu ou relatif selon la façon dont il a été
+  // posé : les deux formes mènent au même identifiant de manifeste.
+  const id = clips[i].id.replace(/^(?:.*\/)?audio\//, '').replace(/\.[a-z0-9]+$/, '');
+  const attendue = manifeste.clips[id];
+  if (!attendue) return { verdict: null, inconnu: id };
+  const suivant = clips[i + 1];
+  if (!suivant) return { verdict: null, attendue };
+  const laisse = (suivant.t - clips[i].t) / 1000;
+  // Pas « ça tient tout juste » : il faut une marge, et elle n'est pas de
+  // confort. Ce navigateur sans écran démarre la lecture presque
+  // instantanément ; un téléphone rend l'écran, décode le fichier, et la régie
+  // ne se réveille que tous les 450 ms. Avec la fenêtre fixe d'avant, la mesure
+  // ici donnait 5,9 s pour 5,36 s — vert — alors que sur un iPhone la phrase
+  // était bel et bien coupée. Une seconde de battement, et le banc voit ce que
+  // l'oreille entend.
+  const MARGE_S = 1;
+  return { verdict: laisse >= attendue + MARGE_S, attendue, laisse };
+}
+
 // Ce qu'on attend de chaque installation. `clips` et `synthese` disent qui a le
 // droit de parler ; c'est tout l'objet du test.
 const ATTENDU = {
@@ -174,21 +210,31 @@ async function main() {
 
   // Une partie complète pour la première installation, juste l'ouverture pour
   // les autres : c'est là que tout se joue, et chaque seconde est réelle.
+  const manifeste = JSON.parse(
+    await readFile(join(RACINE, 'audio', 'manifeste.json'), 'utf8').catch(() => '{"clips":{}}'),
+  );
+
   let echecs = 0;
   for (const [mode, attendu] of Object.entries(ATTENDU)) {
-    const { trace, manches, reglages, erreurs } = await essai(chromium, mode, mode === 'complet' ? 40 : 3);
+    const { trace, manches, reglages, erreurs } = await essai(chromium, mode, mode === 'complet' ? 55 : 3);
     const constate = {
       clips: trace.clips.length > 0,
       synthese: trace.synthese.length > 0,
       reglages: attendu.reglages.test(reglages),
     };
+    const ouverture = ouvertureEntiere(trace.clips, manifeste);
     const ok = constate.clips === attendu.clips
       && constate.synthese === attendu.synthese
       && constate.reglages
+      && ouverture.verdict !== false
       && !erreurs.length;
     if (!ok) echecs += 1;
 
     console.log(`\n${ok ? '✓' : '✗'} ${mode}`);
+    if (ouverture.verdict != null) {
+      console.log(`    ouverture     : ${ouverture.laisse.toFixed(1)} s laissées pour ${ouverture.attendue} s`
+        + `${ouverture.verdict ? '' : '  ← COUPÉE'}`);
+    }
     console.log(`    clips joués   : ${trace.clips.length}  (attendu ${attendu.clips ? '> 0' : '0'})`);
     console.log(`    voix système  : ${trace.synthese.length}  (attendu ${attendu.synthese ? '> 0' : '0'})`);
     if (trace.echecs.length) console.log(`    échecs lecture: ${trace.echecs.join(', ')}`);

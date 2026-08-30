@@ -12,7 +12,7 @@
 // Aucun accès au réseau ni au DOM ici : on entre du temps et des réponses, on
 // sort un état. `app.js` s'occupe de faire tourner la boucle.
 
-import { repliqueDe } from './emcee.js';
+import { repliqueDe, dureeDeLaReplique } from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
 
@@ -58,7 +58,26 @@ export function jokersPossibles(type) {
 // l'énoncé. Un joker choisi la question sous les yeux n'est plus un pari, c'est
 // une évidence — « je connais celle-là, je double ».
 export const DUREE_JOKERS_MS = 6000;
+// Le plancher de l'ouverture, pas sa durée : c'est la longueur du clip qui
+// commande, et 5,5 s coupaient les 5,36 s de l'animateur classique — la lecture
+// ne démarre qu'au battement suivant, et il faut bien la laisser finir.
 const DUREE_INTRO_MS = 5500;
+// Ce qui reste après la dernière syllabe de l'ouverture : le temps de couvrir
+// le délai d'amorçage et de ne pas enchaîner sur la manche 1 au mot près.
+const RESPIRATION_INTRO_S = 2;
+
+/**
+ * Le budget de l'ouverture, pour un clip d'une durée donnée.
+ *
+ * Exporté pour être mesuré et non recopié : la fenêtre réelle dépend du
+ * manifeste audio, que le moteur ne sait lire que dans un navigateur. Un test
+ * qui redirait la formule de son côté resterait vert le jour où elle change
+ * ici — c'est-à-dire précisément le jour où il devrait crier.
+ */
+export const budgetDIntro = (clipS = 0) => Math.max(
+  DUREE_INTRO_MS,
+  Math.round((clipS + RESPIRATION_INTRO_S) * 1000),
+);
 // La révélation dure le temps de lire l'explication à voix haute : c'est elle
 // qui transforme « tu as faux » en « ah bon, tiens », et c'est ce qui fait
 // qu'on enchaîne une deuxième partie.
@@ -290,6 +309,16 @@ export function creerRegie({
   const tempsDeReponse = (manche) => Math.round(dureeMs * typeDeManche(manche.type).facteurDuree);
 
   /**
+   * Combien de temps laisser à l'ouverture.
+   *
+   * La longueur se lit dans emcee et non par un rappel de l'appli, contrairement
+   * à la révélation : c'est une réplique de l'animateur, dont le moteur connaît
+   * déjà la clé. Ce sont les clips de QUESTION qui lui échappent, parce qu'ils
+   * sont indexés sur des identifiants de banque.
+   */
+  const tempsDIntro = () => budgetDIntro(dureeDeLaReplique(persona, 'ouverture'));
+
+  /**
    * Combien de temps laisser sur la révélation.
    *
    * Le plancher suffit quand l'animateur ne fait que commenter, mais dès qu'il
@@ -321,6 +350,7 @@ export function creerRegie({
     niveaux: {},
     deadline: 0,
     finPhase: 0,
+    introAt: 0,
     question: null,
     annonce: '',
     annonceCle: '',
@@ -400,7 +430,9 @@ export function creerRegie({
     etat.niveaux = {};
     etat.resultat = null;
     etat.phase = 'manche';
-    etat.startAt = now + DUREE_JOKERS_MS;
+    // La fenêtre d'avant-question appartient au type : le TTMC y fait annoncer
+    // un niveau, ce qui demande plus que le temps de sortir un joker.
+    etat.startAt = now + (typeDeManche(etat.question.type).avantQuestionMs ?? DUREE_JOKERS_MS);
     etat.deadline = etat.startAt + tempsDeReponse(etat.question);
     etat.finPhase = etat.deadline;
     etat.annonceCle = numero === total ? 'derniereManche' : 'avantManche';
@@ -477,7 +509,9 @@ export function creerRegie({
     lancer(now, joueurs) {
       if (etat.phase !== 'lobby') return false;
       etat.phase = 'intro';
-      etat.finPhase = now + DUREE_INTRO_MS;
+      // Retenu pour pouvoir recalculer la fin : voir `avancer`.
+      etat.introAt = now;
+      etat.finPhase = now + tempsDIntro();
       // `annonceCle` reste 'ouverture' quel que soit le nombre de joueurs :
       // c'est elle qui désigne le clip enregistré, et il n'y en a qu'un. Seul
       // le texte — affiché, et lu par la synthèse en repli — se décline, parce
@@ -488,6 +522,24 @@ export function creerRegie({
         joueurs.length === 1 ? 'ouvertureSolo' : 'ouverture',
         { nb: joueurs.length },
       );
+      return true;
+    },
+
+    /**
+     * Couper court à la révélation.
+     *
+     * La durée est calculée pour laisser l'explication se dire en entier, plus
+     * une respiration : c'est le bon défaut, et c'est parfois trop. Une question
+     * que tout le monde connaissait, une table qui a fini de lire, et l'écran
+     * reste là pendant quinze secondes.
+     *
+     * Avancer la fin de phase suffit — le battement suivant enchaîne, en
+     * passant par le chemin ordinaire. On ne la recule jamais : rallonger une
+     * phase ramènerait un écran que la table a déjà quitté des yeux.
+     */
+    passer(now) {
+      if (etat.phase !== 'revelation' || etat.finPhase <= now) return false;
+      etat.finPhase = now;
       return true;
     },
 
@@ -537,9 +589,18 @@ export function creerRegie({
     avancer(now, joueurs) {
       if (etat.phase === 'lobby' || etat.phase === 'podium') return false;
 
-      if (etat.phase === 'intro' && now >= etat.finPhase) {
-        prepareManche(1, now);
-        return true;
+      if (etat.phase === 'intro') {
+        // Recalculée à chaque battement, et pas seulement au lancement : en
+        // solo la partie démarre au premier tap, avant que le manifeste audio
+        // ne soit lu. La longueur du clip vaut alors zéro, et l'ouverture se
+        // faisait couper par la manche 1. La durée ne peut que s'allonger —
+        // une fois la banque connue, elle ne change plus.
+        etat.finPhase = etat.introAt + tempsDIntro();
+        if (now >= etat.finPhase) {
+          prepareManche(1, now);
+          return true;
+        }
+        return false;
       }
 
       if (etat.phase === 'manche') {
