@@ -35,6 +35,9 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// L'inventaire donne le texte de chaque clip — c'est la seule façon de comparer
+// ce qui est joué à ce qui est écrit. Il ne demande aucune clé d'API.
+import { inventaire } from './generate-audio.mjs';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'ios');
 
@@ -192,6 +195,29 @@ function ouvertureEntiere(clips, manifeste) {
   return { verdict: laisse >= attendue + MARGE_S, attendue, laisse };
 }
 
+/**
+ * Le commentaire de révélation affiché dit-il ce que le clip a dit ?
+ *
+ * Là, la comparaison peut être exacte : contrairement à l'annonce de manche, il
+ * n'y a pas de numéro qui s'écrit en chiffres et se prononce en lettres.
+ *
+ * On repère le clip par élimination : parmi les répliques de l'animateur, tout
+ * ce qui n'est ni un numéro, ni une formule d'avant-manche, ni l'ouverture, ni
+ * le podium est un commentaire de révélation.
+ */
+const COMMENTAIRE = /^emcee\/[^/]+\/(?!manche\/|avantManche\/|derniereManche\/|ouverture\/|podium\/)/;
+
+function revelationEntendue(clips, annonces, textes) {
+  const dits = clips
+    .map((c) => c.id.replace(/^(?:.*\/)?audio\//, '').replace(/\.[a-z0-9]+$/, ''))
+    .filter((id) => COMMENTAIRE.test(id))
+    .map((id) => textes.get(id))
+    .filter(Boolean);
+  if (!dits.length) return { verdict: null };
+  const vu = dits.find((t) => annonces.has(t));
+  return { verdict: Boolean(vu), dit: dits[0], vu };
+}
+
 // Ce qu'on attend de chaque installation. `clips` et `synthese` disent qui a le
 // droit de parler ; c'est tout l'objet du test.
 //
@@ -238,6 +264,8 @@ async function main() {
     await readFile(join(RACINE, 'audio', 'manifeste.json'), 'utf8').catch(() => '{"clips":{}}'),
   );
 
+  const textes = new Map((await inventaire()).map((c) => [c.id, c.texte]));
+
   let echecs = 0;
   for (const [mode, attendu] of Object.entries(ATTENDU)) {
     const { trace, manches, annonces, reglages, erreurs } = await essai(chromium, mode, attendu.secondes);
@@ -253,12 +281,16 @@ async function main() {
     const accord = attendu.annonce == null ? null
       : attendu.annonce === 'enregistree' ? ORDINAL.test(annonceManche ?? '')
         : Boolean(annonceManche) && trace.synthese.includes(annonceManche);
+    const revelation = attendu.annonce === 'enregistree'
+      ? revelationEntendue(trace.clips, annonces, textes)
+      : { verdict: null };
 
     const ok = constate.clips === attendu.clips
       && constate.synthese === attendu.synthese
       && constate.reglages
       && ouverture.verdict !== false
       && accord !== false
+      && revelation.verdict !== false
       && !erreurs.length;
     if (!ok) echecs += 1;
 
@@ -273,6 +305,10 @@ async function main() {
     if (accord != null) {
       console.log(`    annonce à l’écran : ${JSON.stringify(annonceManche ?? '')}`
         + `${accord ? '' : '  ← ne dit pas ce qui est joué'}`);
+    }
+    if (revelation.verdict != null) {
+      console.log(`    révélation        : ${JSON.stringify(revelation.vu ?? revelation.dit)}`
+        + `${revelation.verdict ? '' : '  ← joué, mais pas affiché'}`);
     }
     // `VERBEUX=1` sort toutes les phrases vues, ce qui fait gagner un aller-retour
     // quand la ligne ci-dessus tombe en rouge : la question est toujours de savoir

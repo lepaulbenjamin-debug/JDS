@@ -328,6 +328,63 @@ test('la régie publie l’annonce et le mot pour mot de ce qu’elle dit', () =
   assert.match(fin.annonce, /Ana|Bo|Cé/);
 });
 
+test('tout clip que la régie demande existe vraiment', async () => {
+  // Un seul identifiant manquant fait abandonner TOUT le passage : la règle est
+  // « une partie, une voix », donc jamais un clip et la synthèse dans la même
+  // phrase. Le symptôme n'est donc pas une erreur, c'est du silence — et c'est
+  // ce qui arrivait à CHAQUE révélation de TTMC, dont la réponse et
+  // l'explication ne sont pas enregistrées (dix corrections en parallèle).
+  const { readFileSync } = await import('node:fs');
+  let manifeste;
+  try {
+    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+  } catch {
+    return;                                  // clips non générés : rien à vérifier
+  }
+
+  // Une manche de chaque type, tirée de la vraie banque.
+  const parType = new Map();
+  for (const entree of QUESTIONS) {
+    if (!parType.has(entree.type)) parType.set(entree.type, entree);
+  }
+  const questions = [...parType.values()]
+    .map((entree) => typeDeManche(entree.type).preparer(entree, (l) => l));
+  assert.ok(questions.length >= 5, 'la banque ne couvre pas assez de types');
+
+  const { vues } = jouerUnePartie({ questions });
+  const demandes = new Set();
+  for (const vue of vues) {
+    for (const id of vue.annonceClips ?? []) demandes.add(id);
+    for (const id of vue.resultat?.clips ?? []) demandes.add(id);
+  }
+  assert.ok(demandes.size > 10, 'trop peu de clips demandés, le test ne prouve rien');
+
+  const manquants = [...demandes].filter((id) => manifeste.clips[id] == null);
+  assert.deepEqual(manquants, [], `clips réclamés mais absents : ${manquants.join(', ')}`);
+
+  // Et l'inverse : une révélation sans aucun clip serait muette elle aussi.
+  for (const vue of vues.filter((v) => v.phase === 'revelation')) {
+    assert.ok(vue.resultat.clips.length >= 1,
+      `révélation muette sur une manche ${vue.question?.type}`);
+  }
+});
+
+test('la révélation publie le mot pour mot de ce qu’elle dit', () => {
+  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+  const { vues } = jouerUnePartie({ questions: troisQuestions() });
+
+  const revelations = vues.filter((v) => v.phase === 'revelation');
+  assert.equal(revelations.length, 3);
+  for (const vue of revelations) {
+    const clips = vue.resultat.clips;
+    assert.equal(vue.resultat.commentaireDit, textes.get(clips[0]),
+      'le commentaire affiché ne dit pas ce que le premier clip dit');
+    // La réponse puis l'explication ferment le passage, dans cet ordre.
+    assert.deepEqual(clips.slice(-2),
+      [`reponse/${vue.question.id}`, `note/${vue.question.id}`]);
+  }
+});
+
 test('la bonne réponse n’est publiée qu’à la révélation', () => {
   const { vues } = jouerUnePartie({ questions: troisQuestions() });
   for (const vue of vues.filter((v) => v.phase === 'manche')) {

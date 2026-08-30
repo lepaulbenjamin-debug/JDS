@@ -12,7 +12,7 @@
 // Aucun accès au réseau ni au DOM ici : on entre du temps et des réponses, on
 // sort un état. `app.js` s'occupe de faire tourner la boucle.
 
-import { repliqueDe, dureeDeLaReplique, annonceDeManche } from './emcee.js';
+import { repliqueDe, dureeDeLaReplique, annonceDeManche, paroleDe } from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
 
@@ -475,6 +475,44 @@ export function creerRegie({
     });
   }
 
+  /**
+   * Le passage de la révélation : les clips dans l'ordre, et leur mot pour mot.
+   *
+   * Quatre choses s'enchaînent — le commentaire, l'action marquante s'il y en a
+   * eu une, la bonne réponse, son explication. Les deux premières sont des
+   * répliques de l'animateur, les deux dernières appartiennent à la question.
+   *
+   * Tout est décidé ici pour la même raison qu'ailleurs : tiré sur chaque
+   * appareil, le sort donnait une phrase par téléphone, et une autre encore à
+   * l'écran.
+   *
+   * Le TTMC n'a ni réponse ni explication enregistrées, et c'est normal : dix
+   * corrections tournent en même temps, chacune sur son écran. Les réclamer
+   * quand même rendait la révélation entièrement MUETTE — un clip manquant fait
+   * abandonner tout le passage, plutôt que de mélanger deux timbres dans une
+   * même phrase. D'où le test sur la solution, et non sur l'identifiant.
+   */
+  function paroleDeLaTable(commentaireCle, evenements) {
+    const clips = [];
+    const dit = paroleDe(persona, commentaireCle);
+    if (dit) clips.push(dit.id);
+
+    const marquant = evenements?.[0];
+    const ditMarquant = marquant?.cle ? paroleDe(persona, marquant.cle) : null;
+    if (ditMarquant) clips.push(ditMarquant.id);
+
+    const type = typeDeManche(etat.question.type);
+    if (etat.question.id && type.solutionTexte(etat.question)) {
+      clips.push(`reponse/${etat.question.id}`, `note/${etat.question.id}`);
+    }
+
+    return {
+      clips,
+      commentaireDit: dit?.texte ?? '',
+      evenementDit: ditMarquant?.texte ?? '',
+    };
+  }
+
   function cloreManche(joueurs, now) {
     const finale = etat.manche === total;
     const { detail, scores, evenements } = resoudreManche({
@@ -525,6 +563,8 @@ export function creerRegie({
       evenements,
       commentaire: mot.texte,
       commentaireCle: mot.cle,
+      // Ce que l'animateur va dire, tiré ici et publié : voir `paroleDeLaTable`.
+      ...paroleDeLaTable(mot.cle, evenements),
       rapide: rapide
         ? {
             nom: joueurs.find((j) => j.id === rapide[0])?.name ?? '—',

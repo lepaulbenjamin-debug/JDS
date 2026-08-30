@@ -17,7 +17,7 @@ import {
 import * as packs from './packs.js';
 import * as achats from './achats.js';
 import {
-  PERSONAS, voix, sons, paroleDe, clipsDAnnonce, chargerLesClips,
+  PERSONAS, voix, sons, clipsDAnnonce, chargerLesClips,
   dureeDuClip, dureeDeLaReplique,
 } from './emcee.js';
 
@@ -286,17 +286,13 @@ function parler() {
   const qid = etat.question?.id;
 
   if (etat.phase === 'revelation' && etat.resultat) {
-    const mot = paroleDe(etat.persona, etat.resultat.commentaireCle);
-    if (mot) clips.push(mot.id);
-    repli.push(etat.resultat.commentaire);
-
-    const marquant = etat.resultat.evenements?.[0];
-    if (marquant?.cle) {
-      const dit = paroleDe(etat.persona, marquant.cle);
-      if (dit) clips.push(dit.id);
-      repli.push(marquant.texte);
-    }
-    if (qid) clips.push(`reponse/${qid}`, `note/${qid}`);
+    // Les clips viennent de la régie, comme l'annonce : un seul tirage pour
+    // toute la table, et c'est la même liste qui décide de l'affichage.
+    clips.push(...(etat.resultat.clips ?? []));
+    // Le repli s'arrête au commentaire, et c'est délibéré. Avec une vraie voix
+    // on prend le temps de lire l'explication — c'est le meilleur moment de la
+    // manche. Avec une voix de synthèse, c'est ce même passage qui lasse.
+    repli.push(etat.resultat.commentaire, etat.resultat.evenements?.[0]?.texte);
   } else if (etat.annonceCle) {
     // Les clips viennent de la régie, tirés une fois pour toute la table. Les
     // tirer ici donnait une phrase par appareil, et une autre encore à l'écran.
@@ -391,6 +387,18 @@ function annonceAffichee() {
   return etat?.annonce ?? '';
 }
 
+/**
+ * Le même arbitrage pour la révélation.
+ *
+ * Ce qui se perd en affichant l'enregistré : le prénom du plus proche, le
+ * nombre de bonnes réponses. Ce qui se gagne : la voix et l'écran cessent de se
+ * contredire. Et rien d'essentiel ne disparaît — la réponse exacte est montrée
+ * par la vue de la manche, pas par cette phrase, le classement suit juste en
+ * dessous, et l'animateur ne prononçait de toute façon ni le prénom ni le
+ * compte : la table ne les entendait pas.
+ */
+const ditOuEcrit = (dit, ecrit) => (voix.clipsDisponibles && dit ? dit : (ecrit ?? ''));
+
 function rendreJeu() {
   const cle = `${etat.phase}:${etat.manche}`;
   const question = etat.question;
@@ -415,7 +423,11 @@ function rendreJeu() {
 
   if (cle !== cleRendue) {
     cleRendue = cle;
-    if (etat.phase === 'revelation') $('#jeu-annonce').textContent = etat.resultat?.commentaire ?? '';
+    if (etat.phase === 'revelation') {
+      $('#jeu-annonce').textContent = ditOuEcrit(
+        etat.resultat?.commentaireDit, etat.resultat?.commentaire,
+      );
+    }
     // Sur un TTMC, `texte` est l'annonce de la carte ; l'énoncé joué dépend du
     // niveau et vit dans la vue, qui est seule à savoir lequel a été choisi.
     $('#jeu-question').textContent = question?.type === 'ttmc' ? '' : (question?.texte ?? '');
@@ -607,9 +619,16 @@ function rendreEtatManche() {
     if (etat.question?.note && etat.question.type !== 'ttmc') {
       hote.append(el('p', { class: 'note', text: etat.question.note }));
     }
-    for (const evenement of etat.resultat?.evenements ?? []) {
-      hote.append(el('p', { class: 'evenement', text: evenement.texte }));
-    }
+    // Seul le premier événement est dit à voix haute — c'est celui que la régie
+    // a mis en clip. Les suivants n'existent qu'à l'écran, et gardent donc leur
+    // texte écrit. Rien ne se perd sur le fil rouge : le bandeau 🧵 affiche à
+    // côté le prénom, le mot trouvé et la prime, en permanence.
+    (etat.resultat?.evenements ?? []).forEach((evenement, rang) => {
+      const texte = rang === 0
+        ? ditOuEcrit(etat.resultat.evenementDit, evenement.texte)
+        : evenement.texte;
+      hote.append(el('p', { class: 'evenement', text: texte }));
+    });
     if (etat.resultat?.rapide) {
       hote.append(el('p', {
         class: 'muted small',
