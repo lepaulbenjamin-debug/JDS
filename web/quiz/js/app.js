@@ -130,8 +130,25 @@ const ECRAN_DE_PHASE = {
 // d'où le conseil de tenir la régie depuis la machine qui sert l'appli.
 let veille = null;
 
+/**
+ * Le plugin natif de veille, s'il est là.
+ *
+ * Dans l'application iOS, `navigator.wakeLock` dépend de la version du système
+ * et n'a jamais été fiable en WebView — or si l'écran de la régie s'éteint, la
+ * partie s'arrête pour toute la table. Le plugin fait le travail sans condition.
+ *
+ * Il reste facultatif : sur le web il n'existe pas, et l'appli doit tourner
+ * exactement comme avant. On le cherche sans jamais l'exiger.
+ */
+const veilleNative = () => globalThis.Capacitor?.Plugins?.KeepAwake ?? null;
+
 async function garderEcranAllume(actif) {
   try {
+    const natif = veilleNative();
+    if (natif) {
+      await (actif ? natif.keepAwake() : natif.allowSleep());
+      return;
+    }
     if (!actif) {
       await veille?.release();
       veille = null;
@@ -1409,12 +1426,18 @@ function brancher() {
     }
   });
 
+  // Absent du paquet natif, où le relais est nommé au build : dans une appli
+  // publiée, ce champ n'est qu'un bouton pour tout casser. Le code doit donc
+  // survivre à son absence, sinon le démarrage s'arrête ici — et c'est tout
+  // l'écran qui reste mort, boutons compris.
   const champRelais = $('#relay-url');
-  champRelais.value = net.relayBase();
-  champRelais.addEventListener('change', () => {
-    net.setRelayBase(champRelais.value.trim());
-    toast('Relais enregistré.');
-  });
+  if (champRelais) {
+    champRelais.value = net.relayBase();
+    champRelais.addEventListener('change', () => {
+      net.setRelayBase(champRelais.value.trim());
+      toast('Relais enregistré.');
+    });
+  }
 
   // Le chrono ne doit pas dépendre du rythme des sondages : il s'anime tout seul.
   let jokersOuverts = null;

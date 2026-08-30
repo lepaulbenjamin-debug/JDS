@@ -1,0 +1,20 @@
+{
+  "appId": "fr.quizentreamis.app",
+  "appName": "Quiz entre amis",
+  "webDir": "dist/ios",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0f1116"
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 800,
+      "backgroundColor": "#0f1116",
+      "showSpinner": false
+    }
+  }
+}

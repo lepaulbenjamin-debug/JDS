@@ -8,7 +8,8 @@
     "start": "node server/index.js",
     "check": "node server/check.mjs",
     "check:quiz": "node --test scripts/check-quiz.mjs",
-    "bundle": "node scripts/build-single-file.mjs"
+    "bundle": "node scripts/build-single-file.mjs",
+    "build:ios": "node scripts/build-ios.mjs"
   },
   "engines": {
     "node": ">=20"

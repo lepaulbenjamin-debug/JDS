@@ -15,13 +15,22 @@
 
 const RELAY_KEY = 'quizroom.relay';
 
-/** Repli sur la même origine : le cas normal quand on sert la PWA soi-même. */
+/**
+ * Où joindre le relais.
+ *
+ * Servie sur le web, la PWA vient du même serveur que l'API : l'origine
+ * courante suffit, et c'est ce que veut dire la chaîne vide.
+ *
+ * Dans l'application native, la page vit sur `capacitor://localhost`, où il n'y
+ * a aucune API — le relais doit donc être nommé, sans quoi chaque appel part
+ * dans le vide. C'est le build qui inscrit son adresse dans la page.
+ */
 export function relayBase() {
   try {
-    return localStorage.getItem(RELAY_KEY) ?? '';
-  } catch {
-    return '';
-  }
+    const choisi = localStorage.getItem(RELAY_KEY);
+    if (choisi) return choisi;
+  } catch { /* stockage indisponible : on prendra la valeur du build */ }
+  return globalThis.QUIZ_RELAIS ?? '';
 }
 
 export function setRelayBase(url) {

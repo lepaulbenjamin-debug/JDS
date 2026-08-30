@@ -27,6 +27,7 @@ import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js'
 import { handleRoomRequest } from '../lib/rooms.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
+import * as nodeFs from 'node:fs';
 import { inventaire } from './generate-audio.mjs';
 
 const QUESTION = {
@@ -1704,4 +1705,84 @@ test('un joueur seul qui ne répond jamais n’enlise pas la partie', () => {
   const solo = [{ id: 'seul', name: 'Toi' }];
   const { etatFinal } = jouerUnePartie({ questions: troisQuestions(), joueurs: solo });
   assert.equal(etatFinal.phase, 'podium', 'le chrono doit finir par emporter chaque manche');
+});
+
+/* --- Le paquet de l'application native ------------------------------------ */
+//
+// Le paquet iOS n'est pas une copie de `web/` : le quiz remonte à la racine, les
+// modules partagés changent de place, et trois choses disparaissent. Chacun de
+// ces déplacements peut casser un chemin — en silence, puisque l'application se
+// lance quand même et n'échoue qu'au premier import manquant.
+//
+// Ces tests ne lisent le paquet que s'il a été bâti : `npm run build:ios`.
+
+const paquetIos = () => {
+  const { existsSync, readFileSync } = nodeFs;
+  const racine = 'dist/ios';
+  if (!existsSync(`${racine}/index.html`)) return null;
+  return {
+    racine,
+    existe: (chemin) => existsSync(`${racine}/${chemin}`),
+    lire: (chemin) => readFileSync(`${racine}/${chemin}`, 'utf8'),
+  };
+};
+
+test('le paquet natif nomme son relais', () => {
+  const paquet = paquetIos();
+  if (!paquet) return;
+  // Sans adresse explicite, l'appli chercherait l'API sur `capacitor://localhost`,
+  // où il n'y en a aucune : le multijoueur partirait dans le vide.
+  const page = paquet.lire('index.html');
+  assert.match(page, /window\.QUIZ_RELAIS\s*=\s*"https:\/\//,
+    'le relais doit être inscrit dans la page');
+  // Et avant le script qui pourrait l'interroger.
+  assert.ok(page.indexOf('QUIZ_RELAIS') < page.indexOf('js/app.js'),
+    'le relais doit être posé avant le script de l’appli');
+});
+
+test('le paquet natif ne garde aucun chemin de la mise en page web', () => {
+  const paquet = paquetIos();
+  if (!paquet) return;
+  // Le quiz est remonté d'un cran : `../icons/` et `../../js/` ne désignent
+  // plus rien. Une icône manquante se voit ; un module manquant tue l'appli.
+  for (const fichier of ['index.html', 'manifest.webmanifest']) {
+    assert.doesNotMatch(paquet.lire(fichier), /\.\.\/icons\//,
+      `${fichier} pointe encore vers les icônes du site`);
+  }
+  for (const module of nodeFs.readdirSync(`${paquet.racine}/js`)) {
+    if (!module.endsWith('.js')) continue;
+    assert.doesNotMatch(paquet.lire(`js/${module}`), /\.\.\/\.\.\/js\//,
+      `js/${module} importe encore depuis l’arborescence du site`);
+  }
+});
+
+test('le paquet natif embarque tout ce que l’appli demande', () => {
+  const paquet = paquetIos();
+  if (!paquet) return;
+  for (const chemin of [
+    'commun/ui.js', 'commun/speech.js',      // les deux modules partagés
+    'icons/icon.svg', 'styles.css',
+    'audio/manifeste.json',
+    'js/app.js', 'js/engine.js', 'js/emcee.js', 'js/questions.js',
+  ]) {
+    assert.ok(paquet.existe(chemin), `${chemin} manque au paquet`);
+  }
+  // Les clips, c'est l'essentiel du poids et tout l'intérêt du hors-ligne.
+  const manifeste = JSON.parse(paquet.lire('audio/manifeste.json'));
+  const premier = Object.keys(manifeste.clips)[0];
+  assert.ok(paquet.existe(`audio/${premier}.mp3`), 'les clips doivent être embarqués');
+});
+
+test('le paquet natif se passe du service worker et du réglage de relais', () => {
+  const paquet = paquetIos();
+  if (!paquet) return;
+  // Un cache par-dessus le paquet ne pourrait que servir une version périmée.
+  assert.equal(paquet.existe('sw.js'), false, 'le service worker n’a pas lieu d’être');
+  // Et le champ « adresse du relais » est, dans une appli publiée, un bouton
+  // pour tout casser. Son retrait a déjà cassé le démarrage une fois : le code
+  // doit survivre à son absence.
+  const page = paquet.lire('index.html');
+  assert.doesNotMatch(page, /id="relay-url"/, 'le réglage de relais doit être retiré');
+  assert.match(paquet.lire('js/app.js'), /if \(champRelais\)/,
+    'l’appli doit tolérer l’absence du champ');
 });
