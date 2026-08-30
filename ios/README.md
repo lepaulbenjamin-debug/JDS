@@ -75,17 +75,69 @@ App Store Connect.
 iPhone seulement, portrait seulement — l'appli est écrite pour un téléphone tenu
 à la verticale. Sinon Apple la testera sur iPad et jugera la mise en page.
 
+## Les achats intégrés
+
+Le serveur est écrit et éprouvé ; il manque le pont natif et les fiches
+produits.
+
+### Ce qui est fait
+
+`lib/apple.js` vérifie une transaction StoreKit entièrement hors ligne : chaîne
+de certificats, signature ES256, épinglage de la racine d'Apple
+(`certs/AppleRootCA-G3.cer`, empreinte vérifiée par un test), identifiant
+d'application, remboursement. Neuf tentatives de falsification sont éprouvées
+par les tests, dont la chaîne fabriquée de toutes pièces et la charge remplacée
+après signature.
+
+Faute de racine installée, la vérification **refuse** au lieu d'ouvrir : une
+configuration incomplète ne doit jamais distribuer les packs gratuitement.
+
+Achat et restauration empruntent la même route (`POST /api/packs` avec
+`transactions`) : l'application envoie ce que StoreKit lui donne, le serveur
+accorde ce qui est valable. Une transaction refusée n'annule pas les autres.
+
+### Ce qu'il reste
+
+1. **Créer les produits dans App Store Connect**, en non-consommables :
+   - `fr.quizentreamis.pack.noel`
+   - `fr.quizentreamis.pack.annees80-90`
+
+   Les identifiants sont dans `packs/*.json`, champ `produitApple`. Les prix
+   affichés viennent de l'App Store, pas du champ `prix` — celui-ci n'est plus
+   qu'un repli pour le web.
+
+2. **Installer un pont StoreKit.** Le choix vous revient : je n'ai pas pu
+   l'éprouver sans Mac. Le contrat attendu par `web/quiz/js/achats.js` tient en
+   trois méthodes exposées sous `Capacitor.Plugins.InAppPurchase` :
+
+   ```
+   getProducts({ productIds })  → { products: [{ id, price }] }
+   purchase({ productId })      → { transaction: '<jws>' }
+   restorePurchases()           → { transactions: ['<jws>', …] }
+   ```
+
+   **Le point à ne pas manquer :** `transaction` doit être le JWS signé de
+   StoreKit 2, pas un booléen « ça s'est bien passé ». Un pont qui ne rendrait
+   qu'un succès rendrait la vérification impossible, donc la boutique
+   falsifiable. Si le plugin retenu expose un autre nom ou une autre forme,
+   c'est `achats.js` qu'il faut adapter — et lui seul.
+
+3. **Configurer `APPLE_BUNDLE_ID`** sur Vercel s'il diffère de
+   `fr.quizentreamis.app`.
+
+4. **Tester en bac à sable** avec un compte Sandbox : acheter, désinstaller,
+   réinstaller, restaurer. Les transactions de test portent
+   `environment: "Sandbox"` — le vérificateur les accepte, ce qui est voulu
+   pendant la revue, puisque Apple examine en bac à sable.
+
 ## Ce qui n'est pas fait, et pourquoi
 
 - **L'identité du joueur reste en `localStorage`.** iOS peut purger ce stockage
-  quand l'appareil manque de place : on perdrait sa place dans une partie en
-  cours. Le passage au module de préférences natif rend les lectures
-  asynchrones, ce qui touche l'identité *et* la licence d'achat — autant le
-  faire d'un seul geste avec les achats intégrés, qui refondent la licence de
-  toute façon.
-- **Les achats intégrés.** Décidés (15 %, Small Business Program), pas encore
-  écrits. Une application sans achat passe la revue ; une application rejetée
-  pour fonctionnalité minimale, non. Le mode solo d'abord, la caisse ensuite.
+  quand l'appareil manque de place. Pour les achats ce n'est pas grave — la
+  vérité est chez Apple, et « Restaurer mes achats » la redonne au serveur. Ce
+  qu'on perdrait, c'est sa place dans une partie en cours. Le passage aux
+  préférences natives rend les lectures asynchrones et touche tout le
+  démarrage : à faire d'un seul geste, pas au détour de la boutique.
 
 ## Les notes pour l'examinateur
 

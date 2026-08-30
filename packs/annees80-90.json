@@ -4,12 +4,18 @@
   "emoji": "📼",
   "resume": "Walkman, Minitel, Dragon Ball et disquettes. Pour ceux qui ont connu, et pour ceux qui feront semblant.",
   "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.annees80-90",
   "questions": [
     {
       "id": "p80-01",
       "theme": "annees2000",
       "texte": "Quel jeu vidéo de 1985 met en scène un plombier moustachu ?",
-      "reponses": ["Super Mario Bros.", "Donkey Kong", "Pac-Man", "Sonic"],
+      "reponses": [
+        "Super Mario Bros.",
+        "Donkey Kong",
+        "Pac-Man",
+        "Sonic"
+      ],
       "bonne": 0,
       "note": "Le plombier s’appelait Jumpman dans son premier jeu, et n’était même pas plombier."
     },
@@ -17,7 +23,12 @@
       "id": "p80-02",
       "theme": "musique",
       "texte": "Qui chantait « Voyage voyage » en 1986 ?",
-      "reponses": ["Desireless", "Jeanne Mas", "Elsa", "Lio"],
+      "reponses": [
+        "Desireless",
+        "Jeanne Mas",
+        "Elsa",
+        "Lio"
+      ],
       "bonne": 0,
       "note": "Numéro un dans une quinzaine de pays, avec une coupe de cheveux devenue plus célèbre que la chanteuse."
     },
@@ -25,7 +36,12 @@
       "id": "p80-03",
       "theme": "annees2000",
       "texte": "Quel appareil Sony a permis, dès 1979, d’écouter de la musique en marchant ?",
-      "reponses": ["Le Walkman", "Le Discman", "Le Minidisc", "Le Dictaphone"],
+      "reponses": [
+        "Le Walkman",
+        "Le Discman",
+        "Le Minidisc",
+        "Le Dictaphone"
+      ],
       "bonne": 0,
       "note": "Le patron de Sony le voulait pour écouter de l’opéra en avion. Les ingénieurs trouvaient l’idée absurde."
     },
@@ -33,7 +49,12 @@
       "id": "p80-04",
       "theme": "cinema",
       "texte": "Dans quel film de 1985 Marty McFly voyage-t-il dans le temps ?",
-      "reponses": ["Retour vers le futur", "Les Goonies", "E.T.", "Terminator"],
+      "reponses": [
+        "Retour vers le futur",
+        "Les Goonies",
+        "E.T.",
+        "Terminator"
+      ],
       "bonne": 0,
       "note": "La DeLorean a été choisie parce que ses portes papillon devaient faire croire à une soucoupe volante."
     },
@@ -41,7 +62,12 @@
       "id": "p80-05",
       "theme": "cinema",
       "texte": "Dans quel dessin animé japonais un guerrier aux cheveux hérissés devient-il « Super Guerrier » ?",
-      "reponses": ["Dragon Ball Z", "Ken le Survivant", "Les Chevaliers du Zodiaque", "Nicky Larson"],
+      "reponses": [
+        "Dragon Ball Z",
+        "Ken le Survivant",
+        "Les Chevaliers du Zodiaque",
+        "Nicky Larson"
+      ],
       "bonne": 0,
       "note": "Diffusé en France dans le Club Dorothée, où il a valu à la chaîne des débats parlementaires."
     },
@@ -49,7 +75,12 @@
       "id": "p80-06",
       "theme": "musique",
       "texte": "Quel groupe britannique a sorti « Wonderwall » en 1995 ?",
-      "reponses": ["Oasis", "Blur", "Pulp", "The Verve"],
+      "reponses": [
+        "Oasis",
+        "Blur",
+        "Pulp",
+        "The Verve"
+      ],
       "bonne": 0,
       "note": "Noel Gallagher a longtemps refusé d’expliquer le titre, avant d’admettre qu’il ne voulait rien dire."
     },
@@ -57,7 +88,12 @@
       "id": "p80-07",
       "theme": "musique",
       "texte": "Qui interprète « Like a Prayer », sorti en 1989 ?",
-      "reponses": ["Madonna", "Whitney Houston", "Cyndi Lauper", "Tina Turner"],
+      "reponses": [
+        "Madonna",
+        "Whitney Houston",
+        "Cyndi Lauper",
+        "Tina Turner"
+      ],
       "bonne": 0,
       "note": "Pepsi avait acheté la chanson pour une publicité. Le clip a fait annuler le contrat en une semaine."
     },
@@ -75,7 +111,12 @@
       "theme": "annees2000",
       "type": "ordre",
       "texte": "Du jeu le plus ancien au plus récent",
-      "elements": ["Pac-Man", "Tetris", "Sonic", "Pokémon"],
+      "elements": [
+        "Pac-Man",
+        "Tetris",
+        "Sonic",
+        "Pokémon"
+      ],
       "note": "1980, 1984, 1991, 1996. Tetris a été écrit à Moscou, sur un ordinateur sans écran graphique."
     },
     {
@@ -84,11 +125,26 @@
       "type": "rafale",
       "texte": "Avant Internet",
       "affirmations": [
-        { "texte": "Le Minitel est arrivé en France avant le Web.", "vrai": true },
-        { "texte": "Le premier SMS a été envoyé dans les années 1990.", "vrai": true },
-        { "texte": "« Titanic » est sorti dans les années 1990.", "vrai": true },
-        { "texte": "Le CD a remplacé le vinyle dès les années 1970.", "vrai": false },
-        { "texte": "Google a été fondé dans les années 1980.", "vrai": false }
+        {
+          "texte": "Le Minitel est arrivé en France avant le Web.",
+          "vrai": true
+        },
+        {
+          "texte": "Le premier SMS a été envoyé dans les années 1990.",
+          "vrai": true
+        },
+        {
+          "texte": "« Titanic » est sorti dans les années 1990.",
+          "vrai": true
+        },
+        {
+          "texte": "Le CD a remplacé le vinyle dès les années 1970.",
+          "vrai": false
+        },
+        {
+          "texte": "Google a été fondé dans les années 1980.",
+          "vrai": false
+        }
       ],
       "note": "Le Minitel date de 1980, le Web de 1990 : la France a eu dix ans d’avance, puis dix ans de retard."
     }

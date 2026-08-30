@@ -4,12 +4,18 @@
   "emoji": "🎄",
   "resume": "Pour le 24 au soir, entre le fromage et les cadeaux. Rennes, bûches et vin chaud.",
   "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.noel",
   "questions": [
     {
       "id": "noe-01",
       "theme": "cinema",
       "texte": "Quel personnage vole le Noël des Whos, dans le conte du Dr. Seuss ?",
-      "reponses": ["Le Grinch", "Scrooge", "Krampus", "Le Bonhomme Hiver"],
+      "reponses": [
+        "Le Grinch",
+        "Scrooge",
+        "Krampus",
+        "Le Bonhomme Hiver"
+      ],
       "bonne": 0,
       "note": "Dr. Seuss disait l’avoir écrit après s’être vu, un matin de Noël, la mine renfrognée dans un miroir."
     },
@@ -17,7 +23,12 @@
       "id": "noe-02",
       "theme": "bouffe",
       "texte": "Quelle boisson chaude et épicée est traditionnelle sur les marchés de Noël ?",
-      "reponses": ["Le vin chaud", "Le cidre glacé", "Le punch", "L’hydromel"],
+      "reponses": [
+        "Le vin chaud",
+        "Le cidre glacé",
+        "Le punch",
+        "L’hydromel"
+      ],
       "bonne": 0,
       "note": "Cannelle, orange, girofle : la recette vient des Romains, qui épiçaient surtout du vin devenu mauvais."
     },
@@ -25,7 +36,12 @@
       "id": "noe-03",
       "theme": "culture",
       "texte": "Combien de rennes tirent le traîneau du Père Noël, Rudolph compris ?",
-      "reponses": ["9", "8", "12", "6"],
+      "reponses": [
+        "9",
+        "8",
+        "12",
+        "6"
+      ],
       "bonne": 0,
       "note": "Huit dans le poème de 1823, plus Rudolph, inventé en 1939 pour un catalogue de grand magasin."
     },
@@ -33,7 +49,12 @@
       "id": "noe-04",
       "theme": "cinema",
       "texte": "Quel film de 1990 met en scène un enfant oublié seul à la maison pendant les fêtes ?",
-      "reponses": ["Maman, j’ai raté l’avion", "Le Père Noël est une ordure", "Elfe", "Miracle sur la 34e rue"],
+      "reponses": [
+        "Maman, j’ai raté l’avion",
+        "Le Père Noël est une ordure",
+        "Elfe",
+        "Miracle sur la 34e rue"
+      ],
       "bonne": 0,
       "note": "Tourné dans une vraie maison de banlieue de Chicago, achetée depuis par des fans du film."
     },
@@ -41,7 +62,12 @@
       "id": "noe-05",
       "theme": "musique",
       "texte": "Quelle chanson de Noël est le single le plus vendu de tous les temps ?",
-      "reponses": ["White Christmas", "Last Christmas", "Jingle Bell Rock", "All I Want for Christmas Is You"],
+      "reponses": [
+        "White Christmas",
+        "Last Christmas",
+        "Jingle Bell Rock",
+        "All I Want for Christmas Is You"
+      ],
       "bonne": 0,
       "note": "Enregistrée par Bing Crosby en 1942. Estimée à plus de cinquante millions d’exemplaires."
     },
@@ -49,7 +75,12 @@
       "id": "noe-06",
       "theme": "culture",
       "texte": "De quel pays vient le sapin offert chaque année à Londres depuis 1947 ?",
-      "reponses": ["La Norvège", "La Finlande", "L’Écosse", "Le Canada"],
+      "reponses": [
+        "La Norvège",
+        "La Finlande",
+        "L’Écosse",
+        "Le Canada"
+      ],
       "bonne": 0,
       "note": "Un remerciement d’Oslo pour le soutien britannique pendant la Seconde Guerre mondiale. Toujours d’actualité."
     },
@@ -57,7 +88,12 @@
       "id": "noe-07",
       "theme": "cinema",
       "texte": "Comment s’appelle l’avare du « Conte de Noël » de Dickens ?",
-      "reponses": ["Ebenezer Scrooge", "Jacob Marley", "Bob Cratchit", "Fezziwig"],
+      "reponses": [
+        "Ebenezer Scrooge",
+        "Jacob Marley",
+        "Bob Cratchit",
+        "Fezziwig"
+      ],
       "bonne": 0,
       "note": "Le livre a été écrit en six semaines, parce que Dickens avait un besoin urgent d’argent."
     },
@@ -75,7 +111,12 @@
       "theme": "culture",
       "type": "ordre",
       "texte": "Dans l’ordre du calendrier",
-      "elements": ["La Saint-Nicolas", "Le réveillon de Noël", "Le Nouvel An", "L’Épiphanie"],
+      "elements": [
+        "La Saint-Nicolas",
+        "Le réveillon de Noël",
+        "Le Nouvel An",
+        "L’Épiphanie"
+      ],
       "note": "6 décembre, 24 décembre, 31 décembre, 6 janvier. Un mois exactement entre la première et la dernière."
     },
     {
@@ -84,11 +125,26 @@
       "type": "rafale",
       "texte": "Traditions de Noël",
       "affirmations": [
-        { "texte": "En Islande, ce sont treize lutins qui passent, un par nuit.", "vrai": true },
-        { "texte": "La bûche de Noël était à l’origine une vraie bûche brûlée dans l’âtre.", "vrai": true },
-        { "texte": "Le gui est traditionnellement associé aux baisers.", "vrai": true },
-        { "texte": "Le Père Noël en rouge a été inventé par Coca-Cola.", "vrai": false },
-        { "texte": "Noël est célébré le 25 décembre depuis l’an 1.", "vrai": false }
+        {
+          "texte": "En Islande, ce sont treize lutins qui passent, un par nuit.",
+          "vrai": true
+        },
+        {
+          "texte": "La bûche de Noël était à l’origine une vraie bûche brûlée dans l’âtre.",
+          "vrai": true
+        },
+        {
+          "texte": "Le gui est traditionnellement associé aux baisers.",
+          "vrai": true
+        },
+        {
+          "texte": "Le Père Noël en rouge a été inventé par Coca-Cola.",
+          "vrai": false
+        },
+        {
+          "texte": "Noël est célébré le 25 décembre depuis l’an 1.",
+          "vrai": false
+        }
       ],
       "note": "Coca-Cola n’a pas inventé le Père Noël rouge : il l’a rendu universel à partir de 1931. Le costume rouge existait déjà."
     }

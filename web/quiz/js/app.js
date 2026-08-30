@@ -15,6 +15,7 @@ import {
   ajouterQuestions, toutesLesQuestions,
 } from './questions.js';
 import * as packs from './packs.js';
+import * as achats from './achats.js';
 import {
   PERSONAS, voix, sons, paroleDe, annonceDeManche, clipsDAnnonce, chargerLesClips,
   dureeDuClip, dureeDeLaReplique,
@@ -1082,10 +1083,11 @@ function rendreReglages() {
 /**
  * La boutique de packs, dans les réglages de la partie.
  *
- * Elle ne prend pas de paiement : encaisser demande un prestataire, un compte
- * et des mentions légales, et rien de tout cela n'a sa place dans le dépôt. Ce
- * qui est branché ici, c'est ce qui vient après — vérifier qu'une licence
- * ouvre un pack, le télécharger, le garder hors-ligne.
+ * Dans l'application native, elle encaisse par l'App Store — c'est la seule
+ * voie qu'Apple autorise pour du contenu numérique. Sur le web, elle reste une
+ * vitrine : l'achat s'y fait ailleurs, et ce qui est branché ici est ce qui
+ * vient après — vérifier qu'une licence ouvre un pack, le télécharger, le
+ * garder hors-ligne.
  */
 async function rendrePacks() {
   const hote = $('#liste-packs');
@@ -1099,10 +1101,17 @@ async function rendrePacks() {
     return;
   }
 
+  // Les prix viennent de l'App Store quand il est là : ils arrivent dans la
+  // devise du compte, et une étiquette « 3,99 € » montrée à un compte canadien
+  // serait fausse.
+  const prix = achats.disponible()
+    ? await achats.prixDuStore(disponibles.map((p) => p.produitApple).filter(Boolean))
+    : new Map();
+
   for (const pack of disponibles) {
     const etat = pack.installe ? 'Installé'
       : pack.possede ? 'À télécharger'
-        : (pack.prix ?? 'Verrouillé');
+        : (prix.get(pack.produitApple) ?? pack.prix ?? 'Verrouillé');
 
     hote.append(el('div', { class: `carte-pack${pack.installe ? ' est-installe' : ''}` }, [
       el('div', { class: 'pack-tete' }, [
@@ -1111,6 +1120,29 @@ async function rendrePacks() {
       ]),
       el('p', { class: 'pack-resume muted small', text: pack.resume ?? '' }),
       el('p', { class: 'muted small', text: `${pack.nombre} questions` }),
+      // Acheter, quand la caisse est là et que le pack n'est pas déjà acquis.
+      !pack.possede && achats.disponible() && pack.produitApple
+        ? el('button', {
+            class: 'btn btn-primary btn-block',
+            type: 'button',
+            onclick: async (event) => {
+              event.target.disabled = true;
+              try {
+                await achats.acheter(pack.produitApple, packs.licence(), net.relayBase());
+                toast(`${pack.nom} débloqué.`);
+                await packs.synchroniser();
+                ajouterQuestions(packs.questionsInstallees());
+                rendreReglages();
+              } catch (erreur) {
+                // Un achat abandonné n'est pas une erreur : on ne crie pas.
+                if (!/annul|cancel/i.test(erreur?.message ?? '')) {
+                  toast(erreur.message ?? 'Achat non abouti.', 'warn');
+                }
+                event.target.disabled = false;
+              }
+            },
+          }, `Débloquer — ${prix.get(pack.produitApple) ?? pack.prix ?? ''}`)
+        : null,
       pack.possede && !pack.installe
         ? el('button', {
             class: 'btn btn-primary btn-block',
@@ -1136,6 +1168,31 @@ async function rendrePacks() {
   $('#note-packs').textContent = verrouilles
     ? 'Les packs verrouillés s’achètent une fois et restent acquis. Le jeu de base, lui, ne s’épuise pas.'
     : 'Tous les packs sont débloqués sur cet appareil.';
+
+  // « Restaurer mes achats » est obligatoire chez Apple, et ce n'est pas une
+  // formalité : les packs sont attachés à une licence d'appareil, donc changer
+  // de téléphone les perdrait. StoreKit, lui, sait ce que ce compte a acheté.
+  if (achats.disponible()) {
+    hote.append(el('button', {
+      class: 'btn btn-ghost btn-block',
+      type: 'button',
+      onclick: async (event) => {
+        event.target.disabled = true;
+        try {
+          const { accordes } = await achats.restaurer(packs.licence(), net.relayBase());
+          await packs.synchroniser();
+          ajouterQuestions(packs.questionsInstallees());
+          toast(accordes.length
+            ? `${accordes.length} pack${accordes.length > 1 ? 's' : ''} restauré${accordes.length > 1 ? 's' : ''}.`
+            : 'Aucun achat à restaurer sur ce compte.');
+          rendreReglages();
+        } catch (erreur) {
+          toast(erreur.message ?? 'Restauration impossible.', 'warn');
+          event.target.disabled = false;
+        }
+      },
+    }, 'Restaurer mes achats'));
+  }
 }
 
 /**

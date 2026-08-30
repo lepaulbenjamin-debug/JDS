@@ -21,6 +21,7 @@ import {
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
 import { handlePackRequest, accorder } from '../lib/packs.js';
+import { verifierTransaction, definirRacine, racineApple } from '../lib/apple.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
@@ -1785,4 +1786,211 @@ test('le paquet natif se passe du service worker et du réglage de relais', () =
   assert.doesNotMatch(page, /id="relay-url"/, 'le réglage de relais doit être retiré');
   assert.match(paquet.lire('js/app.js'), /if \(champRelais\)/,
     'l’appli doit tolérer l’absence du champ');
+});
+
+/* --- Les achats de l'App Store -------------------------------------------- */
+//
+// Un achat se falsifie en écrivant une ligne dans le stockage local : la seule
+// chose qui vaille est la signature d'Apple, et elle voyage par un appareil qui,
+// lui, n'est pas de confiance. Ces tests attaquent donc le vérificateur comme
+// le ferait quelqu'un qui veut ouvrir les packs sans payer.
+//
+// Les transactions sont fabriquées avec une autorité de test complète (racine,
+// intermédiaire, feuille en P-256) : on ne peut pas éprouver un refus avec de
+// vraies transactions, puisque Apple n'émet jamais celles qu'on veut voir
+// rejeter.
+
+const avecAutorite = async (travail) => {
+  const { fabriquerAutorite } = await import('./faux-apple.mjs');
+  const autorite = fabriquerAutorite();
+  try {
+    definirRacine(autorite.racine);
+    await travail(autorite);
+  } finally {
+    definirRacine(undefined);
+    autorite.ranger();
+  }
+};
+
+const BUNDLE = { bundleId: 'fr.quizentreamis.app' };
+
+test('une transaction signée par Apple est acceptée', async () => {
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const transaction = await verifierTransaction(
+      signerTransaction(autorite, transactionType()), BUNDLE,
+    );
+    assert.equal(transaction.productId, 'fr.quizentreamis.pack.noel');
+    assert.equal(transaction.transactionId, '2000000900000001');
+  });
+});
+
+test('une transaction fabriquée par un tiers est refusée', async () => {
+  // Le piège le plus facile : vérifier la signature sans épingler la racine.
+  // N'importe qui peut signer un jeton et joindre ses propres certificats — la
+  // chaîne est parfaitement cohérente, elle ne prouve que l'existence de son
+  // auteur.
+  await avecAutorite(async () => {
+    const { fabriquerAutorite, signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const pirate = fabriquerAutorite();
+    try {
+      await assert.rejects(
+        verifierTransaction(signerTransaction(pirate, transactionType()), BUNDLE),
+        /racine/i,
+      );
+    } finally {
+      pirate.ranger();
+    }
+  });
+});
+
+test('une transaction retouchée après signature est refusée', async () => {
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const bonne = signerTransaction(autorite, transactionType());
+    const [entete, , signature] = bonne.split('.');
+
+    // On remplace le pack acheté par l'autre, en gardant la vraie signature.
+    const autre = Buffer
+      .from(JSON.stringify(transactionType({ productId: 'fr.quizentreamis.pack.annees80-90' })))
+      .toString('base64url');
+    await assert.rejects(
+      verifierTransaction(`${entete}.${autre}.${signature}`, BUNDLE), /[Ss]ignature/,
+    );
+
+    // Et une signature bricolée sur la bonne charge.
+    await assert.rejects(
+      verifierTransaction(`${bonne.slice(0, -4)}AAAA`, BUNDLE), /[Ss]ignature/,
+    );
+  });
+});
+
+test('une transaction authentique d’une autre application est refusée', async () => {
+  // Elle est signée par Apple, sa chaîne est parfaite — et elle appartient à
+  // quelqu'un d'autre. Sans ce contrôle, n'importe quel achat fait dans
+  // n'importe quelle application ouvrirait nos packs.
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    await assert.rejects(
+      verifierTransaction(signerTransaction(autorite, transactionType({ bundleId: 'com.autre.app' })), BUNDLE),
+      /autre application/,
+    );
+  });
+});
+
+test('un achat remboursé ne donne plus droit à rien', async () => {
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    await assert.rejects(
+      verifierTransaction(signerTransaction(autorite, transactionType({ revocationDate: Date.now() })), BUNDLE),
+      /annulé ou remboursé/,
+    );
+  });
+});
+
+test('une chaîne tronquée ou rétrogradée est refusée', async () => {
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const charge = transactionType();
+    // La feuille seule : rien ne la relie à Apple.
+    await assert.rejects(
+      verifierTransaction(signerTransaction(autorite, charge, { x5c: [autorite.x5c[0]] }), BUNDLE),
+      /Chaîne/,
+    );
+    // La racine retirée : la chaîne se tient, mais ne remonte nulle part.
+    await assert.rejects(
+      verifierTransaction(signerTransaction(autorite, charge, { x5c: autorite.x5c.slice(0, 2) }), BUNDLE),
+      /racine/i,
+    );
+    // Et l'algorithme rétrogradé, le classique de JOSE.
+    await assert.rejects(
+      verifierTransaction(signerTransaction(autorite, charge, { alg: 'none' }), BUNDLE),
+      /Algorithme/,
+    );
+  });
+});
+
+test('sans racine installée, la boutique refuse au lieu d’ouvrir', async () => {
+  // Fermée par défaut : une configuration incomplète ne doit jamais se traduire
+  // par des packs distribués gratuitement.
+  definirRacine(null);
+  try {
+    const { fabriquerAutorite, signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const autorite = fabriquerAutorite();
+    try {
+      await assert.rejects(
+        verifierTransaction(signerTransaction(autorite, transactionType()), BUNDLE),
+        (erreur) => erreur.status === 503,
+      );
+    } finally {
+      autorite.ranger();
+    }
+  } finally {
+    definirRacine(undefined);
+  }
+});
+
+test('la route accorde les packs d’un achat vérifié, et refuse les autres', async () => {
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const licence = `essai-${Date.now()}`;
+
+    // Un achat valable, un produit qu'on ne vend pas, et une contrefaçon : le
+    // refus de l'un ne doit pas coûter à l'utilisateur celui qu'il a payé.
+    const pirate = (await import('./faux-apple.mjs')).fabriquerAutorite();
+    let resultat;
+    try {
+      resultat = await handlePackRequest({
+        method: 'POST',
+        query: {},
+        body: {
+          licence,
+          transactions: [
+            signerTransaction(autorite, transactionType()),
+            signerTransaction(autorite, transactionType({ productId: 'fr.quizentreamis.pack.inexistant' })),
+            signerTransaction(pirate, transactionType()),
+          ],
+        },
+      });
+    } finally {
+      pirate.ranger();
+    }
+
+    assert.equal(resultat.status, 200);
+    assert.deepEqual(resultat.body.accordes, ['noel']);
+    assert.equal(resultat.body.refuses.length, 2);
+    assert.ok(resultat.body.packs.includes('noel'), 'le pack payé doit être ouvert');
+
+    // Et le contenu sort maintenant pour cette licence, alors qu'il était fermé.
+    const ouvert = await handlePackRequest({ method: 'GET', query: { id: 'noel', licence } });
+    assert.equal(ouvert.status, 200);
+    assert.ok(ouvert.body.questions?.length, 'le pack acheté doit être téléchargeable');
+
+    const ferme = await handlePackRequest({ method: 'GET', query: { id: 'noel', licence: 'quelqu-un-d-autre' } });
+    assert.equal(ferme.status, 402, 'et rester fermé pour une autre licence');
+  });
+});
+
+test('la route sans transaction garde son secret partagé', async () => {
+  // L'autre voie d'encaissement ne doit pas s'être ouverte au passage.
+  const refus = await handlePackRequest({
+    method: 'POST', query: { id: 'noel' }, body: { licence: 'x' },
+  });
+  assert.equal(refus.status, 403);
+});
+
+test('la racine épinglée est bien celle d’Apple', async () => {
+  // Tout repose sur ce fichier : le remplacer, c'est ouvrir la boutique à qui
+  // sait signer. Son empreinte est donc vérifiée, et non sa seule présence.
+  definirRacine(undefined);
+  const racine = await racineApple();
+  if (!racine) return;                       // pas installée : rien à vérifier
+  assert.equal(
+    racine.fingerprint256,
+    '63:34:3A:BF:B8:9A:6A:03:EB:B5:7E:9B:3F:5F:A7:BE:7C:4F:5C:75:6F:30:17:B3:A8:C4:88:C3:65:3E:91:79',
+  );
+  assert.match(racine.subject, /Apple Root CA - G3/);
+  // Auto-signée, et valable au-delà de toute échéance raisonnable.
+  assert.ok(racine.checkIssued(racine) && racine.verify(racine.publicKey));
+  assert.ok(new Date(racine.validTo) > new Date('2030-01-01'));
 });
