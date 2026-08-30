@@ -1,7 +1,9 @@
 //  Le pont vers la caisse d'Apple.
 //
-//  À déposer dans ios/App/App/ après `npm run ios:add`. Capacitor le découvre
-//  tout seul : rien à déclarer ailleurs.
+//  À déposer dans ios/App/App/ après `npm run ios:add`, puis à ajouter à la
+//  cible : cible App › Build Phases › Compile Sources. Copier le fichier dans
+//  le dossier ne suffit pas, et son absence ne provoque aucune erreur — la
+//  boutique se croit simplement sur le web.
 //
 //  Ce plugin ne décide rien. Il encaisse par StoreKit et rend le jeton SIGNÉ
 //  par Apple — le `jwsRepresentation` — que le serveur vérifie ensuite
@@ -16,9 +18,15 @@
 //  donc transmis dans tous les cas, et c'est le serveur qui tranche.
 //
 //  Demande iOS 15 (StoreKit 2). Régler la cible du projet en conséquence.
+//
+//  Sur la concurrence : `CAPPluginCall` n'est pas `Sendable`, et le passer dans
+//  une tâche est refusé par la vérification stricte de Swift 6. Chaque méthode
+//  reste donc sur l'acteur principal du début à la fin, et l'import de
+//  Capacitor est marqué `@preconcurrency` — c'est une bibliothèque écrite avant
+//  ces règles.
 
 import Foundation
-import Capacitor
+@preconcurrency import Capacitor
 import StoreKit
 
 @objc(AchatsPlugin)
@@ -32,16 +40,6 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise)
     ]
 
-    private var veilleur: Task<Void, Never>?
-
-    override public func load() {
-        veilleur = ecouterLesMisesAJour()
-    }
-
-    deinit {
-        veilleur?.cancel()
-    }
-
     // MARK: - Le catalogue
 
     /// Les prix tels que l'App Store les affiche : bonne devise, bon format,
@@ -52,7 +50,7 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Aucun identifiant de produit.")
             return
         }
-        Task {
+        Task { @MainActor in
             do {
                 let produits = try await Product.products(for: identifiants)
                 let liste = produits.map { produit -> [String: Any] in
@@ -81,7 +79,7 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Produit non précisé.")
             return
         }
-        Task {
+        Task { @MainActor in
             do {
                 guard let produit = try await Product.products(for: [identifiant]).first else {
                     call.reject("Produit introuvable dans l’App Store.")
@@ -96,8 +94,8 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
                     let jeton = verification.jwsRepresentation
 
                     // On ne clôt que ce qu'Apple a validé localement. Une
-                    // transaction douteuse reste ouverte et repassera par le
-                    // veilleur — plutôt que d'être refermée sans avoir servi.
+                    // transaction douteuse reste ouverte, plutôt que d'être
+                    // refermée sans avoir servi.
                     if case .verified(let transaction) = verification {
                         await transaction.finish()
                     }
@@ -108,7 +106,7 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .pending:
                     // « Demander la permission d'acheter » : la transaction
-                    // arrivera plus tard, par le veilleur.
+                    // arrivera plus tard, et sera reprise à la restauration.
                     call.resolve(["pending": true])
 
                 @unknown default:
@@ -127,36 +125,23 @@ public class AchatsPlugin: CAPPlugin, CAPBridgedPlugin {
     /// perdrait. StoreKit, lui, sait ce que ce compte a acheté.
     ///
     /// `currentEntitlements` rend les droits en cours, y compris ceux acquis
-    /// sur un autre appareil du même compte. C'est aussi le filet quand un
-    /// achat a bien été encaissé mais que l'appel au serveur a échoué juste
-    /// après : rien n'est perdu, il suffit de restaurer.
+    /// sur un autre appareil du même compte, ceux débloqués après une
+    /// autorisation parentale, et ceux d'un code promotionnel. C'est aussi le
+    /// filet quand un achat a été encaissé mais que l'appel au serveur a
+    /// échoué juste après : rien n'est perdu, il suffit de restaurer.
+    ///
+    /// On clôt au passage ce qui ne l'était pas : une transaction jamais close
+    /// revient indéfiniment.
     @objc func restorePurchases(_ call: CAPPluginCall) {
-        Task {
+        Task { @MainActor in
             var jetons: [String] = []
             for await verification in Transaction.currentEntitlements {
                 jetons.append(verification.jwsRepresentation)
-            }
-            call.resolve(["transactions": jetons])
-        }
-    }
-
-    // MARK: - Les achats qui arrivent d'ailleurs
-
-    /// Tout ce qui n'est pas passé par le bouton : autorisation parentale
-    /// accordée après coup, code promotionnel, achat fait sur un autre
-    /// appareil, remboursement. Sans cette écoute, ces transactions ne sont
-    /// jamais closes et reviennent indéfiniment.
-    private func ecouterLesMisesAJour() -> Task<Void, Never> {
-        Task.detached { [weak self] in
-            for await verification in Transaction.updates {
                 if case .verified(let transaction) = verification {
                     await transaction.finish()
                 }
-                let jeton = verification.jwsRepresentation
-                await MainActor.run {
-                    self?.notifyListeners("achatRecu", data: ["transaction": jeton])
-                }
             }
+            call.resolve(["transactions": jetons])
         }
     }
 }

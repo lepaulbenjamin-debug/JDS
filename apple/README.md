@@ -207,10 +207,13 @@ accorde ce qui est valable. Une transaction refusée n'annule pas les autres.
    une attente d'autorisation parentale non plus. Les confondre afficherait un
    message d'échec à quelqu'un qui a simplement changé d'avis.
 
-   Le plugin écoute aussi `Transaction.updates` : autorisation parentale
-   accordée après coup, code promotionnel, achat fait sur un autre appareil,
-   remboursement. Sans cette écoute, ces transactions ne sont jamais closes et
-   reviennent indéfiniment.
+   Les transactions venues d'ailleurs — autorisation parentale accordée après
+   coup, code promotionnel, achat fait sur un autre appareil — sont reprises par
+   « Restaurer mes achats », qui lit `currentEntitlements` et clôt ce qui ne
+   l'était pas. Une écoute permanente de `Transaction.updates` ferait la même
+   chose plus tôt, mais elle oblige à capturer le plugin dans une tâche
+   détachée, ce que la concurrence stricte de Swift 6 refuse — et l'événement
+   qu'elle émettait n'était écouté par personne côté JavaScript.
 
 3. **Configurer `APPLE_BUNDLE_ID`** sur Vercel s'il diffère de
    `fr.quizentreamis.app`.
