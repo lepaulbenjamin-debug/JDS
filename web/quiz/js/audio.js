@@ -35,13 +35,26 @@ let encours = null;      // l'élément <audio> qui joue, pour pouvoir le couper
  */
 export function charger() {
   if (chargement) return chargement;
-  chargement = fetch(MANIFESTE, { cache: 'force-cache' })
+  // Ni `cache: 'force-cache'` ni `method: 'HEAD'` ici, et c'est délibéré.
+  //
+  // Dans l'application native, la page est servie par un gestionnaire d'URL
+  // maison — `capacitor://localhost` n'est pas un vrai serveur HTTP. Il répond
+  // aux GET ordinaires et à peu près rien d'autre : un HEAD n'y aboutit pas.
+  // La sonde échouait donc toujours, l'appli concluait qu'elle n'avait aucun
+  // clip, et l'animateur repassait à la voix de synthèse du téléphone — alors
+  // que les 741 fichiers étaient bien dans le paquet.
+  //
+  // La sonde reste nécessaire : le manifeste est versionné alors que les clips
+  // d'essai ne le sont pas, et déployé seul il ferait croire à une voix qui
+  // n'existe pas. On la fait donc en GET, quitte à télécharger un clip court
+  // une fois au démarrage — c'est le prix d'un test qui marche partout.
+  chargement = fetch(MANIFESTE)
     .then((res) => (res.ok ? res.json() : null))
     .then(async (json) => {
       if (!json?.clips) return null;
       const premier = Object.keys(json.clips)[0];
       if (!premier) return null;
-      const sonde = await fetch(`${RACINE}/${premier}.${json.format ?? 'mp3'}`, { method: 'HEAD' })
+      const sonde = await fetch(`${RACINE}/${premier}.${json.format ?? 'mp3'}`)
         .catch(() => null);
       return sonde?.ok ? json : null;
     })
@@ -81,7 +94,9 @@ const url = (id) => `${RACINE}/${id}.${manifeste?.format ?? 'mp3'}`;
 export function precharger(ids) {
   for (const id of [].concat(ids)) {
     if (!existe(id)) continue;
-    fetch(url(id), { cache: 'force-cache' }).catch(() => {});
+    // Un GET nu : c'est la lecture elle-même qui remplit le cache, et les modes
+    // de cache exotiques ne sont pas garantis derrière `capacitor://localhost`.
+    fetch(url(id)).catch(() => {});
   }
 }
 
