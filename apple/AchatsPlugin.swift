@@ -1,6 +1,6 @@
 //  Le pont vers la caisse d'Apple.
 //
-//  À déposer dans ios/App/App/ après `npx cap add ios`. Capacitor le découvre
+//  À déposer dans ios/App/App/ après `npm run ios:add`. Capacitor le découvre
 //  tout seul : rien à déclarer ailleurs.
 //
 //  Ce plugin ne décide rien. Il encaisse par StoreKit et rend le jeton SIGNÉ

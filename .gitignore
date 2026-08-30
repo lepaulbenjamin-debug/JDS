@@ -15,3 +15,9 @@ scripts/questions-brouillon.json
 # production. Un déploiement sans clips retomberait sur la synthèse du
 # navigateur, c'est-à-dire sur le défaut qu'on a passé une soirée à corriger.
 web/quiz/audio/**/*.wav
+
+# Le projet natif, engendré par `npm run ios:add` sur un Mac. Il ne se versionne
+# pas depuis ici : il contient les réglages de signature et le paquet web copié.
+# Les sources qui lui sont destinées vivent dans `apple/`.
+ios/
+android/

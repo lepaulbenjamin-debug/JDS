@@ -27,14 +27,22 @@ Trois différences assumées avec la version web, toutes dans le script :
 
 ## Le projet natif
 
+Les fichiers de ce dossier s'appellent `apple/` et non `ios/`, et ce n'est pas
+une coquetterie : **`ios/` appartient à Capacitor**. C'est lui qui l'y crée, et
+y trouver quoi que ce soit avant `cap add ios` lui fait croire la plateforme
+déjà installée. Il refuse alors de la créer, puis synchronise dans un projet
+Xcode qui n'existe pas — l'erreur qu'on obtient parle d'un `Podfile` introuvable,
+et n'a plus aucun rapport visible avec la cause.
+
 Capacitor est dans les dépendances du dépôt, et les commandes passent par des
 scripts npm plutôt que par `npx` :
 
 ```sh
 node -v                    # doit afficher 22 ou plus (exigence de Capacitor 8)
 npm install
-npm run ios:add
-cp ios/AchatsPlugin.swift ios/AppDelegate-audio.swift ios/App/App/
+rm -rf ios                 # seulement si un essai précédent en a laissé un
+npm run ios:add            # c'est cette commande qui crée ios/
+cp apple/AchatsPlugin.swift apple/AppDelegate-audio.swift ios/App/App/
 npm run ios:sync           # rebâtit le paquet web, puis le synchronise
 npm run ios:open
 ```
@@ -58,7 +66,7 @@ origines couperait le jeu en ligne.
 
 ### 1. La session audio — sans elle, l'animateur est muet
 
-Coller le contenu de `ios/AppDelegate-audio.swift` dans
+Coller le contenu de `apple/AppDelegate-audio.swift` dans
 `ios/App/App/AppDelegate.swift`.
 
 Sur iOS, un `<audio>` en WebView appartient à la catégorie « ambiante » : le
@@ -120,7 +128,7 @@ accorde ce qui est valable. Une transaction refusée n'annule pas les autres.
    affichés viennent de l'App Store, pas du champ `prix` — celui-ci n'est plus
    qu'un repli pour le web.
 
-2. **Déposer le pont natif.** Copier `ios/AchatsPlugin.swift` dans
+2. **Déposer le pont natif.** Copier `apple/AchatsPlugin.swift` dans
    `ios/App/App/`. Capacitor le découvre seul, il n'y a rien à déclarer
    ailleurs. Régler la cible du projet sur **iOS 15** minimum : StoreKit 2
    n'existe pas avant.

@@ -1,4 +1,4 @@
-//  À coller dans ios/App/App/AppDelegate.swift après `npx cap add ios`.
+//  À coller dans ios/App/App/AppDelegate.swift après `npm run ios:add`.
 //
 //  Pourquoi c'est indispensable, et pourquoi aucun test ne le verrait.
 //

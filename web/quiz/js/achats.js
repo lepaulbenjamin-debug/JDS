@@ -6,7 +6,7 @@
 // version native, et il n'existe que là : sur le web, il se déclare absent et
 // la boutique reste la vitrine qu'elle était.
 //
-// Le partage des rôles est le point important. Le plugin (`ios/AchatsPlugin.swift`)
+// Le partage des rôles est le point important. Le plugin (`apple/AchatsPlugin.swift`)
 // encaisse et rend le jeton SIGNÉ par Apple ; ce module le transmet tel quel au
 // relais, qui vérifie la signature avant d'ouvrir quoi que ce soit
 // (`lib/apple.js`). Rien de ce que dit l'appareil n'est cru sur parole : un
