@@ -30,6 +30,7 @@ import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
 import * as nodeFs from 'node:fs';
 import { inventaire } from './generate-audio.mjs';
+import { lireLeCatalogue } from './echantillons-voix.mjs';
 
 const QUESTION = {
   id: 'test', theme: 'culture', type: 'qcm',
@@ -1675,6 +1676,34 @@ test('chaque persona a de quoi ne pas se répéter sur douze manches', () => {
     assert.ok(variantes.size >= 6,
       `${persona} n’a que ${variantes.size} formules d’annonce`);
   }
+});
+
+test('le catalogue de voix se lit dans le refus de l’API', () => {
+  // La liste des voix n'est écrite nulle part : aucune route ne les énumère, et
+  // une liste recopiée dans le dépôt vieillit en silence — on croirait les avoir
+  // toutes essayées. On la lit donc dans le message de refus d'une voix
+  // inconnue, qui vient du service lui-même.
+  //
+  // Le format de ce message n'est pas un contrat : d'où ce test, et d'où le
+  // repli sur `null` plutôt qu'une devinette.
+  const vrai = JSON.stringify({
+    error: {
+      message: "Invalid value: '__catalogue__'. Supported values are: 'alloy', 'ash', "
+        + "'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer' and 'verse'.",
+      type: 'invalid_request_error',
+      param: 'voice',
+      code: 'invalid_value',
+    },
+  });
+  const lu = lireLeCatalogue(vrai);
+  assert.ok(lu.includes('coral') && lu.includes('verse'), `catalogue mal lu : ${lu}`);
+  assert.ok(!lu.includes('__catalogue__'), 'le nom de sonde s’est glissé dans le catalogue');
+  assert.ok(!lu.includes('invalid_request_error'), 'le type d’erreur a été pris pour une voix');
+  assert.ok(!lu.includes('voice'), 'le nom du paramètre a été pris pour une voix');
+
+  // Un message qu'on ne sait pas lire ne doit pas produire une liste inventée.
+  assert.equal(lireLeCatalogue('{"error":{"message":"Something went wrong"}}'), null);
+  assert.equal(lireLeCatalogue('Supported values are: nothing quoted here'), null);
 });
 
 test('les ordinaux gardent le s de trois, six et dix', () => {

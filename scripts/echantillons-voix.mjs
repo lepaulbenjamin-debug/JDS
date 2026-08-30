@@ -1,10 +1,16 @@
 // Écouter plusieurs voix côte à côte avant d'en refaire 741.
 //
 //   export OPENAI_API_KEY=sk-...
-//   node scripts/echantillons-voix.mjs                    # le catalogue par défaut
+//   node scripts/echantillons-voix.mjs                    # TOUTES les voix du catalogue
 //   node scripts/echantillons-voix.mjs --voix=coral,sage  # une liste précise
 //   node scripts/echantillons-voix.mjs --animateur=clasheur
-//   node scripts/echantillons-voix.mjs --sec              # ce qui serait fait, sans rien dépenser
+//   node scripts/echantillons-voix.mjs --sec              # le catalogue et ce qui serait dit,
+//                                                         # sans demander un seul son
+//
+// Sans --voix, la liste n'est pas écrite en dur : elle est DEMANDÉE à l'API. Un
+// catalogue recopié vieillit en silence, et on croirait avoir tout essayé. Le
+// sondage porte sur le modèle en cours (OPENAI_TTS_MODEL), donc changer de
+// modèle donne bien SON catalogue et non celui d'un autre.
 //
 // La clé se lit dans l'environnement, jamais en argument : une clé passée en
 // ligne de commande finit dans l'historique du shell, et dans le presse-papier
@@ -27,7 +33,7 @@
 
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // La direction de jeu vient du générateur, et non d'une copie locale : c'est
 // elle qui décide du rendu bien plus que le nom de la voix, donc un échantillon
@@ -36,13 +42,55 @@ import { inventaire, directionDe } from './generate-audio.mjs';
 
 const SORTIE = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'echantillons');
 
-// Le catalogue de gpt-4o-mini-tts. Une voix retirée ou renommée chez OpenAI ne
-// doit pas faire échouer tout le lot : elle est signalée et sautée.
-const VOIX_PAR_DEFAUT = [
+// `… | head` ferme le tuyau avant la dernière ligne. Sans ça, Node lève EPIPE et
+// crache dix lignes de trace pour une commande qui s'est parfaitement passée.
+process.stdout.on('error', (erreur) => {
+  if (erreur.code === 'EPIPE') process.exit(0);
+  throw erreur;
+});
+
+// Le filet, si la découverte échoue. Écrit de mémoire, donc périmable : c'est
+// précisément pourquoi il ne sert que de repli.
+const VOIX_DE_REPLI = [
   'alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer',
 ];
 
 const arg = (nom) => process.argv.find((a) => a.startsWith(`--${nom}=`))?.split('=').slice(1).join('=');
+
+/**
+ * Le catalogue réel, demandé à l'API plutôt que recopié.
+ *
+ * Il n'existe pas de route qui liste les voix. Mais une voix inconnue fait
+ * répondre 400 avec l'énumération des valeurs acceptées — c'est la seule source
+ * qui ne puisse pas être périmée, et elle vient du service lui-même. Une requête
+ * refusée pour paramètre invalide n'est pas facturée, et aucun son n'est rendu.
+ *
+ * Rend `null` si le message ne se laisse pas lire : le format n'est pas un
+ * contrat, et deviner à sa place vaudrait moins que le repli écrit plus haut.
+ */
+async function catalogue(cle, modele) {
+  try {
+    const res = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
+      // Un nom qu'aucune voix ne portera : on veut le refus, pas le son.
+      body: JSON.stringify({ model: modele, voice: '__catalogue__', input: '.' }),
+    });
+    if (res.ok) return null;                   // accepté : le sondage ne prouve rien
+    return lireLeCatalogue(await res.text());
+  } catch {
+    return null;
+  }
+}
+
+/** Les identifiants énumérés par un message de refus. Exporté pour être testé. */
+export function lireLeCatalogue(message) {
+  const apres = message.split(/supported values are/i)[1];
+  if (!apres) return null;
+  const noms = [...apres.matchAll(/'([a-z][a-z0-9_-]*)'/gi)].map((m) => m[1]);
+  const propres = [...new Set(noms)].filter((n) => n !== '__catalogue__');
+  return propres.length ? propres : null;
+}
 
 // Un nombre écrit en toutes lettres. `inventaire()` a déjà fait la conversion —
 // on ne cherche donc pas des chiffres, on cherche leur version dite.
@@ -100,8 +148,9 @@ function repliques(clips, animateur) {
 async function main() {
   const sec = process.argv.includes('--sec');
   const animateur = arg('animateur') ?? 'classique';
-  const voix = (arg('voix') ?? VOIX_PAR_DEFAUT.join(',')).split(',').map((v) => v.trim()).filter(Boolean);
+  const demandees = arg('voix')?.split(',').map((v) => v.trim()).filter(Boolean);
   const modele = process.env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts';
+  const cle = process.env.OPENAI_API_KEY;
 
   // Le générateur choisit la direction sur l'identifiant du clip : on lui en
   // passe un de cet animateur, c'est son API réelle.
@@ -114,27 +163,43 @@ async function main() {
     process.exit(1);
   }
 
+  // Le catalogue avant tout le reste : c'est lui qui décide combien on en fait,
+  // et il est demandé même en essai à blanc — la requête est refusée, donc
+  // gratuite, et savoir ce qui existe VRAIMENT est la moitié de la question.
+  let source = 'demandées';
+  let voix = demandees;
+  if (!voix) {
+    const trouve = cle ? await catalogue(cle, modele) : null;
+    voix = trouve ?? VOIX_DE_REPLI;
+    source = trouve ? 'catalogue de l’API'
+      : cle ? 'repli (le catalogue n’a pas pu être lu)'
+        : 'repli (pas de clé pour interroger le catalogue)';
+  }
+
   console.log(`\nAnimateur : ${animateur}`);
   console.log(`Modèle    : ${modele}`);
-  console.log(`Voix      : ${voix.join(', ')}`);
+  console.log(`Voix      : ${voix.join(', ')}   (${voix.length} — ${source})`);
+  if (source.startsWith('catalogue')) {
+    const inedites = voix.filter((v) => !VOIX_DE_REPLI.includes(v));
+    if (inedites.length) console.log(`            dont jamais essayées ici : ${inedites.join(', ')}`);
+  }
   console.log(`Extraits  : ${lignes.length} par voix, ${lignes.length * voix.length} au total\n`);
   for (const l of lignes) console.log(`  ${l.role.padEnd(28)} ${JSON.stringify(l.texte).slice(0, 76)}`);
 
   if (sec) {
-    // On écrit quand même la page : elle se relit sans un seul appel à l'API,
-    // et c'est le moment de vérifier qu'elle se tient avant de payer.
+    // On écrit quand même la page : elle se relit sans un seul son demandé, et
+    // c'est le moment de vérifier qu'elle se tient avant de payer.
     await mkdir(SORTIE, { recursive: true });
     await writeFile(
       join(SORTIE, 'index.html'),
       page({ animateur, modele, direction, lignes, rendus: voix, sec: true }),
       'utf8',
     );
-    console.log('\n--sec : rien n’a été demandé ni dépensé.');
+    console.log('\n--sec : aucun son demandé, rien de facturé.');
     console.log('La page est écrite dans dist/echantillons/ — sans les sons.\n');
     return;
   }
 
-  const cle = process.env.OPENAI_API_KEY;
   if (!cle) {
     console.error('\nOPENAI_API_KEY n’est pas définie.\n');
     console.error('  export OPENAI_API_KEY=sk-...\n');
@@ -296,7 +361,11 @@ ${sec ? '<p class="meta">Essai à blanc : aucun son n’a été demandé. Relanc
 `;
 }
 
-main().catch((erreur) => {
-  console.error(`\nÉchec : ${erreur.message}\n`);
-  process.exit(1);
-});
+// Ce fichier s'importe aussi — `lireLeCatalogue` est testé. Sans ce garde,
+// l'import déclencherait toute une campagne d'échantillons.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((erreur) => {
+    console.error(`\nÉchec : ${erreur.message}\n`);
+    process.exit(1);
+  });
+}
