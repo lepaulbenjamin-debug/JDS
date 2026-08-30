@@ -66,25 +66,29 @@ origines couperait le jeu en ligne.
 
 ### 1. La session audio — sans elle, l'animateur est muet
 
-`SessionAudio.swift` est copié par la commande ci-dessus. Il ne reste qu'à
-l'appeler : ouvrir `ios/App/App/AppDelegate.swift` et ajouter **deux lignes**.
+`SessionAudio.swift` est copié par la commande ci-dessus. Il ne reste **qu'une
+seule ligne** à ajouter, DANS la méthode existante de
+`ios/App/App/AppDelegate.swift` :
 
 ```swift
-func application(_ application: UIApplication,
-                 didFinishLaunchingWithOptions launchOptions: …) -> Bool {
-    SessionAudio.activer()        // ← à ajouter
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    SessionAudio.activer()          // ←←← la seule ligne à ajouter
     return true
-}
-
-func applicationDidBecomeActive(_ application: UIApplication) {
-    SessionAudio.reprendre()      // ← à ajouter
 }
 ```
 
-Ne remplacez pas l'`AppDelegate` engendré par Capacitor : il contient d'autres
-méthodes qui lui servent. C'est aussi pour ça que `SessionAudio.swift` ne
-définit aucune classe — deux `AppDelegate` dans la même cible, et le projet ne
-compile plus.
+**Dans la méthode, pas à la suite du fichier.** Redéclarer
+`didFinishLaunchingWithOptions` une seconde fois n'ajoute rien : c'est une
+erreur de compilation. `apple/AppDelegate-exemple.swift` montre le fichier
+complet, à comparer avec le vôtre — il ne se copie pas.
+
+Une seule ligne suffit parce que `SessionAudio` s'abonne lui-même au retour au
+premier plan. Le système désactive la session dès qu'une autre application
+prend la main — un appel entrant — et sans reprise l'animateur redevient muet au
+milieu de la soirée. On passe par une notification plutôt que par
+`applicationDidBecomeActive` : le gabarit de Capacitor adopte les scènes, et
+cette méthode-là n'est alors **jamais appelée**. Ce qu'on y aurait mis n'aurait
+jamais servi, sans que rien ne le signale.
 
 Sur iOS, un `<audio>` en WebView appartient à la catégorie « ambiante » : le
 système le coupe dès que l'interrupteur latéral est sur silencieux. Or le

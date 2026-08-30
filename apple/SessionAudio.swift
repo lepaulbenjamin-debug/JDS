@@ -1,12 +1,16 @@
 //  Faire parler l'animateur même quand le téléphone est en silencieux.
 //
-//  À copier dans ios/App/App/, puis à appeler depuis AppDelegate — une ligne,
-//  décrite dans apple/README.md.
+//  À copier dans ios/App/App/, puis à appeler depuis AppDelegate. UNE ligne :
 //
-//  Ce fichier ne redéfinit rien : c'est délibéré. Un AppDelegate complet livré
-//  tel quel entrerait en collision avec celui que Capacitor engendre — deux
-//  classes du même nom et deux `@UIApplicationMain` dans la même cible, et le
-//  projet ne compile plus.
+//      SessionAudio.activer()
+//
+//  dans `application(_:didFinishLaunchingWithOptions:)`, avant le `return true`.
+//  Rien d'autre à toucher.
+//
+//  Ce fichier ne définit aucune classe, et c'est délibéré : un AppDelegate
+//  complet livré tel quel entrerait en collision avec celui que Capacitor
+//  engendre — deux classes du même nom et deux `@UIApplicationMain` dans la
+//  même cible, et le projet ne compile plus.
 //
 //  Le problème qu'il règle. Sur iOS, un élément <audio> dans une WebView
 //  appartient par défaut à la catégorie audio « ambiante » : le système la
@@ -19,11 +23,12 @@
 //  juste du silence.
 
 import Foundation
+import UIKit
 import AVFoundation
 
 enum SessionAudio {
 
-    /// À appeler au lancement, depuis `application(_:didFinishLaunchingWithOptions:)`.
+    /// À appeler une fois, au lancement.
     ///
     /// `.playback` dit au système que ce son est le propos de l'application et
     /// non un bruitage d'accompagnement : il joue donc malgré l'interrupteur
@@ -33,6 +38,11 @@ enum SessionAudio {
     /// qui est ce qu'on veut dans un salon — on baisse la musique, on ne la
     /// coupe pas. À retirer si l'on préfère que l'animateur ait le silence.
     static func activer() {
+        appliquer()
+        surveillerLesRetours()
+    }
+
+    private static func appliquer() {
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -44,12 +54,22 @@ enum SessionAudio {
         }
     }
 
-    /// À appeler depuis `applicationDidBecomeActive`.
-    ///
     /// Le système désactive la session quand une autre application prend la
-    /// main — un appel entrant, une vidéo. Sans cette reprise, l'animateur
-    /// redevient muet au milieu de la soirée, et plus rien ne le rétablit.
-    static func reprendre() {
-        try? AVAudioSession.sharedInstance().setActive(true)
+    /// main — un appel entrant, une vidéo. Sans reprise, l'animateur redevient
+    /// muet au milieu de la soirée et plus rien ne le rétablit.
+    ///
+    /// On s'abonne à la notification plutôt que de compter sur une méthode de
+    /// l'AppDelegate : dès qu'une application adopte les scènes — ce que fait
+    /// le gabarit de Capacitor — `applicationDidBecomeActive` n'est plus
+    /// appelé, et le code qu'on y aurait mis ne servirait jamais. La
+    /// notification, elle, est postée dans les deux cas.
+    private static func surveillerLesRetours() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            try? AVAudioSession.sharedInstance().setActive(true)
+        }
     }
 }
