@@ -168,15 +168,17 @@ la synchronisation.
 
 ### 2. Le manifeste de confidentialité
 
-Créer `ios/App/App/PrivacyInfo.xcprivacy`. Capacitor lit les préférences
-système, ce qui relève des API « à raison requise » depuis 2024 :
+Le fichier est écrit : copier `apple/PrivacyInfo.xcprivacy` dans
+`ios/App/App/`, puis l'ajouter à la cible **exactement comme les deux fichiers
+Swift ci-dessus** — c'est le même piège, et le même symptôme muet.
 
-- `NSPrivacyAccessedAPICategoryUserDefaults`, raison `CA92.1`
-  (accès aux seules préférences de l'application elle-même).
+Il déclare que l'application ne suit personne, ne collecte rien, et n'emploie
+qu'une API « à raison requise » : `UserDefaults`, où Capacitor range ses
+préférences, avec la raison `CA92.1`. Le détail est commenté dans le fichier.
 
-L'application ne suit personne et ne collecte rien : `NSPrivacyTracking` à
-`false`, `NSPrivacyCollectedDataTypes` vide. À déclarer dans le même sens dans
-App Store Connect.
+Sans ce manifeste, le dépôt est refusé avant même la revue. Et le questionnaire
+de confidentialité d'App Store Connect doit dire la même chose : une divergence
+entre les deux est un motif de rejet.
 
 ### 3. La cible
 
