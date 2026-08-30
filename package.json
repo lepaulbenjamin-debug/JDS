@@ -8,6 +8,7 @@
     "start": "node server/index.js",
     "check": "node server/check.mjs",
     "check:quiz": "node --test scripts/check-quiz.mjs",
+    "voix:echantillons": "node scripts/echantillons-voix.mjs",
     "bundle": "node scripts/build-single-file.mjs",
     "build:ios": "node scripts/build-ios.mjs",
     "ios:add": "cap add ios",

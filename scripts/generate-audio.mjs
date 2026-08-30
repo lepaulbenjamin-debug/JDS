@@ -154,8 +154,15 @@ const DIRECTIONS = {
     + 'quelqu’un qui méprise. Appuie les chutes, savoure-les.',
 };
 
-/** Les clips d'un animateur portent son nom : `emcee/<persona>/<clé>/<n>`. */
-function directionDe(id) {
+/**
+ * Les clips d'un animateur portent son nom : `emcee/<persona>/<clé>/<n>`.
+ *
+ * Exporté pour `echantillons-voix.mjs` : comparer deux voix sur une autre
+ * consigne que celle de production ne dirait rien de la banque qu'on
+ * fabriquerait ensuite — c'est la consigne qui domine le rendu, pas le nom de
+ * la voix.
+ */
+export function directionDe(id) {
   const persona = id.startsWith('emcee/') ? id.split('/')[1] : null;
   return DIRECTIONS[persona] ?? DIRECTIONS.defaut;
 }
