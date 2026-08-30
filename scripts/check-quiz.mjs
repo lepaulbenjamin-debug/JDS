@@ -1671,3 +1671,37 @@ test('la fonction déployée pose bien les en-têtes, et pas seulement la librai
   assert.equal(web.sortie.code, 201);
   assert.equal(web.sortie.entetes['access-control-allow-origin'], undefined);
 });
+
+/* --- La partie solo -------------------------------------------------------- */
+//
+// Jouer seul, c'est le même moteur avec un seul pupitre et le relais remplacé
+// par une file en mémoire. Ce qui doit tenir côté moteur, c'est qu'une table
+// d'un seul joueur aille jusqu'au podium sans se bloquer — notamment quand ce
+// joueur ne répond pas, puisque la règle qui évite d'attendre un pupitre parti
+// se chercher à boire viderait alors la liste des joueurs attendus.
+
+test('une partie à un seul joueur va jusqu’au podium', () => {
+  const solo = [{ id: 'seul', name: 'Toi' }];
+  const { etatFinal, vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    joueurs: solo,
+    repondre: (public_) => (
+      public_.phase === 'manche'
+        ? [{ playerId: 'seul', round: public_.manche, reponse: 1, elapsedMs: 900 }]
+        : []
+    ),
+  });
+  assert.equal(etatFinal.phase, 'podium');
+  assert.equal(etatFinal.podium?.[0]?.id, 'seul', 'le seul joueur gagne sa partie');
+  assert.ok(vues.length > 3, 'la partie doit traverser ses manches');
+});
+
+test('un joueur seul qui ne répond jamais n’enlise pas la partie', () => {
+  // La manche ne se clôt normalement qu'une fois tous les présents ayant
+  // répondu — mais on cesse d'attendre celui qui s'est absenté plusieurs
+  // manches. Seul, cela vide la liste des attendus : sans le garde-fou, la
+  // partie se figerait là, et l'examinateur d'App Store verrait un écran mort.
+  const solo = [{ id: 'seul', name: 'Toi' }];
+  const { etatFinal } = jouerUnePartie({ questions: troisQuestions(), joueurs: solo });
+  assert.equal(etatFinal.phase, 'podium', 'le chrono doit finir par emporter chaque manche');
+});

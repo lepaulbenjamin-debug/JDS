@@ -92,7 +92,13 @@ let filEnvoye = false;         // une tentative de fil rouge part sans écho imm
 let filRendu = '';             // ce que la boîte du fil rouge affiche déjà, pour ne pas la reconstruire sous les doigts
 let monNiveau = null;          // { manche, niveau } — le pari du TTMC, écho local
 
-const estRegie = () => Boolean(salon?.hostToken);
+// En solo, le relais est remplacé par cette file : les réponses y sont déposées
+// et relues au battement suivant, exactement là où le relais les aurait rendues.
+let fileSolo = [];
+
+const estSolo = () => Boolean(salon?.solo);
+// Solo ou hôte, c'est le même rôle : cet appareil fait tourner la régie.
+const estRegie = () => Boolean(salon?.hostToken) || estSolo();
 
 /* --- Navigation ---------------------------------------------------------- */
 
@@ -173,6 +179,15 @@ function arreterBoucle() {
 }
 
 async function battementRegie() {
+  if (estSolo()) {
+    // Ni publication ni sondage : la table ne change pas, et les réponses sont
+    // déjà sur l'appareil. Le reste du battement est identique.
+    regie.encaisser(fileSolo.splice(0));
+    regie.avancer(net.serverNow(), joueurs);
+    appliquer(regie.etatPublic(joueurs));
+    return;
+  }
+
   const reponse = await net.publishState(salon.code, salon.hostToken, aPublier);
   aPublier = undefined;
 
@@ -293,6 +308,18 @@ function lireEnonce() {
   voix.enoncer({ clips: [`question/${qid}`], repli: [] });
 }
 
+/**
+ * Déposer une réponse. En solo, la file locale tient lieu de relais — même
+ * forme, même trajet, sans réseau.
+ */
+async function envoyerReponse(answer) {
+  if (estSolo()) {
+    fileSolo.push(answer);
+    return;
+  }
+  await net.sendAnswer(salon.code, answer);
+}
+
 /* --- Rendu --------------------------------------------------------------- */
 
 function rendre() {
@@ -411,7 +438,7 @@ async function annoncerLeNiveau(niveau) {
   sons.bip();
   rendrePari();
   try {
-    await net.sendAnswer(salon.code, { playerId: moi.id, round: etat.manche, niveau });
+    await envoyerReponse({ playerId: moi.id, round: etat.manche, niveau });
   } catch {
     toast('Niveau non transmis — le relais n’a pas répondu.', 'warn');
   }
@@ -678,7 +705,7 @@ async function tenterLeFil(propose) {
   filEnvoye = true;
   rendreFilRouge();
   try {
-    await net.sendAnswer(salon.code, { playerId: moi.id, round: 0, reponse: null, fil: propose });
+    await envoyerReponse({ playerId: moi.id, round: 0, reponse: null, fil: propose });
   } catch {
     toast('Proposition non transmise.', 'warn');
     filEnvoye = false;
@@ -896,7 +923,7 @@ async function repondre(valeur) {
   rendreEtatManche();
 
   try {
-    await net.sendAnswer(salon.code, {
+    await envoyerReponse({
       playerId: moi.id,
       round: etat.manche,
       reponse: valeur,
@@ -1094,29 +1121,14 @@ async function rendrePacks() {
     : 'Tous les packs sont débloqués sur cet appareil.';
 }
 
-async function ouvrirSalon() {
-  // Le tirage au sort tient ici, et nulle part ailleurs : il doit tomber à
-  // chaque nouvelle partie, y compris derrière « Une autre ! ».
-  const fil = reglages.avecFil
-    ? FILS_ROUGES[Math.floor(Math.random() * FILS_ROUGES.length)] ?? null
-    : null;
-  const questions = tirerQuestions({
-    themes: reglages.themes,
-    types: reglages.types,
-    nombre: reglages.nombre,
-    fil: fil?.id ?? null,
-  });
-  if (!questions.length) {
-    toast('Aucune question sur ces thèmes.', 'warn');
-    return;
-  }
-
-  const bouton = $('#btn-ouvrir-salon');
-  bouton.disabled = true;
-  try {
-    const { code, hostToken } = await net.createRoom();
-    salon = { code, hostToken };
-    regie = creerRegie({
+/**
+ * La régie de la partie qui commence.
+ *
+ * Identique en solo et à plusieurs : le moteur ne sait pas combien de pupitres
+ * l'écoutent, et c'est ce qui rend le mode solo possible sans le dupliquer.
+ */
+function construireRegie(questions, fil) {
+  return creerRegie({
       questions,
       dureeMs: reglages.dureeMs,
       persona: reglages.persona,
@@ -1139,7 +1151,36 @@ async function ouvrirSalon() {
         // + le temps de lire son score et de souffler avant la manche suivante.
         return (lu + commente + marquant + RESPIRATION_S) * 1000;
       },
-    });
+  });
+}
+
+/** Le tirage tombe à chaque nouvelle partie, y compris derrière « Une autre ! ». */
+function tirerLaPartie() {
+  const fil = reglages.avecFil
+    ? FILS_ROUGES[Math.floor(Math.random() * FILS_ROUGES.length)] ?? null
+    : null;
+  const questions = tirerQuestions({
+    themes: reglages.themes,
+    types: reglages.types,
+    nombre: reglages.nombre,
+    fil: fil?.id ?? null,
+  });
+  return { fil, questions };
+}
+
+async function ouvrirSalon() {
+  const { fil, questions } = tirerLaPartie();
+  if (!questions.length) {
+    toast('Aucune question sur ces thèmes.', 'warn');
+    return;
+  }
+
+  const bouton = $('#btn-ouvrir-salon');
+  bouton.disabled = true;
+  try {
+    const { code, hostToken } = await net.createRoom();
+    salon = { code, hostToken };
+    regie = construireRegie(questions, fil);
     const arrivee = await net.joinRoom(code, moi);
     moi.id = arrivee.playerId;
     enregistrerMoi();
@@ -1154,6 +1195,49 @@ async function ouvrirSalon() {
     demarrerBoucle();
   } catch (erreur) {
     toast(erreur.message ?? 'Impossible d’ouvrir le salon.', 'warn');
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
+/**
+ * Une partie pour soi seul, sans salon, sans code, sans réseau.
+ *
+ * Le moteur tourne déjà sur l'appareil qui reçoit la partie : jouer seul, c'est
+ * le même moteur avec un seul pupitre et le relais remplacé par une file en
+ * mémoire. Rien n'est simulé, rien n'est allégé — mêmes questions, mêmes
+ * jokers, même animateur.
+ *
+ * Ce mode existe pour trois raisons qui pointent dans la même direction : on
+ * n'a pas toujours quatre amis sous la main, une application qui exige un
+ * second téléphone pour faire quoi que ce soit est invalidable, et un
+ * examinateur d'App Store est seul avec un appareil.
+ */
+function jouerSeul() {
+  const { fil, questions } = tirerLaPartie();
+  if (!questions.length) {
+    toast('Aucune question sur ces thèmes.', 'warn');
+    return;
+  }
+
+  const bouton = $('#btn-solo');
+  bouton.disabled = true;
+  try {
+    salon = { code: null, hostToken: null, solo: true };
+    fileSolo = [];
+    // Le prénom n'est pas demandé ici : seul, on sait qui on est, et une partie
+    // qui démarre en un tap est le seul moyen de prouver que l'appli fait
+    // quelque chose sans second téléphone.
+    joueurs = [{ id: moi.id, name: moi.name || 'Toi' }];
+    regie = construireRegie(questions, fil);
+    voix.appliquerDefaut(true);           // seul, on est aussi la voix de la pièce
+    majBoutonSon();
+    // Personne à attendre : pas de lobby, la partie commence.
+    regie.lancer(net.serverNow(), joueurs);
+    appliquer(regie.etatPublic(joueurs));
+    demarrerBoucle();
+  } catch (erreur) {
+    toast(erreur.message ?? 'Impossible de lancer la partie.', 'warn');
   } finally {
     bouton.disabled = false;
   }
@@ -1222,8 +1306,10 @@ function rendreLienPartage() {
 
 async function quitter() {
   if (etat && etat.phase !== 'lobby' && etat.phase !== 'podium') {
+    // Seul, on n'arrête la partie de personne : l'avertissement de la régie
+    // n'aurait aucun sens.
     const sur = await confirmDialog(
-      estRegie()
+      estRegie() && !estSolo()
         ? 'Tu tiens la régie : si tu quittes, la partie s’arrête pour tout le monde. Continuer ?'
         : 'Quitter la partie en cours ?',
       { okLabel: 'Quitter', danger: true },
@@ -1233,6 +1319,7 @@ async function quitter() {
   arreterBoucle();
   voix.taire();
   salon = null;
+  fileSolo = [];
   regie = null;
   etat = null;
   joueurs = [];
@@ -1257,6 +1344,8 @@ function brancher() {
   });
 
   $('#btn-ouvrir-salon').addEventListener('click', ouvrirSalon);
+  // Le premier tap de la partie : c'est lui qui débloque le son sur mobile.
+  $('#btn-solo').addEventListener('click', () => { sons.debloquer(); jouerSeul(); });
   $('#btn-rejoindre').addEventListener('click', () => { sons.debloquer(); rejoindreSalon(); });
   $('#btn-back').addEventListener('click', quitter);
 
@@ -1277,14 +1366,21 @@ function brancher() {
   });
 
   $('#btn-rejouer').addEventListener('click', () => {
+    const encoreSeul = estSolo();
     arreterBoucle();
     salon = null;
     regie = null;
     etat = null;
     version = -1;
     cleRendue = '';
-  filRendu = '';
+    filRendu = '';
     derniereVoix = '';
+    // Une partie solo se rejoue d'un tap : repasser par les réglages et le
+    // salon n'aurait aucun sens quand on est seul.
+    if (encoreSeul) {
+      jouerSeul();
+      return;
+    }
     rendreReglages();
     montrer('reglages');
   });
