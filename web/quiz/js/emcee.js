@@ -43,6 +43,16 @@ const BANQUE = {
       'Bonsoir à tous, et bienvenue. {nb} candidats ce soir, et une seule place sur la première marche.',
       'Mesdames, messieurs, bonsoir. Vous êtes {nb} ce soir. Dans un quart d’heure, il n’en restera qu’un.',
     ],
+    // Une clé à part, et pas un accord automatique sur {nb} : « 1 candidats »
+    // n'est pas une faute de grammaire à rattraper, c'est une phrase écrite pour
+    // une salle. Seul, on ne joue pas contre les autres mais contre soi, et
+    // l'animateur doit le dire autrement. Les clips, eux, ne bougent pas :
+    // `annonceCle` reste 'ouverture', et les répliques enregistrées ne comptent
+    // déjà personne.
+    ouvertureSolo: [
+      'Bonsoir, et bienvenue. Ce soir, vous êtes seul en lice : contre le score, et contre vous-même.',
+      'Mesdames, messieurs — enfin, vous. Une place sur la première marche, et un seul candidat pour la prendre.',
+    ],
     avantManche: [
       'Manche {manche} sur {total}.',
       'On enchaîne. Question {manche}.',
@@ -127,6 +137,10 @@ const BANQUE = {
       'Bon, vous êtes {nb}. Statistiquement, il y en a au moins deux qui vont le regretter.',
       'Salut la compagnie ! {nb} joueurs, un seul gagnant, et beaucoup d’excuses à préparer.',
     ],
+    ouvertureSolo: [
+      'Bon, vous êtes tout seul. Statistiquement, ça va être serré.',
+      'Salut ! Un joueur, un gagnant, un perdant. Bon courage pour cumuler les deux.',
+    ],
     avantManche: [
       'Question {manche}. Allez, on se réveille.',
       'Manche {manche} sur {total}. Essayez de lire jusqu’au bout cette fois.',
@@ -205,6 +219,10 @@ const BANQUE = {
       'Bonsoir. Vous êtes {nb}. Nous verrons bien.',
       'Bien. {nb} participants. Commençons, tant que la motivation est là.',
     ],
+    ouvertureSolo: [
+      'Bonsoir. Vous êtes seul. Nous verrons bien.',
+      'Bien. Un participant. Commençons, tant que la motivation est là.',
+    ],
     avantManche: [
       'Question {manche}.',
       'Manche {manche} sur {total}. Prenez votre temps. Enfin, non.',
@@ -258,6 +276,10 @@ const BANQUE = {
     ouverture: [
       'Vous êtes {nb}. Ça fait {nb} occasions de se ridiculiser. Profitez-en.',
       'Bonsoir. {nb} joueurs, et déjà des doutes sur au moins la moitié.',
+    ],
+    ouvertureSolo: [
+      'Tout seul ? Au moins, personne ne verra ça. Profitez-en.',
+      'Bonsoir. Un joueur, et déjà des doutes. Ça commence bien.',
     ],
     avantManche: [
       'Question {manche}. Essayez de viser la bonne case.',
@@ -718,6 +740,12 @@ export const voix = {
   async enoncer({ clips = [], repli = [] } = {}) {
     if (!this.active) return;
     speech.stop();
+    // Ne jamais conclure « pas de clips » avant la fin du chargement. En solo la
+    // partie démarre au premier tap, sans salon ni attente : la toute première
+    // phrase de la soirée arrivait avant la réponse du manifeste, partait à la
+    // synthèse, et donnait le ton pour la suite.
+    // `charger` mémorise sa promesse : après le premier appel, ceci ne coûte rien.
+    await audio.charger();
     if (await audio.jouer(clips)) return;
     if (audio.disponible()) return;              // banque présente : silence plutôt qu'un autre timbre
     this.dire(repli);
@@ -729,6 +757,10 @@ export const voix = {
   },
   get nomDeLaVoix() {
     return audio.nomDeLaVoix();
+  },
+  /** Pourquoi la voix enregistrée ne sort pas, quand c'est le cas. */
+  get etatDesClips() {
+    return audio.etat();
   },
 
   precharger(clips) {

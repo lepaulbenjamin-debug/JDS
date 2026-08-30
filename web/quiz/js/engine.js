@@ -478,8 +478,16 @@ export function creerRegie({
       if (etat.phase !== 'lobby') return false;
       etat.phase = 'intro';
       etat.finPhase = now + DUREE_INTRO_MS;
+      // `annonceCle` reste 'ouverture' quel que soit le nombre de joueurs :
+      // c'est elle qui désigne le clip enregistré, et il n'y en a qu'un. Seul
+      // le texte — affiché, et lu par la synthèse en repli — se décline, parce
+      // qu'il compte les candidats et qu'à un seul il ne veut plus rien dire.
       etat.annonceCle = 'ouverture';
-      etat.annonce = repliqueDe(persona, 'ouverture', { nb: joueurs.length });
+      etat.annonce = repliqueDe(
+        persona,
+        joueurs.length === 1 ? 'ouvertureSolo' : 'ouverture',
+        { nb: joueurs.length },
+      );
       return true;
     },
 

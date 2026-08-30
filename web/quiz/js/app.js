@@ -105,6 +105,10 @@ const estRegie = () => Boolean(salon?.hostToken) || estSolo();
 
 function montrer(nom) {
   for (const section of $$('[data-screen]')) section.hidden = section.dataset.screen !== nom;
+  // L'état de la voix change en cours de route — le manifeste arrive après le
+  // premier affichage, et une banque peut se révéler illisible à la première
+  // lecture. Le redessiner à l'ouverture évite d'y lire une réponse périmée.
+  if (nom === 'reglages') rendreChoixVoix();
   // Le retour reste disponible en pleine partie : un invité doit pouvoir sortir
   // d'un salon qui a mal tourné. La confirmation évite le départ par accident.
   $('#btn-back').hidden = nom === 'accueil';
@@ -372,9 +376,13 @@ function rendreJeu() {
   const cle = `${etat.phase}:${etat.manche}`;
   const question = etat.question;
 
-  $('#jeu-manche').textContent = etat.finale
-    ? 'Dernière manche — points doublés'
-    : `Manche ${etat.manche} / ${etat.total}`;
+  // Pendant l'ouverture, aucune manche n'a commencé : `etat.manche` vaut zéro,
+  // et « Manche 0 / 12 » s'affichait le temps de l'annonce.
+  $('#jeu-manche').textContent = etat.phase === 'intro'
+    ? `${etat.total} manches`
+    : etat.finale
+      ? 'Dernière manche — points doublés'
+      : `Manche ${etat.manche} / ${etat.total}`;
   $('#jeu-theme').textContent = question ? nomDuTheme(question.theme) : '';
   $('#jeu-theme').hidden = !question;
 
@@ -840,7 +848,11 @@ function rendreChoixVoix() {
 
   hote.append(el('p', {
     class: 'muted small',
-    text: 'Aucun enregistrement installé : l’animateur passe par la voix de synthèse de cet appareil.',
+    // La raison, et pas seulement le constat. Sur un téléphone il n'y a pas de
+    // console : si la voix enregistrée ne sort pas, cette ligne est le seul
+    // endroit où l'on peut lire pourquoi.
+    text: voix.etatDesClips
+      ?? 'Aucun enregistrement installé : l’animateur passe par la voix de synthèse de cet appareil.',
   }));
 
   if (!voix.disponible || !timbres.length) {

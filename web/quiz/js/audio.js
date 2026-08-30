@@ -19,64 +19,80 @@ const MANIFESTE = `${RACINE}/manifeste.json`;
 let manifeste = null;
 let chargement = null;
 let encours = null;      // l'élément <audio> qui joue, pour pouvoir le couper
+// Un clip annoncé par le manifeste s'est révélé illisible : la banque est
+// incomplète, on rend la parole à la synthèse. Voir `jouer`.
+let cassee = false;
+// Ce que le manifeste a répondu, pour l'afficher dans les réglages.
+let panne = null;
 
 /**
  * Charge le manifeste, une seule fois. Son absence n'est pas une erreur :
  * c'est simplement une installation où les clips n'ont pas été générés.
  *
- * Le manifeste ne suffit pas : on vérifie qu'un clip répond vraiment. Il est
- * versionné alors que les fichiers, eux, peuvent ne pas l'être — c'est le cas
- * des essais à blanc, ignorés par git. Déployé tel quel, le manifeste faisait
- * croire à l'appli qu'elle avait une voix : elle tentait un fichier absent
- * avant chaque phrase, se rabattait sur la synthèse après un aller-retour
- * perdu, et masquait le choix de voix système au motif qu'il ne servait plus.
- * Une requête au démarrage évite tout ça, et couvre aussi le cas d'un envoi
- * incomplet.
+ * Rien d'autre n'est vérifié ici, et c'est le fruit d'une erreur qu'il vaut la
+ * peine d'écrire. Le manifeste est versionné alors que les clips d'essai ne le
+ * sont pas : déployé seul, il ferait croire à une voix qui n'existe pas. On
+ * avait donc ajouté une sonde au démarrage — télécharger un clip pour voir s'il
+ * répond. Mauvais juge : dans l'application native la page est servie par un
+ * gestionnaire d'URL maison, `capacitor://localhost` n'est pas un serveur HTTP,
+ * et une requête qui n'aboutit pas là ne dit rien de la capacité à LIRE le
+ * fichier. La sonde concluait « aucun clip » avec 741 fichiers dans le paquet,
+ * et l'animateur repassait à la voix de synthèse du téléphone.
+ *
+ * Le bon juge, c'est la lecture elle-même : elle mesure exactement ce dont on a
+ * besoin, elle ne coûte aucune requête de plus, et elle ne peut pas se tromper
+ * sur un détail de transport. Le manifeste est donc cru sur parole, et c'est le
+ * premier clip qui échoue vraiment qui fait basculer sur la synthèse.
  */
 export function charger() {
   if (chargement) return chargement;
-  // Ni `cache: 'force-cache'` ni `method: 'HEAD'` ici, et c'est délibéré.
-  //
-  // Dans l'application native, la page est servie par un gestionnaire d'URL
-  // maison — `capacitor://localhost` n'est pas un vrai serveur HTTP. Il répond
-  // aux GET ordinaires et à peu près rien d'autre : un HEAD n'y aboutit pas.
-  // La sonde échouait donc toujours, l'appli concluait qu'elle n'avait aucun
-  // clip, et l'animateur repassait à la voix de synthèse du téléphone — alors
-  // que les 741 fichiers étaient bien dans le paquet.
-  //
-  // La sonde reste nécessaire : le manifeste est versionné alors que les clips
-  // d'essai ne le sont pas, et déployé seul il ferait croire à une voix qui
-  // n'existe pas. On la fait donc en GET, quitte à télécharger un clip court
-  // une fois au démarrage — c'est le prix d'un test qui marche partout.
   chargement = fetch(MANIFESTE)
-    .then((res) => (res.ok ? res.json() : null))
-    .then(async (json) => {
-      if (!json?.clips) return null;
-      const premier = Object.keys(json.clips)[0];
-      if (!premier) return null;
-      const sonde = await fetch(`${RACINE}/${premier}.${json.format ?? 'mp3'}`)
-        .catch(() => null);
-      return sonde?.ok ? json : null;
+    .then((res) => {
+      if (!res.ok) { panne = `manifeste ${res.status}`; return null; }
+      return res.json();
     })
-    .then((valide) => {
-      manifeste = valide;
+    .then((json) => {
+      if (json && !json.clips) panne = 'manifeste sans clips';
+      manifeste = json?.clips ? json : null;
       return manifeste;
     })
-    .catch(() => {
+    .catch((erreur) => {
+      panne = `manifeste illisible (${erreur?.message ?? 'erreur'})`;
       manifeste = null;
       return null;
     });
   return chargement;
 }
 
-/** Ce clip existe-t-il ? */
-export function existe(id) {
-  return Boolean(id && manifeste?.clips?.[id] != null);
+/**
+ * L'état de la banque, en clair, pour l'écran des réglages.
+ *
+ * Quand la voix enregistrée ne sort pas, il n'y a rien à voir : l'appli parle,
+ * simplement avec le mauvais timbre. Sur un téléphone, sans console, la seule
+ * façon de savoir POURQUOI est que l'appli le dise elle-même.
+ */
+export function etat() {
+  if (cassee) return 'Enregistrements introuvables à la lecture — repli sur la synthèse.';
+  if (manifeste) return null;
+  if (!chargement) return 'Enregistrements pas encore cherchés.';
+  return panne ? `Enregistrements indisponibles : ${panne}.` : 'Enregistrements en cours de chargement…';
 }
 
-/** Durée d'un clip en secondes, ou 0 si on ne l'a pas. */
+/** Ce clip existe-t-il ? */
+export function existe(id) {
+  return !cassee && Boolean(id && manifeste?.clips?.[id] != null);
+}
+
+/**
+ * Durée d'un clip en secondes, ou 0 si on ne l'a pas.
+ *
+ * Le zéro compte : c'est lui qui fait retomber le minutage des révélations sur
+ * l'estimation par longueur de texte. Une banque déclarée mais cassée rendrait
+ * sinon des durées pour des clips qu'on n'entend pas, et laisserait l'écran
+ * figé le temps d'un silence.
+ */
 export function duree(id) {
-  return manifeste?.clips?.[id] ?? 0;
+  return existe(id) ? manifeste.clips[id] : 0;
 }
 
 const url = (id) => `${RACINE}/${id}.${manifeste?.format ?? 'mp3'}`;
@@ -145,10 +161,32 @@ export async function jouer(ids) {
     try {
       await new Promise((resolve, reject) => {
         const finir = () => { nettoyer(); resolve(); };
-        const rater = () => { nettoyer(); reject(new Error(id)); };
+        // Deux échecs qui n'ont rien à voir, d'où les deux causes.
+        //
+        //   'fichier'  l'élément n'a pas su lire la source : elle est absente
+        //              du paquet, ou illisible. Le manifeste ment, et il ment
+        //              probablement sur tout le reste : on rend la parole à la
+        //              synthèse pour le reste de la soirée.
+        //   'refus'    le système a refusé de jouer, faute de geste utilisateur.
+        //              Les fichiers, eux, sont parfaits — la prochaine phrase
+        //              passera. Surtout ne rien conclure sur la banque.
+        //
+        // Les deux arrivent par deux chemins qui se doublent : une source
+        // illisible fait échouer `play()` ET déclenche `error`, dans un ordre
+        // qui dépend du navigateur. Classer selon le chemin emprunté rendrait
+        // donc un verdict tiré au sort. On classe sur le seul signal qui dit
+        // vraiment de quoi il s'agit : `NotAllowedError`, le nom réservé au
+        // refus de lecture automatique. Tout le reste met la source en cause.
+        const rater = (erreur) => {
+          nettoyer();
+          reject(new Error(erreur?.name === 'NotAllowedError' ? 'refus' : 'fichier'));
+        };
+        // L'événement `error` ne porte pas de nom d'exception : c'est par
+        // définition une source qu'on n'a pas su lire, donc 'fichier'.
+        const raterSource = () => rater(null);
         function nettoyer() {
           element.removeEventListener('ended', finir);
-          element.removeEventListener('error', rater);
+          element.removeEventListener('error', raterSource);
           clearInterval(garde);
         }
         // Une pause ne déclenche pas `ended` : sans ce garde, la boucle d'un
@@ -157,13 +195,13 @@ export async function jouer(ids) {
           if (passage !== lemien) finir();
         }, 120);
         element.addEventListener('ended', finir, { once: true });
-        element.addEventListener('error', rater, { once: true });
+        element.addEventListener('error', raterSource, { once: true });
         element.src = url(id);
         element.play().catch(rater);
       });
-    } catch {
-      // Lecture refusée (aucun geste utilisateur encore) ou fichier illisible :
-      // on s'arrête là plutôt que d'enchaîner dans le vide.
+    } catch (erreur) {
+      if (erreur.message === 'fichier') cassee = true;
+      // On s'arrête là plutôt que d'enchaîner dans le vide.
       if (passage === lemien) encours = null;
       return false;
     }
@@ -172,9 +210,9 @@ export async function jouer(ids) {
   return true;
 }
 
-/** Vrai si cette installation dispose de clips pré-générés. */
+/** Vrai si cette installation dispose de clips pré-générés ET lisibles. */
 export function disponible() {
-  return Boolean(manifeste?.clips && Object.keys(manifeste.clips).length);
+  return !cassee && Boolean(manifeste?.clips && Object.keys(manifeste.clips).length);
 }
 
 /** Le nom de la voix utilisée pour la génération, à afficher dans les réglages. */
