@@ -1527,6 +1527,19 @@ test('on ne s’accorde pas un pack tout seul par l’API', async () => {
   assert.equal(verif.status, 402);
 });
 
+test('un pack payant tient deux parties entières', async () => {
+  // Un thème gratuit doit pouvoir remplir la plus longue partie proposée, soit
+  // douze manches. Un pack acheté quatre euros ne peut pas en offrir autant :
+  // la deuxième soirée retomberait sur les mêmes questions. On en demande donc
+  // le double — de quoi jouer deux fois sans jamais se répéter.
+  const DEUX_PARTIES = 24;
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  for (const pack of vitrine) {
+    assert.ok(pack.nombre >= DEUX_PARTIES,
+      `${pack.nom} : ${pack.nombre} questions, il en faut ${DEUX_PARTIES}`);
+  }
+});
+
 test('les identifiants de produit passent les règles d’Apple', async () => {
   // App Store Connect n'accepte que lettres, chiffres, points et tirets bas —
   // et le refus arrive au moment de créer le produit, des mois après avoir
@@ -1557,6 +1570,17 @@ test('les questions des packs sont valides comme celles de la banque', async () 
       assert.ok(THEMES.some((t) => t.id === q.theme), `${q.id} : thème inconnu`);
       // Préparable et notable, sinon la manche planterait en pleine soirée.
       const manche = type.preparer(q, (l) => l);
+      if (q.type === 'ttmc') {
+        // Une carte n'a pas de solution commune : chacun a répondu à sa propre
+        // question. Ce qui doit tenir, c'est chacun des dix niveaux.
+        assert.equal(q.niveaux.length, 10, `${q.id} : une carte compte dix niveaux`);
+        q.niveaux.forEach((n, i) => {
+          assert.ok(n.texte?.length > 3, `${q.id} niveau ${i + 1} : énoncé manquant`);
+          assert.ok(n.note?.length > 10, `${q.id} niveau ${i + 1} : explication manquante`);
+          assert.ok(n.reponses?.[n.bonne], `${q.id} niveau ${i + 1} : bonne réponse introuvable`);
+        });
+        continue;
+      }
       assert.ok(type.solutionTexte(manche).length > 0, `${q.id} : pas de solution lisible`);
     }
   }

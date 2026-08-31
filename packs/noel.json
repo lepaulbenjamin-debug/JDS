@@ -147,6 +147,456 @@
         }
       ],
       "note": "Coca-Cola n’a pas inventé le Père Noël rouge : il l’a rendu universel à partir de 1931. Le costume rouge existait déjà."
+    },
+    {
+      "id": "noe-11",
+      "theme": "musique",
+      "texte": "Quel duo britannique chante « Last Christmas », sorti en 1984 ?",
+      "reponses": [
+        "Wham!",
+        "Duran Duran",
+        "Culture Club",
+        "Tears for Fears"
+      ],
+      "bonne": 0,
+      "note": "Numéro deux au Royaume-Uni, tenu en échec par le collectif Band Aid — auquel George Michael participait aussi."
+    },
+    {
+      "id": "noe-12",
+      "theme": "monde",
+      "texte": "Dans quel pays mange-t-on traditionnellement du poulet frit à Noël, depuis une campagne de publicité de 1974 ?",
+      "reponses": [
+        "Le Japon",
+        "La Corée du Sud",
+        "La Chine",
+        "Les Philippines"
+      ],
+      "bonne": 0,
+      "note": "Une seule campagne, « Kentucky for Christmas », a créé une tradition nationale. On y réserve son seau plusieurs semaines à l’avance."
+    },
+    {
+      "id": "noe-13",
+      "theme": "cinema",
+      "texte": "Quel film de 1946 montre à un homme désespéré, la nuit de Noël, ce que serait le monde sans lui ?",
+      "reponses": [
+        "La vie est belle",
+        "Miracle sur la 34e rue",
+        "Casablanca",
+        "Le Magicien d’Oz"
+      ],
+      "bonne": 0,
+      "note": "Un échec à sa sortie. Devenu un classique parce que son copyright a expiré et que les télévisions le passaient gratuitement chaque Noël."
+    },
+    {
+      "id": "noe-14",
+      "theme": "bouffe",
+      "texte": "Quelle friandise rayée rouge et blanc, en forme de crosse, décore les sapins ?",
+      "reponses": [
+        "La canne en sucre d’orge",
+        "Le calisson",
+        "Le nougat",
+        "La guimauve"
+      ],
+      "bonne": 0,
+      "note": "On raconte que la forme rappelle le bâton des bergers. Les rayures rouges, elles, n’apparaissent qu’au début du XXe siècle."
+    },
+    {
+      "id": "noe-15",
+      "theme": "musique",
+      "texte": "Quel cantique de Noël, écrit en Autriche en 1818, est aujourd’hui chanté dans le monde entier ?",
+      "reponses": [
+        "Douce nuit",
+        "Mon beau sapin",
+        "Vive le vent",
+        "Petit Papa Noël"
+      ],
+      "bonne": 0,
+      "note": "Composé pour deux voix et une guitare dans un village près de Salzbourg ; on raconte que l’orgue de l’église était en panne."
+    },
+    {
+      "id": "noe-16",
+      "theme": "mots",
+      "texte": "Que désigne le mot « réveillon », à l’origine ?",
+      "reponses": [
+        "Le fait de veiller tard",
+        "Un plat de fête",
+        "Une messe de nuit",
+        "Un cadeau"
+      ],
+      "bonne": 0,
+      "note": "Du verbe « réveiller » : on veillait jusqu’à la messe de minuit, et le repas ne venait qu’après."
+    },
+    {
+      "id": "noe-17",
+      "theme": "cinema",
+      "texte": "Quel film de 1982 enferme une permanence de SOS Détresse-Amitié le soir de Noël ?",
+      "reponses": [
+        "Le Père Noël est une ordure",
+        "Les Bronzés",
+        "La Bûche",
+        "Un jour sans fin"
+      ],
+      "bonne": 0,
+      "note": "La troupe du Splendid, d’abord au théâtre. Le film n’a pas fait recette en salle : c’est la télévision qui l’a rendu culte."
+    },
+    {
+      "id": "noe-18",
+      "theme": "monde",
+      "texte": "Dans quel pays casse-t-on une piñata pendant les neuf soirées des « posadas » avant Noël ?",
+      "reponses": [
+        "Le Mexique",
+        "L’Argentine",
+        "Le Brésil",
+        "Le Pérou"
+      ],
+      "bonne": 0,
+      "note": "Neuf soirées, du 16 au 24 décembre, qui rejouent le voyage de Marie et Joseph cherchant un toit."
+    },
+    {
+      "id": "noe-19",
+      "theme": "insolite",
+      "texte": "Quelle créature à cornes accompagne saint Nicolas dans les Alpes autrichiennes pour punir les enfants ?",
+      "reponses": [
+        "Le Krampus",
+        "Le Père Fouettard",
+        "Zwarte Piet",
+        "Le Yule Cat"
+      ],
+      "bonne": 0,
+      "note": "Cornes, chaînes et langue pendante. Les défilés de Krampus ont toujours lieu début décembre, et font pleurer les touristes."
+    },
+    {
+      "id": "noe-20",
+      "theme": "sport",
+      "texte": "Que se sont mis à faire des soldats allemands et britanniques sortis de leurs tranchées à Noël 1914 ?",
+      "reponses": [
+        "Jouer au football",
+        "Signer un armistice",
+        "Échanger des prisonniers",
+        "Célébrer une messe commune"
+      ],
+      "bonne": 0,
+      "note": "La trêve de Noël. Les états-majors des deux camps ont pris soin qu’elle ne se reproduise pas les années suivantes."
+    },
+    {
+      "id": "noe-21",
+      "theme": "marques",
+      "texte": "Quel grand magasin parisien est célèbre pour ses vitrines animées de Noël ?",
+      "reponses": [
+        "Les Galeries Lafayette",
+        "La Samaritaine",
+        "Le Bon Marché",
+        "Le BHV"
+      ],
+      "bonne": 0,
+      "note": "Une tradition de la fin du XIXe siècle. Des estrades sont montées sur le trottoir pour que les enfants voient par-dessus la foule."
+    },
+    {
+      "id": "noe-22",
+      "theme": "regions",
+      "texte": "De quelle région française vient la tradition du sapin décoré, attestée dès le XVIe siècle ?",
+      "reponses": [
+        "L’Alsace",
+        "La Provence",
+        "La Bretagne",
+        "La Savoie"
+      ],
+      "bonne": 0,
+      "note": "Première mention écrite à Sélestat, en 1521 : la ville payait des gardes pour empêcher qu’on coupe ses sapins."
+    },
+    {
+      "id": "noe-23",
+      "theme": "bouffe",
+      "texte": "Combien de desserts compose traditionnellement le repas de Noël provençal ?",
+      "reponses": [
+        "Treize",
+        "Sept",
+        "Neuf",
+        "Vingt et un"
+      ],
+      "bonne": 0,
+      "note": "Treize, comme le Christ et les douze apôtres. On les laisse sur la table trois jours, et l’on est censé goûter à tous."
+    },
+    {
+      "id": "noe-24",
+      "theme": "musique",
+      "texte": "Qui a popularisé « Petit Papa Noël » en 1946 ?",
+      "reponses": [
+        "Tino Rossi",
+        "Charles Trenet",
+        "Maurice Chevalier",
+        "Luis Mariano"
+      ],
+      "bonne": 0,
+      "note": "Chanté dans un film, « Destins ». C’est resté le plus gros succès du disque en France, toutes époques confondues."
+    },
+    {
+      "id": "noe-25",
+      "theme": "regions",
+      "type": "estimation",
+      "texte": "Combien de sapins de Noël naturels sont vendus chaque année en France ?",
+      "valeur": 6000000,
+      "unite": "sapins",
+      "note": "Environ six millions, dont une bonne part poussent dans le Morvan — des plantations, pas des forêts coupées."
+    },
+    {
+      "id": "noe-26",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien de lettres au Père Noël le secrétariat de La Poste reçoit-il chaque année ?",
+      "valeur": 1200000,
+      "unite": "lettres",
+      "note": "Plus d’un million, venues d’une centaine de pays. Toutes reçoivent une réponse, et ce service existe depuis 1962."
+    },
+    {
+      "id": "noe-27",
+      "theme": "culture",
+      "type": "ordre",
+      "texte": "Du plus ancien au plus récent",
+      "elements": [
+        "Le marché de Noël de Strasbourg",
+        "La première carte de Noël",
+        "La première guirlande électrique",
+        "Le suivi du Père Noël par l’armée américaine"
+      ],
+      "note": "1570, 1843, 1882 et 1955. Le suivi radar est né d’une publicité où le numéro de téléphone était mal imprimé : les enfants tombaient sur la défense aérienne."
+    },
+    {
+      "id": "noe-28",
+      "theme": "monde",
+      "type": "rafale",
+      "texte": "Noël dans le monde",
+      "affirmations": [
+        {
+          "texte": "En Australie, Noël tombe en plein été.",
+          "vrai": true
+        },
+        {
+          "texte": "Au Japon, Noël n’est pas un jour férié.",
+          "vrai": true
+        },
+        {
+          "texte": "En Catalogne, une bûche décorée « rend » les cadeaux quand les enfants la frappent.",
+          "vrai": true
+        },
+        {
+          "texte": "Les orthodoxes russes fêtent Noël le 25 décembre.",
+          "vrai": false
+        },
+        {
+          "texte": "Le 25 décembre est férié dans tous les pays du monde.",
+          "vrai": false
+        }
+      ],
+      "note": "Le Caga Tió catalan existe bel et bien : on nourrit la bûche pendant des semaines, puis on la bat en chantant pour qu’elle rende les cadeaux."
+    },
+    {
+      "id": "noe-29",
+      "theme": "musique",
+      "type": "mix",
+      "texte": "Une chanson de Noël",
+      "acceptees": [
+        {
+          "titre": "All I Want for Christmas Is You",
+          "artiste": "Mariah Carey"
+        },
+        {
+          "titre": "Last Christmas",
+          "artiste": "Wham!"
+        },
+        {
+          "titre": "White Christmas",
+          "artiste": "Bing Crosby"
+        },
+        {
+          "titre": "Petit Papa Noël",
+          "artiste": "Tino Rossi"
+        },
+        {
+          "titre": "Douce nuit",
+          "artiste": "traditionnel"
+        },
+        {
+          "titre": "Vive le vent",
+          "artiste": "traditionnel"
+        },
+        {
+          "titre": "Mon beau sapin",
+          "artiste": "traditionnel"
+        },
+        {
+          "titre": "Jingle Bells",
+          "artiste": "traditionnel"
+        },
+        {
+          "titre": "Let It Snow",
+          "artiste": "Dean Martin"
+        },
+        {
+          "titre": "Happy Xmas (War Is Over)",
+          "artiste": "John Lennon"
+        },
+        {
+          "titre": "Do They Know It’s Christmas?",
+          "artiste": "Band Aid"
+        },
+        {
+          "titre": "Feliz Navidad",
+          "artiste": "José Feliciano"
+        },
+        {
+          "titre": "Santa Claus Is Coming to Town",
+          "artiste": "Bruce Springsteen"
+        },
+        {
+          "titre": "Rockin’ Around the Christmas Tree",
+          "artiste": "Brenda Lee"
+        },
+        {
+          "titre": "Wonderful Christmastime",
+          "artiste": "Paul McCartney"
+        },
+        {
+          "titre": "Driving Home for Christmas",
+          "artiste": "Chris Rea"
+        },
+        {
+          "titre": "Fairytale of New York",
+          "artiste": "The Pogues"
+        },
+        {
+          "titre": "Step into Christmas",
+          "artiste": "Elton John"
+        },
+        {
+          "titre": "L’Enfant au tambour",
+          "artiste": "Nana Mouskouri"
+        },
+        {
+          "titre": "Noël blanc",
+          "artiste": "Tino Rossi"
+        }
+      ],
+      "note": "Vingt titres acceptés. Celui de Mariah Carey rapporte encore plusieurs millions de dollars par an à son autrice, trente ans après."
+    },
+    {
+      "id": "noe-30",
+      "theme": "culture",
+      "type": "ttmc",
+      "texte": "Spécial Noël — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "De quelle couleur est le costume du Père Noël aujourd’hui ?",
+          "reponses": [
+            "Rouge",
+            "Vert",
+            "Bleu",
+            "Brun"
+          ],
+          "bonne": 0,
+          "note": "Rouge et blanc partout — mais on l’a vu en vert, en bleu et en brun jusqu’au XIXe siècle."
+        },
+        {
+          "texte": "Dans quelle ville Jésus est-il né, selon les Évangiles ?",
+          "reponses": [
+            "Bethléem",
+            "Nazareth",
+            "Jérusalem",
+            "Capharnaüm"
+          ],
+          "bonne": 0,
+          "note": "Bethléem. Nazareth est la ville où il a grandi, ce qui explique la confusion."
+        },
+        {
+          "texte": "Quel jour tombe le réveillon de la Saint-Sylvestre ?",
+          "reponses": [
+            "Le 31 décembre",
+            "Le 30 décembre",
+            "Le 1er janvier",
+            "Le 6 janvier"
+          ],
+          "bonne": 0,
+          "note": "Sylvestre était pape au IVe siècle et n’a rien demandé : c’est simplement le saint du dernier jour de l’année."
+        },
+        {
+          "texte": "Quel film de 2003 entrecroise huit histoires d’amour à Londres avant Noël ?",
+          "reponses": [
+            "Love Actually",
+            "Le Journal de Bridget Jones",
+            "Coup de foudre à Notting Hill",
+            "Quatre mariages et un enterrement"
+          ],
+          "bonne": 0,
+          "note": "Neuf histoires selon les décomptes, et une scène d’aéroport que la moitié de la planète rejoue en pensée."
+        },
+        {
+          "texte": "Comment appelle-t-on la couronne dont on allume une bougie chaque dimanche avant Noël ?",
+          "reponses": [
+            "La couronne de l’Avent",
+            "La couronne des Rois",
+            "La couronne de Sainte-Lucie",
+            "La couronne de l’Épiphanie"
+          ],
+          "bonne": 0,
+          "note": "Quatre bougies, quatre dimanches. Un pasteur allemand l’a inventée en 1839 pour faire patienter des orphelins."
+        },
+        {
+          "texte": "Quelle épice, avec la cannelle, parfume le pain d’épices ?",
+          "reponses": [
+            "Le gingembre",
+            "Le safran",
+            "Le cumin",
+            "La vanille"
+          ],
+          "bonne": 0,
+          "note": "Gingembre, cannelle, girofle, muscade. L’anglais « gingerbread » nomme le gingembre ; le français ne dit que « épices »."
+        },
+        {
+          "texte": "Dans quel pays les enfants laissent-ils leurs souliers pour Sinterklaas, le 5 décembre ?",
+          "reponses": [
+            "Les Pays-Bas",
+            "Le Danemark",
+            "La Pologne",
+            "L’Irlande"
+          ],
+          "bonne": 0,
+          "note": "C’est « Sinterklaas », emporté par les émigrants néerlandais à New York, qui est devenu « Santa Claus »."
+        },
+        {
+          "texte": "Quelle plante rouge d’origine mexicaine appelle-t-on « étoile de Noël » ?",
+          "reponses": [
+            "Le poinsettia",
+            "L’amaryllis",
+            "L’hellébore",
+            "Le houx"
+          ],
+          "bonne": 0,
+          "note": "Ses « pétales » rouges sont en réalité des feuilles. Son nom vient de l’ambassadeur américain qui la rapporta en 1828."
+        },
+        {
+          "texte": "Dans quel pays nordique une chèvre de paille géante est-elle incendiée presque chaque année ?",
+          "reponses": [
+            "La Suède",
+            "La Norvège",
+            "La Finlande",
+            "L’Islande"
+          ],
+          "bonne": 0,
+          "note": "La chèvre de Gävle, treize mètres de haut, brûlée plus d’une trentaine de fois depuis 1966 malgré gardiens et caméras."
+        },
+        {
+          "texte": "Quelle fête romaine de fin décembre est considérée comme une ancêtre de Noël ?",
+          "reponses": [
+            "Les Saturnales",
+            "Les Lupercales",
+            "Les Bacchanales",
+            "Les Floralies"
+          ],
+          "bonne": 0,
+          "note": "Banquets, cadeaux, et maîtres servant leurs esclaves pour un jour. Le 25 décembre chrétien s’est installé sur ce calendrier au IVe siècle."
+        }
+      ]
     }
   ]
 }

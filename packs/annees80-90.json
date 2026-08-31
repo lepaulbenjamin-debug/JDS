@@ -147,6 +147,456 @@
         }
       ],
       "note": "Le Minitel date de 1980, le Web de 1990 : la France a eu dix ans d’avance, puis dix ans de retard."
+    },
+    {
+      "id": "p80-11",
+      "theme": "musique",
+      "texte": "Quel album de Michael Jackson, sorti en 1982, est le plus vendu de l’histoire ?",
+      "reponses": [
+        "Thriller",
+        "Bad",
+        "Dangerous",
+        "Off the Wall"
+      ],
+      "bonne": 0,
+      "note": "Environ soixante-six millions d’exemplaires. Le clip dure près de quatorze minutes, du jamais vu à l’époque."
+    },
+    {
+      "id": "p80-12",
+      "theme": "cinema",
+      "texte": "Quel extraterrestre veut « téléphoner maison » dans un film de 1982 ?",
+      "reponses": [
+        "E.T.",
+        "Alf",
+        "Yoda",
+        "Gizmo"
+      ],
+      "bonne": 0,
+      "note": "Spielberg a tourné dans l’ordre chronologique pour que les enfants s’attachent vraiment à la marionnette."
+    },
+    {
+      "id": "p80-13",
+      "theme": "musique",
+      "texte": "Qui chantait « Joe le taxi » en 1987 ?",
+      "reponses": [
+        "Vanessa Paradis",
+        "Elsa",
+        "Lio",
+        "Jeanne Mas"
+      ],
+      "bonne": 0,
+      "note": "Quatorze ans, onze semaines en tête en France, et un tube jusqu’au Royaume-Uni — rare pour une chanson en français."
+    },
+    {
+      "id": "p80-14",
+      "theme": "culture",
+      "texte": "Avec quel objet rembobinait-on une cassette audio pour économiser les piles ?",
+      "reponses": [
+        "Un crayon",
+        "Une pince à linge",
+        "Une fourchette",
+        "Un trombone"
+      ],
+      "bonne": 0,
+      "note": "Le crayon entrait pile dans la bobine. Toute une génération a fait ce geste sans jamais se le faire expliquer."
+    },
+    {
+      "id": "p80-15",
+      "theme": "cinema",
+      "texte": "Quelle trilogie de George Lucas s’achève en 1983 avec « Le Retour du Jedi » ?",
+      "reponses": [
+        "Star Wars",
+        "Indiana Jones",
+        "Alien",
+        "Willow"
+      ],
+      "bonne": 0,
+      "note": "Six ans entre le premier et le dernier, de 1977 à 1983 — puis seize ans d’attente avant la suivante."
+    },
+    {
+      "id": "p80-16",
+      "theme": "marques",
+      "texte": "Quelle console portable de Nintendo, sortie en 1989, était livrée avec Tetris ?",
+      "reponses": [
+        "La Game Boy",
+        "La Game Gear",
+        "La Lynx",
+        "La Neo Geo Pocket"
+      ],
+      "bonne": 0,
+      "note": "Écran vert, quatre nuances de gris. Vendue avec Tetris, elle a été achetée par des adultes qui ne jouaient pas."
+    },
+    {
+      "id": "p80-17",
+      "theme": "monde",
+      "texte": "Quel mur est tombé en novembre 1989 ?",
+      "reponses": [
+        "Le mur de Berlin",
+        "La muraille de Chine",
+        "Le mur d’Hadrien",
+        "Le mur des Lamentations"
+      ],
+      "bonne": 0,
+      "note": "Le 9 novembre, après une conférence de presse confuse où un responsable a annoncé l’ouverture « immédiate »."
+    },
+    {
+      "id": "p80-18",
+      "theme": "cinema",
+      "texte": "Quelle série américaine des années 1990 suit six amis new-yorkais et leur café ?",
+      "reponses": [
+        "Friends",
+        "Seinfeld",
+        "Cheers",
+        "Frasier"
+      ],
+      "bonne": 0,
+      "note": "Dix saisons, de 1994 à 2004. Le canapé du Central Perk n’était jamais pris, ce qui reste la plus grosse invraisemblance de la série."
+    },
+    {
+      "id": "p80-19",
+      "theme": "musique",
+      "texte": "Quel groupe de Seattle sort « Smells Like Teen Spirit » en 1991 ?",
+      "reponses": [
+        "Nirvana",
+        "Pearl Jam",
+        "Soundgarden",
+        "Alice in Chains"
+      ],
+      "bonne": 0,
+      "note": "Le titre vient d’un déodorant pour adolescentes, écrit sur un mur par une amie de Kurt Cobain, qui ignorait la marque."
+    },
+    {
+      "id": "p80-20",
+      "theme": "marques",
+      "texte": "Quelle marque a lancé le « New Coke » en 1985 avant de faire machine arrière ?",
+      "reponses": [
+        "Coca-Cola",
+        "Pepsi",
+        "Orangina",
+        "Schweppes"
+      ],
+      "bonne": 0,
+      "note": "Soixante-dix-neuf jours et quarante mille lettres de protestation plus tard, l’ancienne recette revenait sous le nom de Coca-Cola Classic."
+    },
+    {
+      "id": "p80-21",
+      "theme": "sport",
+      "texte": "Quel pays a organisé — et gagné — la Coupe du monde de football en 1998 ?",
+      "reponses": [
+        "La France",
+        "L’Italie",
+        "L’Allemagne",
+        "Le Brésil"
+      ],
+      "bonne": 0,
+      "note": "Trois buts à zéro contre le Brésil, le 12 juillet. Deux têtes de Zidane sur corner dans la même mi-temps."
+    },
+    {
+      "id": "p80-22",
+      "theme": "culture",
+      "texte": "Quel casse-tête hongrois à six faces colorées a envahi les cours de récréation au début des années 1980 ?",
+      "reponses": [
+        "Le Rubik’s Cube",
+        "Le Tamagotchi",
+        "Le Simon",
+        "Le Puissance 4"
+      ],
+      "bonne": 0,
+      "note": "Inventé en 1974 par un professeur d’architecture, Ernő Rubik, qui a mis un mois à résoudre son propre objet."
+    },
+    {
+      "id": "p80-23",
+      "theme": "annees2000",
+      "texte": "Quel animal virtuel de poche fallait-il nourrir en 1997, sous peine de le voir mourir ?",
+      "reponses": [
+        "Le Tamagotchi",
+        "Le Furby",
+        "Le Pokémon",
+        "Le Digimon"
+      ],
+      "bonne": 0,
+      "note": "Bandai en a vendu des dizaines de millions. Beaucoup d’écoles les ont interdits : ils réclamaient à manger en plein cours."
+    },
+    {
+      "id": "p80-24",
+      "theme": "musique",
+      "texte": "Quel groupe chantait « Les Démons de minuit » en 1986 ?",
+      "reponses": [
+        "Images",
+        "Début de Soirée",
+        "Partenaire Particulier",
+        "Gold"
+      ],
+      "bonne": 0,
+      "note": "Images. Le chanteur a repris le titre bien plus tard sous le nom d’Émile et Images, ce qui embrouille tout le monde depuis."
+    },
+    {
+      "id": "p80-25",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien pesait le premier téléphone portable commercialisé, en 1983 ?",
+      "valeur": 794,
+      "unite": "grammes",
+      "note": "Près de huit cents grammes pour trente minutes de conversation, après dix heures de charge — et quatre mille dollars."
+    },
+    {
+      "id": "p80-26",
+      "theme": "musique",
+      "type": "estimation",
+      "texte": "Combien de semaines « Macarena » est-elle restée numéro un aux États-Unis en 1996 ?",
+      "valeur": 14,
+      "unite": "semaines",
+      "note": "Quatorze semaines. Le duo qui la chantait avait alors plus de cinquante ans et n’a jamais retrouvé un tel succès."
+    },
+    {
+      "id": "p80-27",
+      "theme": "cinema",
+      "type": "ordre",
+      "texte": "Du film le plus ancien au plus récent",
+      "elements": [
+        "E.T.",
+        "Le Roi Lion",
+        "Titanic",
+        "Matrix"
+      ],
+      "note": "1982, 1994, 1997 et 1999. Dix-sept ans qui séparent la marionnette du fond vert."
+    },
+    {
+      "id": "p80-28",
+      "theme": "annees2000",
+      "type": "rafale",
+      "texte": "Les années 90, vrai ou faux",
+      "affirmations": [
+        {
+          "texte": "Le premier épisode des Simpson date des années 1980.",
+          "vrai": true
+        },
+        {
+          "texte": "Windows 95 est sorti en 1995.",
+          "vrai": true
+        },
+        {
+          "texte": "Le CD-ROM est arrivé avant le DVD.",
+          "vrai": true
+        },
+        {
+          "texte": "L’euro est entré dans les porte-monnaie dans les années 1990.",
+          "vrai": false
+        },
+        {
+          "texte": "Le premier iPhone est sorti dans les années 1990.",
+          "vrai": false
+        }
+      ],
+      "note": "L’euro existe comme monnaie de compte depuis 1999, mais les pièces et les billets n’arrivent qu’en 2002."
+    },
+    {
+      "id": "p80-29",
+      "theme": "musique",
+      "type": "mix",
+      "texte": "Un tube des années 80",
+      "acceptees": [
+        {
+          "titre": "Billie Jean",
+          "artiste": "Michael Jackson"
+        },
+        {
+          "titre": "Like a Virgin",
+          "artiste": "Madonna"
+        },
+        {
+          "titre": "Sweet Dreams",
+          "artiste": "Eurythmics"
+        },
+        {
+          "titre": "Take On Me",
+          "artiste": "a-ha"
+        },
+        {
+          "titre": "Africa",
+          "artiste": "Toto"
+        },
+        {
+          "titre": "Every Breath You Take",
+          "artiste": "The Police"
+        },
+        {
+          "titre": "Girls Just Want to Have Fun",
+          "artiste": "Cyndi Lauper"
+        },
+        {
+          "titre": "Tainted Love",
+          "artiste": "Soft Cell"
+        },
+        {
+          "titre": "Don’t You (Forget About Me)",
+          "artiste": "Simple Minds"
+        },
+        {
+          "titre": "Careless Whisper",
+          "artiste": "George Michael"
+        },
+        {
+          "titre": "The Final Countdown",
+          "artiste": "Europe"
+        },
+        {
+          "titre": "Livin’ on a Prayer",
+          "artiste": "Bon Jovi"
+        },
+        {
+          "titre": "Bette Davis Eyes",
+          "artiste": "Kim Carnes"
+        },
+        {
+          "titre": "Enola Gay",
+          "artiste": "OMD"
+        },
+        {
+          "titre": "Marcia Baila",
+          "artiste": "Les Rita Mitsouko"
+        },
+        {
+          "titre": "Ella, elle l’a",
+          "artiste": "France Gall"
+        },
+        {
+          "titre": "Mistral gagnant",
+          "artiste": "Renaud"
+        },
+        {
+          "titre": "Femme libérée",
+          "artiste": "Cookie Dingler"
+        },
+        {
+          "titre": "Étienne",
+          "artiste": "Guesch Patti"
+        },
+        {
+          "titre": "Partenaire particulier",
+          "artiste": "Partenaire Particulier"
+        }
+      ],
+      "note": "Vingt titres acceptés, et il en manque cent. C’est le moment où quelqu’un dit « ah mais oui » en se frappant le front."
+    },
+    {
+      "id": "p80-30",
+      "theme": "annees2000",
+      "type": "ttmc",
+      "texte": "Années 80-90 — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "De quelle couleur est le hérisson Sonic ?",
+          "reponses": [
+            "Bleu",
+            "Rouge",
+            "Vert",
+            "Jaune"
+          ],
+          "bonne": 0,
+          "note": "Bleu, comme le logo de Sega — c’est la raison du choix, pas une coïncidence."
+        },
+        {
+          "texte": "Quel film de 1993 met en scène un parc à dinosaures qui tourne mal ?",
+          "reponses": [
+            "Jurassic Park",
+            "Godzilla",
+            "King Kong",
+            "Alien"
+          ],
+          "bonne": 0,
+          "note": "Spielberg encore. La moitié des dinosaures sont des marionnettes grandeur nature, pas des images de synthèse."
+        },
+        {
+          "texte": "Quel dessin animé met en scène quatre tortues ninja amatrices de pizza ?",
+          "reponses": [
+            "Les Tortues Ninja",
+            "Les Bisounours",
+            "Les Maîtres de l’univers",
+            "Les Schtroumpfs"
+          ],
+          "bonne": 0,
+          "note": "Nées en 1984 dans une bande dessinée en noir et blanc, qui était au départ une parodie."
+        },
+        {
+          "texte": "Quel groupe chante « Bohemian Rhapsody », remis à la mode en 1992 par « Wayne’s World » ?",
+          "reponses": [
+            "Queen",
+            "The Who",
+            "Genesis",
+            "Dire Straits"
+          ],
+          "bonne": 0,
+          "note": "Le film a renvoyé le titre au sommet des classements dix-sept ans après sa sortie."
+        },
+        {
+          "texte": "Quel jeu de combat en arcade opposait Ryu et Ken à partir de 1991 ?",
+          "reponses": [
+            "Street Fighter II",
+            "Mortal Kombat",
+            "Tekken",
+            "Virtua Fighter"
+          ],
+          "bonne": 0,
+          "note": "Il a vidé les poches d’une génération pièce par pièce, et inventé le combat en tournoi."
+        },
+        {
+          "texte": "Quel site dominait le Web avant Google, avec son annuaire tenu à la main ?",
+          "reponses": [
+            "Yahoo!",
+            "AltaVista",
+            "Lycos",
+            "Excite"
+          ],
+          "bonne": 0,
+          "note": "Des humains rangeaient les sites dans des catégories. Yahoo! a refusé d’acheter Google pour un million de dollars."
+        },
+        {
+          "texte": "Quel ordinateur d’Apple, en plastique translucide, relance la marque en 1998 ?",
+          "reponses": [
+            "L’iMac",
+            "Le Macintosh Classic",
+            "Le Power Mac Cube",
+            "Le Newton"
+          ],
+          "bonne": 0,
+          "note": "Bleu « Bondi ». Apple était à deux doigts de la faillite deux ans plus tôt."
+        },
+        {
+          "texte": "Quel navigateur web grand public, lancé en 1994, a précédé Internet Explorer ?",
+          "reponses": [
+            "Netscape Navigator",
+            "Mosaic",
+            "Opera",
+            "Lynx"
+          ],
+          "bonne": 0,
+          "note": "Mosaic est arrivé avant, en 1993, mais restait un outil d’université. Netscape a ouvert le Web à tout le monde."
+        },
+        {
+          "texte": "Quelle messagerie instantanée de 1996 annonçait ses messages par un « Uh-oh ! » ?",
+          "reponses": [
+            "ICQ",
+            "MSN Messenger",
+            "AIM",
+            "Skype"
+          ],
+          "bonne": 0,
+          "note": "Quatre développeurs israéliens, revendus à AOL deux ans plus tard pour près de trois cents millions de dollars."
+        },
+        {
+          "texte": "Quel jeu de 1993, distribué en shareware, a fait connaître le tir à la première personne au monde entier ?",
+          "reponses": [
+            "Doom",
+            "Wolfenstein 3D",
+            "Quake",
+            "Duke Nukem 3D"
+          ],
+          "bonne": 0,
+          "note": "Wolfenstein 3D avait ouvert la voie un an plus tôt, mais c’est Doom, dont le premier tiers était gratuit, qui a tout emporté."
+        }
+      ]
     }
   ]
 }
