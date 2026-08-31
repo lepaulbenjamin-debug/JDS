@@ -1575,6 +1575,16 @@ function rendreLienPartage() {
       toast('Lien sélectionné : copie-le, ou dicte le code.');
     },
   }, '📤 Envoyer le lien'));
+
+  // L'écran commun. Il existe, encore faut-il le savoir : personne ne devine
+  // qu'une page `tv.html` attend quelque part. Le lien est donc ici, au moment
+  // exact où l'on cherche comment installer la soirée — et il porte déjà le
+  // code, pour qu'il n'y ait rien à taper sur une télé.
+  const tv = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}tv.html#${salon.code}`;
+  hote.append(el('p', { class: 'muted small centre' }, [
+    el('span', { text: 'Une télé dans la pièce ? ' }),
+    el('a', { class: 'lien-tv', href: tv, target: '_blank', rel: 'noopener', text: 'Ouvrir l’écran commun' }),
+  ]));
 }
 
 async function quitter() {

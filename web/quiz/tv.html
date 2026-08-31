@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12141c">
+<meta name="description" content="L'écran commun de Quiz entre amis : la question, le chrono et les scores en grand, pour une télé ou un vidéoprojecteur.">
+<title>Quiz entre amis — l’écran commun</title>
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="tv-body">
+
+<main id="tv" class="tv">
+
+  <!-- Avant tout : le code du salon à regarder. -->
+  <section class="tv-ecran" data-tv="code">
+    <p class="tv-kicker">Écran commun</p>
+    <h1 class="tv-titre">Quel salon ?</h1>
+    <form id="tv-form" class="tv-form">
+      <input id="tv-code" class="tv-champ" type="text" inputmode="text" autocapitalize="characters"
+             autocomplete="off" maxlength="4" placeholder="CODE" aria-label="Code du salon">
+      <button class="btn btn-primary btn-lg" type="submit">Afficher</button>
+    </form>
+    <p class="tv-note">Le code s’affiche sur le téléphone qui a créé la partie. Cet écran ne joue pas : il regarde.</p>
+  </section>
+
+  <!-- Le salon est ouvert, on attend le lancement. -->
+  <section class="tv-ecran" data-tv="lobby" hidden>
+    <p class="tv-kicker">Rejoignez la partie</p>
+    <p id="tv-code-affiche" class="tv-code"></p>
+    <div id="tv-joueurs" class="tv-joueurs"></div>
+    <p class="tv-note" id="tv-lobby-note"></p>
+  </section>
+
+  <!-- La manche. -->
+  <section class="tv-ecran" data-tv="jeu" hidden>
+    <div class="tv-entete">
+      <span id="tv-manche" class="tv-pastille"></span>
+      <span id="tv-theme" class="tv-pastille tv-pastille-douce"></span>
+    </div>
+    <div id="tv-chrono" class="tv-chrono"><div id="tv-jauge" class="tv-jauge"></div></div>
+    <p id="tv-annonce" class="tv-annonce"></p>
+    <h2 id="tv-question" class="tv-question"></h2>
+    <div id="tv-reponses" class="tv-reponses"></div>
+    <p id="tv-note" class="tv-explication"></p>
+    <div id="tv-scores" class="tv-scores"></div>
+  </section>
+
+  <!-- Le podium. -->
+  <section class="tv-ecran" data-tv="fin" hidden>
+    <p class="tv-kicker">Podium</p>
+    <p id="tv-fin-annonce" class="tv-annonce"></p>
+    <div id="tv-podium" class="tv-podium"></div>
+  </section>
+
+</main>
+
+<p id="tv-alerte" class="tv-alerte" hidden></p>
+
+<script type="module" src="js/tv.js"></script>
+</body>
+</html>

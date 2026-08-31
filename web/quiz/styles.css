@@ -666,3 +666,140 @@ body {
 .vote-boutons .btn { padding: 10px 14px; }
 .vote-oui.est-actif { background: color-mix(in srgb, var(--ok) 30%, transparent); border-color: var(--ok); }
 .vote-non.est-actif { background: color-mix(in srgb, var(--danger) 30%, transparent); border-color: var(--danger); }
+
+/* Le lien vers l'écran commun, sous le partage du lobby. */
+.lien-tv { color: var(--accent); }
+
+/* --- L'écran commun ------------------------------------------------------- */
+
+/* Une télé se regarde à trois mètres, pas à trente centimètres : tout est
+   dimensionné en `vmin` pour que la page suive l'écran qu'on lui donne, du
+   vidéoprojecteur au portable posé sur la cheminée. */
+.tv-body {
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.tv { width: 100%; height: 100%; padding: 4vmin; display: grid; }
+.tv-ecran { align-self: center; justify-self: center; width: 100%; max-width: 1600px; }
+
+.tv-kicker {
+  margin: 0 0 1vmin;
+  font-size: 2vmin; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--gold);
+}
+.tv-titre { margin: 0 0 3vmin; font-size: 6vmin; }
+.tv-note { color: var(--muted); font-size: 2.2vmin; margin: 3vmin 0 0; }
+
+.tv-form { display: flex; gap: 2vmin; align-items: center; }
+.tv-champ {
+  flex: 1; min-width: 0;
+  padding: 2vmin;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text);
+  font: 700 6vmin/1 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
+}
+
+/* Le code du salon : c'est ce qu'on lit du fond de la pièce pour rejoindre. */
+/* Le lobby se lit du fond de la pièce : tout y est centré, sans quoi le code
+   flotte au milieu pendant que les mots restent collés à gauche. */
+.tv-ecran[data-tv="lobby"], .tv-ecran[data-tv="code"] { text-align: center; }
+.tv-ecran[data-tv="code"] .tv-form { text-align: left; }
+
+.tv-code {
+  margin: 0 0 4vmin;
+  font: 800 22vmin/1 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.12em; text-align: center;
+  color: var(--gold);
+}
+.tv-joueurs { display: flex; flex-wrap: wrap; gap: 1.5vmin; justify-content: center; }
+.tv-joueur {
+  padding: 1.2vmin 2.4vmin;
+  border-radius: 999px; background: var(--surface-2);
+  font-size: 2.6vmin; font-weight: 600;
+}
+
+.tv-entete { display: flex; gap: 1.5vmin; margin-bottom: 2vmin; }
+.tv-pastille {
+  padding: 0.9vmin 2vmin; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted);
+  font-size: 2vmin; font-weight: 700;
+}
+.tv-pastille-douce { background: transparent; border: 1px solid var(--border); }
+
+.tv-chrono {
+  position: relative;
+  height: 1.2vmin; margin-bottom: 3vmin;
+  border-radius: 999px; background: var(--surface-2); overflow: hidden;
+}
+.tv-jauge { height: 100%; background: var(--accent); transition: width 0.2s linear; }
+.tv-jauge.est-urgent { background: var(--danger); }
+/* Le décompte d'avant-question, en très grand : c'est le signal que la table
+   doit lâcher son verre. */
+.tv-chrono[data-compte]::after {
+  content: attr(data-compte);
+  position: absolute; inset: 0; top: 2vmin;
+  display: grid; place-items: center;
+  font: 800 12vmin/1 system-ui, sans-serif; color: var(--muted);
+}
+.tv-chrono[data-compte] { margin-bottom: 16vmin; }
+
+.tv-annonce { margin: 0 0 1.5vmin; color: var(--muted); font-size: 2.6vmin; font-style: italic; }
+.tv-question { margin: 0 0 3vmin; font-size: 5.5vmin; line-height: 1.2; }
+.tv-explication { margin: 2vmin 0 0; color: var(--muted); font-size: 2.4vmin; line-height: 1.4; }
+
+.tv-reponses { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6vmin; }
+.tv-reponse {
+  padding: 2vmin 2.4vmin;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 3vmin; font-weight: 600;
+}
+.tv-reponse.est-juste {
+  background: color-mix(in srgb, var(--ok) 22%, transparent);
+  border-color: var(--ok);
+}
+.tv-titre-accepte {
+  padding: 1.2vmin 2vmin;
+  border-radius: var(--radius); background: var(--surface);
+  font-size: 2.4vmin;
+}
+
+/* Le classement ne quitte jamais l'écran : sur un téléphone il faut défiler
+   pour le voir, et personne ne défile pendant une manche. */
+.tv-scores {
+  display: flex; flex-wrap: wrap; gap: 1.2vmin;
+  margin-top: 3vmin; padding-top: 2vmin;
+  border-top: 1px solid var(--border);
+}
+.tv-score {
+  display: flex; align-items: baseline; gap: 1.2vmin;
+  padding: 1vmin 2vmin;
+  border-radius: 999px; background: var(--surface);
+  font-size: 2.4vmin;
+}
+.tv-score.est-tete { background: color-mix(in srgb, var(--gold) 18%, transparent); }
+.tv-score-nom { font-weight: 600; }
+.tv-score-total { font-weight: 800; }
+.tv-score-gain { font-size: 2vmin; font-weight: 700; }
+.tv-score-gain.est-plus { color: var(--ok); }
+.tv-score-gain.est-moins { color: var(--danger); }
+
+.tv-podium { display: grid; gap: 2vmin; }
+.tv-podium-ligne {
+  display: flex; align-items: center; gap: 3vmin;
+  padding: 2.4vmin 3vmin;
+  border-radius: var(--radius); background: var(--surface);
+}
+.tv-medaille { font-size: 5vmin; }
+.tv-podium-nom { flex: 1; font-size: 4vmin; font-weight: 700; }
+.tv-podium-score { font-size: 3vmin; color: var(--muted); }
+
+.tv-alerte {
+  position: fixed; left: 50%; bottom: 3vmin; transform: translateX(-50%);
+  margin: 0; padding: 1.4vmin 3vmin;
+  border-radius: 999px; background: var(--surface-2); color: var(--warn);
+  font-size: 2.2vmin;
+}
