@@ -31,6 +31,7 @@ export const THEMES = [
   { id: 'marques', nom: 'Marques & pubs', emoji: '🏷️' },
   { id: 'mots', nom: 'Mots & expressions', emoji: '💬' },
   { id: 'disney', nom: 'Disney & Pixar', emoji: '🏰' },
+  { id: 'regions', nom: 'Les régions de France', emoji: '🗺️' },
 ];
 
 export const QUESTIONS = [
@@ -1020,6 +1021,125 @@ export const QUESTIONS = [
     note: 'Monstres & Cie. Toute l’intrigue tient à une découverte industrielle : le rire produit bien plus d’énergie que la peur.',
   },
 
+  /* --- Les régions de France ----------------------------------------------- */
+  //
+  // Un thème, treize régions, et au moins une question pour chacune : une table
+  // où personne ne vient du même endroit doit y trouver la sienne. Les questions
+  // portent sur ce qui se sait — préfectures, frontières, superficies — et non
+  // sur des tours de force administratifs.
+  {
+    id: 'reg-01', theme: 'regions',
+    texte: 'Quelle est la préfecture de la région Bretagne ?',
+    reponses: ['Rennes', 'Brest', 'Quimper', 'Vannes'],
+    bonne: 0,
+    note: 'Rennes. Brest est plus connue à l’étranger, mais c’est Rennes qui administre.',
+  },
+  {
+    id: 'reg-02', theme: 'regions',
+    texte: 'De quelle région Lyon est-elle la préfecture ?',
+    reponses: ['Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Provence-Alpes-Côte d’Azur', 'Occitanie'],
+    bonne: 0,
+    note: 'Auvergne-Rhône-Alpes, née en 2016 de la fusion de l’Auvergne et de Rhône-Alpes.',
+  },
+  {
+    id: 'reg-03', theme: 'regions',
+    texte: 'Combien de départements compte la Corse ?',
+    reponses: ['Deux', 'Un', 'Trois', 'Quatre'],
+    bonne: 0,
+    note: 'La Haute-Corse et la Corse-du-Sud. L’île n’en formait qu’un seul jusqu’en 1976.',
+  },
+  {
+    id: 'reg-04', theme: 'regions',
+    texte: 'Quelle est la plus vaste région de France métropolitaine ?',
+    reponses: ['Nouvelle-Aquitaine', 'Occitanie', 'Grand Est', 'Auvergne-Rhône-Alpes'],
+    bonne: 0,
+    note: 'Quatre-vingt-quatre mille kilomètres carrés : plus grande que l’Autriche.',
+  },
+  {
+    id: 'reg-05', theme: 'regions',
+    texte: 'Dans quelle région se trouve le Mont-Saint-Michel ?',
+    reponses: ['Normandie', 'Bretagne', 'Pays de la Loire', 'Centre-Val de Loire'],
+    bonne: 0,
+    note: 'En Normandie, dans la Manche — et c’est une querelle vieille de plusieurs siècles avec la Bretagne, que le fleuve Couesnon a tranchée en changeant de lit.',
+  },
+  {
+    id: 'reg-06', theme: 'regions',
+    texte: 'Quelle région est née en 2016 de la fusion de l’Alsace, de la Lorraine et de la Champagne-Ardenne ?',
+    reponses: ['Le Grand Est', 'Les Hauts-de-France', 'La Bourgogne-Franche-Comté', 'Le Centre-Val de Loire'],
+    bonne: 0,
+    note: 'Le Grand Est. Le nom, provisoire au départ, est resté faute de mieux.',
+  },
+  {
+    id: 'reg-07', theme: 'regions',
+    texte: 'Quelle est la préfecture des Hauts-de-France ?',
+    reponses: ['Lille', 'Amiens', 'Arras', 'Calais'],
+    bonne: 0,
+    note: 'Lille. Amiens était la préfecture de l’ancienne Picardie, absorbée dans la fusion.',
+  },
+  {
+    id: 'reg-08', theme: 'regions',
+    texte: 'Dans quelle région produit-on le chablis ?',
+    reponses: ['Bourgogne-Franche-Comté', 'Grand Est', 'Centre-Val de Loire', 'Nouvelle-Aquitaine'],
+    bonne: 0,
+    note: 'Dans l’Yonne, à la pointe nord de la Bourgogne — plus près de Paris que de Beaune.',
+  },
+  {
+    id: 'reg-09', theme: 'regions',
+    texte: 'Dans quelle région se trouvent les châteaux de Chambord et de Chenonceau ?',
+    reponses: ['Centre-Val de Loire', 'Pays de la Loire', 'Nouvelle-Aquitaine', 'Bourgogne-Franche-Comté'],
+    bonne: 0,
+    note: 'Centre-Val de Loire. Les châteaux dits « de la Loire » sont pour la plupart sur ses affluents, pas sur le fleuve.',
+  },
+  {
+    id: 'reg-10', theme: 'regions',
+    texte: 'Dans quelle région randonne-t-on sur le GR 20 ?',
+    reponses: ['Corse', 'Provence-Alpes-Côte d’Azur', 'Occitanie', 'Auvergne-Rhône-Alpes'],
+    bonne: 0,
+    note: 'En Corse : cent quatre-vingts kilomètres du nord au sud de l’île, souvent présentés comme le sentier de grande randonnée le plus difficile d’Europe.',
+  },
+  {
+    id: 'reg-11', theme: 'regions',
+    texte: 'Quelle région française compte le plus d’habitants ?',
+    reponses: ['L’Île-de-France', 'L’Auvergne-Rhône-Alpes', 'La Nouvelle-Aquitaine', 'L’Occitanie'],
+    bonne: 0,
+    note: 'Environ douze millions, soit près d’un Français sur cinq sur deux pour cent du territoire.',
+  },
+  {
+    id: 'reg-12', theme: 'regions',
+    texte: 'Quelle est la préfecture de l’Occitanie ?',
+    reponses: ['Toulouse', 'Montpellier', 'Nîmes', 'Perpignan'],
+    bonne: 0,
+    note: 'Toulouse. Montpellier, préfecture de l’ancien Languedoc-Roussillon, garde le conseil régional en partage.',
+  },
+  {
+    id: 'reg-13', theme: 'regions',
+    texte: 'De quelle région Nantes est-elle la préfecture ?',
+    reponses: ['Pays de la Loire', 'Bretagne', 'Centre-Val de Loire', 'Nouvelle-Aquitaine'],
+    bonne: 0,
+    note: 'Pays de la Loire — ce qui alimente depuis 1955 une discussion sans fin sur son appartenance à la Bretagne historique.',
+  },
+  {
+    id: 'reg-14', theme: 'regions',
+    texte: 'Dans quelle région se trouvent les gorges du Verdon ?',
+    reponses: ['Provence-Alpes-Côte d’Azur', 'Auvergne-Rhône-Alpes', 'Occitanie', 'Corse'],
+    bonne: 0,
+    note: 'Sept cents mètres de profondeur : le plus grand canyon d’Europe.',
+  },
+  {
+    id: 'reg-15', theme: 'regions',
+    texte: 'Quelle région borde à la fois la mer Méditerranée et les Pyrénées ?',
+    reponses: ['L’Occitanie', 'La Nouvelle-Aquitaine', 'La Provence-Alpes-Côte d’Azur', 'La Corse'],
+    bonne: 0,
+    note: 'L’Occitanie, de Cerbère à la frontière espagnole jusqu’à la Camargue : la seule région à toucher les Pyrénées et la Méditerranée.',
+  },
+  {
+    id: 'reg-16', theme: 'regions',
+    texte: 'De quelle région le kouign-amann est-il originaire ?',
+    reponses: ['La Bretagne', 'La Normandie', 'Les Hauts-de-France', 'Les Pays de la Loire'],
+    bonne: 0,
+    note: 'De Douarnenez, vers 1860. Le nom signifie « gâteau au beurre » en breton, ce qui est un euphémisme.',
+  },
+
   /* --- Estimations ------------------------------------------------------- */
 
   {
@@ -1108,6 +1228,13 @@ export const QUESTIONS = [
     unite: 'Oscars',
     note: 'Vingt-deux, plus quatre honorifiques. C’est le record absolu, et personne ne s’en est approché depuis.',
   },
+  {
+    id: 'est-15', theme: 'regions', type: 'estimation',
+    texte: 'Combien de départements compte la France, outre-mer compris ?',
+    valeur: 101,
+    unite: 'départements',
+    note: 'Cent un. Mayotte est le plus récent : elle est devenue le 101ᵉ en 2011.',
+  },
   /* --- Dans l'ordre ------------------------------------------------------- */
 
   {
@@ -1186,6 +1313,17 @@ export const QUESTIONS = [
       'La Reine des neiges',
     ],
     note: '1937, 1967, 1994, 2013. Trente ans entre les deux premiers, trente entre les deux suivants.',
+  },
+  {
+    id: 'ord-12', theme: 'regions', type: 'ordre',
+    texte: 'De la plus peuplée à la moins peuplée : ces régions',
+    elements: [
+      'Île-de-France',
+      'Auvergne-Rhône-Alpes',
+      'Nouvelle-Aquitaine',
+      'Corse',
+    ],
+    note: 'Environ douze millions, huit millions, six millions — et trois cent cinquante mille pour la Corse, moins que la ville de Nice.',
   },
   /* --- Rafales ------------------------------------------------------------ */
 
@@ -1321,6 +1459,18 @@ export const QUESTIONS = [
       { texte: '« Toy Story » a été le premier film d’animation à recevoir l’Oscar du meilleur film.', vrai: false },
     ],
     note: 'Aucun film d’animation n’a jamais reçu l’Oscar du meilleur film. Une catégorie à part a été créée en 2001, et « Shrek » l’a remportée le premier.',
+  },
+  {
+    id: 'raf-12', theme: 'regions', type: 'rafale',
+    texte: 'Les régions françaises',
+    affirmations: [
+      { texte: 'La Loire-Atlantique fait partie de la région Bretagne.', vrai: false },
+      { texte: 'Le Grand Est borde quatre pays étrangers.', vrai: true },
+      { texte: 'La Corse est la plus petite région de France métropolitaine.', vrai: true },
+      { texte: 'L’Occitanie a une frontière avec l’Espagne.', vrai: true },
+      { texte: 'La France métropolitaine compte dix-huit régions.', vrai: false },
+    ],
+    note: 'La Loire-Atlantique est en Pays de la Loire depuis 1955, et le sujet fâche encore. Le Grand Est touche la Belgique, le Luxembourg, l’Allemagne et la Suisse. Et la métropole compte treize régions depuis 2016 — dix-huit en comptant l’outre-mer.',
   },
   /* --- Tu te mets combien ? ------------------------------------------------ */
   //
@@ -1880,6 +2030,25 @@ export const QUESTIONS = [
       { titre: 'Le Bleu lumière', artiste: 'Vaiana' },
     ],
     note: 'Quatorze titres acceptés, et la liste pourrait tenir sur trois écrans.',
+  },
+  {
+    id: 'mix-07', theme: 'regions', type: 'mix',
+    texte: 'Une chanson française qui porte un lieu de France dans son titre ou son refrain',
+    acceptees: [
+      { titre: 'Aux Champs-Élysées', artiste: 'Joe Dassin' },
+      { titre: 'Sous le ciel de Paris', artiste: 'Édith Piaf' },
+      { titre: 'Nantes', artiste: 'Barbara' },
+      { titre: 'Toulouse', artiste: 'Claude Nougaro' },
+      { titre: 'Vesoul', artiste: 'Jacques Brel' },
+      { titre: 'Les Corons', artiste: 'Pierre Bachelet' },
+      { titre: 'La Montagne', artiste: 'Jean Ferrat' },
+      { titre: 'Douce France', artiste: 'Charles Trenet' },
+      { titre: 'Il est cinq heures, Paris s’éveille', artiste: 'Jacques Dutronc' },
+      { titre: 'Le Sud', artiste: 'Nino Ferrer' },
+      { titre: 'Ma Normandie', artiste: 'Frédéric Bérat' },
+      { titre: 'Mon amant de Saint-Jean', artiste: 'Lucienne Delyle' },
+    ],
+    note: 'Douze titres acceptés, et la chanson française en compterait cent.',
   },
   /* --- Les questions du fil rouge ----------------------------------------- */
   //
