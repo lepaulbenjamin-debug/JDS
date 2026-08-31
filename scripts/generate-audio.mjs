@@ -39,6 +39,8 @@ const BANQUES = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz
 // Le dossier porte l'identifiant court de la voix (`coral`, `cedar`) et non son
 // nom d'affichage : c'est lui qui se retrouve dans des URL.
 const dossierDe = (voix) => join(BANQUES, voix);
+// Les packs vivent hors de `web/` : leur audio aussi.
+const PACKS = join(dirname(fileURLToPath(import.meta.url)), '..', 'packs');
 const INDEX = join(BANQUES, 'voix.json');
 
 /* --- Ce qu'il y a à dire -------------------------------------------------- */
@@ -47,39 +49,46 @@ const INDEX = join(BANQUES, 'voix.json');
  * L'inventaire complet. Un identifiant stable par clip : c'est lui que l'appli
  * demande, et il ne doit jamais changer une fois les fichiers distribués.
  */
-export function inventaire() {
-  const clips = inventaireDesParoles();
+/**
+ * Les trois clips d'une question : l'énoncé, la bonne réponse, l'explication.
+ *
+ * La même fabrique sert la banque de base et les packs. Elle DOIT être la même :
+ * une question achetée qui sonnerait autrement qu'une question gratuite ferait
+ * entendre la couture au milieu de la soirée.
+ */
+function clipsDeQuestion(entree) {
+  const type = typeDeManche(entree.type);
+  // On prépare sans mélanger : la solution ne dépend pas de l'ordre dans
+  // lequel une partie donnée affichera les réponses.
+  const manche = type.preparer(entree, (liste) => liste);
+  const clips = [{ id: `question/${entree.id}`, texte: entree.texte }];
 
-  for (const entree of QUESTIONS) {
-    const type = typeDeManche(entree.type);
-    // On prépare sans mélanger : la solution ne dépend pas de l'ordre dans
-    // lequel une partie donnée affichera les réponses.
-    const manche = type.preparer(entree, (liste) => liste);
+  // Un TTMC n'a pas de réponse commune : dix corrections différentes tournent
+  // en même temps, et chacune s'affiche sur son propre écran. L'animateur
+  // annonce la carte, puis se tait.
+  if (!type.solutionTexte(manche)) return clips;
 
-    clips.push({ id: `question/${entree.id}`, texte: entree.texte });
+  clips.push({
+    id: `reponse/${entree.id}`,
+    texte: {
+      rafale: () => type.solutionTexte(manche),
+      // Vingt titres valables : « la bonne réponse » n'a pas de sens ici.
+      mix: () => `Il y avait par exemple : ${type.solutionTexte(manche)}.`,
+    }[type.id]?.() ?? `La bonne réponse était : ${type.solutionTexte(manche)}.`,
+    // Une liste de titres, pas une phrase : 99 Luftballons, 9 to 5, 19-2000.
+    // Ces chiffres-là font partie du nom et se disent tels quels.
+    titres: type.id === 'mix',
+  });
+  if (entree.note) clips.push({ id: `note/${entree.id}`, texte: entree.note });
+  return clips;
+}
 
-    // Un TTMC n'a pas de réponse commune : dix corrections différentes tournent
-    // en même temps, et chacune s'affiche sur son propre écran. L'animateur
-    // annonce la carte, puis se tait.
-    if (!type.solutionTexte(manche)) continue;
-
-    clips.push({
-      id: `reponse/${entree.id}`,
-      texte: {
-        rafale: () => type.solutionTexte(manche),
-        // Vingt titres valables : « la bonne réponse » n'a pas de sens ici.
-        mix: () => `Il y avait par exemple : ${type.solutionTexte(manche)}.`,
-      }[type.id]?.() ?? `La bonne réponse était : ${type.solutionTexte(manche)}.`,
-      // Une liste de titres, pas une phrase : 99 Luftballons, 9 to 5, 19-2000.
-      // Ces chiffres-là font partie du nom et se disent tels quels.
-      titres: type.id === 'mix',
-    });
-    clips.push({ id: `note/${entree.id}`, texte: entree.note });
-  }
-
-  // Les chiffres partent en lettres au modèle, jamais à l'écran : c'est la
-  // seule façon qu'il lise « 1665 marches » comme une quantité et non comme
-  // une année. La banque, elle, continue d'écrire 1665.
+/**
+ * Les chiffres partent en lettres au modèle, jamais à l'écran : c'est la seule
+ * façon qu'il lise « 1665 marches » comme une quantité et non comme une année.
+ * La banque, elle, continue d'écrire 1665.
+ */
+function pourLeModele(clips) {
   return clips.map((clip) => {
     if (clip.titres) return clip;
     // Une phrase qui commence par un nombre repart en minuscule une fois le
@@ -89,6 +98,25 @@ export function inventaire() {
     const texte = direLesNombres(clip.texte);
     return { ...clip, texte: texte.charAt(0).toUpperCase() + texte.slice(1) };
   });
+}
+
+export function inventaire() {
+  return pourLeModele([
+    ...inventaireDesParoles(),
+    ...QUESTIONS.flatMap(clipsDeQuestion),
+  ]);
+}
+
+/**
+ * L'inventaire d'un pack : ses questions, et rien d'autre.
+ *
+ * Pas de répliques d'animateur ici. Elles sont les mêmes pour tout le monde et
+ * vivent déjà dans la banque gratuite : les redonner à chaque pack ferait payer
+ * deux fois la même phrase, et surtout tripler le poids de ce qui transite.
+ */
+export async function inventaireDuPack(fichier) {
+  const pack = JSON.parse(await readFile(fichier, 'utf8'));
+  return { pack, clips: pourLeModele(pack.questions.flatMap(clipsDeQuestion)) };
 }
 
 /* --- Fournisseurs --------------------------------------------------------- */
@@ -328,24 +356,15 @@ async function dejaFait(chemin, clip, fournisseur, anciennesEmpreintes) {
 // 429 qu'il faudrait réessayer, donc du temps, pas moins.
 const EN_VOL = 6;
 
-async function main() {
-  const args = process.argv.slice(2);
-  const blanc = args.includes('--blanc');
-  const tout = args.includes('--tout');
-  const voixDemandee = args.find((a) => a.startsWith('--voix='))?.split('=')[1];
-  // Faire de cette voix celle que l'appli sert par défaut. Explicite, parce
-  // qu'essayer une voix ne doit pas changer celle du jeu par accident.
-  const devientDefaut = args.includes('--defaut');
-
-  const fournisseur = blanc ? fournisseurBlanc() : fournisseurOpenAI(voixDemandee);
-  const racine = dossierDe(fournisseur.id);
-  const clips = inventaire();
-
-  console.log(`\nAnimateur : ${fournisseur.nom}`);
-  console.log(`Banque    : web/quiz/audio/${fournisseur.id}/`);
-  console.log(`${clips.length} clips à produire (${QUESTIONS.length} questions).`);
-  if (!blanc && !tout) console.log('Les clips déjà présents sont conservés (--tout pour tout refaire).\n');
-
+/**
+ * Produire une banque : la boucle, le cache, le manifeste.
+ *
+ * Sortie de `main` pour que les packs empruntent EXACTEMENT le même chemin que
+ * la banque de base — même fabrique de clips, même empreinte, même reprise. Une
+ * seconde boucle écrite à côté aurait fini par diverger, et la couture
+ * s'entendrait au milieu de la soirée.
+ */
+async function produire({ racine, clips, fournisseur, tout, blanc }) {
   const ancien = await manifestePrecedent(racine);
   const manifeste = {
     voix: fournisseur.nom, id: fournisseur.id,
@@ -398,11 +417,42 @@ async function main() {
     panne = erreur;
   }
 
+  // Le manifeste est écrit même après une panne : c'est lui qui porte les
+  // empreintes, donc lui qui permet de relancer sans tout refaire. Sans ça, une
+  // coupure au clip 180 rejetait cent quatre-vingts clips déjà payés.
   await writeFile(
     join(racine, 'manifeste.json'),
     `${JSON.stringify(manifeste, null, 2)}\n`,
     'utf8',
   );
+
+  return { manifeste, produits, reutilises, refaits, panne };
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const blanc = args.includes('--blanc');
+  const tout = args.includes('--tout');
+  const packs = args.includes('--packs');
+  const voixDemandee = args.find((a) => a.startsWith('--voix='))?.split('=')[1];
+  // Faire de cette voix celle que l'appli sert par défaut. Explicite, parce
+  // qu'essayer une voix ne doit pas changer celle du jeu par accident.
+  const devientDefaut = args.includes('--defaut');
+
+  const fournisseur = blanc ? fournisseurBlanc() : fournisseurOpenAI(voixDemandee);
+
+  console.log(`\nAnimateur : ${fournisseur.nom}`);
+  if (!blanc && !tout) console.log('Les clips déjà présents sont conservés (--tout pour tout refaire).');
+
+  if (packs) return await lesPacks({ fournisseur, tout, blanc });
+
+  const clips = inventaire();
+  console.log(`Banque    : web/quiz/audio/${fournisseur.id}/`);
+  console.log(`${clips.length} clips à produire (${QUESTIONS.length} questions).\n`);
+
+  const { manifeste, produits, reutilises, refaits, panne } = await produire({
+    racine: dossierDe(fournisseur.id), clips, fournisseur, tout, blanc,
+  });
   const index = await ecrireLIndex(devientDefaut && !panne ? fournisseur.id : null);
 
   if (panne) {
@@ -420,6 +470,49 @@ async function main() {
   console.log('\nÉcoutez quelques clips avant de livrer, en particulier les explications :');
   console.log(`  ${join('web', 'quiz', 'audio', fournisseur.id, 'note', `${QUESTIONS[0].id}.${fournisseur.extension}`)}`);
   console.log(`\nThèmes couverts : ${[...new Set(QUESTIONS.map((q) => nomDuTheme(q.theme)))].join(', ')}\n`);
+}
+
+/**
+ * Les clips des packs, dans `packs/audio/<voix>/` — HORS de `web/`.
+ *
+ * C'est tout l'enjeu de ce dossier. Le contenu d'un pack ne sort qu'avec une
+ * licence valide ; un fichier posé sous `web/` serait servi en statique à qui
+ * le demande. Or un énoncé lu à voix haute EST le contenu : mettre l'audio en
+ * accès libre reviendrait à donner les questions qu'on vend, en plus lisible.
+ *
+ * Les répliques de l'animateur n'y sont pas : elles sont les mêmes pour tout le
+ * monde et vivent déjà dans la banque gratuite.
+ */
+async function lesPacks({ fournisseur, tout, blanc }) {
+  const { readdir } = await import('node:fs/promises');
+  const fichiers = (await readdir(PACKS)).filter((f) => f.endsWith('.json')).sort();
+  if (!fichiers.length) {
+    console.log('\nAucun pack dans packs/.\n');
+    return;
+  }
+
+  console.log(`Packs     : packs/audio/${fournisseur.id}/`);
+  let total = 0;
+  let reprises = 0;
+  for (const fichier of fichiers) {
+    const { pack, clips } = await inventaireDuPack(join(PACKS, fichier));
+    console.log(`\n  ${pack.nom} — ${pack.questions.length} questions, ${clips.length} clips`);
+
+    const { produits, reutilises, panne } = await produire({
+      racine: join(PACKS, 'audio', fournisseur.id, pack.id),
+      clips, fournisseur, tout, blanc,
+    });
+    total += produits;
+    reprises += reutilises;
+    if (panne) {
+      console.log(`\n  ${produits} produits avant l’interruption. Relancer reprend où ça s’est arrêté.`);
+      throw panne;
+    }
+    console.log(`  ${produits} produits, ${reutilises} réutilisés.`);
+  }
+
+  console.log(`\n${total} clips produits, ${reprises} réutilisés, dans packs/audio/${fournisseur.id}/`);
+  console.log('Hors de web/ : ce contenu est payant, il ne sort qu’avec une licence.\n');
 }
 
 // Seulement quand on lance le script pour de bon. `inventaire` est exporté pour

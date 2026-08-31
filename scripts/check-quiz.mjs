@@ -29,6 +29,7 @@ import { handleRoomRequest } from '../lib/rooms.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
 import * as nodeFs from 'node:fs';
+import { join } from 'node:path';
 import { inventaire } from './generate-audio.mjs';
 import { lireLeCatalogue } from './echantillons-voix.mjs';
 
@@ -1344,6 +1345,83 @@ test('une licence qui a le pack en obtient le contenu', async () => {
   // Sans changer quoi que ce soit pour les autres.
   const autre = await boutique('GET', { licence: 'quelqu-un-d-autre' });
   assert.equal(autre.body.packs.find((p) => p.id === cible).possede, false);
+});
+
+test('les clips d’un pack restent hors de web/', async () => {
+  // L'invariant qui tient tout le modèle économique. Un énoncé lu à voix haute
+  // EST le contenu du pack : posé sous `web/`, il serait servi en statique à qui
+  // le demande, et donnerait gratuitement — en plus confortable — ce qu'on vend.
+  // Ce test existe pour le jour où quelqu'un déplacera le dossier « pour
+  // simplifier ».
+  const { readdirSync, existsSync } = nodeFs;
+  assert.equal(existsSync('web/quiz/audio/noel'), false, 'un pack sous web/quiz/audio/');
+  for (const entree of readdirSync('web/quiz/audio')) {
+    if (entree === 'voix.json') continue;
+    const dedans = readdirSync(join('web/quiz/audio', entree));
+    assert.ok(!dedans.includes('noel') && !dedans.includes('annees80-90'),
+      `des clips de pack sous web/quiz/audio/${entree}/`);
+  }
+});
+
+test('un pack acheté arrive avec ses clips, dans la voix demandée', async () => {
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  const cible = vitrine[0].id;
+  await accorder('licence-audio', cible);
+
+  const { defaut } = JSON.parse(nodeFs.readFileSync('web/quiz/audio/voix.json', 'utf8'));
+  const avec = await boutique('GET', { id: cible, licence: 'licence-audio', voix: defaut });
+  assert.equal(avec.status, 200);
+
+  const audio = avec.body.audio;
+  if (!audio) return;                        // clips de packs pas encore générés
+
+  // Un clip par énoncé au minimum, et chacun accompagné de ses octets : une
+  // durée sans données ferait promettre un fichier absent, donc taire tout le
+  // passage — un seul clip manquant fait abandonner la phrase entière.
+  assert.ok(Object.keys(audio.clips).length >= avec.body.questions.length,
+    'moins de clips que de questions');
+  for (const id of Object.keys(audio.clips)) {
+    assert.ok(audio.donnees[id]?.length > 100, `clip vide ou absent : ${id}`);
+  }
+
+  // Une voix qu'on n'a pas enregistrée ne fait pas échouer le téléchargement :
+  // sans clips, l'appli sait se rabattre sur la synthèse ; sans questions, non.
+  const sans = await boutique('GET', { id: cible, licence: 'licence-audio', voix: 'inexistante' });
+  assert.equal(sans.status, 200);
+  assert.equal(sans.body.audio, null);
+  assert.ok(sans.body.questions.length > 0, 'les questions doivent arriver quand même');
+
+  // Et sans licence, ni questions ni clips.
+  const vol = await boutique('GET', { id: cible, licence: 'inconnue', voix: defaut });
+  assert.equal(vol.status, 402);
+  assert.equal(vol.body.audio, undefined);
+});
+
+test('chaque question de pack a ses clips, dans toutes les voix', () => {
+  // Le défaut qu'on vient de corriger : `generate-audio.mjs` ne parcourait que
+  // la banque de base. Une question achetée passait donc à la synthèse pendant
+  // que les autres restaient enregistrées — le changement de timbre en pleine
+  // soirée, exactement ce qu'on évite partout ailleurs.
+  const { existsSync, readFileSync, readdirSync } = nodeFs;
+  if (!existsSync('packs/audio')) return;    // pas encore générés
+
+  const voix = readdirSync('packs/audio').filter((v) => v !== 'blanc');
+  assert.ok(voix.length > 0, 'aucune voix de pack');
+
+  for (const v of voix) {
+    for (const fichier of readdirSync('packs').filter((f) => f.endsWith('.json'))) {
+      const pack = JSON.parse(readFileSync(join('packs', fichier), 'utf8'));
+      const racine = join('packs/audio', v, pack.id);
+      assert.ok(existsSync(join(racine, 'manifeste.json')), `manifeste manquant : ${v}/${pack.id}`);
+      const manifeste = JSON.parse(readFileSync(join(racine, 'manifeste.json'), 'utf8'));
+      for (const question of pack.questions) {
+        const id = `question/${question.id}`;
+        assert.ok(manifeste.clips[id] != null, `clip absent du manifeste : ${v}/${id}`);
+        assert.ok(existsSync(join(racine, `${id}.${manifeste.format}`)),
+          `fichier absent : ${v}/${id}`);
+      }
+    }
+  }
 });
 
 test('on ne s’accorde pas un pack tout seul par l’API', async () => {

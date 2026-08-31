@@ -146,9 +146,57 @@ export function etat() {
   return panne ? `Enregistrements indisponibles : ${panne}.` : 'Enregistrements en cours de chargement…';
 }
 
+/* --- Les clips des packs -------------------------------------------------- */
+
+// Les packs ne sont pas servis en statique — leur contenu est payant — donc
+// leurs clips ne vivent pas à côté des autres : ils arrivent avec le pack et
+// sont rangés dans le cache du navigateur. Ce module ne sait pas les
+// télécharger et n'a pas à le savoir ; on les lui déclare.
+let extras = { durees: {}, adresses: {} };
+// Une URL d'objet par clip, fabriquée à la première lecture et gardée : en
+// refaire une à chaque fois fuirait de la mémoire à chaque manche.
+const objets = new Map();
+
+/**
+ * Déclare les clips venus des packs installés.
+ *
+ * Appelé après le chargement et après chaque installation : un pack acheté en
+ * cours de soirée doit être lu par l'animateur, pas à la partie suivante.
+ */
+export function ajouterDesClips({ durees = {}, adresses = {} } = {}) {
+  extras = { durees, adresses };
+  for (const url of objets.values()) URL.revokeObjectURL(url);
+  objets.clear();
+}
+
+/**
+ * L'adresse réellement lisible d'un clip.
+ *
+ * Pour la banque de base, un chemin de fichier. Pour un pack, une réponse
+ * rangée dans le cache du navigateur : sans service worker, `fetch` ne la
+ * trouverait pas toute seule, il faut aller la chercher et en faire une URL
+ * d'objet. D'où une résolution asynchrone, là où un chemin suffisait.
+ */
+async function source(id) {
+  if (manifeste?.clips?.[id] != null) return url(id);
+  const adresse = extras.adresses[id];
+  if (!adresse || !globalThis.caches) return null;
+  if (objets.has(id)) return objets.get(id);
+  try {
+    const reponse = await caches.match(adresse);
+    if (!reponse) return null;
+    const objet = URL.createObjectURL(await reponse.blob());
+    objets.set(id, objet);
+    return objet;
+  } catch {
+    return null;
+  }
+}
+
 /** Ce clip existe-t-il ? */
 export function existe(id) {
-  return !cassee && Boolean(id && manifeste?.clips?.[id] != null);
+  if (cassee || !id) return false;
+  return manifeste?.clips?.[id] != null || extras.durees[id] != null;
 }
 
 /**
@@ -160,7 +208,8 @@ export function existe(id) {
  * figé le temps d'un silence.
  */
 export function duree(id) {
-  return existe(id) ? manifeste.clips[id] : 0;
+  if (!existe(id)) return 0;
+  return manifeste?.clips?.[id] ?? extras.durees[id] ?? 0;
 }
 
 const url = (id) => `${BANQUES}/${courante}/${id}.${manifeste?.format ?? 'mp3'}`;
@@ -178,6 +227,9 @@ const url = (id) => `${BANQUES}/${courante}/${id}.${manifeste?.format ?? 'mp3'}`
 export function precharger(ids) {
   for (const id of [].concat(ids)) {
     if (!existe(id)) continue;
+    // Un clip de pack est déjà sur l'appareil : rien à télécharger, mais son
+    // URL d'objet est à fabriquer, et ça vaut mieux avant le top que pendant.
+    if (manifeste?.clips?.[id] == null) { source(id).catch(() => {}); continue; }
     // Un GET nu : c'est la lecture elle-même qui remplit le cache, et les modes
     // de cache exotiques ne sont pas garantis derrière `capacitor://localhost`.
     fetch(url(id)).catch(() => {});
@@ -225,6 +277,20 @@ export async function jouer(ids) {
 
   for (const id of liste) {
     if (passage !== lemien) return true;        // coupé entre-temps : c'est voulu
+    // Résolue avant d'armer les écouteurs : un clip de pack va se chercher dans
+    // le cache, et cette attente-là n'a rien à faire au milieu d'une promesse
+    // de lecture.
+    const adresse = await source(id);
+    if (!adresse) {
+      // Un clip de pack annoncé mais absent du cache : on le retire de
+      // l'inventaire, et la manche suivante retombera proprement sur la
+      // synthèse. Surtout PAS `cassee` — la banque de base, elle, va bien, et
+      // la condamner pour un pack rendrait toute la soirée muette.
+      delete extras.durees[id];
+      delete extras.adresses[id];
+      encours = null;
+      return false;
+    }
     encours = element;
     try {
       await new Promise((resolve, reject) => {
@@ -264,7 +330,7 @@ export async function jouer(ids) {
         }, 120);
         element.addEventListener('ended', finir, { once: true });
         element.addEventListener('error', raterSource, { once: true });
-        element.src = url(id);
+        element.src = adresse;
         element.play().catch(rater);
       });
     } catch (erreur) {

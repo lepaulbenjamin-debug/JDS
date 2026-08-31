@@ -21,3 +21,6 @@ web/quiz/audio/**/*.wav
 # Les sources qui lui sont destinées vivent dans `apple/`.
 ios/
 android/
+
+# Les clips d'essai des packs : du silence, comme ceux de la banque de base.
+packs/audio/blanc/

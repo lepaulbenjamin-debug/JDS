@@ -18,7 +18,10 @@
 import { speech, frenchVoices } from '../../js/speech.js';
 import * as audio from './audio.js';
 
-export { charger as chargerLesClips, duree as dureeDuClip } from './audio.js';
+export {
+  charger as chargerLesClips, duree as dureeDuClip,
+  ajouterDesClips as declarerLesClipsDesPacks,
+} from './audio.js';
 
 export const PERSONAS = [
   { id: 'classique', nom: 'Classique', desc: 'Le ton du plateau télé, sérieux et chaleureux.' },
@@ -775,6 +778,11 @@ export const voix = {
   /** Pourquoi la voix enregistrée ne sort pas, quand c'est le cas. */
   get etatDesClips() {
     return audio.etat();
+  },
+  /** L'identifiant de la banque ouverte : c'est dans cette voix qu'on
+   *  télécharge les packs. */
+  get banqueCourante() {
+    return audio.banquesDisponibles().find((b) => b.courante)?.id ?? null;
   },
   /** Les voix enregistrées installées, pour le sélecteur des réglages. */
   get banques() {

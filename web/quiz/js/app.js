@@ -17,7 +17,7 @@ import {
 import * as packs from './packs.js';
 import * as achats from './achats.js';
 import {
-  PERSONAS, voix, sons, clipsDAnnonce, chargerLesClips,
+  PERSONAS, voix, sons, clipsDAnnonce, chargerLesClips, declarerLesClipsDesPacks,
   dureeDuClip, dureeDeLaReplique,
 } from './emcee.js';
 
@@ -1222,8 +1222,10 @@ async function rendrePacks() {
               try {
                 await achats.acheter(pack.produitApple, packs.licence(), net.relayBase());
                 toast(`${pack.nom} débloqué.`);
-                await packs.synchroniser();
+                await packs.synchroniser(voix.banqueCourante);
                 ajouterQuestions(packs.questionsInstallees());
+      declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
+                declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
                 rendreReglages();
               } catch (erreur) {
                 // Renoncer n'est pas échouer : quelqu'un qui referme la feuille
@@ -1246,8 +1248,9 @@ async function rendrePacks() {
             onclick: async (event) => {
               event.target.disabled = true;
               try {
-                const installe = await packs.installer(pack.id);
+                const installe = await packs.installer(pack.id, voix.banqueCourante);
                 ajouterQuestions(installe.questions);
+                declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
                 toast(`${installe.nom} installé.`);
                 rendreReglages();
               } catch (erreur) {
@@ -1276,8 +1279,10 @@ async function rendrePacks() {
         event.target.disabled = true;
         try {
           const { accordes } = await achats.restaurer(packs.licence(), net.relayBase());
-          await packs.synchroniser();
+          await packs.synchroniser(voix.banqueCourante);
           ajouterQuestions(packs.questionsInstallees());
+      declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
+          declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
           toast(accordes.length
             ? `${accordes.length} pack${accordes.length > 1 ? 's' : ''} restauré${accordes.length > 1 ? 's' : ''}.`
             : 'Aucun achat à restaurer sur ce compte.');
@@ -1578,16 +1583,24 @@ function brancher() {
   // Les voix système arrivent souvent après le chargement de la page : sans ce
   // rappel, la liste resterait vide sur la plupart des navigateurs.
   window.speechSynthesis?.addEventListener?.('voiceschanged', rendreChoixVoix);
-  chargerLesClips().then(rendreChoixVoix);
-
   // Les packs déjà téléchargés sont disponibles immédiatement, avant même que
   // le réseau réponde : c'est tout l'intérêt de les garder en local.
   ajouterQuestions(packs.questionsInstallees());
-  packs.synchroniser().then((nouveaux) => {
-    if (nouveaux) {
-      ajouterQuestions(packs.questionsInstallees());
-      toast(`${nouveaux} pack${nouveaux > 1 ? 's' : ''} téléchargé${nouveaux > 1 ? 's' : ''}.`);
-    }
+
+  // Le chargement de la banque D'ABORD, la synchronisation des packs ensuite.
+  // L'ordre n'est pas cosmétique : c'est le chargement qui fixe la voix
+  // courante, et un pack téléchargé avant elle arrivait sans clips — ses
+  // questions étaient alors les seules de la soirée à passer à la synthèse.
+  chargerLesClips().then(async () => {
+    const banque = voix.banqueCourante;
+    declarerLesClipsDesPacks(packs.clipsInstalles(banque));
+    rendreChoixVoix();
+
+    const nouveaux = await packs.synchroniser(banque).catch(() => 0);
+    if (!nouveaux) return;
+    ajouterQuestions(packs.questionsInstallees());
+    declarerLesClipsDesPacks(packs.clipsInstalles(banque));
+    toast(`${nouveaux} pack${nouveaux > 1 ? 's' : ''} téléchargé${nouveaux > 1 ? 's' : ''}.`);
   });
 
   // Absent du paquet natif, où le relais est nommé au build : dans une appli
