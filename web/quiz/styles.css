@@ -646,3 +646,23 @@ body {
   .chrono-jauge { transition: none; }
   .btn:active { transform: none; }
 }
+
+/* --- Le vote de la table -------------------------------------------------- */
+
+/* Le mix juge sur une liste, qui ne connaît pas toute la musique du monde.
+   Ce bloc est le rattrapage : ce que la machine refuse, la salle tranche. */
+.vote { margin: 18px 0; display: grid; gap: 10px; }
+.vote-titre { margin: 0; font-weight: 600; }
+.vote-ligne {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.vote-quoi { min-width: 0; }
+.vote-quoi strong { display: block; overflow-wrap: anywhere; }
+.vote-boutons { display: flex; gap: 8px; flex: none; }
+/* Assez large pour le pouce : on vote vite, et souvent de travers sinon. */
+.vote-boutons .btn { padding: 10px 14px; }
+.vote-oui.est-actif { background: color-mix(in srgb, var(--ok) 30%, transparent); border-color: var(--ok); }
+.vote-non.est-actif { background: color-mix(in srgb, var(--danger) 30%, transparent); border-color: var(--danger); }

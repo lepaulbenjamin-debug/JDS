@@ -501,6 +501,100 @@ test('une réponse qui arrive après la fin de la manche est ignorée', () => {
   assert.equal(etatFinal.podium.every((j) => j.score === 0), true);
 });
 
+test('le mix soumet à la table ce qu’il n’a pas reconnu', () => {
+  // La limite du mix était assumée : il juge sur une liste, il ne connaît pas
+  // toute la musique du monde. Quelqu'un qui a raison se faisait refuser. Le
+  // vote lève cette limite sans toucher au barème — un titre validé rejoint
+  // simplement les réponses acceptées de la manche.
+  const entree = QUESTIONS.find((q) => q.type === 'mix');
+  const inconnu = 'Un Titre Que La Liste N’a Pas';
+
+  // Une carte NEUVE par cas : accepter un titre modifie les réponses admises de
+  // la manche, et rejouer la même carte ferait passer le cas suivant pour la
+  // mauvaise raison.
+  const partie = () => {
+    const carte = typeDeManche('mix').preparer(entree, (l) => l);
+    const regie = creerRegie({ questions: [carte], dureeMs: DUREE });
+    regie.lancer(0, JOUEURS);
+    let horloge = 0;
+    while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+
+    // Ana propose quelque chose d'absent de la liste, personne d'autre ne joue.
+    horloge = regie.etatPublic(JOUEURS).startAt + 100;
+    regie.encaisser([{ playerId: 'a', round: 1, reponse: inconnu, elapsedMs: 100 }]);
+    while (regie.phase === 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+    return { regie, horloge };
+  };
+
+  // Sans vote de personne : refusé. Le silence n'est pas une approbation, sinon
+  // une table distraite validerait tout.
+  {
+    const { regie, horloge } = partie();
+    assert.equal(regie.phase, 'vote', 'le vote doit s’ouvrir');
+    const vue = regie.etatPublic(JOUEURS);
+    assert.equal(vue.candidats.length, 1);
+    assert.equal(vue.candidats[0].titre, inconnu);
+    assert.equal(vue.candidats[0].nom, 'Ana');
+
+    let t = horloge;
+    while (regie.phase === 'vote') { t += 500; regie.avancer(t, JOUEURS); }
+    assert.equal(regie.phase, 'revelation');
+    assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, false);
+  }
+
+  // Deux voix contre zéro : accepté, et Ana marque comme si la liste l'avait
+  // reconnu depuis le début.
+  {
+    const { regie, horloge } = partie();
+    regie.encaisser([
+      { playerId: 'b', vote: { candidat: 'a', oui: true } },
+      { playerId: 'c', vote: { candidat: 'a', oui: true } },
+    ]);
+    let t = horloge;
+    while (regie.phase === 'vote') { t += 500; regie.avancer(t, JOUEURS); }
+
+    const vue = regie.etatPublic(JOUEURS);
+    assert.equal(vue.resultat.detail.a.correct, true, 'la table a accepté, Ana doit marquer');
+    assert.ok(vue.resultat.detail.a.points > 0);
+    assert.deepEqual(vue.valides, [inconnu]);
+
+    // Et ça ne déborde pas de la manche : ce qu'une table accepte un soir ne
+    // devient pas une bonne réponse pour tout le monde. La banque est partagée
+    // entre les parties d'une même session — une fuite ici se paierait deux
+    // heures plus tard, sur une autre table.
+    assert.ok(!entree.acceptees.some((t) => t.titre === inconnu),
+      'la banque a été contaminée par un vote de table');
+  }
+
+  // On ne vote pas pour soi-même : le bulletin de l'auteur est ignoré, donc la
+  // proposition reste refusée faute d'autres voix.
+  {
+    const { regie, horloge } = partie();
+    regie.encaisser([{ playerId: 'a', vote: { candidat: 'a', oui: true } }]);
+    let t = horloge;
+    while (regie.phase === 'vote') { t += 500; regie.avancer(t, JOUEURS); }
+    assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, false);
+  }
+});
+
+test('un mix reconnu n’ouvre aucun vote', () => {
+  // Un écran de vote qui s'ouvre pour rien est le meilleur moyen de casser le
+  // rythme : il ne doit apparaître que s'il y a vraiment à juger.
+  const entree = QUESTIONS.find((q) => q.type === 'mix');
+  const carte = typeDeManche('mix').preparer(entree, (l) => l);
+  const regie = creerRegie({ questions: [carte], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  let horloge = 0;
+  while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+
+  horloge = regie.etatPublic(JOUEURS).startAt + 100;
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: entree.acceptees[0].titre, elapsedMs: 100 }]);
+  while (regie.phase === 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+
+  assert.equal(regie.phase, 'revelation', 'aucun vote ne doit s’ouvrir');
+  assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, true);
+});
+
 test('la fenêtre de jokers précède la question', () => {
   const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE });
   regie.lancer(0, JOUEURS);
@@ -1554,6 +1648,15 @@ test('le relais laisse passer toutes les formes de réponse, texte compris', asy
   await appel('POST', { code, action: 'answer' }, { playerId: 'a', round: 1, niveau: 7 });
   const { body } = await appel('POST', { code }, { hostToken });
   assert.equal(body.answers[0]?.niveau, 7, 'ttmc : niveau perdu par le relais');
+
+  // Le bulletin du vote de table, même histoire : il ne ressemble à aucune
+  // réponse, et sans sa ligne dans le filtre il disparaissait sans un mot — la
+  // table votait, et rien ne se passait.
+  await appel('POST', { code, action: 'answer' },
+    { playerId: 'a', vote: { candidat: 'b', oui: true } });
+  const { body: apresVote } = await appel('POST', { code }, { hostToken });
+  assert.deepEqual(apresVote.answers[0]?.vote, { candidat: 'b', oui: true },
+    'vote perdu par le relais');
 });
 
 test('un titre trop long est tronqué, jamais jeté', async () => {

@@ -92,6 +92,7 @@ let vueManche = null;          // la vue construite pour la manche en cours
 let filEnvoye = false;         // une tentative de fil rouge part sans écho immédiat
 let filRendu = '';             // ce que la boîte du fil rouge affiche déjà, pour ne pas la reconstruire sous les doigts
 let monNiveau = null;          // { manche, niveau } — le pari du TTMC, écho local
+let mesVotes = {};             // candidat → oui/non, écho local le temps d'un battement
 
 // En solo, le relais est remplacé par cette file : les réponses y sont déposées
 // et relues au battement suivant, exactement là où le relais les aurait rendues.
@@ -127,6 +128,7 @@ const ECRAN_DE_PHASE = {
   lobby: 'lobby',
   intro: 'jeu',
   manche: 'jeu',
+  vote: 'jeu',
   revelation: 'jeu',
   podium: 'fin',
 };
@@ -262,6 +264,7 @@ function appliquer(nouvel) {
       masque = null;
       filEnvoye = false;
       monNiveau = null;
+      mesVotes = {};
       // L'énoncé sera lu au top : on le met en cache pendant la fenêtre de
       // jokers, pour qu'il parte pile à l'heure et non après un aller-retour.
       if (etat.question?.id) {
@@ -286,6 +289,10 @@ function appliquer(nouvel) {
  */
 function parler() {
   if (!etat) return;
+  // Le vote n'a rien à annoncer, et `annonceCle` porte encore celle de la
+  // manche : sans ce garde, l'animateur redirait « troisième question » au
+  // moment où la table s'apprête à juger une réponse.
+  if (etat.phase === 'vote') return;
   const clips = [];
   const repli = [];
   const qid = etat.question?.id;
@@ -343,6 +350,19 @@ async function envoyerReponse(answer) {
     return;
   }
   await net.sendAnswer(salon.code, answer);
+}
+
+/**
+ * Un bulletin sur une proposition que l'appli n'a pas su reconnaître.
+ *
+ * L'écho local est immédiat : la régie ne republiera qu'au battement suivant,
+ * et un bouton qui met un demi-tour de boucle à réagir donne l'impression de
+ * n'avoir pas été pressé — on retape, et on vote deux fois.
+ */
+async function envoyerVote(candidat, oui) {
+  mesVotes = { ...mesVotes, [candidat]: oui };
+  rendre();
+  await envoyerReponse({ playerId: moi.id, vote: { candidat, oui } });
 }
 
 /* --- Rendu --------------------------------------------------------------- */
@@ -441,6 +461,7 @@ function rendreJeu() {
 
   rendrePari();
   peindreReponses();
+  rendreVote();
   rendreJokers();
   rendreEtatManche();
   rendreFilRouge();
@@ -598,6 +619,61 @@ function rendreJokers() {
       : 'Jokers verrouillés pour cette manche.');
 }
 
+/**
+ * Le vote de la table sur ce que l'appli n'a pas reconnu.
+ *
+ * Le mix juge sur une liste, et cette liste ne connaît pas toute la musique du
+ * monde : quelqu'un qui répond juste se faisait refuser. La salle, elle, sait.
+ *
+ * On ne montre à personne sa propre proposition — on ne se juge pas soi-même —
+ * et l'auteur voit à la place où en est le verdict. Les bulletins des autres
+ * sont visibles : autour d'une table, on voit très bien qui lève la main, et le
+ * cacher n'ajouterait qu'un suspense que personne n'a demandé.
+ */
+function rendreVote() {
+  const zone = $('#jeu-vote');
+  zone.hidden = etat.phase !== 'vote';
+  if (zone.hidden) return;
+
+  clear(zone);
+  zone.append(el('p', { class: 'vote-titre', text: 'À la table de trancher' }));
+  zone.append(el('p', {
+    class: 'muted small',
+    text: 'Ces réponses ne sont pas dans ma liste. Elles comptent si la majorité les accepte.',
+  }));
+
+  for (const candidat of etat.candidats ?? []) {
+    const bulletins = etat.votes?.[candidat.playerId] ?? {};
+    const oui = Object.values(bulletins).filter(Boolean).length;
+    const non = Object.values(bulletins).length - oui;
+    const mien = mesVotes[candidat.playerId] ?? bulletins[moi.id];
+    const cest = candidat.playerId === moi.id;
+
+    zone.append(el('div', { class: 'vote-ligne' }, [
+      el('div', { class: 'vote-quoi' }, [
+        el('strong', { text: candidat.titre }),
+        el('span', { class: 'muted small', text: ` — ${cest ? 'ta réponse' : candidat.nom}` }),
+      ]),
+      cest
+        ? el('span', { class: 'muted small', text: `${oui} pour, ${non} contre` })
+        : el('div', { class: 'vote-boutons' }, [
+            el('button', {
+              class: `btn vote-oui${mien === true ? ' est-actif' : ''}`,
+              type: 'button',
+              'aria-label': `Accepter ${candidat.titre}`,
+              onclick: () => envoyerVote(candidat.playerId, true),
+            }, `✅ ${oui}`),
+            el('button', {
+              class: `btn vote-non${mien === false ? ' est-actif' : ''}`,
+              type: 'button',
+              'aria-label': `Refuser ${candidat.titre}`,
+              onclick: () => envoyerVote(candidat.playerId, false),
+            }, `❌ ${non}`),
+          ]),
+    ]));
+  }
+}
+
 function rendreEtatManche() {
   const hote = clear($('#jeu-etat'));
 
@@ -623,6 +699,17 @@ function rendreEtatManche() {
     // dans la vue, juste sous la question : la note de la carte ferait double.
     if (etat.question?.note && etat.question.type !== 'ttmc') {
       hote.append(el('p', { class: 'note', text: etat.question.note }));
+    }
+    // Ce que la table a validé pendant le vote : sans cette ligne, une réponse
+    // acceptée par la salle marquerait des points sans que personne ne sache
+    // pourquoi.
+    if (etat.valides?.length) {
+      hote.append(el('p', {
+        class: 'evenement',
+        text: etat.valides.length === 1
+          ? `La table a accepté « ${etat.valides[0]} ».`
+          : `La table a accepté : ${etat.valides.map((t) => `« ${t} »`).join(', ')}.`,
+      }));
     }
     // Seul le premier événement est dit à voix haute — c'est celui que la régie
     // a mis en clip. Les suivants n'existent qu'à l'écran, et gardent donc leur
@@ -815,6 +902,17 @@ function rafraichirChrono() {
   const jauge = $('#chrono-jauge');
   const cadre = $('#jeu-chrono');
   const enManche = etat?.phase === 'manche';
+
+  // Le vote est chronométré lui aussi : sans jauge, on ne sait pas qu'il faut
+  // se décider, et la phase se ferme sur des gens qui lisaient encore.
+  if (etat?.phase === 'vote') {
+    cadre.hidden = false;
+    const reste = Math.max(0, etat.finPhase - net.serverNow());
+    delete cadre.dataset.compte;
+    jauge.style.width = `${(reste / 12000) * 100}%`;
+    jauge.classList.toggle('est-urgent', reste < 4000);
+    return;
+  }
   cadre.hidden = !enManche;
 
   if (!enManche) {

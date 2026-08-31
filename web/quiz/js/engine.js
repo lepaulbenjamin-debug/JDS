@@ -382,6 +382,9 @@ export function creerRegie({
     dureeMs,
     startAt: 0,
     niveaux: {},
+    candidats: null,
+    votes: {},
+    valides: null,
     deadline: 0,
     finPhase: 0,
     introAt: 0,
@@ -513,7 +516,101 @@ export function creerRegie({
     };
   }
 
+  // Le temps laissé à la table pour trancher. Court : c'est un réflexe, pas une
+  // délibération, et l'écran de révélation attend derrière.
+  const DUREE_VOTE_MS = 12000;
+
+  /**
+   * Les propositions que l'appli n'a pas reconnues, et qu'elle soumet à la table.
+   *
+   * La limite du mix était assumée depuis le début : le jeu juge sur une liste,
+   * il ne connaît pas toute la musique du monde. Quelqu'un qui répond « Karma
+   * Police » sur « une chanson avec un métier dans le titre » a raison, et se
+   * faisait refuser. Personne autour de la table n'a ce problème — d'où ce
+   * passage de relais : ce que la machine ne sait pas, la salle le sait.
+   *
+   * Seules les manches de mix en ouvrent une, et seulement s'il y a quelque
+   * chose à juger. Ajouter un écran de vote pour rien serait le meilleur moyen
+   * de casser le rythme de la soirée.
+   */
+  function aSoumettreAuVote(joueurs) {
+    if (etat.question?.type !== 'mix') return [];
+    const type = typeDeManche('mix');
+    const notes = type.noter(etat.question, etat.reponses);
+    return Object.entries(etat.reponses)
+      .filter(([id, r]) => r.valeur && !notes[id]?.correct && !notes[id]?.dejaCite)
+      .map(([id, r]) => ({
+        playerId: id,
+        nom: joueurs.find((j) => j.id === id)?.name ?? '—',
+        titre: String(r.valeur).slice(0, 80),
+      }));
+  }
+
+  /**
+   * Le verdict de la table, appliqué avant de compter les points.
+   *
+   * Un titre validé rejoint la liste des réponses acceptées DE CETTE MANCHE, et
+   * rien d'autre ne bouge : le barème, l'ordre d'arrivée, la règle du titre déjà
+   * pris continuent de s'appliquer tels quels. C'est ce qui garde le vote
+   * inoffensif — il élargit ce que le jeu reconnaît, il ne change pas comment il
+   * compte.
+   *
+   * Majorité des votants, l'auteur exclu : on ne vote pas pour soi-même.
+   * Personne n'a voté sur une proposition ? Elle est refusée — le silence n'est
+   * pas une approbation, sinon une table distraite validerait tout.
+   */
+  function appliquerLeVote() {
+    const acceptes = [];
+    for (const candidat of etat.candidats ?? []) {
+      const bulletins = Object.values(etat.votes?.[candidat.playerId] ?? {});
+      const oui = bulletins.filter(Boolean).length;
+      if (bulletins.length && oui * 2 > bulletins.length) {
+        acceptes.push(candidat.titre);
+        etat.question.acceptees = [...etat.question.acceptees, { titre: candidat.titre, parLaTable: true }];
+      }
+    }
+    return acceptes;
+  }
+
+  /**
+   * Un bulletin. Rend `true` si l'état a bougé — la régie ne republie que dans
+   * ce cas, et un vote qui n'apparaît pas tout de suite se retape.
+   *
+   * On refuse celui de l'auteur : voter pour sa propre proposition n'est pas un
+   * jugement. Et on n'accepte un bulletin que pendant la phase de vote, sinon un
+   * pupitre en retard corrigerait un résultat déjà annoncé.
+   */
+  function enregistrerLeVote(playerId, vote) {
+    if (etat.phase !== 'vote' || !playerId) return false;
+    const cible = String(vote.candidat ?? '');
+    if (cible === playerId) return false;
+    if (!etat.candidats?.some((c) => c.playerId === cible)) return false;
+
+    const bulletins = etat.votes[cible] ?? (etat.votes[cible] = {});
+    const oui = Boolean(vote.oui);
+    if (bulletins[playerId] === oui) return false;
+    bulletins[playerId] = oui;
+    return true;
+  }
+
   function cloreManche(joueurs, now) {
+    const candidats = aSoumettreAuVote(joueurs);
+    // Personne d'autre que les auteurs autour de la table : il n'y a personne
+    // pour juger, et se voter soi-même n'aurait aucun sens. On tranche comme
+    // avant, sur la liste.
+    const votants = joueurs.filter((j) => !candidats.some((c) => c.playerId === j.id));
+    if (candidats.length && votants.length) {
+      etat.phase = 'vote';
+      etat.candidats = candidats;
+      etat.votes = {};
+      etat.valides = null;
+      etat.finPhase = now + DUREE_VOTE_MS;
+      return;
+    }
+    resoudreLaManche(joueurs, now);
+  }
+
+  function resoudreLaManche(joueurs, now) {
     const finale = etat.manche === total;
     const { detail, scores, evenements } = resoudreManche({
       manche: etat.question,
@@ -633,6 +730,12 @@ export function creerRegie({
           continue;
         }
 
+        // Un bulletin sur une proposition soumise à la table.
+        if (entree.vote) {
+          if (enregistrerLeVote(entree.playerId, entree.vote)) nouvelle = true;
+          continue;
+        }
+
         if (entree.niveau != null) {
           if (poserLePari(entree.playerId, entree.round, entree.niveau)) nouvelle = true;
           continue;
@@ -672,6 +775,20 @@ export function creerRegie({
         etat.finPhase = etat.introAt + tempsDIntro();
         if (now >= etat.finPhase) {
           prepareManche(1, now);
+          return true;
+        }
+        return false;
+      }
+
+      // Le vote se ferme au chrono, ou dès que tout le monde s'est prononcé
+      // sur tout : rien à attendre quand la table a fini de trancher.
+      if (etat.phase === 'vote') {
+        const votants = joueurs.filter((j) => !etat.candidats.some((c) => c.playerId === j.id));
+        const complet = etat.candidats.every((c) =>
+          votants.every((j) => etat.votes?.[c.playerId]?.[j.id] !== undefined));
+        if (now >= etat.finPhase || (votants.length && complet)) {
+          etat.valides = appliquerLeVote();
+          resoudreLaManche(joueurs, now);
           return true;
         }
         return false;
@@ -751,6 +868,13 @@ export function creerRegie({
         // quand ils sont là. `annonce` est la version écrite, qui porte les
         // prénoms et les points : le repli de la synthèse, et le texte du
         // podium.
+        // Les propositions soumises à la table, et les bulletins déjà tombés.
+        // Le détail des votants est public : autour d'une table, on voit très
+        // bien qui lève la main.
+        candidats: etat.phase === 'vote' ? etat.candidats : null,
+        votes: etat.phase === 'vote' ? etat.votes : null,
+        // Ce que la table a validé, dit à la révélation.
+        valides: etat.valides ?? null,
         annonceDite: etat.annonceDite ?? '',
         annonce: etat.annonce,
         resultat: etat.resultat,
