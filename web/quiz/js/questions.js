@@ -1178,6 +1178,27 @@ export const QUESTIONS = [
   // L'ordre EST le barème : `niveaux[0]` doit se répondre à la table du café du
   // commerce, `niveaux[9]` doit faire douter celui qui s'y connaît. Une carte
   // mal graduée casse le jeu — se mettre à 8 doit faire peur.
+  //
+  // Aucun test ne peut vérifier ça : la difficulté d'une question ne se mesure
+  // pas depuis un fichier. C'est donc une relecture, et elle se fait avec une
+  // question simple, posée niveau par niveau — « celle-ci est-elle vraiment
+  // plus dure que la précédente ? ». Les six cartes y sont passées, et vingt-
+  // huit niveaux ont bougé. Les fautes étaient toujours les mêmes :
+  //
+  //   - une notoriété prise pour une culture. « Le prénom du docteur House »
+  //     était en 6 et « Nevermind » en 6 : ce sont des questions de niveau 4,
+  //     tout le monde les a vues passer. Ce qui compte n'est pas si la réponse
+  //     est savante, c'est combien de gens la savent ;
+  //   - un piège pris pour une difficulté. « La capitale de la Turquie » était
+  //     en 6 parce qu'on répond Istanbul. Mais celui qui hésite connaît la
+  //     réponse — le piège coûte une seconde, pas un point ;
+  //   - un classique pris pour un savoir de spécialiste. « Les trois armes de
+  //     l'escrime » était en 7, « Les Quatre Saisons » en 5 : ce sont des
+  //     réponses de table, pas de connaisseur.
+  //
+  // La règle qui en sort, et qui vaut pour la carte suivante : demandez-vous
+  // combien de personnes autour d'une table de six auraient la réponse. Six,
+  // c'est un niveau 1. Une seule, et pas toujours, c'est un niveau 10.
 
   {
     id: 'ttm-01', theme: 'cinema', type: 'ttmc',
@@ -1195,19 +1216,9 @@ export const QUESTIONS = [
         note: 'La réplique a été improvisée sur le tournage, et le réalisateur a failli la couper au montage.',
       },
       {
-        texte: 'Qui incarne Vito Corleone dans le premier « Parrain » ?',
-        reponses: ['Marlon Brando', 'Al Pacino', 'Robert De Niro', 'James Caan'], bonne: 0,
-        note: 'Brando. De Niro joue le même personnage jeune, mais dans le deuxième film — et décroche l’Oscar pour ça.',
-      },
-      {
         texte: 'Quelle série met en scène un professeur de chimie devenu fabricant de drogue ?',
         reponses: ['Breaking Bad', 'Dexter', 'The Wire', 'Ozark'], bonne: 0,
         note: 'Le créateur a résumé son idée en une phrase : transformer Monsieur Tout-le-Monde en Scarface.',
-      },
-      {
-        texte: 'Quel film sud-coréen a remporté l’Oscar du meilleur film en 2020 ?',
-        reponses: ['Parasite', 'Old Boy', 'Memories of Murder', 'Burning'], bonne: 0,
-        note: 'Le premier film non anglophone à décrocher la statuette suprême, quatre-vingt-douze ans après la création des Oscars.',
       },
       {
         texte: 'Quel est le prénom du docteur House ?',
@@ -1215,14 +1226,24 @@ export const QUESTIONS = [
         note: 'Gregory House. Le personnage est calqué sur Sherlock Holmes : même adresse au 221B, même addiction, même ami médecin.',
       },
       {
-        texte: 'Quelle actrice détient le record d’Oscars d’interprétation ?',
-        reponses: ['Katharine Hepburn', 'Meryl Streep', 'Ingrid Bergman', 'Bette Davis'], bonne: 0,
-        note: 'Quatre statuettes, et elle n’est venue en chercher aucune. Meryl Streep, avec bien plus de nominations, en compte trois.',
+        texte: 'Qui incarne Vito Corleone dans le premier « Parrain » ?',
+        reponses: ['Marlon Brando', 'Al Pacino', 'Robert De Niro', 'James Caan'], bonne: 0,
+        note: 'Brando. De Niro joue le même personnage jeune, mais dans le deuxième film — et décroche l’Oscar pour ça.',
+      },
+      {
+        texte: 'Quel film sud-coréen a remporté l’Oscar du meilleur film en 2020 ?',
+        reponses: ['Parasite', 'Old Boy', 'Memories of Murder', 'Burning'], bonne: 0,
+        note: 'Le premier film non anglophone à décrocher la statuette suprême, quatre-vingt-douze ans après la création des Oscars.',
       },
       {
         texte: 'Quel film de Stanley Kubrick est sorti après sa mort ?',
         reponses: ['Eyes Wide Shut', 'Shining', 'Full Metal Jacket', 'Barry Lyndon'], bonne: 0,
         note: 'Il est mort quelques jours après avoir montré le montage final au studio, en 1999.',
+      },
+      {
+        texte: 'Quelle actrice détient le record d’Oscars d’interprétation ?',
+        reponses: ['Katharine Hepburn', 'Meryl Streep', 'Ingrid Bergman', 'Bette Davis'], bonne: 0,
+        note: 'Quatre statuettes, et elle n’est venue en chercher aucune. Meryl Streep, avec bien plus de nominations, en compte trois.',
       },
       {
         texte: 'Dans quel film de Godard, sorti en 1960, Jean-Paul Belmondo tient-il le premier rôle ?',
@@ -1257,6 +1278,16 @@ export const QUESTIONS = [
         note: 'À 2 400 mètres d’altitude. Le site n’a jamais été trouvé par les conquistadors, ce qui explique son état.',
       },
       {
+        texte: 'Quelle est la capitale de la Turquie ?',
+        reponses: ['Ankara', 'Istanbul', 'Izmir', 'Antalya'], bonne: 0,
+        note: 'Ankara, choisie par Atatürk en 1923 précisément pour tourner la page d’Istanbul et de l’Empire ottoman.',
+      },
+      {
+        texte: 'Quel détroit sépare l’Alaska de la Russie ?',
+        reponses: ['Le détroit de Béring', 'Le détroit de Magellan', 'Le détroit de Torres', 'Le détroit de Davis'], bonne: 0,
+        note: 'Quatre-vingts kilomètres d’eau, et deux îles au milieu : l’une américaine, l’autre russe, séparées de quatre kilomètres et d’une journée entière de décalage horaire.',
+      },
+      {
         texte: 'Quelle mer borde la Croatie ?',
         reponses: ['L’Adriatique', 'La mer Égée', 'La mer Noire', 'La mer Ionienne'], bonne: 0,
         note: 'L’Adriatique, et plus de mille îles côté croate — dont une cinquantaine seulement sont habitées.',
@@ -1267,24 +1298,14 @@ export const QUESTIONS = [
         note: 'Le Danube arrose quatre capitales, plus que n’importe quel autre fleuve au monde — Bratislava est la quatrième.',
       },
       {
-        texte: 'Quelle est la capitale de la Turquie ?',
-        reponses: ['Ankara', 'Istanbul', 'Izmir', 'Antalya'], bonne: 0,
-        note: 'Ankara, choisie par Atatürk en 1923 précisément pour tourner la page d’Istanbul et de l’Empire ottoman.',
+        texte: 'Quelle capitale se trouve à la plus haute altitude ?',
+        reponses: ['La Paz', 'Quito', 'Bogota', 'Katmandou'], bonne: 0,
+        note: 'Plus de 3 600 mètres — même si, constitutionnellement, la capitale de la Bolivie est Sucre : La Paz n’en est que le siège du gouvernement.',
       },
       {
         texte: 'Quel pays a pour capitale Astana ?',
         reponses: ['Le Kazakhstan', 'L’Ouzbékistan', 'La Mongolie', 'Le Kirghizistan'], bonne: 0,
         note: 'La ville a changé de nom plusieurs fois en trente ans, au gré des présidents — elle s’est même appelée Noursoultan.',
-      },
-      {
-        texte: 'Quel détroit sépare l’Alaska de la Russie ?',
-        reponses: ['Le détroit de Béring', 'Le détroit de Magellan', 'Le détroit de Torres', 'Le détroit de Davis'], bonne: 0,
-        note: 'Quatre-vingts kilomètres d’eau, et deux îles au milieu : l’une américaine, l’autre russe, séparées de quatre kilomètres et d’une journée entière de décalage horaire.',
-      },
-      {
-        texte: 'Quelle capitale se trouve à la plus haute altitude ?',
-        reponses: ['La Paz', 'Quito', 'Bogota', 'Katmandou'], bonne: 0,
-        note: 'Plus de 3 600 mètres — même si, constitutionnellement, la capitale de la Bolivie est Sucre : La Paz n’en est que le siège du gouvernement.',
       },
       {
         texte: 'Quel est le pays le plus densément peuplé du monde ?',
@@ -1314,11 +1335,6 @@ export const QUESTIONS = [
         note: 'Fondé à Sydney par deux frères nés en Écosse. Le nom vient d’une plaque au dos d’une machine à coudre.',
       },
       {
-        texte: 'Quel instrument Django Reinhardt jouait-il ?',
-        reponses: ['La guitare', 'Le violon', 'L’accordéon', 'Le piano'], bonne: 0,
-        note: 'Avec deux doigts brûlés et paralysés par un incendie de roulotte : il a refait toute sa technique autour de ce handicap.',
-      },
-      {
         texte: 'Qui a composé « Les Quatre Saisons » ?',
         reponses: ['Vivaldi', 'Bach', 'Haendel', 'Corelli'], bonne: 0,
         note: 'Vivaldi, prêtre roux et professeur dans un orphelinat de filles à Venise, pour qui il écrivait la plupart de ses concertos.',
@@ -1329,19 +1345,24 @@ export const QUESTIONS = [
         note: '1991. Le bébé de la pochette a été payé deux cents dollars, et a passé sa vie d’adulte à s’en expliquer.',
       },
       {
+        texte: 'Quel instrument Django Reinhardt jouait-il ?',
+        reponses: ['La guitare', 'Le violon', 'L’accordéon', 'Le piano'], bonne: 0,
+        note: 'Avec deux doigts brûlés et paralysés par un incendie de roulotte : il a refait toute sa technique autour de ce handicap.',
+      },
+      {
         texte: 'Quel chanteur français a écrit « Les Copains d’abord » ?',
         reponses: ['Georges Brassens', 'Jacques Brel', 'Léo Ferré', 'Charles Trenet'], bonne: 0,
         note: 'Écrite pour un film, sur commande, et devenue malgré lui l’hymne de toutes les tablées de France.',
       },
       {
-        texte: 'Quel producteur a inventé le « mur du son » ?',
-        reponses: ['Phil Spector', 'Quincy Jones', 'George Martin', 'Brian Eno'], bonne: 0,
-        note: 'Empiler les instruments jusqu’à ce qu’on ne les distingue plus : une trentaine de musiciens dans un studio, pour un seul mono compact.',
-      },
-      {
         texte: 'De quel style musical le « bebop » est-il une révolution, dans les années 1940 ?',
         reponses: ['Le jazz', 'Le blues', 'La country', 'Le gospel'], bonne: 0,
         note: 'Contre le jazz de danse : des tempos impossibles et des harmonies tordues, pour que les amateurs ne puissent plus suivre sur scène.',
+      },
+      {
+        texte: 'Quel producteur a inventé le « mur du son » ?',
+        reponses: ['Phil Spector', 'Quincy Jones', 'George Martin', 'Brian Eno'], bonne: 0,
+        note: 'Empiler les instruments jusqu’à ce qu’on ne les distingue plus : une trentaine de musiciens dans un studio, pour un seul mono compact.',
       },
       {
         texte: 'Quel compositeur a écrit l’opéra « Le Vaisseau fantôme » ?',
@@ -1377,6 +1398,11 @@ export const QUESTIONS = [
         note: 'Pois chiche, tahini, citron, ail. « Houmous » veut d’ailleurs dire « pois chiche » en arabe.',
       },
       {
+        texte: 'Quel champignon est le plus cher du monde ?',
+        reponses: ['La truffe blanche d’Alba', 'La truffe noire du Périgord', 'Le matsutake', 'La morille'], bonne: 0,
+        note: 'La truffe blanche du Piémont. On ne sait toujours pas la cultiver : il faut la trouver, et c’est tout le problème.',
+      },
+      {
         texte: 'Qu’est-ce qui distingue un sorbet d’une glace ?',
         reponses: [
           'Le sorbet ne contient aucun produit laitier',
@@ -1385,11 +1411,6 @@ export const QUESTIONS = [
           'Le sorbet est fouetté plus longtemps',
         ], bonne: 0,
         note: 'Un sorbet, c’est de l’eau, du sucre et des fruits. Dès qu’il y a du lait ou de la crème, c’est une glace.',
-      },
-      {
-        texte: 'Quel champignon est le plus cher du monde ?',
-        reponses: ['La truffe blanche d’Alba', 'La truffe noire du Périgord', 'Le matsutake', 'La morille'], bonne: 0,
-        note: 'La truffe blanche du Piémont. On ne sait toujours pas la cultiver : il faut la trouver, et c’est tout le problème.',
       },
       {
         texte: 'Quel pays a fait inscrire la culture du bortsch au patrimoine de l’UNESCO ?',
@@ -1402,11 +1423,6 @@ export const QUESTIONS = [
         note: 'Décrite par un médecin français en 1912. C’est elle qui donne l’odeur du pain grillé, du café torréfié et de la croûte d’un rôti.',
       },
       {
-        texte: 'Que mesure le degré Brix, en œnologie ?',
-        reponses: ['Le taux de sucre', 'Le taux d’alcool', 'L’acidité', 'La teneur en tanins'], bonne: 0,
-        note: 'Le sucre d’un moût — donc le degré d’alcool que le vin atteindra. C’est ce chiffre qui décide de la date des vendanges.',
-      },
-      {
         texte: 'D’où vient le mot « restaurant » ?',
         reponses: [
           'D’un bouillon censé restaurer les forces',
@@ -1415,6 +1431,11 @@ export const QUESTIONS = [
           'D’un mot venu de l’italien',
         ], bonne: 0,
         note: 'Au XVIIIᵉ siècle, un « restaurant » était un bouillon de viande qu’on prenait pour se remettre d’aplomb. Les maisons qui en servaient ont fini par porter le nom du plat.',
+      },
+      {
+        texte: 'Que mesure le degré Brix, en œnologie ?',
+        reponses: ['Le taux de sucre', 'Le taux d’alcool', 'L’acidité', 'La teneur en tanins'], bonne: 0,
+        note: 'Le sucre d’un moût — donc le degré d’alcool que le vin atteindra. C’est ce chiffre qui décide de la date des vendanges.',
       },
     ],
   },
@@ -1444,16 +1465,6 @@ export const QUESTIONS = [
         note: 'C’est le strike. Douze d’affilée font une partie parfaite, à trois cents points.',
       },
       {
-        texte: 'Combien de points vaut un drop au rugby à XV ?',
-        reponses: ['3', '2', '5', '1'], bonne: 0,
-        note: 'Trois, comme une pénalité. Il faut que le ballon touche le sol avant d’être frappé, ce qui explique qu’on en voie si peu.',
-      },
-      {
-        texte: 'En quelle année ont eu lieu les premiers Jeux olympiques modernes ?',
-        reponses: ['1896', '1900', '1888', '1912'], bonne: 0,
-        note: 'Athènes, 1896, à l’initiative de Pierre de Coubertin. Quatorze pays, deux cent quarante athlètes, et pas une seule femme.',
-      },
-      {
         texte: 'Quelles sont les trois armes de l’escrime ?',
         reponses: [
           'Fleuret, épée, sabre',
@@ -1462,6 +1473,16 @@ export const QUESTIONS = [
           'Fleuret, sabre, dague',
         ], bonne: 0,
         note: 'Trois armes, trois règles : la surface valable et la priorité changent de l’une à l’autre, ce qui en fait presque trois sports.',
+      },
+      {
+        texte: 'Combien de points vaut un drop au rugby à XV ?',
+        reponses: ['3', '2', '5', '1'], bonne: 0,
+        note: 'Trois, comme une pénalité. Il faut que le ballon touche le sol avant d’être frappé, ce qui explique qu’on en voie si peu.',
+      },
+      {
+        texte: 'En quelle année ont eu lieu les premiers Jeux olympiques modernes ?',
+        reponses: ['1896', '1900', '1888', '1912'], bonne: 0,
+        note: 'Athènes, 1896, à l’initiative de Pierre de Coubertin. Quatorze pays, deux cent quarante athlètes, et pas une seule femme.',
       },
       {
         texte: 'Combien de joueurs une équipe de water-polo aligne-t-elle dans l’eau ?',
@@ -1501,24 +1522,24 @@ export const QUESTIONS = [
         note: 'Jusqu’à trente mètres. Sa langue pèse à elle seule le poids d’un éléphant.',
       },
       {
-        texte: 'Combien de temps dure la gestation d’une éléphante ?',
-        reponses: ['Environ 22 mois', 'Environ 12 mois', 'Environ 9 mois', 'Environ 6 mois'], bonne: 0,
-        note: 'Près de deux ans, la plus longue de tous les mammifères. Le petit naît debout en quelques minutes, et pèse déjà cent kilos.',
-      },
-      {
         texte: 'Quel gaz les plantes absorbent-elles pour fabriquer leur matière ?',
         reponses: ['Le dioxyde de carbone', 'L’oxygène', 'L’azote', 'L’hydrogène'], bonne: 0,
         note: 'Un arbre est fait d’air, pour l’essentiel : le carbone de son bois vient du CO₂, pas du sol.',
       },
       {
-        texte: 'Quel est l’organe le plus lourd du corps humain ?',
-        reponses: ['La peau', 'Le foie', 'Le cerveau', 'Les poumons'], bonne: 0,
-        note: 'La peau, entre trois et cinq kilos. Le foie n’est que le plus lourd des organes internes.',
-      },
-      {
         texte: 'Que mesure l’échelle de Scoville ?',
         reponses: ['La force des piments', 'La dureté des minéraux', 'L’acidité d’un sol', 'La puissance d’un séisme'], bonne: 0,
         note: 'À l’origine, on diluait le piment dans de l’eau sucrée jusqu’à ce qu’un jury ne sente plus rien. Le nombre de dilutions donnait la note.',
+      },
+      {
+        texte: 'Combien de temps dure la gestation d’une éléphante ?',
+        reponses: ['Environ 22 mois', 'Environ 12 mois', 'Environ 9 mois', 'Environ 6 mois'], bonne: 0,
+        note: 'Près de deux ans, la plus longue de tous les mammifères. Le petit naît debout en quelques minutes, et pèse déjà cent kilos.',
+      },
+      {
+        texte: 'Quel est l’organe le plus lourd du corps humain ?',
+        reponses: ['La peau', 'Le foie', 'Le cerveau', 'Les poumons'], bonne: 0,
+        note: 'La peau, entre trois et cinq kilos. Le foie n’est que le plus lourd des organes internes.',
       },
       {
         texte: 'Quel animal possède le plus gros cerveau ?',
