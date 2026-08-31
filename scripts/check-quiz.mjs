@@ -1527,6 +1527,18 @@ test('on ne s’accorde pas un pack tout seul par l’API', async () => {
   assert.equal(verif.status, 402);
 });
 
+test('les identifiants de produit passent les règles d’Apple', async () => {
+  // App Store Connect n'accepte que lettres, chiffres, points et tirets bas —
+  // et le refus arrive au moment de créer le produit, des mois après avoir
+  // écrit le fichier du pack. Un tiret dans « annees80-90 » a déjà bloqué une
+  // mise en vente : l'identifiant du pack en garde un, celui du produit non.
+  const { body: { packs: vitrine } } = await boutique('GET', {});
+  for (const pack of vitrine) {
+    if (!pack.produitApple) continue;
+    assert.match(pack.produitApple, /^[A-Za-z0-9._]+$/, `${pack.id} : ${pack.produitApple}`);
+  }
+});
+
 test('un pack inconnu répond 404, pas 402', async () => {
   const absent = await boutique('GET', { id: 'pack-qui-nexiste-pas', licence: 'peu-importe' });
   assert.equal(absent.status, 404);
@@ -2320,7 +2332,7 @@ test('une transaction retouchée après signature est refusée', async () => {
 
     // On remplace le pack acheté par l'autre, en gardant la vraie signature.
     const autre = Buffer
-      .from(JSON.stringify(transactionType({ productId: 'fr.quizentreamis.pack.annees80-90' })))
+      .from(JSON.stringify(transactionType({ productId: 'fr.quizentreamis.pack.annees80_90' })))
       .toString('base64url');
     await assert.rejects(
       verifierTransaction(`${entete}.${autre}.${signature}`, BUNDLE), /[Ss]ignature/,
