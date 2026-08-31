@@ -52,9 +52,10 @@ function servir(mode) {
     const chemin = decodeURIComponent(req.url.split('?')[0]);
     const cible = chemin === '/' ? '/index.html' : chemin;
 
-    if (mode === 'sans-manifeste' && cible === '/audio/manifeste.json') return res.writeHead(404).end();
+    // L'index est la porte d'entrée : sans lui, aucune banque n'est trouvée.
+    if (mode === 'sans-manifeste' && cible === '/audio/voix.json') return res.writeHead(404).end();
     if (mode === 'sans-clips' && cible.endsWith('.mp3')) return res.writeHead(404).end();
-    if (mode === 'manifeste-lent' && cible === '/audio/manifeste.json') {
+    if (mode === 'manifeste-lent' && cible.endsWith('manifeste.json')) {
       await new Promise((ok) => setTimeout(ok, 1200));
     }
 
@@ -178,7 +179,9 @@ function ouvertureEntiere(clips, manifeste) {
   if (i === -1) return { verdict: null };
   // `element.src` peut être absolu ou relatif selon la façon dont il a été
   // posé : les deux formes mènent au même identifiant de manifeste.
-  const id = clips[i].id.replace(/^(?:.*\/)?audio\//, '').replace(/\.[a-z0-9]+$/, '');
+  const id = clips[i].id
+    .replace(/^(?:.*\/)?audio\/[^/]+\//, '')   // audio/<voix>/ tombe
+    .replace(/\.[a-z0-9]+$/, '');
   const attendue = manifeste.clips[id];
   if (!attendue) return { verdict: null, inconnu: id };
   const suivant = clips[i + 1];
@@ -209,7 +212,7 @@ const COMMENTAIRE = /^emcee\/[^/]+\/(?!manche\/|avantManche\/|derniereManche\/|o
 
 function revelationEntendue(clips, annonces, textes) {
   const dits = clips
-    .map((c) => c.id.replace(/^(?:.*\/)?audio\//, '').replace(/\.[a-z0-9]+$/, ''))
+    .map((c) => c.id.replace(/^(?:.*\/)?audio\/[^/]+\//, '').replace(/\.[a-z0-9]+$/, ''))
     .filter((id) => COMMENTAIRE.test(id))
     .map((id) => textes.get(id))
     .filter(Boolean);
@@ -245,7 +248,7 @@ const ATTENDU = {
   'complet':        { secondes: 55, clips: true,  synthese: false, reglages: /Voix enregistrée/, annonce: 'enregistree' },
   'manifeste-lent': { secondes: 3,  clips: true,  synthese: false, reglages: /Voix enregistrée/ },
   'sans-clips':     { secondes: 3,  clips: true,  synthese: true,  reglages: /introuvables à la lecture/ },
-  'sans-manifeste': { secondes: 14, clips: false, synthese: true,  reglages: /manifeste 404/, annonce: 'synthetisee' },
+  'sans-manifeste': { secondes: 14, clips: false, synthese: true,  reglages: /index 404/, annonce: 'synthetisee' },
 };
 
 async function main() {
@@ -260,8 +263,13 @@ async function main() {
 
   // Chaque seconde est réelle : on ne joue que le temps qu'il faut pour que
   // l'installation dise ce qu'elle a à dire.
+  // Le manifeste de la voix que le paquet sert : c'est elle qu'on entendra.
+  const index = JSON.parse(
+    await readFile(join(RACINE, 'audio', 'voix.json'), 'utf8').catch(() => '{"defaut":null}'),
+  );
   const manifeste = JSON.parse(
-    await readFile(join(RACINE, 'audio', 'manifeste.json'), 'utf8').catch(() => '{"clips":{}}'),
+    await readFile(join(RACINE, 'audio', String(index.defaut), 'manifeste.json'), 'utf8')
+      .catch(() => '{"clips":{}}'),
   );
 
   const textes = new Map((await inventaire()).map((c) => [c.id, c.texte]));

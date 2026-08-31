@@ -776,6 +776,31 @@ export const voix = {
   get etatDesClips() {
     return audio.etat();
   },
+  /** Les voix enregistrées installées, pour le sélecteur des réglages. */
+  get banques() {
+    return audio.banquesDisponibles();
+  },
+  /** En changer. Rend une promesse : la nouvelle banque doit être lue avant. */
+  choisirBanque(id) {
+    return audio.choisirBanque(id);
+  },
+
+  /**
+   * Faire entendre la voix retenue, depuis les réglages.
+   *
+   * Volontairement hors de `enoncer` : celui-ci se tait quand la voix de
+   * l'animateur est coupée sur cet appareil, ce qui est juste en partie et
+   * absurde sous un bouton « écouter ». Et volontairement un CLIP et non la
+   * synthèse : un bouton d'essai qui ferait entendre autre chose que ce qu'on
+   * vient de choisir ne servirait à rien.
+   */
+  async essayer() {
+    speech.stop();
+    await audio.charger();
+    const dit = paroleDe('classique', 'ouverture');
+    if (dit && await audio.jouer([dit.id])) return;
+    this.dire(dit?.texte ?? 'Bonsoir. C’est moi qui animerai cette soirée.', { force: true });
+  },
 
   precharger(clips) {
     if (this.active) audio.precharger(clips);

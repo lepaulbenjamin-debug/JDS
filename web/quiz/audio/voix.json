@@ -1,0 +1,13 @@
+{
+  "defaut": "cedar",
+  "voix": [
+    {
+      "id": "cedar",
+      "nom": "OpenAI TTS — cedar"
+    },
+    {
+      "id": "coral",
+      "nom": "OpenAI TTS — coral"
+    }
+  ]
+}

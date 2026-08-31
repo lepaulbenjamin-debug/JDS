@@ -32,6 +32,21 @@ import * as nodeFs from 'node:fs';
 import { inventaire } from './generate-audio.mjs';
 import { lireLeCatalogue } from './echantillons-voix.mjs';
 
+/**
+ * La banque servie par défaut, lue dans l'index plutôt que devinée.
+ *
+ * Les tests qui mesurent des durées de clips doivent regarder la voix que le
+ * jeu sert vraiment : en viser une autre les rendrait verts sur une banque que
+ * personne n'entend.
+ */
+function banqueParDefaut() {
+  try {
+    return JSON.parse(nodeFs.readFileSync('web/quiz/audio/voix.json', 'utf8')).defaut;
+  } catch {
+    return 'coral';
+  }
+}
+
 const QUESTION = {
   id: 'test', theme: 'culture', type: 'qcm',
   texte: 'Question de test ?',
@@ -338,7 +353,7 @@ test('tout clip que la régie demande existe vraiment', async () => {
   const { readFileSync } = await import('node:fs');
   let manifeste;
   try {
-    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+    manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
   } catch {
     return;                                  // clips non générés : rien à vérifier
   }
@@ -1604,7 +1619,7 @@ test('le plafond de révélation couvre la plus longue explication de la banque'
   const { readFileSync } = await import('node:fs');
   let manifeste;
   try {
-    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+    manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
   } catch {
     return;                                  // clips non générés : rien à vérifier
   }
@@ -1678,6 +1693,43 @@ test('chaque persona a de quoi ne pas se répéter sur douze manches', () => {
   }
 });
 
+test('toutes les banques de voix disent exactement la même chose', () => {
+  // Changer de voix ne doit rien retirer. Une banque incomplète ne provoque
+  // aucune erreur : elle rend muettes les manches dont elle n'a pas les clips,
+  // et seulement pour ceux qui ont choisi cette voix-là. Autant dire un défaut
+  // invisible en développement et systématique chez la personne concernée.
+  let index;
+  try {
+    index = JSON.parse(nodeFs.readFileSync('web/quiz/audio/voix.json', 'utf8'));
+  } catch {
+    return;                                  // clips non générés : rien à vérifier
+  }
+
+  assert.ok(index.voix.length >= 1, 'index sans aucune voix');
+  assert.ok(index.voix.some((v) => v.id === index.defaut),
+    `la voix par défaut « ${index.defaut} » n’est pas dans l’index`);
+
+  const attendus = inventaire().map((c) => c.id).sort();
+  for (const voix of index.voix) {
+    const chemin = `web/quiz/audio/${voix.id}/manifeste.json`;
+    assert.ok(nodeFs.existsSync(chemin), `${voix.id} est annoncée sans manifeste`);
+    const manifeste = JSON.parse(nodeFs.readFileSync(chemin, 'utf8'));
+
+    const presents = Object.keys(manifeste.clips).sort();
+    const manquants = attendus.filter((id) => !manifeste.clips[id]);
+    assert.deepEqual(manquants, [],
+      `${voix.id} : ${manquants.length} clips de l’inventaire manquent au manifeste`);
+    assert.deepEqual(presents, attendus,
+      `${voix.id} ne couvre pas le même inventaire que les autres`);
+
+    // Et le manifeste ne doit pas promettre un fichier absent : c'est ce qui
+    // fait basculer TOUT un passage sur la synthèse, sans le dire.
+    const premier = presents[0];
+    assert.ok(nodeFs.existsSync(`web/quiz/audio/${voix.id}/${premier}.mp3`),
+      `${voix.id} : le manifeste annonce des clips qui ne sont pas sur le disque`);
+  }
+});
+
 test('le catalogue de voix se lit dans le refus de l’API', () => {
   // La liste des voix n'est écrite nulle part : aucune route ne les énumère, et
   // une liste recopiée dans le dépôt vieillit en silence — on croirait les avoir
@@ -1733,7 +1785,7 @@ test('l’annonce tient dans la fenêtre de jokers', async () => {
   const { readFileSync } = await import('node:fs');
   let manifeste;
   try {
-    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+    manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
   } catch {
     return;                                  // clips non générés : rien à vérifier
   }
@@ -1768,7 +1820,7 @@ test('l’ouverture tient dans la fenêtre d’intro', async () => {
   const { readFileSync } = await import('node:fs');
   let manifeste;
   try {
-    manifeste = JSON.parse(readFileSync('web/quiz/audio/manifeste.json', 'utf8'));
+    manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
   } catch {
     return;                                  // clips non générés : rien à vérifier
   }
@@ -1988,15 +2040,25 @@ test('le paquet natif embarque tout ce que l’appli demande', () => {
   for (const chemin of [
     'commun/ui.js', 'commun/speech.js',      // les deux modules partagés
     'icons/icon.svg', 'styles.css',
-    'audio/manifeste.json',
+    'audio/voix.json',
     'js/app.js', 'js/engine.js', 'js/emcee.js', 'js/questions.js',
   ]) {
     assert.ok(paquet.existe(chemin), `${chemin} manque au paquet`);
   }
-  // Les clips, c'est l'essentiel du poids et tout l'intérêt du hors-ligne.
-  const manifeste = JSON.parse(paquet.lire('audio/manifeste.json'));
-  const premier = Object.keys(manifeste.clips)[0];
-  assert.ok(paquet.existe(`audio/${premier}.mp3`), 'les clips doivent être embarqués');
+
+  // L'index ne doit nommer que des banques réellement embarquées : en proposer
+  // une absente rendrait l'animateur muet, sans rien signaler. Le paquet natif
+  // n'en emporte qu'une, les autres restent sur le web.
+  const index = JSON.parse(paquet.lire('audio/voix.json'));
+  assert.ok(index.voix.length >= 1, 'aucune voix dans le paquet');
+  assert.ok(index.voix.some((v) => v.id === index.defaut), 'la voix par défaut n’est pas embarquée');
+  for (const voix of index.voix) {
+    assert.ok(paquet.existe(`audio/${voix.id}/manifeste.json`), `manifeste manquant : ${voix.id}`);
+    // Les clips, c'est l'essentiel du poids et tout l'intérêt du hors-ligne.
+    const manifeste = JSON.parse(paquet.lire(`audio/${voix.id}/manifeste.json`));
+    const premier = Object.keys(manifeste.clips)[0];
+    assert.ok(paquet.existe(`audio/${voix.id}/${premier}.mp3`), `clips manquants : ${voix.id}`);
+  }
 });
 
 test('le paquet natif se passe du service worker et du réglage de relais', () => {

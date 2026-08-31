@@ -13,11 +13,24 @@
 // Le repli sur la synthèse du navigateur reste branché : tant que les clips ne
 // sont pas générés, ou si l'un manque, l'animateur parle quand même.
 
-const RACINE = 'audio';
-const MANIFESTE = `${RACINE}/manifeste.json`;
+// Une banque par voix, et un index qui les liste :
+//
+//   audio/voix.json          { defaut, voix: [{ id, nom }] }
+//   audio/<id>/manifeste.json
+//   audio/<id>/emcee/…       les fichiers
+//
+// Tout vivait à plat sous `audio/`, ce qui allait tant qu'il n'y avait qu'une
+// voix. Générer la suivante écrasait la précédente — or une banque déjà payée
+// et déjà écoutée est précisément ce qui permet d'offrir le choix.
+const BANQUES = 'audio';
+const INDEX = `${BANQUES}/voix.json`;
+const CHOIX = 'quizroom.banque';
 
 let manifeste = null;
 let chargement = null;
+let banques = [];        // l'index : [{ id, nom }]
+let defaut = null;
+let courante = null;     // la banque effectivement ouverte
 let encours = null;      // l'élément <audio> qui joue, pour pouvoir le couper
 // Un clip annoncé par le manifeste s'est révélé illisible : la banque est
 // incomplète, on rend la parole à la synthèse. Voir `jouer`.
@@ -26,10 +39,14 @@ let cassee = false;
 let panne = null;
 
 /**
- * Charge le manifeste, une seule fois. Son absence n'est pas une erreur :
- * c'est simplement une installation où les clips n'ont pas été générés.
+ * Charge l'index, puis le manifeste de la banque retenue. Une seule fois.
  *
- * Rien d'autre n'est vérifié ici, et c'est le fruit d'une erreur qu'il vaut la
+ * Deux requêtes au lieu d'une, et c'est le prix du choix : l'index dit quelles
+ * voix sont installées et laquelle sert par défaut, le manifeste dit ce que
+ * contient celle qu'on ouvre. Leur absence n'est pas une erreur — c'est
+ * simplement une installation où les clips n'ont pas été générés.
+ *
+ * Rien d'autre n'est vérifié, et c'est le fruit d'une erreur qu'il vaut la
  * peine d'écrire. Le manifeste est versionné alors que les clips d'essai ne le
  * sont pas : déployé seul, il ferait croire à une voix qui n'existe pas. On
  * avait donc ajouté une sonde au démarrage — télécharger un clip pour voir s'il
@@ -46,23 +63,74 @@ let panne = null;
  */
 export function charger() {
   if (chargement) return chargement;
-  chargement = fetch(MANIFESTE)
-    .then((res) => {
-      if (!res.ok) { panne = `manifeste ${res.status}`; return null; }
-      return res.json();
-    })
-    .then((json) => {
-      if (json && !json.clips) panne = 'manifeste sans clips';
-      manifeste = json?.clips ? json : null;
-      return manifeste;
-    })
-    .catch((erreur) => {
-      panne = `manifeste illisible (${erreur?.message ?? 'erreur'})`;
+  chargement = (async () => {
+    try {
+      const res = await fetch(INDEX);
+      if (!res.ok) { panne = `index ${res.status}`; return null; }
+      const json = await res.json();
+      banques = Array.isArray(json?.voix) ? json.voix : [];
+      defaut = json?.defaut ?? banques[0]?.id ?? null;
+      // Le choix mémorisé ne vaut que s'il existe encore : une banque retirée
+      // d'une version à l'autre laisserait l'appareil muet, sans rien dire.
+      const voulue = banques.some((v) => v.id === lire()) ? lire() : defaut;
+      return await ouvrir(voulue);
+    } catch (erreur) {
+      panne = `index illisible (${erreur?.message ?? 'erreur'})`;
       manifeste = null;
       return null;
-    });
+    }
+  })();
   return chargement;
 }
+
+/** Lit le manifeste d'une banque et en fait la banque courante. */
+async function ouvrir(id) {
+  courante = id;
+  cassee = false;
+  if (!id) { panne = 'aucune banque installée'; manifeste = null; return null; }
+  try {
+    const res = await fetch(`${BANQUES}/${id}/manifeste.json`);
+    if (!res.ok) { panne = `manifeste ${res.status}`; manifeste = null; return null; }
+    const json = await res.json();
+    if (!json?.clips) { panne = 'manifeste sans clips'; manifeste = null; return null; }
+    panne = null;
+    manifeste = json;
+    return manifeste;
+  } catch (erreur) {
+    panne = `manifeste illisible (${erreur?.message ?? 'erreur'})`;
+    manifeste = null;
+    return null;
+  }
+}
+
+/** Les voix installées, pour le sélecteur des réglages. */
+export function banquesDisponibles() {
+  return banques.map((v) => ({ ...v, courante: v.id === courante }));
+}
+
+/**
+ * Changer de voix. Rend la promesse du chargement, parce que l'appelant doit
+ * pouvoir redessiner ses réglages une fois la nouvelle banque lue.
+ *
+ * Le choix est mémorisé sur l'appareil, comme le timbre de synthèse : c'est un
+ * réglage de préférence, pas un état de partie. Deux personnes autour de la
+ * table peuvent donc l'avoir réglé différemment — sans conséquence, puisque
+ * seule la régie parle.
+ */
+export function choisirBanque(id) {
+  if (!banques.some((v) => v.id === id)) return Promise.resolve(manifeste);
+  ecrire(id);
+  taire();
+  chargement = ouvrir(id);
+  return chargement;
+}
+
+const lire = () => {
+  try { return localStorage.getItem(CHOIX); } catch { return null; }
+};
+const ecrire = (id) => {
+  try { localStorage.setItem(CHOIX, id); } catch { /* navigation privée */ }
+};
 
 /**
  * L'état de la banque, en clair, pour l'écran des réglages.
@@ -95,7 +163,7 @@ export function duree(id) {
   return existe(id) ? manifeste.clips[id] : 0;
 }
 
-const url = (id) => `${RACINE}/${id}.${manifeste?.format ?? 'mp3'}`;
+const url = (id) => `${BANQUES}/${courante}/${id}.${manifeste?.format ?? 'mp3'}`;
 
 /**
  * Met des clips en cache avant d'en avoir besoin. Appelé pendant la fenêtre de

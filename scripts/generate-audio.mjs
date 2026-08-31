@@ -27,7 +27,19 @@ import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { inventaireDesParoles } from '../web/quiz/js/emcee.js';
 import { direLesNombres } from './nombres.mjs';
 
-const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz', 'audio');
+const BANQUES = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz', 'audio');
+
+// Une banque par voix, et un index qui les liste.
+//
+// Tout vivait à plat sous `audio/`, ce qui allait tant qu'il n'y avait qu'une
+// voix : générer la suivante écrasait la précédente. Or une banque déjà payée
+// et déjà écoutée est ce qui permet d'offrir le choix — la jeter pour en
+// fabriquer une autre revient à décider qu'il n'y aura jamais de choix.
+//
+// Le dossier porte l'identifiant court de la voix (`coral`, `cedar`) et non son
+// nom d'affichage : c'est lui qui se retrouve dans des URL.
+const dossierDe = (voix) => join(BANQUES, voix);
+const INDEX = join(BANQUES, 'voix.json');
 
 /* --- Ce qu'il y a à dire -------------------------------------------------- */
 
@@ -112,6 +124,7 @@ function fournisseurBlanc() {
 
   return {
     nom: 'silence (essai à blanc)',
+    id: 'blanc',
     extension: 'wav',
     async rendre(texte) {
       // Débit de lecture réaliste, pour que les durées du manifeste aient un
@@ -177,29 +190,56 @@ function fournisseurOpenAI(voixDemandee) {
 
   return {
     nom: `OpenAI TTS — ${voix}`,
+    id: voix,
     extension: 'mp3',
     // Entre dans l'empreinte : changer de voix, de modèle ou de direction doit
     // tout refaire, sans quoi la banque finirait à deux voix.
     signature: (id) => `${modele}|${voix}|${directionDe(id)}`,
-    async rendre(texte, id) {
-      const res = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: { authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
-        body: JSON.stringify({
-          model: modele,
-          voice: voix,
-          input: texte,
-          response_format: 'mp3',
-          instructions: directionDe(id),
-        }),
-      });
-      if (!res.ok) {
-        throw new Error(`TTS ${res.status} : ${(await res.text()).slice(0, 200)}`);
+
+    /**
+     * Un clip, avec quelques réessais.
+     *
+     * Sept cents requêtes de suite, ça casse : une connexion coupée, un 429,
+     * un 500 passager. Sans réessai, la panne d'UNE requête arrêtait toute la
+     * campagne — et comme c'est arrivé au clip 180, ça se paie en minutes et
+     * en centimes à chaque fois.
+     *
+     * On ne réessaie pas un 4xx qui n'est pas un 429 : une voix inconnue ou une
+     * clé refusée ne s'arrangeront pas en attendant, et insister sept cents fois
+     * sur la même erreur est la pire façon de la signaler.
+     */
+    async rendre(texte, id, essais = 4) {
+      for (let essai = 1; ; essai += 1) {
+        try {
+          const res = await fetch('https://api.openai.com/v1/audio/speech', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
+            body: JSON.stringify({
+              model: modele,
+              voice: voix,
+              input: texte,
+              response_format: 'mp3',
+              instructions: directionDe(id),
+            }),
+          });
+          if (!res.ok) {
+            const detail = `TTS ${res.status} : ${(await res.text()).slice(0, 200)}`;
+            const passager = res.status === 429 || res.status >= 500;
+            if (!passager || essai >= essais) throw new Error(detail);
+            throw Object.assign(new Error(detail), { passager: true });
+          }
+          const donnees = Buffer.from(await res.arrayBuffer());
+          // La durée exacte demanderait de décoder le MP3 ; l'estimation suffit,
+          // elle ne sert qu'à régler le rythme, jamais à synchroniser quoi que ce soit.
+          return { donnees, secondes: Number(Math.max(1, texte.length / 14).toFixed(2)) };
+        } catch (erreur) {
+          // Une coupure réseau n'a pas de statut : `fetch` lève, et c'est tout
+          // ce qu'on sait. On la traite comme passagère, faute de mieux.
+          const reseau = !Object.hasOwn(erreur, 'passager') && erreur.name === 'TypeError';
+          if (essai >= essais || (!erreur.passager && !reseau)) throw erreur;
+          await new Promise((ok) => setTimeout(ok, 500 * 2 ** essai));
+        }
       }
-      const donnees = Buffer.from(await res.arrayBuffer());
-      // La durée exacte demanderait de décoder le MP3 ; l'estimation suffit,
-      // elle ne sert qu'à régler le rythme, jamais à synchroniser quoi que ce soit.
-      return { donnees, secondes: Number(Math.max(1, texte.length / 14).toFixed(2)) };
     },
   };
 }
@@ -220,12 +260,46 @@ const empreinteDe = (fournisseur, clip) => createHash('sha1')
   .slice(0, 12);
 
 /** Le manifeste précédent, s'il y en a un : c'est lui qui porte les empreintes. */
-async function manifestePrecedent() {
+async function manifestePrecedent(racine) {
   try {
-    return JSON.parse(await readFile(join(RACINE, 'manifeste.json'), 'utf8'));
+    return JSON.parse(await readFile(join(racine, 'manifeste.json'), 'utf8'));
   } catch {
     return null;
   }
+}
+
+/**
+ * L'index des banques, reconstruit en relisant les dossiers.
+ *
+ * Reconstruit et non tenu à la main : une entrée oubliée ferait disparaître une
+ * banque payée, une entrée de trop ferait proposer une voix dont les fichiers
+ * n'existent pas — et l'appli tomberait alors en silence, pas en erreur.
+ *
+ * `defaut` est la voix servie à qui n'a rien choisi. Elle ne change que si on le
+ * demande : générer une banque d'essai ne doit pas déplacer la voix du jeu.
+ */
+async function ecrireLIndex(nouveauDefaut) {
+  const { readdir } = await import('node:fs/promises');
+  const entrees = await readdir(BANQUES, { withFileTypes: true }).catch(() => []);
+
+  const voix = [];
+  for (const entree of entrees) {
+    if (!entree.isDirectory()) continue;
+    const manifeste = await manifestePrecedent(join(BANQUES, entree.name));
+    if (!manifeste?.clips) continue;
+    voix.push({ id: entree.name, nom: manifeste.voix ?? entree.name });
+  }
+  voix.sort((a, b) => a.id.localeCompare(b.id));
+
+  const ancien = await readFile(INDEX, 'utf8').then(JSON.parse).catch(() => null);
+  const connu = (id) => voix.some((v) => v.id === id);
+  const defaut = (nouveauDefaut && connu(nouveauDefaut) && nouveauDefaut)
+    || (connu(ancien?.defaut) && ancien.defaut)
+    || voix[0]?.id
+    || null;
+
+  await writeFile(INDEX, `${JSON.stringify({ defaut, voix }, null, 2)}\n`, 'utf8');
+  return { defaut, voix };
 }
 
 /**
@@ -246,63 +320,105 @@ async function dejaFait(chemin, clip, fournisseur, anciennesEmpreintes) {
   return anciennesEmpreintes?.[clip.id] === empreinteDe(fournisseur, clip);
 }
 
+// Combien de clips en vol à la fois.
+//
+// Sept cent quarante et une requêtes à la file prennent une demi-heure, pendant
+// laquelle rien ne peut être relu ni corrigé. Six en parallèle ramènent ça à
+// quelques minutes et restent loin des limites de débit — au-delà, on gagne des
+// 429 qu'il faudrait réessayer, donc du temps, pas moins.
+const EN_VOL = 6;
+
 async function main() {
   const args = process.argv.slice(2);
   const blanc = args.includes('--blanc');
   const tout = args.includes('--tout');
   const voixDemandee = args.find((a) => a.startsWith('--voix='))?.split('=')[1];
+  // Faire de cette voix celle que l'appli sert par défaut. Explicite, parce
+  // qu'essayer une voix ne doit pas changer celle du jeu par accident.
+  const devientDefaut = args.includes('--defaut');
 
   const fournisseur = blanc ? fournisseurBlanc() : fournisseurOpenAI(voixDemandee);
+  const racine = dossierDe(fournisseur.id);
   const clips = inventaire();
 
   console.log(`\nAnimateur : ${fournisseur.nom}`);
+  console.log(`Banque    : web/quiz/audio/${fournisseur.id}/`);
   console.log(`${clips.length} clips à produire (${QUESTIONS.length} questions).`);
   if (!blanc && !tout) console.log('Les clips déjà présents sont conservés (--tout pour tout refaire).\n');
 
-  const ancien = await manifestePrecedent();
+  const ancien = await manifestePrecedent(racine);
   const manifeste = {
-    voix: fournisseur.nom, format: fournisseur.extension, clips: {}, empreintes: {},
+    voix: fournisseur.nom, id: fournisseur.id,
+    format: fournisseur.extension, clips: {}, empreintes: {},
   };
   let produits = 0;
   let reutilises = 0;
   let refaits = 0;
 
-  for (const [index, clip] of clips.entries()) {
-    const chemin = join(RACINE, `${clip.id}.${fournisseur.extension}`);
-    await mkdir(dirname(chemin), { recursive: true });
-    manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
+  // Un seul curseur partagé par les ouvriers : chacun prend le clip suivant dès
+  // qu'il a fini le sien, plutôt que de découper la liste en tranches — une
+  // tranche d'explications longues finirait bien après les autres.
+  let curseur = 0;
+  const ouvrier = async () => {
+    while (curseur < clips.length) {
+      const clip = clips[curseur];
+      curseur += 1;
 
-    if (!tout && await dejaFait(chemin, clip, fournisseur, ancien?.empreintes)) {
-      manifeste.clips[clip.id] = ancien?.clips?.[clip.id]
-        ?? Number(Math.max(1, clip.texte.length / 14).toFixed(2));
-      reutilises += 1;
-      continue;
+      const chemin = join(racine, `${clip.id}.${fournisseur.extension}`);
+      await mkdir(dirname(chemin), { recursive: true });
+      manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
+
+      if (!tout && await dejaFait(chemin, clip, fournisseur, ancien?.empreintes)) {
+        manifeste.clips[clip.id] = ancien?.clips?.[clip.id]
+          ?? Number(Math.max(1, clip.texte.length / 14).toFixed(2));
+        reutilises += 1;
+        continue;
+      }
+      // Un clip déjà là mais dont le texte a bougé : c'est une reformulation.
+      if (ancien?.clips?.[clip.id] !== undefined) refaits += 1;
+
+      const { donnees, secondes } = await fournisseur.rendre(clip.texte, clip.id);
+      await writeFile(chemin, donnees);
+      manifeste.clips[clip.id] = secondes;
+      produits += 1;
+
+      if ((produits + reutilises) % 25 === 0) {
+        process.stdout.write(`\r  ${produits} produits, ${reutilises} réutilisés…   `);
+      }
     }
-    // Un clip déjà là mais dont le texte a bougé : c'est une reformulation.
-    if (ancien?.clips?.[clip.id] !== undefined) refaits += 1;
-
-    const { donnees, secondes } = await fournisseur.rendre(clip.texte, clip.id);
-    await writeFile(chemin, donnees);
-    manifeste.clips[clip.id] = secondes;
-    produits += 1;
-
-    if (produits % 25 === 0 || index === clips.length - 1) {
-      process.stdout.write(`\r  ${produits} produits, ${reutilises} réutilisés…   `);
-    }
+  };
+  // Le manifeste est écrit MÊME si la campagne casse en route, et c'est ce qui
+  // la rend reprenable : sans lui, les clips déjà sur le disque n'ont pas
+  // d'empreinte, donc `dejaFait` ne peut rien affirmer et tout serait refait.
+  // Une coupure au clip 180 coûtait 180 requêtes ; elle n'en coûte plus aucune.
+  let panne = null;
+  try {
+    await Promise.all(Array.from({ length: blanc ? 1 : EN_VOL }, ouvrier));
+  } catch (erreur) {
+    panne = erreur;
   }
 
   await writeFile(
-    join(RACINE, 'manifeste.json'),
+    join(racine, 'manifeste.json'),
     `${JSON.stringify(manifeste, null, 2)}\n`,
     'utf8',
   );
+  const index = await ecrireLIndex(devientDefaut && !panne ? fournisseur.id : null);
+
+  if (panne) {
+    console.log(`\n\n${produits} clips produits avant l’interruption, ${reutilises} réutilisés.`);
+    console.log('Le manifeste est enregistré : relancer la même commande reprend où ça s’est arrêté.');
+    throw panne;
+  }
 
   const duree = Object.values(manifeste.clips).reduce((t, s) => t + s, 0);
   console.log(`\n\n${produits} clips produits, ${reutilises} réutilisés.`);
   if (refaits) console.log(`dont ${refaits} refaits : le texte avait changé depuis.`);
-  console.log(`≈ ${Math.round(duree / 60)} minutes d’audio, dans web/quiz/audio/`);
+  console.log(`≈ ${Math.round(duree / 60)} minutes d’audio, dans web/quiz/audio/${fournisseur.id}/`);
+  console.log(`\nBanques disponibles : ${index.voix.map((v) => v.id).join(', ')}`);
+  console.log(`Servie par défaut   : ${index.defaut}${devientDefaut ? '' : '  (--defaut pour changer)'}`);
   console.log('\nÉcoutez quelques clips avant de livrer, en particulier les explications :');
-  console.log(`  ${join('web', 'quiz', 'audio', 'note', `${QUESTIONS[0].id}.${fournisseur.extension}`)}`);
+  console.log(`  ${join('web', 'quiz', 'audio', fournisseur.id, 'note', `${QUESTIONS[0].id}.${fournisseur.extension}`)}`);
   console.log(`\nThèmes couverts : ${[...new Set(QUESTIONS.map((q) => nomDuTheme(q.theme)))].join(', ')}\n`);
 }
 

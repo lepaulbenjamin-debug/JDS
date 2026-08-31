@@ -105,10 +105,15 @@ const estRegie = () => Boolean(salon?.hostToken) || estSolo();
 
 function montrer(nom) {
   for (const section of $$('[data-screen]')) section.hidden = section.dataset.screen !== nom;
-  // L'état de la voix change en cours de route — le manifeste arrive après le
+  // L'état de la voix change en cours de route — l'index arrive après le
   // premier affichage, et une banque peut se révéler illisible à la première
-  // lecture. Le redessiner à l'ouverture évite d'y lire une réponse périmée.
-  if (nom === 'reglages') rendreChoixVoix();
+  // lecture. Le redessiner en revenant évite d'y lire une réponse périmée.
+  //
+  // Sur l'accueil, parce que c'est là que vit le bloc « La voix de l'animateur ».
+  // Il avait d'abord été branché sur l'écran des réglages, qui porte le contenu
+  // de la partie et non les préférences de l'appareil : le redessin arrivait
+  // alors sur une section masquée.
+  if (nom === 'accueil') rendreChoixVoix();
   // Le retour reste disponible en pleine partie : un invité doit pouvoir sortir
   // d'un salon qui a mal tourné. La confirmation évite le départ par accident.
   $('#btn-back').hidden = nom === 'accueil';
@@ -888,10 +893,36 @@ function rendreChoixVoix() {
   // Quand les clips sont là, la voix système ne sert plus à rien : tout le
   // monde entend la même, et le sélecteur ne ferait que semer le doute.
   if (voix.clipsDisponibles) {
+    const banques = voix.banques;
+
+    // Une seule voix installée : un sélecteur à une entrée ne propose rien, il
+    // fait seulement croire qu'il manque quelque chose.
+    if (banques.length < 2) {
+      hote.append(el('p', {
+        class: 'voix-etat',
+        text: `Voix enregistrée${voix.nomDeLaVoix ? ` — ${voix.nomDeLaVoix}` : ''}. Identique sur tous les appareils.`,
+      }));
+      return;
+    }
+
     hote.append(el('p', {
       class: 'voix-etat',
-      text: `Voix enregistrée${voix.nomDeLaVoix ? ` — ${voix.nomDeLaVoix}` : ''}. Identique sur tous les appareils.`,
+      text: 'Voix enregistrée. Le choix reste sur cet appareil.',
     }));
+    hote.append(el('select', {
+      id: 'banque-voix',
+      'aria-label': 'La voix de l’animateur',
+      onchange: async (event) => {
+        // On attend la nouvelle banque avant de parler : sinon la phrase d'essai
+        // partirait avec l'ancienne, et donnerait exactement le contraire de ce
+        // que le sélecteur vient de promettre.
+        await voix.choisirBanque(event.target.value);
+        rendreChoixVoix();
+        voix.essayer();
+      },
+    }, banques.map((b) => el('option', {
+      value: b.id, selected: b.courante, text: b.nom,
+    }))));
     return;
   }
 

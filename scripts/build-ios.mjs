@@ -57,6 +57,49 @@ const remplacer = async (chemin, paires) => {
   await writeFile(chemin, texte, 'utf8');
 };
 
+/**
+ * Une seule banque de voix dans le paquet, sauf demande contraire.
+ *
+ *   --voix=toutes        les embarquer toutes
+ *   --voix=coral,cedar   celles-là
+ *
+ * Chaque voix pèse une soixantaine de mégaoctets. Les embarquer toutes double
+ * le poids de l'application pour un réglage que personne n'ouvrira — et le
+ * poids d'une application se paie deux fois : à la revue, et dans la décision
+ * d'installer. Sur le web la question ne se pose pas, rien n'est téléchargé
+ * avant d'être joué : c'est là que le choix reste entier.
+ *
+ * L'index est réécrit en conséquence : proposer une voix absente du paquet
+ * rendrait l'animateur muet, sans rien signaler.
+ */
+async function taillerLesVoix() {
+  const dossier = join(SORTIE, 'audio');
+  let index;
+  try {
+    index = JSON.parse(await readFile(join(dossier, 'voix.json'), 'utf8'));
+  } catch {
+    return;                                   // pas de banque : rien à tailler
+  }
+
+  const demande = (process.argv.find((a) => a.startsWith('--voix=')) ?? '').split('=')[1];
+  const garder = demande === 'toutes'
+    ? index.voix.map((v) => v.id)
+    : demande ? demande.split(',').map((v) => v.trim()).filter(Boolean)
+      : [index.defaut].filter(Boolean);
+
+  for (const voix of index.voix) {
+    if (!garder.includes(voix.id)) await rm(join(dossier, voix.id), { recursive: true, force: true });
+  }
+
+  const restantes = index.voix.filter((v) => garder.includes(v.id));
+  await writeFile(join(dossier, 'voix.json'), `${JSON.stringify({
+    defaut: garder.includes(index.defaut) ? index.defaut : restantes[0]?.id ?? null,
+    voix: restantes,
+  }, null, 2)}\n`, 'utf8');
+
+  return restantes.map((v) => v.id);
+}
+
 async function batir() {
   await rm(SORTIE, { recursive: true, force: true });
   await mkdir(SORTIE, { recursive: true });
@@ -73,6 +116,8 @@ async function batir() {
 
   // Le service worker n'a plus lieu d'être : tout est dans le paquet.
   await rm(join(SORTIE, 'sw.js'), { force: true });
+
+  const voixEmbarquees = await taillerLesVoix();
 
   // Les chemins que la remontée d'un cran vient de casser.
   await remplacer(join(SORTIE, 'index.html'), [['../icons/', 'icons/']]);
@@ -111,6 +156,7 @@ async function batir() {
   console.log(`\nPaquet prêt dans dist/ios/`);
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
   console.log(`  dont audio : ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo`);
+  console.log(`  voix       : ${voixEmbarquees?.join(', ') ?? 'aucune'}  (--voix=toutes pour toutes les embarquer)`);
   console.log(`  relais     : ${relais}`);
   console.log('\nEnsuite, sur un Mac :  npm run ios:sync && npm run ios:open\n');
 }
