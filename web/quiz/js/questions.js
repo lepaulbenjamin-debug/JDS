@@ -30,6 +30,7 @@ export const THEMES = [
   { id: 'monde', nom: 'Le monde', emoji: '🌍' },
   { id: 'marques', nom: 'Marques & pubs', emoji: '🏷️' },
   { id: 'mots', nom: 'Mots & expressions', emoji: '💬' },
+  { id: 'disney', nom: 'Disney & Pixar', emoji: '🏰' },
 ];
 
 export const QUESTIONS = [
@@ -900,6 +901,125 @@ export const QUESTIONS = [
     note: 'Le héros éponyme d’un roman, c’est celui qui lui donne son titre — et jamais l’inverse, contrairement à ce qu’on entend partout.',
   },
 
+  /* --- Disney & Pixar ------------------------------------------------------ */
+  //
+  // Des questions SUR des films : des dates, des noms, des faits de production.
+  // Rien de tout cela n'appartient à personne. Ce qui appartient au studio, ce
+  // sont les images, les logos, la typographie et les paroles — on n'en emploie
+  // aucun, et le nom du thème décrit le sujet sans prétendre à un partenariat.
+  {
+    id: 'dis-01', theme: 'disney',
+    texte: 'Quel est le premier long métrage d’animation des studios Disney ?',
+    reponses: ['Blanche-Neige et les Sept Nains', 'Pinocchio', 'Fantasia', 'Dumbo'],
+    bonne: 0,
+    note: 'Sorti en 1937. La profession l’appelait « la folie de Disney » : personne ne croyait qu’un public tiendrait plus d’une heure devant un dessin animé.',
+  },
+  {
+    id: 'dis-02', theme: 'disney',
+    texte: 'Quel est le premier long métrage entièrement réalisé en images de synthèse ?',
+    reponses: ['Toy Story', 'Shrek', 'Fourmiz', 'Le Géant de fer'],
+    bonne: 0,
+    note: 'Toy Story, en 1995. Les jouets ont été choisis parce que le plastique était ce que la technique de l’époque savait le mieux imiter.',
+  },
+  {
+    id: 'dis-03', theme: 'disney',
+    texte: 'Dans quelle ville imaginaire se déroule « Aladdin » ?',
+    reponses: ['Agrabah', 'Askaban', 'Zamunda', 'Gondor'],
+    bonne: 0,
+    note: 'Agrabah, dont le nom ne renvoie à aucune ville réelle.',
+  },
+  {
+    id: 'dis-04', theme: 'disney',
+    texte: 'Comment s’appelle le père de Nemo ?',
+    reponses: ['Marlin', 'Dory', 'Gill', 'Bloat'],
+    bonne: 0,
+    note: 'Marlin — du nom du poisson, le marlin, alors que lui est un poisson-clown.',
+  },
+  {
+    id: 'dis-05', theme: 'disney',
+    texte: 'Dans « Le Livre de la jungle », comment s’appelle l’ours ?',
+    reponses: ['Baloo', 'Bagheera', 'Shere Khan', 'Kaa'],
+    bonne: 0,
+    note: 'Baloo signifie simplement « ours » en hindi. Kipling n’a pas cherché plus loin.',
+  },
+  {
+    id: 'dis-06', theme: 'disney',
+    texte: 'Comment s’appelle le rat cuisinier de « Ratatouille » ?',
+    reponses: ['Rémy', 'Émile', 'Django', 'Linguini'],
+    bonne: 0,
+    note: 'Rémy. Émile est son frère, Django leur père, et Linguini le jeune homme qu’il pilote par les cheveux.',
+  },
+  {
+    id: 'dis-07', theme: 'disney',
+    texte: 'Quel studio Disney a-t-il racheté en 2006 ?',
+    reponses: ['Pixar', 'DreamWorks', 'Ghibli', 'Aardman'],
+    bonne: 0,
+    note: 'Sept milliards et demi de dollars. Steve Jobs, principal actionnaire de Pixar, est devenu du même coup le premier actionnaire individuel de Disney.',
+  },
+  {
+    id: 'dis-08', theme: 'disney',
+    texte: 'Quel personnage apparaît pour la première fois dans « Steamboat Willie », en 1928 ?',
+    reponses: ['Mickey Mouse', 'Donald Duck', 'Dingo', 'Pluto'],
+    bonne: 0,
+    note: 'Ce n’est pas son tout premier dessin animé, mais c’est le premier distribué — et l’un des premiers avec un son synchronisé.',
+  },
+  {
+    id: 'dis-09', theme: 'disney',
+    texte: 'Dans « Là-haut », qu’est-ce qui fait décoller la maison ?',
+    reponses: ['Des milliers de ballons', 'Une montgolfière', 'Une tornade', 'Des hélices'],
+    bonne: 0,
+    note: 'Dans la réalité il en faudrait des millions : la maison pèse infiniment plus que ce que quelques milliers de ballons peuvent soulever.',
+  },
+  {
+    id: 'dis-10', theme: 'disney',
+    texte: 'Quel était le prénom complet de Walt Disney ?',
+    reponses: ['Walter', 'Walton', 'Wallace', 'Walden'],
+    bonne: 0,
+    note: 'Walter Elias Disney. « Walt » est le diminutif qu’il a fait entrer dans le nom du studio.',
+  },
+  {
+    id: 'dis-11', theme: 'disney',
+    texte: 'Dans « La Reine des neiges », comment s’appelle la sœur d’Elsa ?',
+    reponses: ['Anna', 'Ariel', 'Aurore', 'Astrid'],
+    bonne: 0,
+    note: 'Anna. Les deux prénoms viennent du conte d’Andersen dont le film s’éloigne beaucoup.',
+  },
+  {
+    id: 'dis-12', theme: 'disney',
+    texte: 'Quel film Pixar se déroule presque entièrement dans la tête d’une fillette ?',
+    reponses: ['Vice-versa', 'Coco', 'Soul', 'En avant'],
+    bonne: 0,
+    note: 'Vice-versa. Les scénaristes ont consulté des chercheurs en psychologie des émotions pendant toute l’écriture.',
+  },
+  {
+    id: 'dis-13', theme: 'disney',
+    texte: 'Dans « Toy Story », comment s’appelle le petit garçon à qui appartiennent les jouets ?',
+    reponses: ['Andy', 'Sid', 'Woody', 'Al'],
+    bonne: 0,
+    note: 'Andy. Sid est le voisin qui démonte les siens.',
+  },
+  {
+    id: 'dis-14', theme: 'disney',
+    texte: 'De quelle pièce de Shakespeare « Le Roi Lion » reprend-il la trame ?',
+    reponses: ['Hamlet', 'Macbeth', 'Le Roi Lear', 'Othello'],
+    bonne: 0,
+    note: 'Un oncle tue le roi, prend le trône, et le fils exilé revient. C’est Hamlet, avec une fin heureuse.',
+  },
+  {
+    id: 'dis-15', theme: 'disney',
+    texte: 'Quel compositeur signe la musique de « La Petite Sirène », « La Belle et la Bête » et « Aladdin » ?',
+    reponses: ['Alan Menken', 'Hans Zimmer', 'Randy Newman', 'Michael Giacchino'],
+    bonne: 0,
+    note: 'Alan Menken, l’homme du renouveau des années 90. Zimmer, lui, a signé « Le Roi Lion ».',
+  },
+  {
+    id: 'dis-16', theme: 'disney',
+    texte: 'Quel film Pixar met en scène des monstres qui récoltent les cris des enfants ?',
+    reponses: ['Monstres & Cie', 'Cars', 'WALL-E', 'Les Indestructibles'],
+    bonne: 0,
+    note: 'Monstres & Cie. Toute l’intrigue tient à une découverte industrielle : le rire produit bien plus d’énergie que la peur.',
+  },
+
   /* --- Estimations ------------------------------------------------------- */
 
   {
@@ -981,6 +1101,13 @@ export const QUESTIONS = [
     note: 'Huit mille huit cent quarante-neuf, d’après le dernier relevé conjoint du Népal et de la Chine. Il gagne quelques millimètres par an.',
   },
 
+  {
+    id: 'est-14', theme: 'disney', type: 'estimation',
+    texte: 'Combien d’Oscars Walt Disney a-t-il remportés à titre personnel ?',
+    valeur: 22,
+    unite: 'Oscars',
+    note: 'Vingt-deux, plus quatre honorifiques. C’est le record absolu, et personne ne s’en est approché depuis.',
+  },
   /* --- Dans l'ordre ------------------------------------------------------- */
 
   {
@@ -1049,6 +1176,17 @@ export const QUESTIONS = [
     note: '2001, 2004, 2005, 2006. Cinq ans à peine, et tout ce qui fait aujourd’hui nos journées était déjà en place.',
   },
 
+  {
+    id: 'ord-11', theme: 'disney', type: 'ordre',
+    texte: 'Du plus ancien au plus récent : ces films',
+    elements: [
+      'Blanche-Neige et les Sept Nains',
+      'Le Livre de la jungle',
+      'Le Roi Lion',
+      'La Reine des neiges',
+    ],
+    note: '1937, 1967, 1994, 2013. Trente ans entre les deux premiers, trente entre les deux suivants.',
+  },
   /* --- Rafales ------------------------------------------------------------ */
 
   {
@@ -1172,6 +1310,18 @@ export const QUESTIONS = [
     note: 'Adolphe Sax était né à Dinant. Il a passé sa vie en procès contre les fabricants qui copiaient son invention, et il est mort ruiné.',
   },
 
+  {
+    id: 'raf-11', theme: 'disney', type: 'rafale',
+    texte: 'Disney et Pixar',
+    affirmations: [
+      { texte: 'Walt Disney a longtemps prêté sa propre voix à Mickey.', vrai: true },
+      { texte: 'Disneyland Paris a ouvert en 1992.', vrai: true },
+      { texte: '« Le Roi Lion » est adapté d’un roman.', vrai: false },
+      { texte: 'Steve Jobs a été le principal actionnaire de Pixar.', vrai: true },
+      { texte: '« Toy Story » a été le premier film d’animation à recevoir l’Oscar du meilleur film.', vrai: false },
+    ],
+    note: 'Aucun film d’animation n’a jamais reçu l’Oscar du meilleur film. Une catégorie à part a été créée en 2001, et « Shrek » l’a remportée le premier.',
+  },
   /* --- Tu te mets combien ? ------------------------------------------------ */
   //
   // Une carte = un thème et dix questions, de la plus facile à la plus coriace.
@@ -1710,6 +1860,27 @@ export const QUESTIONS = [
     note: 'Seven Nation Army n’a pas de basse : c’est une guitare passée dans une pédale qui descend d’une octave. Le riff le plus chanté des stades du monde tient en sept notes.',
   },
 
+  {
+    id: 'mix-06', theme: 'disney', type: 'mix',
+    texte: 'Une chanson d’un film Disney ou Pixar',
+    acceptees: [
+      { titre: 'Libérée, délivrée', artiste: 'La Reine des neiges' },
+      { titre: 'Hakuna Matata', artiste: 'Le Roi Lion' },
+      { titre: 'Le Cercle de la vie', artiste: 'Le Roi Lion' },
+      { titre: 'Je voudrais déjà être roi', artiste: 'Le Roi Lion' },
+      { titre: 'Ce rêve bleu', artiste: 'Aladdin' },
+      { titre: 'Un ami comme moi', artiste: 'Aladdin' },
+      { titre: 'Sous l’océan', artiste: 'La Petite Sirène' },
+      { titre: 'Partir là-bas', artiste: 'La Petite Sirène' },
+      { titre: 'Histoire éternelle', artiste: 'La Belle et la Bête' },
+      { titre: 'Il en faut peu pour être heureux', artiste: 'Le Livre de la jungle' },
+      { titre: 'L’Air du vent', artiste: 'Pocahontas' },
+      { titre: 'Un jour mon prince viendra', artiste: 'Blanche-Neige et les Sept Nains' },
+      { titre: 'Je suis ton ami', artiste: 'Toy Story' },
+      { titre: 'Le Bleu lumière', artiste: 'Vaiana' },
+    ],
+    note: 'Quatorze titres acceptés, et la liste pourrait tenir sur trois écrans.',
+  },
   /* --- Les questions du fil rouge ----------------------------------------- */
   //
   // Elles se jouent comme n'importe quelle autre. Leur particularité tient
