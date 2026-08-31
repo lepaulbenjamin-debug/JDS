@@ -1701,6 +1701,18 @@ test('le catalogue de voix se lit dans le refus de l’API', () => {
   assert.ok(!lu.includes('invalid_request_error'), 'le type d’erreur a été pris pour une voix');
   assert.ok(!lu.includes('voice'), 'le nom du paramètre a été pris pour une voix');
 
+  // L'autre formulation, celle de tts-1-hd. Deux modèles, deux phrases : un
+  // refus qu'on ne sait pas lire ferait retomber sur la liste écrite en dur,
+  // c'est-à-dire sur le catalogue d'un AUTRE modèle.
+  const autre = JSON.stringify({
+    error: {
+      message: "[{'type': 'enum', 'loc': ('body', 'voice'), 'msg': \"Input should be 'nova', "
+        + "'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage' or 'coral'\"}]",
+    },
+  });
+  const lu2 = lireLeCatalogue(autre);
+  assert.deepEqual(lu2, ['nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage', 'coral']);
+
   // Un message qu'on ne sait pas lire ne doit pas produire une liste inventée.
   assert.equal(lireLeCatalogue('{"error":{"message":"Something went wrong"}}'), null);
   assert.equal(lireLeCatalogue('Supported values are: nothing quoted here'), null);

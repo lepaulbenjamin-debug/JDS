@@ -6,6 +6,8 @@
 //   node scripts/echantillons-voix.mjs --animateur=clasheur
 //   node scripts/echantillons-voix.mjs --sec              # le catalogue et ce qui serait dit,
 //                                                         # sans demander un seul son
+//   node scripts/echantillons-voix.mjs --autonome         # un seul fichier, sons embarqués
+//   node scripts/echantillons-voix.mjs --reference=coral  # marque la voix déjà en place
 //
 // Sans --voix, la liste n'est pas écrite en dur : elle est DEMANDÉE à l'API. Un
 // catalogue recopié vieillit en silence, et on croirait avoir tout essayé. Le
@@ -83,9 +85,22 @@ async function catalogue(cle, modele) {
   }
 }
 
-/** Les identifiants énumérés par un message de refus. Exporté pour être testé. */
+/**
+ * Les identifiants énumérés par un message de refus. Exporté pour être testé.
+ *
+ * Deux formulations coexistent chez OpenAI, et il a fallu sonder pour le voir :
+ *
+ *   gpt-4o-mini-tts   « Supported values are: 'alloy', 'echo', … »
+ *   tts-1-hd          « Input should be 'nova', 'shimmer', … »
+ *
+ * D'où deux amorces. Ce n'est pas de la générosité : un modèle dont on ne sait
+ * pas lire le refus retombe sur la liste écrite en dur, c'est-à-dire sur celle
+ * d'un AUTRE modèle — et on croirait avoir tout essayé.
+ */
+const AMORCES = /supported values are|input should be/i;
+
 export function lireLeCatalogue(message) {
-  const apres = message.split(/supported values are/i)[1];
+  const apres = message.split(AMORCES)[1];
   if (!apres) return null;
   const noms = [...apres.matchAll(/'([a-z][a-z0-9_-]*)'/gi)].map((m) => m[1]);
   const propres = [...new Set(noms)].filter((n) => n !== '__catalogue__');
@@ -147,6 +162,8 @@ function repliques(clips, animateur) {
 
 async function main() {
   const sec = process.argv.includes('--sec');
+  const autonome = process.argv.includes('--autonome');
+  const reference = arg('reference') ?? null;
   const animateur = arg('animateur') ?? 'classique';
   const demandees = arg('voix')?.split(',').map((v) => v.trim()).filter(Boolean);
   const modele = process.env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts';
@@ -192,7 +209,7 @@ async function main() {
     await mkdir(SORTIE, { recursive: true });
     await writeFile(
       join(SORTIE, 'index.html'),
-      page({ animateur, modele, direction, lignes, rendus: voix, sec: true }),
+      page({ animateur, modele, direction, lignes, rendus: voix, reference, sec: true }),
       'utf8',
     );
     console.log('\n--sec : aucun son demandé, rien de facturé.');
@@ -212,6 +229,8 @@ async function main() {
 
   const rendus = [];
   const sautees = [];
+  // Gardés en mémoire : `--autonome` les embarque dans la page.
+  const sons = new Map();
   for (const v of voix) {
     let ok = 0;
     for (const [i, ligne] of lignes.entries()) {
@@ -237,7 +256,9 @@ async function main() {
           sautees.push(`${v} : ${res.status} ${detail}`);
           break;                              // voix inconnue : inutile d'insister
         }
-        await writeFile(join(SORTIE, fichier), Buffer.from(await res.arrayBuffer()));
+        const octets = Buffer.from(await res.arrayBuffer());
+        await writeFile(join(SORTIE, fichier), octets);
+        sons.set(`${v}-${i}`, octets.toString('base64'));
         ok += 1;
         process.stdout.write(`\r  ${v} … ${ok}/${lignes.length}   `);
       } catch (erreur) {
@@ -256,7 +277,11 @@ async function main() {
     process.exit(1);
   }
 
-  await writeFile(join(SORTIE, 'index.html'), page({ animateur, modele, direction, lignes, rendus }), 'utf8');
+  await writeFile(
+    join(SORTIE, 'index.html'),
+    page({ animateur, modele, direction, lignes, rendus, reference, sons: autonome ? sons : null }),
+    'utf8',
+  );
 
   console.log(`\n${rendus.length} voix rendues : ${rendus.join(', ')}`);
   for (const s of sautees) console.log(`  sautée — ${s}`);
@@ -266,12 +291,16 @@ async function main() {
 }
 
 /** La page de comparaison : les voix en colonnes, les répliques en lignes. */
-function page({ animateur, modele, direction, lignes, rendus, sec = false }) {
+function page({ animateur, modele, direction, lignes, rendus, sons, reference, sec = false }) {
   const echapper = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // Autonome : le son est dans la page. Un seul fichier s'envoie par message,
+  // s'ouvre sur un téléphone et se garde ; un dossier de quarante mp3 ne fait
+  // aucune de ces trois choses.
+  const son = (v, i) => (sons ? `data:audio/mpeg;base64,${sons.get(`${v}-${i}`)}` : `${v}-${i}.mp3`);
 
   const colonnes = rendus.map((v) => `
-      <th>
-        <div class="voix">${echapper(v)}</div>
+      <th${v === reference ? ' class="est-reference"' : ''}>
+        <div class="voix">${echapper(v)}${v === reference ? ' <span class="badge">en place</span>' : ''}</div>
         <button type="button" data-voix="${echapper(v)}">▶ tout écouter</button>
       </th>`).join('');
 
@@ -281,7 +310,7 @@ function page({ animateur, modele, direction, lignes, rendus, sec = false }) {
         <div class="role">${echapper(ligne.role)}</div>
         <p class="texte">${echapper(ligne.texte)}</p>
       </th>
-      ${rendus.map((v) => `<td><audio controls preload="none" data-voix="${echapper(v)}" data-rang="${i}" src="${echapper(v)}-${i}.mp3"></audio></td>`).join('')}
+      ${rendus.map((v) => `<td${v === reference ? ' class="est-reference"' : ''}><audio controls preload="none" data-voix="${echapper(v)}" data-rang="${i}" src="${son(v, i)}"></audio></td>`).join('')}
     </tr>`).join('');
 
   return `<!doctype html>
@@ -309,6 +338,11 @@ function page({ animateur, modele, direction, lignes, rendus, sec = false }) {
            border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
   button[aria-pressed="true"] { background: #5b5bd6; border-color: transparent; }
   audio { width: 220px; }
+  /* La voix déjà en place : on ne juge pas une voix dans l'absolu, on la juge
+     contre celle qu'on remplacerait. */
+  .est-reference { background: #14161f; }
+  .badge { font-size: 11px; font-weight: 600; color: #0f1116; background: #7c7cf0;
+           border-radius: 999px; padding: 2px 7px; vertical-align: middle; }
 </style>
 
 <h1>Comparaison de voix</h1>
