@@ -1453,6 +1453,23 @@ test('l’icône livrée à l’App Store est carrée et sans transparence', () 
   assert.ok(![4, 6].includes(entete[9]), 'l’icône a une couche alpha');
 });
 
+test('le quiz et le compteur de points n’ont pas la même icône', () => {
+  // Les deux applications vivent sous le même toit, et le quiz a longtemps
+  // emprunté `web/icons/` au compteur. Y déposer l'icône du quiz a donc changé
+  // l'icône du compteur sur tous les écrans d'accueil où il était installé —
+  // sans que rien ne le signale. Chacun a désormais son dossier, et ce test
+  // existe pour que la confusion ne revienne pas.
+  for (const nom of ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) {
+    const site = nodeFs.readFileSync(join('web/icons', nom));
+    const quiz = nodeFs.readFileSync(join('web/quiz/icons', nom));
+    assert.ok(!site.equals(quiz), `${nom} est le même fichier pour les deux applis`);
+  }
+  for (const page of ['web/quiz/index.html', 'web/quiz/tv.html', 'web/quiz/manifest.webmanifest']) {
+    assert.doesNotMatch(nodeFs.readFileSync(page, 'utf8'), /\.\.\/icons\//,
+      `${page} emprunte encore les icônes du compteur`);
+  }
+});
+
 test('les clips d’un pack restent hors de web/', async () => {
   // L'invariant qui tient tout le modèle économique. Un énoncé lu à voix haute
   // EST le contenu du pack : posé sous `web/`, il serait servi en statique à qui
@@ -2268,7 +2285,7 @@ test('le paquet natif embarque tout ce que l’appli demande', () => {
   if (!paquet) return;
   for (const chemin of [
     'commun/ui.js', 'commun/speech.js',      // les deux modules partagés
-    'icons/icon.svg', 'styles.css',
+    'icons/icon-192.png', 'styles.css',
     'audio/voix.json',
     'js/app.js', 'js/engine.js', 'js/emcee.js', 'js/questions.js',
   ]) {

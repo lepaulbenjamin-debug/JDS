@@ -104,11 +104,10 @@ async function batir() {
   await rm(SORTIE, { recursive: true, force: true });
   await mkdir(SORTIE, { recursive: true });
 
-  // Le quiz devient la racine.
+  // Le quiz devient la racine — ses icônes lui appartiennent et le suivent.
   await cp(join(WEB, 'quiz'), SORTIE, { recursive: true });
-  // Les icônes et les deux modules partagés le suivent, à des places qui ne se
-  // heurtent pas au `js/` du quiz.
-  await cp(join(WEB, 'icons'), join(SORTIE, 'icons'), { recursive: true });
+  // Les deux modules partagés avec le compteur de points le suivent aussi, à
+  // une place qui ne se heurte pas au `js/` du quiz.
   await mkdir(join(SORTIE, 'commun'), { recursive: true });
   for (const module of ['ui.js', 'speech.js']) {
     await cp(join(WEB, 'js', module), join(SORTIE, 'commun', module));
@@ -120,8 +119,6 @@ async function batir() {
   const voixEmbarquees = await taillerLesVoix();
 
   // Les chemins que la remontée d'un cran vient de casser.
-  await remplacer(join(SORTIE, 'index.html'), [['../icons/', 'icons/']]);
-  await remplacer(join(SORTIE, 'manifest.webmanifest'), [['../icons/', 'icons/']]);
   for (const module of await readdir(join(SORTIE, 'js'))) {
     if (module.endsWith('.js')) {
       await remplacer(join(SORTIE, 'js', module), [['../../js/', '../commun/']]);

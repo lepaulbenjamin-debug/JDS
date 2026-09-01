@@ -18,7 +18,7 @@ const SHELL = [
   'js/questions.js',
   '../js/ui.js',
   '../js/speech.js',
-  '../icons/icon.svg',
+  'icons/icon-192.png',
 ];
 
 self.addEventListener('install', (event) => {

@@ -25,9 +25,13 @@ indigo, vert, or, rouge, les couleurs de l'interface. Elle est en place :
 |---|---|
 | `assets/icon.png` | 1024 × 1024, sans alpha — la source de tout le reste |
 | `assets/splash.png`, `assets/splash-dark.png` | 2732 × 2732, motif à 38 % au centre |
-| `web/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | le site et l'écran d'accueil |
-| `web/icons/icon-maskable-512.png` | motif à 72 %, pour le rognage d'Android |
-| `web/icons/icon.svg` | version à plat, sans texte, redessinée à la main |
+| `web/quiz/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | le site et l'écran d'accueil |
+| `web/quiz/icons/icon-maskable-512.png` | motif à 72 %, pour le rognage d'Android |
+
+`web/icons/` appartient au **compteur de points**, pas au quiz. Les deux
+applications vivent sous le même toit, et le quiz y empruntait ses icônes : y
+déposer les siennes changeait celle du compteur sur tous les écrans d'accueil
+où il était installé. Un test compare désormais les deux dossiers.
 
 Deux corrections ont été apportées à l'image d'origine, et elles valent pour
 toute image qu'un modèle rendra plus tard :
@@ -164,12 +168,8 @@ de quelques allers-retours. Si une image revient fautive, recoller la ligne.
    the central 70% of the square, plain background elsewhere ».
 
    ```sh
-   magick assets/icon.png -resize 192x192 web/icons/icon-192.png
-   magick assets/icon.png -resize 512x512 web/icons/icon-512.png
-   magick assets/icon.png -resize 180x180 web/icons/apple-touch-icon.png
-   magick maskable-recue.png -resize 512x512 web/icons/icon-maskable-512.png
+   magick assets/icon.png -resize 192x192 web/quiz/icons/icon-192.png
+   magick assets/icon.png -resize 512x512 web/quiz/icons/icon-512.png
+   magick assets/icon.png -resize 180x180 web/quiz/icons/apple-touch-icon.png
+   magick maskable-recue.png -resize 512x512 web/quiz/icons/icon-maskable-512.png
    ```
-
-Reste `web/icons/icon.svg`, l'icône vectorielle du site : une fois la direction
-choisie, la redessiner à la main en quelques formes. Un SVG de trente lignes
-reste net à toutes les tailles, là où un PNG agrandi bave.
