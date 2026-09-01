@@ -1441,6 +1441,18 @@ test('une licence qui a le pack en obtient le contenu', async () => {
   assert.equal(autre.body.packs.find((p) => p.id === cible).possede, false);
 });
 
+test('l’icône livrée à l’App Store est carrée et sans transparence', () => {
+  // Apple refuse une icône qui porte une couche alpha, et le refus arrive tout
+  // à la fin — après le téléversement, par courriel, avec un code d'erreur.
+  // L'entête PNG suffit à le savoir ici : largeur, hauteur, puis le type de
+  // couleur, où 4 et 6 sont les deux formes qui transportent de la
+  // transparence.
+  const entete = nodeFs.readFileSync('assets/icon.png').subarray(16, 26);
+  assert.equal(entete.readUInt32BE(0), 1024, 'l’icône n’est pas large de 1024 px');
+  assert.equal(entete.readUInt32BE(4), 1024, 'l’icône n’est pas haute de 1024 px');
+  assert.ok(![4, 6].includes(entete[9]), 'l’icône a une couche alpha');
+});
+
 test('les clips d’un pack restent hors de web/', async () => {
   // L'invariant qui tient tout le modèle économique. Un énoncé lu à voix haute
   // EST le contenu du pack : posé sous `web/`, il serait servi en statique à qui

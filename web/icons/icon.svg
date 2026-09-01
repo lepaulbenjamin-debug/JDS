@@ -1,15 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Scores">
+<!-- L'icône vectorielle du site : la même idée que l'icône de l'application —
+     une bulle et quatre pupitres — mais redessinée à plat, en quelques formes.
+
+     Deux raisons de ne pas se contenter du PNG. Un SVG reste net à toutes les
+     tailles, jusqu'au favicon de seize pixels où un PNG réduit bave. Et à cette
+     taille-là le texte de l'illustration serait de toute façon illisible : ce
+     qui doit rester, c'est la silhouette. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Quiz entre amis">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#3b2f8f"/>
+    <linearGradient id="bulle" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#7c7ef5"/>
+      <stop offset="1" stop-color="#4f46e5"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g fill="#ffffff">
-    <rect x="104" y="150" width="212" height="34" rx="17"/>
-    <rect x="104" y="239" width="164" height="34" rx="17"/>
-    <rect x="104" y="328" width="248" height="34" rx="17"/>
+
+  <rect width="512" height="512" rx="112" fill="#0f1116"/>
+
+  <!-- Les éclats : ce qui dit qu'on vient de trouver. -->
+  <g stroke="#f5c518" stroke-width="18" stroke-linecap="round">
+    <path d="M84 152 L104 170"/>
+    <path d="M106 106 L119 130"/>
+    <path d="M152 82 L156 110"/>
   </g>
-  <circle cx="372" cy="167" r="46" fill="#f5c518"/>
+
+  <!-- La bulle : un corps et une queue qui se recouvrent, plutôt qu'un tracé
+       unique — le raccord ne se voit pas, et les proportions se règlent à la
+       main sans redessiner la courbe. -->
+  <g fill="url(#bulle)">
+    <ellipse cx="272" cy="208" rx="146" ry="110"/>
+    <path d="M232 286 L268 316 L196 350 Z"/>
+  </g>
+
+  <!-- Les quatre pupitres. L'ordre des couleurs est celui de l'interface. -->
+  <g>
+    <ellipse cx="98" cy="412" rx="46" ry="15" fill="#232838"/>
+    <circle cx="98" cy="402" r="36" fill="#6366f1"/>
+    <ellipse cx="198" cy="428" rx="46" ry="15" fill="#232838"/>
+    <circle cx="198" cy="418" r="36" fill="#34d399"/>
+    <ellipse cx="306" cy="428" rx="46" ry="15" fill="#232838"/>
+    <circle cx="306" cy="418" r="36" fill="#f5c518"/>
+    <ellipse cx="410" cy="412" rx="46" ry="15" fill="#232838"/>
+    <circle cx="410" cy="402" r="36" fill="#f87171"/>
+  </g>
 </svg>

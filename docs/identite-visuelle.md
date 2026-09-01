@@ -16,11 +16,34 @@ La palette n'est pas un choix à faire ici : elle est déjà dans
 | Menthe | `#34d399` |
 | Corail | `#f87171` |
 
-## Ce qui est déjà fixé
+## L'icône : retenue
 
-L'icône présente dans `web/icons/icon.svg` n'est **pas** celle du quiz : c'est
-celle du compteur de points, héritée telle quelle au montage de l'application.
-Elle est à remplacer entièrement.
+Une bulle de dialogue portant le nom du jeu, posée devant quatre pupitres —
+indigo, vert, or, rouge, les couleurs de l'interface. Elle est en place :
+
+| Fichier | Rôle |
+|---|---|
+| `assets/icon.png` | 1024 × 1024, sans alpha — la source de tout le reste |
+| `assets/splash.png`, `assets/splash-dark.png` | 2732 × 2732, motif à 38 % au centre |
+| `web/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | le site et l'écran d'accueil |
+| `web/icons/icon-maskable-512.png` | motif à 72 %, pour le rognage d'Android |
+| `web/icons/icon.svg` | version à plat, sans texte, redessinée à la main |
+
+Deux corrections ont été apportées à l'image d'origine, et elles valent pour
+toute image qu'un modèle rendra plus tard :
+
+- **Les coins arrondis ont été effacés.** L'illustration était posée sur une
+  carte déjà arrondie, entourée de noir. iOS applique son propre masque : les
+  deux arrondis se seraient superposés et l'icône aurait porté un liseré noir.
+  Le fond a donc été prolongé jusqu'aux bords.
+- **La couche alpha a été retirée.** Une icône transparente fait échouer
+  l'envoi sur l'App Store. Un test le vérifie désormais à chaque exécution.
+
+Il reste un compromis assumé : le nom est **écrit dans l'icône**. Apple le
+déconseille — le nom s'affiche déjà sous l'icône — et « entre amis » est
+illisible à 60 px. « Quiz » reste lisible, et c'est ce qui a décidé.
+
+## Ce qui est déjà fixé
 
 | Visuel | Taille | Contrainte |
 |---|---|---|
@@ -30,83 +53,11 @@ Elle est à remplacer entièrement.
 | Vignette d'un pack | 1024 × 1024 | Lisible à 96 px, sa taille réelle dans la boutique |
 | Fond de capture | 1290 × 2796 | Vide au centre : la capture et le titre viennent par-dessus |
 
-## Trois directions pour l'icône
+## Les visuels qui restent à produire
 
-Une seule sera retenue, et elle décide de tout le reste. Générer les trois, les
-regarder **réduites à 60 px** — la taille réelle sur un écran d'accueil — et
-garder celle qui se reconnaît encore.
-
-### A · Le buzzer (recommandée)
-
-Le geste central du jeu : le doigt qui s'abat sur le pupitre. La plus lisible en
-tout petit, parce qu'elle tient dans un cercle et une couleur.
-
-```
-Square app icon, 1024x1024, flat vector illustration, centred composition.
-A single glossy round game-show buzzer button seen from a slight
-three-quarter angle: deep indigo dome (#6366f1) with a thin warm gold rim
-(#f5c518), resting on a near-black ground (#0f1116). A soft indigo glow
-spreads from underneath the button, and two faint concentric rings suggest
-the sound travelling outward. Minimal, geometric, high contrast, crisp
-edges, no gradient other than the dome's own sheen. Bold shapes that stay
-readable when the image is shrunk to 60 pixels.
-No text, no letters, no numbers, no hands, no people.
-Full bleed to the edges, square corners, fully opaque background,
-no drop shadow outside the square.
-```
-
-### B · Les pupitres
-
-Ce que le jeu est réellement : quatre téléphones autour d'une table. Plus
-narrative, plus dure à lire en petit — à ne garder que si la version réduite
-tient.
-
-```
-Square app icon, 1024x1024, flat vector illustration, top-down view.
-Four rounded rectangles laid out like four phones around an invisible round
-table, evenly spaced, each slightly rotated toward the centre. Each screen
-glows a different flat colour: indigo #6366f1, gold #f5c518, mint #34d399,
-coral #f87171. The ground is near-black #0f1116. A single small gold dot
-sits at the exact centre with a faint halo around it. Minimal, geometric,
-generous empty space, strong silhouette.
-No text, no letters, no numbers, no hands, no people, no interface details
-on the screens.
-Full bleed to the edges, square corners, fully opaque background.
-```
-
-### C · La question
-
-Une bulle de dialogue dont la queue devient un point d'interrogation. La plus
-sage, et la plus proche de ce que font les autres applications de quiz.
-
-```
-Square app icon, 1024x1024, flat vector illustration, centred.
-A rounded speech bubble in deep indigo (#6366f1) whose tail curls downward
-and becomes the hook of a question mark; the dot of the question mark is a
-warm gold circle (#f5c518). Near-black ground (#0f1116) with a soft indigo
-glow behind the bubble. Thick simple forms, very few details, designed to
-stay readable at 60 pixels.
-No text, no letters, no numbers.
-Full bleed to the edges, square corners, fully opaque background.
-```
-
-## Les autres visuels
-
-Remplacer `[LE MOTIF RETENU]` par la description de l'icône gagnante — « the
-indigo buzzer button », « the four phones seen from above », « the indigo
-question-mark bubble ». C'est ce qui fait tenir la famille ensemble.
-
-### Écran de lancement — 2732 × 2732
-
-```
-Square image, 2732x2732, launch screen. Near-black ground (#0f1116),
-almost entirely empty. [LE MOTIF RETENU] sits exactly at the centre and
-occupies about 22% of the width, with a very soft indigo glow (#6366f1)
-behind it and a barely visible vignette darkening the corners.
-Nothing whatsoever in the outer third of the image, on any side.
-No text, no logo, no wordmark, no objects near the edges.
-Flat, calm, fully opaque.
-```
+L'icône et l'écran de lancement sont faits. Les quatre images ci-dessous ne le
+sont pas. Elles doivent tenir avec l'icône : même fond, mêmes couleurs, et pour
+les vignettes de packs, le même cadrage d'une image à l'autre.
 
 ### Vignette du pack Spécial Noël — 1024 × 1024
 
@@ -190,7 +141,8 @@ de quelques allers-retours. Si une image revient fautive, recoller la ligne.
    fewer details ».
 
 2. **Aplatir l'icône** — supprime la transparence, force le PNG et le format
-   exact, sans quoi l'envoi sur l'App Store est rejeté :
+   exact, sans quoi l'envoi sur l'App Store est rejeté. Déjà fait pour l'icône
+   en place ; à refaire si elle est un jour remplacée :
 
    ```sh
    magick icone-recue.png -background '#0f1116' -alpha remove -alpha off \
