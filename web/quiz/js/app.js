@@ -22,6 +22,7 @@ import {
 } from './emcee.js';
 
 const MOI_KEY = 'quizroom.moi';
+const SALON_KEY = 'quizroom.salon';
 const BATTEMENT_REGIE_MS = 450;
 const BATTEMENT_PUPITRE_MS = 700;
 const ERREURS_AVANT_ALERTE = 5;
@@ -58,6 +59,26 @@ function enregistrerMoi() {
   try {
     localStorage.setItem(MOI_KEY, JSON.stringify(moi));
   } catch { /* navigation privée : on rejouera sous un nouvel identifiant */ }
+}
+
+// Le salon où l'on jouait, pour y revenir seul après un rechargement. On note
+// aussi si l'on tenait la régie : ce cas-là ne se rattrape pas, et le dire vaut
+// mieux que de rendre un lobby qui n'avancera plus.
+function retenirLeSalon(code, tenaitLaRegie) {
+  try {
+    localStorage.setItem(SALON_KEY, JSON.stringify({ code, regie: tenaitLaRegie }));
+  } catch { /* stockage indisponible : on retapera le code */ }
+}
+
+function salonRetenu() {
+  try {
+    const brut = JSON.parse(localStorage.getItem(SALON_KEY) ?? 'null');
+    return /^[A-Z0-9]{4}$/.test(brut?.code ?? '') ? brut : null;
+  } catch { return null; }
+}
+
+function oublierLeSalon() {
+  try { localStorage.removeItem(SALON_KEY); } catch { /* rien à oublier */ }
 }
 
 /* --- État de l'appli ----------------------------------------------------- */
@@ -1461,6 +1482,7 @@ async function ouvrirSalon() {
     majBoutonSon();
     joueurs = arrivee.players ?? [{ id: moi.id, name: moi.name }];
     aPublier = regie.etatPublic(joueurs);
+    retenirLeSalon(code, true);
     location.hash = code;
     montrer('lobby');
     rendreLienPartage();
@@ -1535,6 +1557,7 @@ async function rejoindreSalon() {
     salon = { code, hostToken: null };
     joueurs = reponse.players ?? [];
     version = -1;
+    retenirLeSalon(code, false);
     location.hash = code;
     montrer('lobby');
     rendreLienPartage();
@@ -1610,6 +1633,7 @@ async function quitter() {
   cleRendue = '';
   filRendu = '';
   derniereVoix = '';
+  oublierLeSalon();
   location.hash = '';
   montrer('accueil');
 }
@@ -1761,9 +1785,57 @@ function brancher() {
   if (code.length === 4) $('#code-salon').value = code;
 }
 
+/**
+ * Retrouver sa place après un rechargement.
+ *
+ * C'est l'incident le plus banal d'une soirée : un téléphone se verrouille, le
+ * navigateur recharge la page pour récupérer de la mémoire, et le joueur se
+ * retrouve à l'accueil pendant que la table continue sans lui. Son identifiant
+ * a survécu, donc le relais lui rendra sa place et son score — encore
+ * faut-il rejoindre, ce que personne ne pense à faire au milieu d'une manche.
+ *
+ * La régie fait exception. Son moteur vivait dans la page : rechargée, elle ne
+ * peut plus faire avancer la partie, et la ramener dans un salon qu'elle ne
+ * pilote plus donnerait un écran figé sans explication.
+ */
+async function reprendreLaPartie() {
+  const memoire = salonRetenu();
+  const dansLAdresse = location.hash.replace('#', '').toUpperCase();
+  const code = /^[A-Z0-9]{4}$/.test(dansLAdresse) ? dansLAdresse : memoire?.code;
+  if (!code) return;
+
+  if (memoire?.code === code && memoire.regie) {
+    oublierLeSalon();
+    toast('Cette partie était pilotée depuis ce téléphone : elle ne peut pas reprendre.', 'warn');
+    return;
+  }
+  if (!moi.name) return;              // sans prénom, on n'a jamais rejoint
+
+  try {
+    const reponse = await net.joinRoom(code, moi);
+    moi.id = reponse.playerId;
+    enregistrerMoi();
+    voix.appliquerDefaut(false);
+    majBoutonSon();
+    salon = { code, hostToken: null };
+    joueurs = reponse.players ?? [];
+    version = -1;
+    retenirLeSalon(code, false);
+    montrer('lobby');
+    rendreLienPartage();
+    rendreLobby();
+    demarrerBoucle();               // l'état reçu remettra le bon écran
+  } catch (erreur) {
+    // Salon fini ou expiré : on reste à l'accueil, le code déjà tapé dans la
+    // case. Rien à dire — c'est le cas normal au lancement suivant.
+    if (erreur?.status === 404) oublierLeSalon();
+  }
+}
+
 try {
   brancher();
   montrer('accueil');
+  reprendreLaPartie();
 } catch (erreur) {
   // Sans ce filet, une API manquante laisse une page qui s'affiche normalement
   // mais dont aucun bouton ne répond : on découvre la panne au premier tap,
