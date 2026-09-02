@@ -524,6 +524,12 @@ function rendrePari() {
 
   const choisi = niveauCourant();
   clear(zone);
+  // Le thème d'abord, et en grand. Il figure déjà dans la pastille du haut,
+  // mais personne ne l'y lisait : on choisit son niveau en regardant la grille,
+  // et miser sans savoir sur quoi, c'est jouer à pile ou face. C'est la seule
+  // information dont on dispose pour décider, elle doit donc être là où la
+  // décision se prend.
+  zone.append(el('p', { class: 'pari-theme', text: nomDuTheme(etat.question.theme) }));
   zone.append(el('p', { class: 'pari-titre', text: ouvert ? 'Tu te mets combien ?' : `Tu t’es mis à ${choisi}.` }));
 
   const grille = el('div', { class: 'pari-grille' });

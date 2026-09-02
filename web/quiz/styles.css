@@ -406,6 +406,16 @@ body {
 /* --- Tu te mets combien ? ------------------------------------------------ */
 
 .pari { display: grid; gap: 10px; margin: 4px 0 14px; }
+/* Le thème de la carte, seule information sur laquelle on puisse miser. Il
+   passe devant « tu te mets combien ? », qui ne dit rien qu'on ne sache déjà
+   après la première manche du genre. */
+.pari-theme {
+  margin: 0 0 2px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--gold);
+}
 .pari-titre { margin: 0; font-size: 19px; font-weight: 800; }
 /* Dix crans sur une largeur de téléphone : cinq par ligne, assez gros pour le
    pouce. Une seule ligne de dix donnerait des cibles de 30 px. */

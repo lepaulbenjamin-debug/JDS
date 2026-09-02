@@ -20,6 +20,7 @@
 import * as net from './net.js';
 import { el, clear } from '../../js/ui.js';
 import { typeDeManche } from './manches/index.js';
+import { THEMES } from './questions.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -133,7 +134,12 @@ function rendreJeu() {
     : revele ? (etat.resultat?.commentaireDit || etat.resultat?.commentaire || '')
       : (etat.annonceDite || etat.annonce || '');
 
-  $('#tv-question').textContent = question?.type === 'ttmc' ? '' : (question?.texte ?? '');
+  // Sur un TTMC, chacun a sa propre question : il n'y en a pas à montrer en
+  // grand. Le thème, lui, est ce dont la table parle pendant que chacun mise —
+  // et c'est l'écran commun qui doit le porter.
+  $('#tv-question').textContent = question?.type === 'ttmc'
+    ? (THEMES.find((t) => t.id === question.theme)?.nom ?? '')
+    : (question?.texte ?? '');
   $('#tv-question').hidden = !question || etat.phase === 'intro';
 
   rendreReponses(question, revele);
