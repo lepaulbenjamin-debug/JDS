@@ -19,22 +19,27 @@ import { filRougeTrouve } from './questions.js';
 export const JOKERS = [
   {
     id: 'double', nom: 'Quitte ou double', emoji: '🎲',
+    court: 'Le double, ou la moitié en moins',
     desc: 'Bonne réponse : points doublés. Mauvaise réponse : tu perds la moitié de ce que tu aurais gagné.',
   },
   {
     id: 'vol', nom: 'Vol', emoji: '🥷',
+    court: 'Prend la moitié des points du leader',
     desc: 'Si tu as bon, tu prends la moitié des points que le leader gagne sur cette manche.',
   },
   {
     id: 'sabotage', nom: 'Sabotage', emoji: '🧨',
+    court: 'Le leader ne marque rien',
     desc: 'Si tu as bon, le leader ne marque rien du tout sur cette manche.',
   },
   {
     id: 'sangfroid', nom: 'Sang-froid', emoji: '🧊',
+    court: 'Le maximum, sans courir',
     desc: 'Prends tout ton temps : tu marques le maximum de points, comme si tu avais répondu du tac au tac.',
   },
   {
     id: 'cinquante', nom: '50/50', emoji: '✂️',
+    court: 'Deux réponses en moins, points divisés',
     desc: 'Deux mauvaises réponses disparaissent — mais tes points de la manche sont divisés par deux.',
   },
 ];
@@ -57,7 +62,11 @@ export function jokersPossibles(type) {
 // le seul moment où l'on peut sortir un joker : on parie sans avoir vu
 // l'énoncé. Un joker choisi la question sous les yeux n'est plus un pari, c'est
 // une évidence — « je connais celle-là, je double ».
-export const DUREE_JOKERS_MS = 6000;
+//
+// Dix secondes et non six : il faut lire cinq intitulés qu'on ne connaît pas
+// encore par cœur, se rappeler qui mène au classement, et décider. Six
+// secondes suffisaient à taper sur un bouton, pas à choisir lequel.
+export const DUREE_JOKERS_MS = 10000;
 // Le plancher de l'ouverture, pas sa durée : c'est la longueur du clip qui
 // commande, et 5,5 s coupaient les 5,36 s de l'animateur classique — la lecture
 // ne démarre qu'au battement suivant, et il faut bien la laisser finir.

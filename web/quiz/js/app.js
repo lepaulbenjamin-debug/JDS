@@ -633,6 +633,27 @@ function rendreJokers() {
     ]));
   }
 
+  // Ce que fait chaque joker, sous la rangée et pendant la fenêtre seulement.
+  //
+  // Un nom seul ne dit rien la première fois — « Sang-froid » ne se devine pas
+  // — et la phrase complète n'apparaissait qu'une fois le joker armé, c'est-à-
+  // dire après avoir choisi. La légende disparaît dès que la fenêtre se ferme :
+  // à ce moment-là elle ne sert plus qu'à pousser la question vers le bas.
+  const legende = clear($('#joker-legende'));
+  const montrable = JOKERS.filter((j) => actifs.includes(j.id) && possibles.includes(j.id) && j.court);
+  legende.hidden = !jouable || !montrable.length;
+  if (!legende.hidden) {
+    for (const joker of montrable) {
+      legende.append(el('li', {}, [
+        el('span', { class: 'joker-legende-emoji', text: joker.emoji }),
+        el('span', {}, [
+          el('b', { text: joker.nom }),
+          el('span', { class: 'muted', text: ` — ${joker.court}` }),
+        ]),
+      ]));
+    }
+  }
+
   // L'avertissement sur l'absence de cible n'a de sens que si un joker à cible
   // est effectivement de la partie.
   const aUneCible = actifs.includes('vol') || actifs.includes('sabotage');

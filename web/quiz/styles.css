@@ -573,6 +573,22 @@ body {
 .joker.est-use { opacity: 0.3; }
 .joker:disabled { cursor: default; }
 
+/* La légende : ce que fait chaque joker, le temps de la fenêtre. Assez petite
+   pour ne pas repousser la rangée hors de l'écran, assez lisible pour qu'on la
+   parcoure en dix secondes. */
+.joker-legende {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+.joker-legende li { display: grid; grid-template-columns: 20px 1fr; gap: 6px; align-items: start; }
+.joker-legende-emoji { font-size: 13px; }
+.joker-legende b { font-weight: 600; }
+
 /* --- Classement et podium ------------------------------------------------ */
 
 .classement { display: grid; gap: 6px; margin-top: 8px; }

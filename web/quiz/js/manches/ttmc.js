@@ -54,7 +54,11 @@ export default {
   // n'avaient pas fini d'y penser que l'énoncé s'affichait, et repartaient au
   // niveau 1 par défaut — c'est-à-dire au pari le plus prudent, sur le seul
   // type de manche qui existe pour qu'on ose.
-  avantQuestionMs: 12000,
+  //
+  // C'est la fenêtre à jokers plus le temps de viser un cran : les deux
+  // décisions se prennent l'une après l'autre, pas en même temps. Quand la
+  // première s'allonge, celle-ci doit suivre — un test le vérifie.
+  avantQuestionMs: 15000,
 
   // Déclare au moteur que ce type se joue avec une annonce préalable. C'est ce
   // qui ouvre le canal « niveau » côté régie, sans que le moteur ait à
