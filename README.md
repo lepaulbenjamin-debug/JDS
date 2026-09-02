@@ -3,10 +3,11 @@
 Application web (PWA) pour compter les points d'une partie sans calcul mental,
 en suivant les règles de chaque jeu telles que son livret les écrit.
 
-Dix jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
-**Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders**, **Mölkky**
-et **Les Aventuriers du Rail** (États-Unis, Europe, Autour du Monde). Un jeu =
-un module dans `web/js/games/`, et le moteur s'adapte à ses règles.
+Onze jeux sont implémentés : **Papayoo**, **Skyjo**, **6 qui prend !**,
+**Tarot**, **Belote**, **Skull King**, **Le Barbu**, **7 Wonders**, **Mölkky**,
+**Les Aventuriers du Rail** (États-Unis, Europe, Autour du Monde) et
+**Forêt Mixte**. Un jeu = un module dans `web/js/games/`, et le moteur s'adapte
+à ses règles.
 
 ## Ce que ça fait
 
@@ -334,7 +335,7 @@ rançon, et abîmerait ce qui fait recommander l'appli.
 
 | | Gratuit | Version complète |
 | --- | --- | --- |
-| Compter les points, les dix jeux, les règles, la voix, le carnet | sans limite | sans limite |
+| Compter les points, les onze jeux, les règles, la voix, le carnet | sans limite | sans limite |
 | Lecture photo | `LECTURES_OFFERTES` par mois (10 aujourd'hui) | sans limite |
 
 **Le compteur.** `state.quota = { mois, lectures }`, renouvelé à la lecture
@@ -463,6 +464,34 @@ Le serveur passe par le SDK officiel `@anthropic-ai/sdk`. En mode « clé
 directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
+
+## Règles de Forêt Mixte (rappel)
+
+Vérifié sur le livret français officiel (Kosch, Lookout Games) et sur le bloc
+de score publié par l'éditeur.
+
+- **Fin de partie.** « Dès que la 3ᵉ carte Hiver est révélée, la partie prend
+  immédiatement fin. Vous ne pouvez pas finir votre tour. »
+- **Décompte.** « Additionnez tous les points des cartes visibles dans votre
+  forêt et ajoutez-y autant de points que le nombre de cartes dans votre
+  Grotte. » Les quatre lignes du bloc de score de l'éditeur sont reprises
+  telles quelles : **Arbres**, **Haut/Bas**, **Gauche/Droite**, **Grotte**.
+- **Égalité.** « En cas d'égalité, les joueurs concernés se partagent la
+  victoire. » Aucun départage, donc aucun n'est inventé.
+- **Mise en place.** On retire de la boîte 30 cartes à 2 joueurs, 20 à 3, 10 à
+  4, aucune à 5. Deux cartes Hiver sont mélangées dans une des trois piles, la
+  troisième posée au sommet de cette pile, et les deux autres piles empilées
+  par-dessus.
+
+**Ce que l'appli ne fait pas, et pourquoi.** Elle ne sait pas ce que vaut une
+carte donnée : l'Érable rapporte autant de points qu'il y a d'arbres dans la
+forêt, le Lièvre d'Europe autant qu'il y a de lièvres, la Barbastelle rien en
+dessous de trois espèces de chauves-souris. Ces valeurs dépendent de la carte
+**et** de la disposition ; les reproduire demanderait la base des 180 cartes,
+que le livret ne contient pas — elle vit dans les cartes de référence et
+l'annexe numérique de l'éditeur. L'appli fait donc ce que fait le bloc de
+score officiel : elle met le décompte en ordre, convertit la Grotte et
+additionne. L'évaluation reste à la table, l'arithmétique revient à l'appli.
 
 ## Règles des Aventuriers du Rail (rappel)
 
