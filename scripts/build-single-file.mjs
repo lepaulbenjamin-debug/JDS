@@ -88,6 +88,31 @@ function topLevelNames(code) {
     .map((m) => m[1]);
 }
 
+/**
+ * Le service worker précharge une liste de fichiers écrite à la main. Un module
+ * oublié ne se voit pas en ligne — le réseau le sert quand même — mais il
+ * manque hors-ligne, et surtout les appareils continuent de servir l'ancienne
+ * version des fichiers qui, eux, sont dans la liste. Ce contrôle compare la
+ * liste aux modules réellement chargés par l'appli.
+ */
+function verifierServiceWorker() {
+  const sw = readFileSync(join(WEB, 'sw.js'), 'utf8');
+  const shell = [...sw.matchAll(/^\s*'([^']+)',$/gm)].map((m) => m[1]);
+  const manquants = MODULES
+    .map(([file]) => file)
+    .filter((file) => !shell.includes(file));
+
+  if (manquants.length) {
+    throw new Error(
+      `Module absent du service worker : ${manquants.join(', ')}.\n`
+      + "Ajoutez-le à SHELL dans web/sw.js et incrémentez CACHE, sinon les appareils\n"
+      + "déjà installés continueront de servir l'ancienne version.",
+    );
+  }
+}
+
+verifierServiceWorker();
+
 const vus = new Map();
 const bundle = MODULES
   .map(([file, name]) => {

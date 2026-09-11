@@ -289,6 +289,13 @@ C'est la partie qui rend l'appli utile sur les petits jeux : même sans compteur
 de points sophistiqué, un `pitch` + un `setup()` suffisent à sortir un jeu et à
 l'expliquer sans rouvrir la règle.
 
+**Ne pas oublier `web/sw.js`.** Le service worker précharge une liste de
+fichiers écrite à la main : ajoutez-y le module et incrémentez `CACHE`. Sans
+ça, le jeu manque hors-ligne — et surtout les appareils déjà installés
+continuent de servir l'ancienne version de `js/games/index.js`, donc le jeu
+n'apparaît pas du tout. `npm run bundle` refuse désormais de produire le
+fichier unique si un module manque à cette liste.
+
 ## Lecture à voix haute
 
 La voix vient de l'API `SpeechSynthesis` du navigateur : pas de réseau, pas de
