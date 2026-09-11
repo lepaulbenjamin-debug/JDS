@@ -472,6 +472,50 @@ directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
 
+## Lecture photo d'une forêt : ce que la mesure a donné
+
+Question posée : le modèle sait-il identifier les cartes d'une forêt à la
+résolution que l'API accepte (1568 px sur le grand côté) ? Mesuré le
+12 septembre 2026, sur une photo réelle de partie, via la fonction déployée.
+
+La photo de départ couvre ~34 cm de table, une carte y fait 470 px. Les vues
+plus larges sont simulées en réduisant cette photo jusqu'à ce qu'une carte y
+occupe la place qu'elle occuperait dans un cadrage donné.
+
+| Cadrage simulé | Carte | Lues | Devinées | Illisibles | Confiance |
+| --- | --- | --- | --- | --- | --- |
+| 34 cm (la photo) | 470 px | 5 | 0 | 0 | haute |
+| 60 cm | 165 px | 5 | 0 | 0 | haute |
+| **85 cm — une forêt entière** | 116 px | **5** | 0 | 0 | haute |
+| 120 cm | 82 px | 4 | 0 | 1 | moyenne |
+| 170 cm | 58 px | 0 | 3 | 4 | basse |
+| 240 cm | 41 px | 0 | 2 | 3 | basse |
+
+**Le cadrage d'une forêt entière passe.** Noms et règles imprimées sont lus mot
+pour mot, y compris le barème progressif du Marronnier commun
+(1/4/9/16/25/36/49). La dégradation est ensuite graduelle et honnête : la
+confiance baisse, les cartes non identifiables sont comptées à part, et le
+modèle bascule de « lu » à « deviné » plutôt que d'inventer.
+
+**Une réserve, et elle est sérieuse.** À 120 cm, le barème du Marronnier a été
+transcrit faux — « 0 1 4 8 16 25 38 48 » au lieu de « 1 4 9 16 25 36 49 » —
+tout en étant marqué « lu ». Les notes signalaient bien que les chiffres
+étaient flous, mais le champ structuré, lui, affirmait la lecture. Toute
+implémentation devra donc faire confirmer les **nombres** par la table, sans se
+reposer sur le seul drapeau de certitude.
+
+**Ce qui n'est pas encore mesuré :** une vraie vue d'ensemble, prise de loin,
+avec le flou de bougé, la profondeur de champ et les cartes vues de biais —
+réduire une photo nette est plus clément que photographier de loin. Et une
+forêt dense de trente cartes qui se chevauchent, là où l'essai n'en comptait
+que cinq.
+
+**Rien n'est branché dans l'interface.** Le mode `inventaire` existe dans le
+schéma et dans le module du jeu, mais le bouton photo reste masqué pour les
+jeux à saisie par formulaire. Un inventaire n'est pas un score : les conditions
+portent sur toute la forêt (« si vous avez au moins 4 Hêtres »), donc le
+décompte demandera un relevé complet puis une passe d'évaluation.
+
 ## La saisie qui s'additionne
 
 Une colonne de formulaire déclarée `cumul: true` ne demande plus un total mais
