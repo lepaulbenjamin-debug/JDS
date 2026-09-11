@@ -1595,10 +1595,15 @@ async function runScan() {
 /** Ouvre l'écran règles pour un jeu, en reprenant l'effectif du contexte. */
 function openRules(game = activeGame()) {
   const match = store.state.match;
-  const count = match && match.gameId === game.id ? match.players.length : rulesState.playerCount;
+  const enCours = match && match.gameId === game.id;
+  const count = enCours ? match.players.length : rulesState.playerCount;
   rulesState = {
     gameId: game.id,
     playerCount: Math.min(Math.max(count, game.minPlayers), game.maxPlayers),
+    // Les variantes de la partie en cours aussi, pas seulement l'effectif :
+    // consulter les règles au milieu d'une partie Europe pour y lire la mise
+    // en place des États-Unis n'aiderait personne.
+    options: enCours ? { ...(match.options ?? {}) } : rulesState.options,
     step: -1,
     speaking: false,
     paused: false,
