@@ -85,6 +85,25 @@ export default {
   // prévoit donc aucun départage : il n'y en aura pas.
   tieNote: 'Le livret le dit : à égalité, les joueurs concernés se partagent la victoire.',
 
+  // Lecture photo : pour l'instant un relevé, pas un décompte. Chaque carte
+  // porte sa règle imprimée, ce qui rend l'inventaire envisageable ; mais les
+  // conditions parlent de toute la forêt (« si vous avez au moins 4 Hêtres »),
+  // donc un score ne peut sortir que d'un inventaire complet. Tant que la
+  // fiabilité de ce relevé n'est pas établie, rien n'est branché dans
+  // l'interface — le bouton photo reste masqué pour les jeux à formulaire.
+  vision: {
+    context: `À Forêt Mixte, chaque joueur bâtit une forêt de cartes.
+Les cartes Arbre sont posées entières ; tout autour, des moitiés de cartes sont glissées dessous par le haut, le bas, la gauche ou la droite, et seule la moitié restée visible compte.
+Chaque carte porte son nom en bas de sa partie visible, et juste en dessous sa règle de score imprimée — par exemple « 5 si rattaché à un Hêtre » ou « 5 si vous avez au moins 4 Hêtres ».
+Beaucoup de ces règles dépendent de la forêt entière et non de la carte seule.`,
+    inventaire: {
+      label: 'Une forêt',
+      hint: 'Photographiez la forêt d’un joueur : l’appli relève les cartes visibles, sans calculer.',
+      instruction: `La photo montre tout ou partie de la forêt d'un joueur.
+Relève chaque carte dont la partie visible est identifiable : son nom, et la règle de score imprimée dessous.`,
+    },
+  },
+
   deal(playerCount = 4) {
     const n = Math.min(Math.max(playerCount, 2), 5);
     return { perPlayer: 6, retirees: CARTES_RETIREES[n] ?? 0, mainMax: 10 };

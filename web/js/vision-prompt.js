@@ -21,8 +21,8 @@ export const SCHEMA = {
   properties: {
     detected: {
       type: 'string',
-      enum: ['scoresheet', 'cards', 'unclear'],
-      description: "Ce que montre la photo : une feuille de scores, des cartes, ou rien d'exploitable.",
+      enum: ['scoresheet', 'cards', 'inventory', 'unclear'],
+      description: "Ce que montre la photo : une feuille de scores, des cartes à additionner, un tableau de cartes à inventorier, ou rien d'exploitable.",
     },
     rounds: {
       type: 'array',
@@ -67,10 +67,37 @@ export const SCHEMA = {
       required: ['values', 'count', 'detail'],
       additionalProperties: false,
     },
+    inventory: {
+      type: 'object',
+      description: 'Cartes inventoriées sur un tableau étalé. Utilisé seulement si detected = "inventory".',
+      properties: {
+        cards: {
+          type: 'array',
+          description: 'Une entrée par carte visible identifiée.',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'Le nom lu sur la carte, recopié tel quel.' },
+              rule: { type: 'string', description: 'La règle de score imprimée sur la carte, recopiée telle quelle. Chaîne vide si elle n’est pas lisible.' },
+              certainty: {
+                type: 'string',
+                enum: ['read', 'guessed'],
+                description: '"read" si le nom est déchiffré sur la carte, "guessed" s’il est déduit de l’illustration.',
+              },
+            },
+            required: ['name', 'rule', 'certainty'],
+            additionalProperties: false,
+          },
+        },
+        unreadable: { type: 'integer', description: 'Cartes visibles mais non identifiables.' },
+      },
+      required: ['cards', 'unreadable'],
+      additionalProperties: false,
+    },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
     notes: { type: 'string', description: 'Une phrase en français : ce qui a été lu, ou ce qui pose problème.' },
   },
-  required: ['detected', 'rounds', 'cards', 'confidence', 'notes'],
+  required: ['detected', 'rounds', 'cards', 'inventory', 'confidence', 'notes'],
   additionalProperties: false,
 };
 
@@ -85,6 +112,20 @@ ${game.vision?.context ?? ''}`.trim();
 
 function instructionFor(mode, game, players) {
   const names = players.length ? players.map((p) => `"${p}"`).join(', ') : 'inconnus';
+
+  // Inventorier, c'est lire ce qui est posé sans rien calculer. Un jeu dont
+  // chaque carte porte sa propre règle — au Forêt Mixte — ne peut pas être
+  // scoré à partir d'une carte isolée : les conditions parlent de toute la
+  // forêt. On relève donc d'abord, on évaluera ensuite.
+  if (mode === 'inventaire') {
+    return `${game.vision?.inventaire?.instruction ?? 'Inventorie les cartes visibles sur la photo.'}
+
+Ne calcule aucun score, aucun total : cette étape ne sert qu'à relever ce qui est posé.
+Ne devine pas un nom que tu ne lis pas. Une carte dont le nom n'est pas déchiffrable se compte dans "unreadable" plutôt que de s'inventer.
+Distingue dans "certainty" ce que tu as lu de ce que tu déduis de l'illustration : une identification confiante mais fausse donnerait un score faux sans que personne ne s'en aperçoive.
+Recopie la règle imprimée sur la carte dans "rule", mot pour mot, ou laisse la chaîne vide si elle n'est pas lisible.
+Laisse "rounds" et "cards" vides, et mets detected = "inventory".`;
+  }
 
   if (mode === 'cards') {
     return `${game.vision?.cards?.instruction ?? 'Liste la valeur en points de chaque carte visible sur la photo.'}
