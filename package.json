@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node server/index.js",
     "check": "node server/check.mjs",
+    "essai-foret": "node server/essai-foret.mjs",
     "bundle": "node scripts/build-single-file.mjs"
   },
   "engines": {

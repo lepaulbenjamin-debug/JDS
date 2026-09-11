@@ -97,10 +97,14 @@ export default {
         type: 'players',
         label: 'Le décompte',
         hint: 'Les quatre lignes du bloc de score de l’éditeur. Additionnez les points de vos cartes visibles catégorie par catégorie ; pour la Grotte, comptez les cartes, l’appli fait la conversion.',
+        // Les trois colonnes de points s'additionnent carte après carte : on
+        // tape la valeur d'une carte, elle s'ajoute, le total court reste
+        // affiché. C'est là qu'était la corvée — trente nombres à additionner
+        // de tête. La Grotte, elle, est un simple nombre de cartes.
         columns: [
-          { key: 'arbres', label: 'Arbres', min: 0, max: 300, placeholder: '0' },
-          { key: 'hautBas', label: 'Haut/Bas', min: 0, max: 300, placeholder: '0' },
-          { key: 'gaucheDroite', label: 'Gauche/Droite', min: 0, max: 300, placeholder: '0' },
+          { key: 'arbres', label: 'Arbres', min: 0, max: 300, placeholder: '+', cumul: true },
+          { key: 'hautBas', label: 'Haut/Bas', min: 0, max: 300, placeholder: '+', cumul: true },
+          { key: 'gaucheDroite', label: 'Gauche/Droite', min: 0, max: 300, placeholder: '+', cumul: true },
           { key: 'grotte', label: 'Grotte (cartes)', min: 0, max: 60, placeholder: '0' },
         ],
       },

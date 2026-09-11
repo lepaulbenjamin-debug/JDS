@@ -472,6 +472,28 @@ directe », l'appel part du navigateur en HTTP direct (pas de bundler dans ce
 projet, donc pas de SDK côté client) avec l'en-tête
 `anthropic-dangerous-direct-browser-access`.
 
+## La saisie qui s'additionne
+
+Une colonne de formulaire déclarée `cumul: true` ne demande plus un total mais
+des valeurs à ajouter : on tape ce que vaut une carte, elle s'ajoute, et la
+légende porte le total courant. Le détail de ce qui a été ajouté reste affiché
+sous la case, la dernière valeur s'annule d'un bouton, et la colonne entière se
+remet à zéro d'un autre.
+
+C'est fait pour Forêt Mixte, où une catégorie est la somme d'une trentaine de
+valeurs lues une à une sur les cartes : demander un total supposerait de l'avoir
+calculé de tête, ce qui est exactement la corvée qu'on veut supprimer. La suite
+des valeurs est conservée avec la manche, donc rouvrir une partie archivée
+retrouve le détail, pas seulement le total.
+
+Deux pièges rencontrés en l'écrivant, tous deux attrapés par les tests :
+
+- **Une boucle de rendu.** Le champ se re-rend quand il prend le curseur, ce qui
+  le recrée, ce qui lui redonne le curseur… La garde est dans `onfocus` : on ne
+  re-rend que si la cellule active change réellement.
+- **Une valeur tapée puis abandonnée.** Toucher une autre case sans valider
+  aurait perdu le nombre en silence. La sortie du champ ajoute aussi.
+
 ## Règles de Forêt Mixte (rappel)
 
 Vérifié sur le livret français officiel (Kosch, Lookout Games) et sur le bloc

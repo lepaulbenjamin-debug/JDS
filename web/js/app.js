@@ -777,6 +777,129 @@ function renderRoundPanel(match, game) {
  * Saisie d'une donne décrite par le jeu (Tarot) : le score n'est pas tapé,
  * il est calculé à partir de ces champs.
  */
+/**
+ * Cellule qui s'additionne, pour les décomptes qui se font carte par carte.
+ *
+ * Au Forêt Mixte, une catégorie est la somme d'une trentaine de valeurs lues
+ * une à une sur les cartes. Taper un total suppose de l'avoir calculé de tête,
+ * ce qui est précisément la corvée. Ici le champ veut dire « ajouter » : on
+ * tape la valeur d'une carte, elle s'ajoute, et la légende porte le total
+ * courant. Le détail est conservé, donc une valeur mal tapée s'annule.
+ */
+
+/** Le détail d'une colonne cumulative : la suite des valeurs ajoutées. */
+function suiteCumul(form, fieldKey, playerId, colKey) {
+  const suite = form?.cumuls?.[fieldKey]?.[playerId]?.[colKey];
+  return Array.isArray(suite) ? suite : [];
+}
+
+/** Écrit la suite et le total qui en découle. */
+function ecrireCumul(fieldKey, playerId, colKey, suite) {
+  store.update((s) => {
+    const f = s.match.draft.form;
+    f.cumuls ??= {};
+    f.cumuls[fieldKey] ??= {};
+    f.cumuls[fieldKey][playerId] ??= {};
+    f.cumuls[fieldKey][playerId][colKey] = suite;
+    f[fieldKey] ??= {};
+    f[fieldKey][playerId] ??= {};
+    f[fieldKey][playerId][colKey] = String(suite.reduce((t, v) => t + v, 0));
+  });
+}
+
+/** Quelle cellule cumulative est en cours de saisie, pour afficher son détail. */
+let cumulActif = null;
+
+function celluleCumul(field, player, col, form, game) {
+  const suite = suiteCumul(form, field.key, player.id, col.key);
+  const total = Number(form[field.key]?.[player.id]?.[col.key]) || 0;
+  const actif = cumulActif
+    && cumulActif.field === field.key
+    && cumulActif.player === player.id
+    && cumulActif.col === col.key;
+
+  const champ = el('input', {
+    type: 'number',
+    inputmode: 'numeric',
+    min: col.min,
+    max: col.max,
+    step: '1',
+    value: '',
+    placeholder: col.placeholder ?? '+',
+    'aria-label': `${col.label} de ${player.name} : ajouter une valeur`,
+    onfocus: () => {
+      // Sans cette garde, on boucle : le re-rendu recrée le champ, lui rendre
+      // le curseur déclenche un nouveau `focus`, qui re-rend, et ainsi de suite.
+      if (actif) return;
+      cumulActif = { field: field.key, player: player.id, col: col.key };
+      renderForm(store.state.match, game);
+      // Le re-rendu recrée le champ : on lui rend le curseur, sinon le clavier
+      // se referme au moment même où l'on vient de l'ouvrir.
+      focusCellule(field.key, player.id, col.key);
+    },
+    // On ajoute à la validation comme à la sortie du champ : une valeur tapée
+    // puis abandonnée serait perdue sans bruit.
+    onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); ajouter(e.target); } },
+    onblur: (e) => ajouter(e.target, false),
+  });
+
+  function ajouter(input, garderLeFocus = true) {
+    const brut = input.value.trim();
+    if (brut === '') return;
+    const valeur = Number(brut);
+    if (!Number.isFinite(valeur)) return;
+    input.value = '';
+    ecrireCumul(field.key, player.id, col.key, [...suiteCumul(store.state.match.draft.form, field.key, player.id, col.key), valeur]);
+    if (garderLeFocus) focusCellule(field.key, player.id, col.key);
+  }
+
+  return el('label', {
+    class: `grid-cell grid-cell-cumul${actif ? ' is-active' : ''}`,
+    dataset: { cumul: `${field.key}|${player.id}|${col.key}` },
+  }, [
+    el('span', { class: 'grid-cap' }, [
+      el('span', { text: col.label }),
+      el('span', { class: 'grid-total', text: String(total) }),
+    ]),
+    champ,
+    suite.length > 0 && el('span', { class: 'grid-suite', text: suite.join(' + ') }),
+  ].filter(Boolean));
+}
+
+/** Rend le curseur à une cellule cumulative après un re-rendu. */
+function focusCellule(fieldKey, playerId, colKey) {
+  const cible = $(`.grid-cell-cumul[data-cumul="${fieldKey}|${playerId}|${colKey}"] input`);
+  if (cible && document.activeElement !== cible) cible.focus();
+}
+
+/** Les boutons de correction, sous la ligne du joueur en cours de saisie. */
+function barreCumul(field, player, form, game) {
+  if (!cumulActif || cumulActif.field !== field.key || cumulActif.player !== player.id) return null;
+  const col = field.columns.find((c) => c.key === cumulActif.col);
+  const suite = suiteCumul(form, field.key, player.id, cumulActif.col);
+  if (!col || suite.length === 0) return null;
+
+  const refaire = (nouvelle) => {
+    ecrireCumul(field.key, player.id, col.key, nouvelle);
+    renderForm(store.state.match, game);
+    focusCellule(field.key, player.id, col.key);
+  };
+
+  return el('div', { class: 'cumul-bar' }, [
+    el('span', { class: 'muted small', text: `${col.label} de ${player.name}` }),
+    el('button', {
+      class: 'btn btn-ghost',
+      type: 'button',
+      onclick: () => refaire(suite.slice(0, -1)),
+    }, `↶ Annuler ${suite[suite.length - 1]}`),
+    el('button', {
+      class: 'btn btn-ghost',
+      type: 'button',
+      onclick: () => refaire([]),
+    }, 'Tout effacer'),
+  ]);
+}
+
 function renderForm(match, game) {
   const host = clear($('#entry-form'));
   const { form } = match.draft;
@@ -807,35 +930,42 @@ function renderForm(match, game) {
         : field.columns.length > 4 ? ' is-dense' : '';
       const grille = el('div', { class: `player-grid${densite}` });
       for (const p of match.players) {
-        const cellules = field.columns.map((col) => el('label', { class: 'grid-cell' }, [
-          el('span', { class: 'grid-cap', text: col.label }),
-          el('input', {
-            type: 'number',
-            inputmode: 'numeric',
-            min: col.min,
-            max: typeof col.max === 'function' ? col.max(match, form) : col.max,
-            step: '1',
-            value: form[field.key]?.[p.id]?.[col.key] ?? '',
-            placeholder: col.placeholder ?? '0',
-            oninput: (e) => {
-              const cible = store.state.match.draft.form;
-              cible[field.key] ??= {};
-              cible[field.key][p.id] ??= {};
-              cible[field.key][p.id][col.key] = e.target.value;
-              refreshStatus(store.state.match, game);
-            },
-            onchange: () => store.touch(),
-          }),
-        ]));
-        grille.append(
-          el('div', { class: 'player-grid-row' }, [
-            el('div', { class: 'grid-name' }, [
-              el('span', { class: 'dot', style: { background: p.color } }),
-              el('span', { text: p.name }),
-            ]),
-            el('div', { class: 'grid-cells' }, cellules),
+        const cellules = field.columns.map((col) => (col.cumul
+          ? celluleCumul(field, p, col, form, game)
+          : el('label', { class: 'grid-cell' }, [
+            el('span', { class: 'grid-cap', text: col.label }),
+            el('input', {
+              type: 'number',
+              inputmode: 'numeric',
+              min: col.min,
+              max: typeof col.max === 'function' ? col.max(match, form) : col.max,
+              step: '1',
+              value: form[field.key]?.[p.id]?.[col.key] ?? '',
+              placeholder: col.placeholder ?? '0',
+              oninput: (e) => {
+                const cible = store.state.match.draft.form;
+                cible[field.key] ??= {};
+                cible[field.key][p.id] ??= {};
+                cible[field.key][p.id][col.key] = e.target.value;
+                refreshStatus(store.state.match, game);
+              },
+              onchange: () => store.touch(),
+            }),
+          ])));
+
+        const ligne = el('div', { class: 'player-grid-row' }, [
+          el('div', { class: 'grid-name' }, [
+            el('span', { class: 'dot', style: { background: p.color } }),
+            el('span', { text: p.name }),
           ]),
-        );
+          el('div', { class: 'grid-cells' }, cellules),
+        ]);
+
+        // Le rappel de ce qui a été ajouté, sous la ligne du joueur concerné :
+        // c'est là qu'on regarde quand on doute d'avoir compté une carte.
+        const barre = barreCumul(field, p, form, game);
+        if (barre) ligne.append(barre);
+        grille.append(ligne);
       }
       block.append(grille);
     } else if (field.type === 'number') {
