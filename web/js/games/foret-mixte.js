@@ -99,8 +99,9 @@ Beaucoup de ces règles dépendent de la forêt entière et non de la carte seul
     inventaire: {
       label: 'Une forêt',
       hint: 'Photographiez la forêt d’un joueur : l’appli relève les cartes visibles, sans calculer.',
-      instruction: `La photo montre tout ou partie de la forêt d'un joueur.
-Relève chaque carte dont la partie visible est identifiable : son nom, et la règle de score imprimée dessous.`,
+      instruction: `La photo montre un arbre de la forêt d'un joueur avec ce qui lui est rattaché, ou une portion de cette forêt.
+Relève chaque carte dont la partie visible est identifiable : son nom, la règle de score imprimée dessous, et le côté de l'arbre où elle est glissée.
+Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles autour d'elle sont rattachées par le haut, le bas, la gauche ou la droite.`,
     },
   },
 

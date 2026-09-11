@@ -79,19 +79,28 @@ export const SCHEMA = {
             properties: {
               name: { type: 'string', description: 'Le nom lu sur la carte, recopié tel quel.' },
               rule: { type: 'string', description: 'La règle de score imprimée sur la carte, recopiée telle quelle. Chaîne vide si elle n’est pas lisible.' },
+              side: {
+                type: 'string',
+                enum: ['arbre', 'haut', 'bas', 'gauche', 'droite', 'inconnu'],
+                description: 'Où se trouve la carte : "arbre" pour une carte Arbre posée entière, sinon le côté de l’arbre auquel sa moitié visible est rattachée.',
+              },
               certainty: {
                 type: 'string',
                 enum: ['read', 'guessed'],
                 description: '"read" si le nom est déchiffré sur la carte, "guessed" s’il est déduit de l’illustration.',
               },
             },
-            required: ['name', 'rule', 'certainty'],
+            required: ['name', 'rule', 'side', 'certainty'],
             additionalProperties: false,
           },
         },
+        tree: {
+          type: 'string',
+          description: 'Quand la photo montre un seul arbre et ce qui lui est rattaché, le nom de cet arbre. Chaîne vide sinon.',
+        },
         unreadable: { type: 'integer', description: 'Cartes visibles mais non identifiables.' },
       },
-      required: ['cards', 'unreadable'],
+      required: ['cards', 'tree', 'unreadable'],
       additionalProperties: false,
     },
     confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
@@ -124,6 +133,8 @@ Ne calcule aucun score, aucun total : cette étape ne sert qu'à relever ce qui 
 Ne devine pas un nom que tu ne lis pas. Une carte dont le nom n'est pas déchiffrable se compte dans "unreadable" plutôt que de s'inventer.
 Distingue dans "certainty" ce que tu as lu de ce que tu déduis de l'illustration : une identification confiante mais fausse donnerait un score faux sans que personne ne s'en aperçoive.
 Recopie la règle imprimée sur la carte dans "rule", mot pour mot, ou laisse la chaîne vide si elle n'est pas lisible.
+Indique dans "side" où se trouve chaque carte : "arbre" si elle est posée entière, sinon le côté de l'arbre auquel sa moitié visible est rattachée — c'est ce côté qui décide de la ligne du décompte, et une carte rangée du mauvais côté fausserait le total.
+Si la photo ne montre qu'un seul arbre et ce qui lui est rattaché, donne son nom dans "tree".
 Laisse "rounds" et "cards" vides, et mets detected = "inventory".`;
   }
 
