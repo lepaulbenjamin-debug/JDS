@@ -497,6 +497,39 @@ pour mot, y compris le barème progressif du Marronnier commun
 confiance baisse, les cartes non identifiables sont comptées à part, et le
 modèle bascule de « lu » à « deviné » plutôt que d'inventer.
 
+### Deuxième mesure : quatre vraies photos, un arbre par photo
+
+Le 12 septembre 2026, sur quatre photos réelles d'une forêt en cours de partie,
+prises arbre par arbre. **14 cartes relevées, 14 exactes**, côté de rattachement
+correct partout, aucune attribution fautive.
+
+| Photo | Arbre | Cartes rattachées | Résultat |
+| --- | --- | --- | --- |
+| 1 | Hêtre | Pinson (haut), Lynx (gauche), Chevreuil (droite), Luciole (bas) | 5/5, côtés justes |
+| 2 | Hêtre | Pinson (haut), Blaireau (gauche), Pipistrelle (droite) | 4/4, côtés justes |
+| 3 | Marronnier commun | Loir gris (gauche) | 2/2, barème exact |
+| 4 | Bouleau | Autour des palombes (haut), Barbastelle (gauche) | 3/3, côtés justes |
+
+Deux comportements qui comptent plus que le score brut. Sur la photo 4, une
+carte d'un **arbre voisin** dépassait dans le cadre : elle a été écartée
+explicitement — « appartient à une autre zone » — au lieu d'être rattachée au
+mauvais arbre. Et chaque incertitude est nommée : l'icône de condition du Loir
+gris masquée, la règle du Bouleau cachée par les moitiés glissées dessous.
+
+**Deux obstacles structurels apparaissent, et ils ne concernent plus la
+lecture :**
+
+1. **Beaucoup de règles sont des icônes, pas des phrases.** Le Chevreuil dit
+   « 3🌰 × 🍃 », l'Autour des palombes « 3🌰 × 🐦 », le Blaireau un pictogramme
+   de conversion. Le relevé les transcrit fidèlement, mais les interpréter
+   demande de connaître l'iconographie du jeu — problème différent de la
+   lecture.
+2. **La règle d'un Arbre est souvent cachée.** Les moitiés de cartes se
+   glissent sous l'Arbre et masquent le bas de sa carte, là où figure son
+   barème. C'est le cas du Bouleau sur la photo 4. Mais il n'y a que
+   **8 espèces d'Arbres** : une petite table, contrairement aux 180 cartes du
+   jeu.
+
 **Une réserve, et elle est sérieuse.** À 120 cm, le barème du Marronnier a été
 transcrit faux — « 0 1 4 8 16 25 38 48 » au lieu de « 1 4 9 16 25 36 49 » —
 tout en étant marqué « lu ». Les notes signalaient bien que les chiffres
