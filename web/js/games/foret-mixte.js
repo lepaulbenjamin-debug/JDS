@@ -23,8 +23,48 @@ import { lireLigne, grillesVides } from './common.js';
 /** Ce que rapporte chaque carte rangée sous la Grotte. */
 const POINTS_PAR_CARTE_GROTTE = 1;
 
-/** Cartes à retirer de la boîte avant de jouer, selon l'effectif. */
-export const CARTES_RETIREES = { 2: 30, 3: 20, 4: 10, 5: 0 };
+/**
+ * Cartes à retirer de la boîte avant de jouer.
+ *
+ * Le jeu de base a sa propre table. Dès qu'une extension entre en jeu, les
+ * deux livrets d'extension en imposent une autre, et ajoutent une étape : on
+ * retire d'abord 10 cartes, puis le nombre indiqué « en plus des 10
+ * premières ».
+ */
+export const CARTES_RETIREES = {
+  base: { 2: 30, 3: 20, 4: 10, 5: 0 },
+  une: { 2: 45, 3: 30, 4: 15, 5: 0 },
+  deux: { 2: 80, 3: 50, 4: 35, 5: 20 },
+};
+
+/** Les 10 cartes retirées d'office avant la table, dès qu'il y a une extension. */
+const RETRAIT_PREALABLE = 10;
+
+/** Les extensions, dans leur ordre de parution. */
+export const EXTENSIONS = [
+  { value: 'aucune', label: 'Sans extension' },
+  { value: 'alpes', label: 'Alpes' },
+  { value: 'lisiere', label: 'Lisière de forêt' },
+  { value: 'deux', label: 'Les deux' },
+];
+
+/** Ce que l'extension choisie change, en une seule lecture. */
+export function extensionsDe(options) {
+  const choix = options?.extensions ?? 'aucune';
+  const alpes = choix === 'alpes' || choix === 'deux';
+  // La Lisière introduit les Arbustes : quatre emplacements comme un Arbre,
+  // mais « les Arbustes ne sont ni des Arbres ni des Champignons ».
+  const lisiere = choix === 'lisiere' || choix === 'deux';
+  const nombre = (alpes ? 1 : 0) + (lisiere ? 1 : 0);
+  return {
+    choix,
+    alpes,
+    lisiere,
+    nombre,
+    table: nombre === 0 ? CARTES_RETIREES.base : (nombre === 1 ? CARTES_RETIREES.une : CARTES_RETIREES.deux),
+    prealable: nombre === 0 ? 0 : RETRAIT_PREALABLE,
+  };
+}
 
 /**
  * Décompte d'un joueur, dans les quatre catégories du bloc de score officiel.
@@ -95,7 +135,8 @@ export default {
     context: `À Forêt Mixte, chaque joueur bâtit une forêt de cartes.
 Les cartes Arbre sont posées entières ; tout autour, des moitiés de cartes sont glissées dessous par le haut, le bas, la gauche ou la droite, et seule la moitié restée visible compte.
 Chaque carte porte son nom en bas de sa partie visible, et juste en dessous sa règle de score imprimée — par exemple « 5 si rattaché à un Hêtre » ou « 5 si vous avez au moins 4 Hêtres ».
-Beaucoup de ces règles dépendent de la forêt entière et non de la carte seule.`,
+Beaucoup de ces règles dépendent de la forêt entière et non de la carte seule.
+Avec l'extension Lisière de forêt, des Arbustes sont posés entiers comme les Arbres et offrent eux aussi quatre emplacements, sans être des Arbres pour autant.`,
     inventaire: {
       label: 'Une forêt',
       hint: 'Photographiez la forêt d’un joueur : l’appli relève les cartes visibles, sans calculer.',
@@ -105,12 +146,31 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
     },
   },
 
-  deal(playerCount = 4) {
+  options: [
+    {
+      key: 'extensions',
+      label: 'Extensions en jeu',
+      hint: 'Elles changent le nombre de cartes à retirer, et la Lisière ajoute les Arbustes.',
+      options: EXTENSIONS,
+    },
+  ],
+
+  deal(playerCount = 4, options = {}) {
     const n = Math.min(Math.max(playerCount, 2), 5);
-    return { perPlayer: 6, retirees: CARTES_RETIREES[n] ?? 0, mainMax: 10 };
+    const ext = extensionsDe(options);
+    return {
+      perPlayer: 6,
+      retirees: ext.prealable + (ext.table[n] ?? 0),
+      mainMax: 10,
+    };
   },
 
-  form() {
+  form(playerCount, players, rounds = [], form = {}, options = {}) {
+    // Le bloc de score de l'éditeur range par emplacement, pas par type : la
+    // première ligne couvre les cartes posées entières. Avec la Lisière, ce
+    // sont donc les Arbres et les Arbustes — « les Arbustes ne sont ni des
+    // Arbres ni des Champignons », mais ils se posent comme eux.
+    const { lisiere } = extensionsDe(options);
     return [
       {
         key: 'decompte',
@@ -122,7 +182,14 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
         // affiché. C'est là qu'était la corvée — trente nombres à additionner
         // de tête. La Grotte, elle, est un simple nombre de cartes.
         columns: [
-          { key: 'arbres', label: 'Arbres', min: 0, max: 300, placeholder: '+', cumul: true },
+          {
+            key: 'arbres',
+            label: lisiere ? 'Arbres/Arbustes' : 'Arbres',
+            min: 0,
+            max: 300,
+            placeholder: '+',
+            cumul: true,
+          },
           { key: 'hautBas', label: 'Haut/Bas', min: 0, max: 300, placeholder: '+', cumul: true },
           { key: 'gaucheDroite', label: 'Gauche/Droite', min: 0, max: 300, placeholder: '+', cumul: true },
           { key: 'grotte', label: 'Grotte (cartes)', min: 0, max: 60, placeholder: '0' },
@@ -195,10 +262,11 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
 
   pitch: "Forêt Mixte, c'est une forêt qu'on plante carte après carte. À votre tour, vous piochez deux cartes, ou vous en jouez une en la payant avec d'autres cartes de votre main. Les arbres forment le squelette ; tout autour, vous glissez des animaux, des plantes et des champignons, chacun avec ses exigences : celui-ci veut ses congénères, celui-là un habitat précis. La partie s'arrête net à la troisième carte Hiver. Le décompte final est long parce que chaque carte compte à sa façon — l'appli ne le fera pas à votre place, mais elle le met en ordre et fait l'addition.",
 
-  setup(playerCount = 4) {
+  setup(playerCount = 4, options = {}) {
     const n = Math.min(Math.max(playerCount, this.minPlayers), this.maxPlayers);
-    const retirees = CARTES_RETIREES[n] ?? 0;
-    return [
+    const ext = extensionsDe(options);
+    const table = ext.table[n] ?? 0;
+    const etapes = [
       {
         title: 'La clairière',
         say: 'Posez le plateau Clairière au centre de la table, à portée de tous, et les quatorze cartes de référence à côté. Elles expliquent chaque espèce : gardez-les accessibles, vous les consulterez au décompte.',
@@ -211,12 +279,40 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
         title: 'Les cartes Hiver',
         say: 'Mettez les trois cartes Hiver de côté pour l’instant. Ce sont elles qui décideront de la fin de la partie.',
       },
-      {
+    ];
+
+    if (ext.nombre === 0) {
+      etapes.push({
         title: 'Retirer des cartes',
-        say: retirees > 0
-          ? `Mélangez toutes les autres cartes, puis rangez ${retirees} cartes dans la boîte sans les regarder. À ${n} joueurs, c’est ce qu’il faut retirer pour que la partie dure le temps prévu.`
+        say: table > 0
+          ? `Mélangez toutes les autres cartes, puis rangez ${table} cartes dans la boîte sans les regarder. À ${n} joueurs, c’est ce qu’il faut retirer pour que la partie dure le temps prévu.`
           : `Mélangez toutes les autres cartes. À ${n} joueurs, vous jouez avec la totalité du jeu : ne retirez rien.`,
-      },
+      });
+    } else {
+      const nomExt = ext.nombre === 2 ? 'des deux extensions' : `de l’extension ${ext.alpes ? 'Alpes' : 'Lisière de forêt'}`;
+      // Le livret d'extension impose deux retraits successifs : dix cartes
+      // d'abord, puis la table « en plus des dix premières ».
+      etapes.push({
+        title: 'Mélanger les extensions',
+        say: `Mélangez les cartes du jeu de base avec celles ${nomExt}, puis rangez dix cartes dans la boîte sans les regarder.`,
+      });
+      etapes.push({
+        title: 'Retirer des cartes',
+        say: table > 0
+          ? `En plus de ces dix, retirez ${table} cartes, toujours sans les regarder. À ${n} joueurs avec ${ext.nombre === 2 ? 'deux extensions' : 'une extension'}, cela fait ${ext.prealable + table} cartes rangées au total.`
+          : `À ${n} joueurs avec une extension, il n’y a rien à retirer de plus : les dix premières suffisent.`,
+      });
+      if (ext.nombre === 2 && n <= 3) {
+        etapes.push({
+          title: 'Le raccourci du livret',
+          say: n === 2
+            ? 'Plutôt que de compter, le livret propose plus simple : mélangez toutes les cartes, faites cinq piles de taille égale, et retirez-en deux du jeu.'
+            : 'Plutôt que de compter, le livret propose plus simple : mélangez toutes les cartes, faites quatre piles de taille égale, et retirez-en une du jeu.',
+        });
+      }
+    }
+
+    etapes.push(
       {
         title: 'Monter la pioche',
         say: 'Divisez les cartes en trois piles à peu près égales, faces cachées. Mélangez deux cartes Hiver dans l’une d’elles, puis posez la troisième carte Hiver au sommet de cette même pile. Empilez enfin les deux autres piles par-dessus, et posez le tout à côté de la Clairière.',
@@ -229,7 +325,16 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
         title: 'Qui commence',
         say: 'Le dernier joueur à s’être promené en forêt commence. Ensuite on joue dans le sens des aiguilles d’une montre.',
       },
-    ];
+    );
+
+    if (ext.lisiere) {
+      etapes.push({
+        title: 'Les Arbustes',
+        say: 'Un mot sur les Arbustes, apportés par la Lisière de forêt : ils offrent quatre emplacements comme un Arbre, et un effet permanent comme un Champignon. Mais attention, ils ne sont ni l’un ni l’autre : une carte qui exige un Arbre ne se contente pas d’un Arbuste.',
+      });
+    }
+
+    return etapes;
   },
 
   rules: [
@@ -256,6 +361,14 @@ Une carte Arbre est posée entière et occupe le centre ; les moitiés visibles 
     {
       title: 'Le décompte final',
       body: "Additionnez les points de toutes les cartes visibles de votre forêt, puis ajoutez un point par carte rangée dans votre Grotte. L'appli reprend les quatre lignes du bloc de score de l'éditeur — Arbres, Haut/Bas, Gauche/Droite, Grotte — fait la conversion de la Grotte et l'addition. Ce qu'elle ne peut pas faire, c'est dire ce que vaut telle carte : cela dépend de la carte et de la disposition de votre forêt. Les cartes de référence sont là pour ça.",
+    },
+    {
+      title: 'Les extensions Alpes et Lisière de forêt',
+      body: "Chacune ajoute 36 cartes qu'on mélange simplement au jeu de base. **Alpes** apporte deux nouvelles espèces d'Arbres — le Mélèze d'Europe et le Pin cembro — un sixième Papillon, et le Gypaète barbu, troisième carte permettant de garnir sa Grotte. Le Lièvre variable compte avec les Lièvres d'Europe au décompte. Le Chêne et la Fraise des bois continuent de n'exiger que 8 espèces d'Arbres différentes malgré les deux nouvelles. **Lisière de forêt** apporte les Arbustes : quatre emplacements comme un Arbre, un effet permanent comme un Champignon, mais ni l'un ni l'autre — une carte qui réclame un Arbre ne se contente pas d'un Arbuste. Avec les deux extensions, le jeu compte 7 Papillons différents.",
+    },
+    {
+      title: 'Ce que les extensions changent à la mise en place',
+      body: "Le retrait de cartes n'est plus le même, et il se fait en deux temps : on range d'abord dix cartes sans les regarder, puis un nombre qui dépend de l'effectif — avec une extension, 45 à deux joueurs, 30 à trois, 15 à quatre, rien à cinq ; avec les deux, 80, 50, 35 et 20. À deux ou trois joueurs avec les deux extensions, le livret propose plus simple que de compter : faire cinq piles égales et en retirer deux, ou quatre piles et en retirer une.",
     },
     {
       title: 'Quelques barèmes qui piègent',

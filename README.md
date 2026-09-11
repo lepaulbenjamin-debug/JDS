@@ -589,6 +589,18 @@ de score publié par l'éditeur.
   troisième posée au sommet de cette pile, et les deux autres piles empilées
   par-dessus.
 
+**Les extensions Alpes et Lisière de forêt** se choisissent avant de commencer
+et changent deux choses. La mise en place d'abord : le retrait se fait en deux
+temps — dix cartes, puis un nombre qui dépend de l'effectif et du nombre
+d'extensions (45/30/15/0 avec une, 80/50/35/20 avec les deux). L'appli annonce
+les deux retraits et leur total, et donne le raccourci du livret à deux et
+trois joueurs avec les deux extensions (cinq piles moins deux, quatre piles
+moins une). Le décompte ensuite : la Lisière apporte les **Arbustes**, posés
+entiers comme des Arbres tout en n'étant « ni des Arbres ni des Champignons ».
+Le bloc de score de l'éditeur range par emplacement et non par type, donc les
+Arbustes vont sur la ligne des cartes posées entières — que l'appli intitule
+alors « Arbres/Arbustes ».
+
 **Ce que l'appli ne fait pas, et pourquoi.** Elle ne sait pas ce que vaut une
 carte donnée : l'Érable rapporte autant de points qu'il y a d'arbres dans la
 forêt, le Lièvre d'Europe autant qu'il y a de lièvres, la Barbastelle rien en
