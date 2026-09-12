@@ -1228,21 +1228,31 @@ test('les questions du fil rouge sont réparties dans la partie, jamais groupée
   }
 });
 
-test('trouver le fil rouge rapporte une prime, et une seule fois', () => {
+test('le fil rouge se trouve à plusieurs, mais une seule fois chacun', () => {
+  // La course ne s'arrête pas au premier : quand un joueur rapide trouvait à la
+  // manche 2, toute la table cherchait pour rien pendant dix manches.
   const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE, fil: FIL });
   regie.lancer(0, JOUEURS);
   regie.avancer(0, JOUEURS);
 
   regie.encaisser([{ playerId: 'a', fil: 'le rouge' }]);
   const vue = regie.etatPublic(JOUEURS);
-  assert.equal(vue.fil.trouve.nom, 'Ana');
-  assert.ok(vue.fil.trouve.prime > 0);
-  assert.equal(vue.classement.find((j) => j.id === 'a').score, vue.fil.trouve.prime);
+  assert.deepEqual(vue.fil.trouves.map((t) => t.nom), ['Ana']);
+  assert.ok(vue.fil.trouves[0].prime > 0);
+  assert.equal(vue.classement.find((j) => j.id === 'a').score, vue.fil.trouves[0].prime);
 
-  // Bo arrive après la bataille : plus rien à gagner.
+  // Bo trouve à son tour : il touche lui aussi.
   regie.encaisser([{ playerId: 'b', fil: 'le rouge' }]);
-  assert.equal(regie.etatPublic(JOUEURS).fil.trouve.nom, 'Ana');
-  assert.equal(regie.etatPublic(JOUEURS).classement.find((j) => j.id === 'b').score, 0);
+  const apresBo = regie.etatPublic(JOUEURS);
+  assert.deepEqual(apresBo.fil.trouves.map((t) => t.nom), ['Ana', 'Bo']);
+  assert.ok(apresBo.classement.find((j) => j.id === 'b').score > 0);
+
+  // Mais on ne touche pas deux fois.
+  const avant = apresBo.classement.find((j) => j.id === 'a').score;
+  regie.encaisser([{ playerId: 'a', fil: 'le rouge' }]);
+  const rejoue = regie.etatPublic(JOUEURS);
+  assert.equal(rejoue.fil.trouves.length, 2, 'une seconde prime a été versée');
+  assert.equal(rejoue.classement.find((j) => j.id === 'a').score, avant);
 });
 
 test('se tromper sur le fil rouge coûte deux manches de silence', () => {
@@ -1252,21 +1262,39 @@ test('se tromper sur le fil rouge coûte deux manches de silence', () => {
 
   regie.encaisser([{ playerId: 'a', fil: 'bleu' }]);
   const vue = regie.etatPublic(JOUEURS);
-  assert.equal(vue.fil.trouve, null);
+  assert.deepEqual(vue.fil.trouves, []);
   assert.equal(vue.fil.bloques.a, vue.manche + 2);
 
   // Même la bonne réponse ne passe pas tant que le blocage tient.
   regie.encaisser([{ playerId: 'a', fil: 'rouge' }]);
-  assert.equal(regie.etatPublic(JOUEURS).fil.trouve, null);
+  assert.deepEqual(regie.etatPublic(JOUEURS).fil.trouves, []);
 });
 
-test('la solution du fil rouge n’est publiée qu’une fois trouvée', () => {
+test('le mot du fil rouge ne sort qu’au podium', () => {
+  // L'état publié est le même pour tout le monde : y mettre le mot dès qu'une
+  // personne avait trouvé le servait à la table entière, et la course
+  // s'arrêtait là. Même l'annonce à voix haute se garde de le dire.
   const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE, fil: FIL });
   regie.lancer(0, JOUEURS);
   regie.avancer(0, JOUEURS);
   assert.equal(regie.etatPublic(JOUEURS).fil.solution, undefined);
+
   regie.encaisser([{ playerId: 'a', fil: 'rouge' }]);
-  assert.equal(regie.etatPublic(JOUEURS).fil.solution, FIL.solution);
+  assert.equal(regie.etatPublic(JOUEURS).fil.solution, undefined,
+    'le mot a fuité dès qu’un joueur l’a trouvé');
+
+  let horloge = 0;
+  while (regie.phase !== 'podium' && horloge < 600000) {
+    horloge += 500;
+    regie.avancer(horloge, JOUEURS);
+    for (const evenement of regie.etatPublic(JOUEURS).resultat?.evenements ?? []) {
+      assert.ok(!evenement.texte.includes(FIL.solution),
+        `le mot est annoncé à voix haute : « ${evenement.texte} »`);
+    }
+  }
+  const fin = regie.etatPublic(JOUEURS).fil;
+  assert.equal(fin.solution, FIL.solution, 'le mot devrait se dire à la fin');
+  assert.equal(fin.revelation, FIL.revelation);
 });
 
 test('sans fil rouge demandé, l’état n’en parle pas', () => {

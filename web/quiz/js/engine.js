@@ -411,7 +411,10 @@ export function creerRegie({
     absences: {},        // id → manches consécutives sans réponse
     reponses: {},        // manche en cours seulement
     // Le fil rouge est le seul état qui traverse les manches.
-    fil: fil ? { id: fil.id, trouve: null, bloques: {}, annonce: false } : null,
+    // Plusieurs personnes peuvent démasquer le fil : `trouves` les garde dans
+    // l'ordre où elles ont trouvé, `annonces` retient combien ont déjà été dites
+    // à voix haute.
+    fil: fil ? { id: fil.id, trouves: [], bloques: {}, annonces: 0 } : null,
   };
 
   const jokersRestants = (id) => autorises
@@ -427,7 +430,11 @@ export function creerRegie({
    * pas une réponse de manche.
    */
   function tenterLeFil(playerId, propose) {
-    if (!etat.fil || etat.fil.trouve) return false;
+    if (!etat.fil) return false;
+    // On ne touche la prime qu'une fois — mais le fil reste ouvert aux autres :
+    // la course ne s'arrête pas au premier, sinon toute la table cherche pour
+    // rien dès qu'un joueur rapide a trouvé.
+    if (etat.fil.trouves.some((t) => t.playerId === playerId)) return false;
     if ((etat.fil.bloques[playerId] ?? 0) > etat.manche) return false;
 
     if (!filRougeTrouve(fil, propose)) {
@@ -442,7 +449,7 @@ export function creerRegie({
       PRIME_FIL_DEPART - PRIME_FIL_DECROISSANCE * Math.max(0, etat.manche - 1),
     );
     etat.scores[playerId] = (etat.scores[playerId] ?? 0) + prime;
-    etat.fil.trouve = { playerId, manche: etat.manche, prime };
+    etat.fil.trouves.push({ playerId, manche: etat.manche, prime });
     return true;
   }
 
@@ -646,15 +653,18 @@ export function creerRegie({
 
     etat.scores = scores;
 
-    // Le fil rouge trouvé entre deux manches s'annonce ici, une seule fois.
-    if (etat.fil?.trouve && !etat.fil.annonce) {
-      etat.fil.annonce = true;
-      const nom = joueurs.find((j) => j.id === etat.fil.trouve.playerId)?.name ?? '—';
-      evenements.unshift({
+    // Les fils démasqués depuis la dernière révélation s'annoncent ici, chacun
+    // une seule fois. Le mot, lui, n'est jamais dit : les autres cherchent
+    // encore, et l'annoncer mettrait fin à la course pour toute la table.
+    const nouveauxFils = (etat.fil?.trouves ?? []).slice(etat.fil?.annonces ?? 0);
+    if (nouveauxFils.length) {
+      etat.fil.annonces = etat.fil.trouves.length;
+      evenements.unshift(...nouveauxFils.map((trouve) => ({
         type: 'fil',
         cle: 'filTrouve',
-        texte: `${nom} a trouvé le fil rouge : ${fil.solution}. ${etat.fil.trouve.prime} points.`,
-      });
+        texte: `${joueurs.find((j) => j.id === trouve.playerId)?.name ?? '—'}`
+          + ` a trouvé le fil rouge. ${trouve.prime} points.`,
+      })));
     }
 
     // Le plus rapide parmi ceux qui ont trouvé : c'est la ligne qui donne envie
@@ -924,14 +934,18 @@ export function creerRegie({
         niveaux: etat.niveaux ?? {},
         fil: etat.fil && {
           indice: fil.indice,
-          // La solution ne part qu'une fois trouvée, ou à la toute fin.
-          solution: etat.fil.trouve || etat.phase === 'podium' ? fil.solution : undefined,
+          // Le mot ne part qu'à la toute fin. Il partait jusqu'ici dès qu'une
+          // personne avait trouvé — et comme l'état est le même pour tous, cela
+          // le servait à la table entière : la course s'arrêtait au premier, et
+          // les autres n'avaient plus qu'à recopier.
+          solution: etat.phase === 'podium' ? fil.solution : undefined,
           revelation: etat.phase === 'podium' ? fil.revelation : undefined,
-          trouve: etat.fil.trouve && {
-            nom: joueurs.find((j) => j.id === etat.fil.trouve.playerId)?.name ?? '—',
-            manche: etat.fil.trouve.manche,
-            prime: etat.fil.trouve.prime,
-          },
+          trouves: etat.fil.trouves.map((trouve) => ({
+            id: trouve.playerId,
+            nom: joueurs.find((j) => j.id === trouve.playerId)?.name ?? '—',
+            manche: trouve.manche,
+            prime: trouve.prime,
+          })),
           bloques: etat.fil.bloques,
         },
       };

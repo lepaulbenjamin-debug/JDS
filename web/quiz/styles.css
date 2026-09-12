@@ -573,6 +573,21 @@ body {
 .joker.est-use { opacity: 0.3; }
 .joker:disabled { cursor: default; }
 
+/* Le fil rouge au podium : c'est la chute de la soirée, elle mérite mieux
+   qu'une ligne perdue sous le classement. */
+.fin-fil {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface);
+  display: grid;
+  gap: 6px;
+}
+.fin-fil p { margin: 0; }
+.fil-mot { font-size: 18px; font-weight: 700; }
+
 /* La légende : ce que fait chaque joker, le temps de la fenêtre. Assez petite
    pour ne pas repousser la rangée hors de l'écran, assez lisible pour qu'on la
    parcoure en dix secondes. */

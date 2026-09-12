@@ -857,8 +857,11 @@ function rendreFilRouge() {
   // boîte doit survivre au rythme du jeu, pas se refermer à chaque tour.
   const bloqueJusqu = fil.bloques?.[moi.id] ?? 0;
   const bloque = bloqueJusqu > etat.manche;
+  const trouves = fil.trouves ?? [];
+  const monTrouve = trouves.find((t) => t.id === moi.id);
   const signature = [
-    fil.trouve ? `trouve:${fil.trouve.playerId}` : '',
+    `trouves:${trouves.length}`,
+    monTrouve ? 'moi' : '',
     bloque ? `bloque:${bloqueJusqu - etat.manche}` : '',
     filEnvoye ? 'envoye' : '',
   ].join('|');
@@ -867,11 +870,20 @@ function rendreFilRouge() {
 
   clear(zone);
 
-  if (fil.trouve) {
+  // Celui qui a trouvé n'a plus rien à chercher — et connaît déjà le mot, donc
+  // rien à lui cacher. On ne l'écrit pas pour autant : son écran se lit à trois
+  // par-dessus l'épaule.
+  if (monTrouve) {
     zone.append(el('p', { class: 'fil-trouve' }, [
-      el('strong', { text: `🧵 ${fil.trouve.nom} a trouvé le fil rouge` }),
-      el('span', { text: ` — ${fil.solution ?? ''} (+${fil.trouve.prime} pts, manche ${fil.trouve.manche})` }),
+      el('strong', { text: '🧵 Tu as trouvé le fil rouge' }),
+      el('span', { text: ` — +${monTrouve.prime} pts, manche ${monTrouve.manche}.` }),
     ]));
+    if (trouves.length > 1) {
+      zone.append(el('p', {
+        class: 'muted small',
+        text: `${trouves.length - 1} autre${trouves.length > 2 ? 's' : ''} l’${trouves.length > 2 ? 'ont' : 'a'} trouvé aussi.`,
+      }));
+    }
     return;
   }
 
@@ -914,9 +926,15 @@ function rendreFilRouge() {
     el('p', {
       class: 'muted small',
       text: 'Un même mot se cache dans les bonnes réponses de plusieurs manches. '
-        + 'Le premier à le nommer rafle une grosse prime — et plus tôt il trouve, plus elle est grosse.',
+        + 'Chacun peut le trouver et toucher la prime — mais elle fond de manche en manche, '
+        + 'alors mieux vaut être tôt que sûr.',
     }),
     el('p', { class: 'fil-indice', text: `Indice : ${fil.indice}` }),
+    ...(trouves.length ? [el('p', {
+      class: 'muted small',
+      text: `${trouves.map((t) => t.nom).join(', ')} `
+        + `${trouves.length > 1 ? 'l’ont' : 'l’a'} déjà trouvé — la prime est plus petite, mais elle est là.`,
+    })] : []),
     el('div', { class: 'fil-ligne' }, [
       champ,
       el('button', { class: 'btn btn-primary', type: 'button', onclick: envoyer }, 'Proposer'),
@@ -1023,6 +1041,24 @@ function rendreFin() {
       el('span', { class: 'podium-score', text: `${joueur.score} pts` }),
     ]));
   });
+  // Le fil rouge se dévoile ici, et nulle part ailleurs : c'est la fin de la
+  // course. Sans cette ligne, une table qui n'a pas trouvé ne saurait jamais ce
+  // qu'elle cherchait — et c'est justement le moment que tout le monde attend.
+  const fil = etat.fil;
+  if (fil?.revelation || fil?.solution) {
+    const bloc = el('div', { class: 'fin-fil' }, [
+      el('p', { class: 'fil-mot', text: `🧵 Le fil rouge : ${fil.solution ?? ''}` }),
+      ...(fil.revelation ? [el('p', { class: 'muted', text: fil.revelation })] : []),
+      el('p', {
+        class: 'muted small',
+        text: fil.trouves?.length
+          ? `Trouvé par ${fil.trouves.map((t) => `${t.nom} (+${t.prime})`).join(', ')}.`
+          : 'Personne ne l’a démasqué.',
+      }),
+    ]);
+    hote.append(bloc);
+  }
+
   $('#btn-rejouer').hidden = !estRegie();
 }
 
