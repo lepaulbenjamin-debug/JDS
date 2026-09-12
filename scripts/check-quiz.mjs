@@ -698,6 +698,48 @@ test('après le chrono, plus personne ne change sa réponse', () => {
     'une réponse arrivée après le chrono a été comptée');
 });
 
+test('on choisit qui l’on vole et qui l’on sabote', () => {
+  // Sans cible désignée, c'est le premier au classement — la règle d'avant, et
+  // ce que fait la moitié de la table. Désigner quelqu'un d'autre doit marcher,
+  // et deux joueurs qui visent deux victimes différentes doivent réussir tous
+  // les deux : les en empêcher punirait celui qui n'a pas visé comme le voisin.
+  const scores = { a: 5000, b: 3000, c: 1000 };
+  const resultat = manche({
+    a: { valeur: 0, elapsedMs: 1000 },
+    b: { valeur: 0, elapsedMs: 1200, joker: 'sabotage', cible: 'c' },
+    c: { valeur: 0, elapsedMs: 1400, joker: 'sabotage' },
+  }, scores);
+
+  assert.equal(resultat.detail.b.sabotage, 'c', 'Bo devait saboter Cé, qu’il a désigné');
+  assert.equal(resultat.detail.c.sabotage, 'a', 'Cé, sans cible, devait viser le leader');
+  assert.ok(!resultat.detail.b.jokerRendu && !resultat.detail.c.jokerRendu,
+    'deux cibles différentes : les deux jokers doivent aboutir');
+  assert.equal(resultat.detail.c.points <= 0, true, 'Cé sabotée ne devait rien marquer');
+});
+
+test('deux jokers sur la même victime : un seul aboutit', () => {
+  // Le second ne trouverait plus rien à prendre : il récupère son joker plutôt
+  // que de le perdre au profit de quelqu'un qui a simplement tapé plus vite.
+  const resultat = manche({
+    a: { valeur: 0, elapsedMs: 1000 },
+    b: { valeur: 0, elapsedMs: 1200, joker: 'vol', cible: 'a' },
+    c: { valeur: 0, elapsedMs: 1400, joker: 'vol', cible: 'a' },
+  }, { a: 5000, b: 3000, c: 1000 });
+
+  assert.ok(resultat.detail.b.vol > 0, 'le plus rapide devait voler');
+  assert.ok(resultat.detail.c.jokerRendu, 'le second devait récupérer son joker');
+});
+
+test('on ne se vise pas soi-même', () => {
+  // Se saboter serait une façon comique de perdre, mais c'est surtout le
+  // symptôme d'un tap mal placé : on retombe sur le leader.
+  const resultat = manche({
+    a: { valeur: 0, elapsedMs: 1000 },
+    b: { valeur: 0, elapsedMs: 1200, joker: 'sabotage', cible: 'b' },
+  }, { a: 5000, b: 3000, c: 1000 });
+  assert.equal(resultat.detail.b.sabotage, 'a');
+});
+
 test('la fenêtre de jokers précède la question', () => {
   const regie = creerRegie({ questions: troisQuestions(), dureeMs: DUREE });
   regie.lancer(0, JOUEURS);
@@ -1853,6 +1895,14 @@ test('le relais laisse passer toutes les formes de réponse, texte compris', asy
   const { body: apresVote } = await appel('POST', { code }, { hostToken });
   assert.deepEqual(apresVote.answers[0]?.vote, { candidat: 'b', oui: true },
     'vote perdu par le relais');
+
+  // Et la cible du vol ou du sabotage, arrivée en même temps que le joker : sans
+  // sa ligne, le relais laisse passer le joker et jette la cible, si bien que
+  // tout le monde saboterait le premier au classement sans comprendre pourquoi.
+  await appel('POST', { code, action: 'answer' },
+    { playerId: 'a', round: 1, reponse: 0, elapsedMs: 900, joker: 'sabotage', cible: 'b' });
+  const { body: apresCible } = await appel('POST', { code }, { hostToken });
+  assert.equal(apresCible.answers[0]?.cible, 'b', 'cible du joker perdue par le relais');
 });
 
 test('un titre trop long est tronqué, jamais jeté', async () => {

@@ -139,10 +139,10 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
   const type = typeDeManche(manche.type);
   const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
 
-  // Le leader *avant* la manche : c'est lui que visent le vol et le sabotage.
-  // Automatiquement, sans écran de sélection de cible — un joker qui demande de
-  // désigner quelqu'un coûte trois secondes que la manche n'a pas, et viser le
-  // premier est de toute façon ce que tout le monde ferait.
+  // Le leader *avant* la manche : c'est la cible par défaut du vol et du
+  // sabotage, celle qu'on vise sans rien désigner. Choisir quelqu'un d'autre
+  // reste possible — mais personne ne doit y être obligé en dix secondes, et
+  // viser le premier est ce que fait la moitié de la table.
   const classement = joueurs
     .map((j) => ({ id: j.id, score: scores[j.id] ?? 0 }))
     .sort((a, b) => b.score - a.score);
@@ -197,50 +197,62 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
 
   const evenements = [];
 
+  /** La victime d'un joker : celle qu'on a désignée, ou le premier au classement. */
+  const viseePar = (id) => {
+    const voulue = reponses[id]?.cible;
+    if (voulue && voulue !== id && joueurs.some((j) => j.id === voulue)) return voulue;
+    return leader && leader !== id ? leader : null;
+  };
+
   /**
-   * Un seul vol, un seul sabotage par manche — le plus rapide à avoir trouvé.
+   * Les jokers à cible qui aboutissent : le plus rapide par victime.
    *
-   * Trois joueurs qui volent le même leader ne se partagent pas le butin : le
-   * deuxième et le troisième ne trouveraient plus rien à prendre et auraient
-   * grillé leur joker pour rien. Ceux-là le récupèrent donc, plutôt que de le
-   * perdre au profit de quelqu'un qui a simplement tapé plus vite.
+   * Deux joueurs qui volent la MÊME personne ne se partagent pas le butin — le
+   * second ne trouverait plus rien à prendre et aurait grillé son joker pour
+   * rien ; celui-là le récupère. Mais deux joueurs qui visent deux victimes
+   * différentes réussissent tous les deux : depuis qu'on choisit sa cible, les
+   * en empêcher reviendrait à punir celui qui n'a pas visé le même que le
+   * voisin.
    */
-  const premierAvoirJoue = (nom) => {
+  const parVictime = (nom) => {
     const candidats = Object.entries(detail)
       .filter(([, r]) => r.joker === nom && r.correct)
       .sort((a, b) => a[1].elapsedMs - b[1].elapsedMs);
 
-    const gagnant = candidats.find(([id]) => leader && leader !== id) ?? null;
-    for (const [, r] of candidats) if (r !== gagnant?.[1]) r.jokerRendu = true;
-    return gagnant;
+    const retenus = new Map();               // victime → [id, note] le plus rapide
+    for (const [id, r] of candidats) {
+      const victime = viseePar(id);
+      if (!victime) { r.jokerRendu = true; continue; }
+      if (retenus.has(victime)) { r.jokerRendu = true; continue; }
+      retenus.set(victime, [id, r]);
+    }
+    return retenus;
   };
 
   // Le vol passe avant le sabotage : le voleur prend sa part de ce que le leader
   // a gagné, puis le saboteur efface ce qu'il en reste. Les deux jokers se
   // cumulent donc sur une même manche, et c'est voulu.
-  const voleur = premierAvoirJoue('vol');
-  if (voleur) {
-    const [id, r] = voleur;
-    const pris = Math.round(Math.max(0, gains[leader] ?? 0) / 2);
-    gains[leader] = (gains[leader] ?? 0) - pris;
+  for (const [victime, [id, r]] of parVictime('vol')) {
+    const pris = Math.round(Math.max(0, gains[victime] ?? 0) / 2);
+    gains[victime] = (gains[victime] ?? 0) - pris;
     gains[id] += pris;
     r.vol = pris;
+    r.cible = victime;
     evenements.push({
       type: 'vol',
       cle: 'vol',
-      texte: repliqueDe(persona, 'vol', { nom: nomDe(id), cible: nomDe(leader), points: pris }),
+      texte: repliqueDe(persona, 'vol', { nom: nomDe(id), cible: nomDe(victime), points: pris }),
     });
   }
 
-  const saboteur = premierAvoirJoue('sabotage');
-  if (saboteur) {
-    const [id, r] = saboteur;
-    gains[leader] = Math.min(0, gains[leader] ?? 0);
-    r.sabotage = leader;
+  for (const [victime, [id, r]] of parVictime('sabotage')) {
+    gains[victime] = Math.min(0, gains[victime] ?? 0);
+    r.sabotage = victime;
+    r.cible = victime;
     evenements.push({
       type: 'sabotage',
       cle: 'sabotage',
-      texte: repliqueDe(persona, 'sabotage', { nom: nomDe(id), cible: nomDe(leader) }),
+      texte: repliqueDe(persona, 'sabotage', { nom: nomDe(id), cible: nomDe(victime) }),
     });
   }
 
@@ -783,6 +795,10 @@ export function creerRegie({
           // Un joker écarté des réglages est ignoré, même si un pupitre bricolé
           // en renvoie un : le réglage de la partie fait loi ici, pas là-bas.
           joker: autorises.includes(entree.joker) ? entree.joker : null,
+          // Qui l'on vise, quand le joker vise quelqu'un. Vide : le premier au
+          // classement, comme avant — c'est ce que fait la moitié de la table,
+          // et personne ne doit être forcé de choisir en dix secondes.
+          cible: typeof entree.cible === 'string' ? entree.cible : null,
         };
         nouvelle = true;
       }

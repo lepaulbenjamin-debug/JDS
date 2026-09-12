@@ -573,6 +573,13 @@ body {
 .joker.est-use { opacity: 0.3; }
 .joker:disabled { cursor: default; }
 
+/* Le choix de la cible, juste sous la rangée : on vient d'armer le joker, la
+   question suivante est « sur qui ? » et la réponse doit être à portée de
+   pouce. */
+.joker-cible { margin-top: 10px; display: grid; gap: 6px; }
+.joker-cible p { margin: 0; }
+.cible-rangee { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* Le fil rouge au podium : c'est la chute de la soirée, elle mérite mieux
    qu'une ligne perdue sous le classement. */
 .fin-fil {

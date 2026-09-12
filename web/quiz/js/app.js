@@ -106,6 +106,7 @@ let reglages = {
 
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
 let jokerArme = null;
+let cibleVisee = null;         // qui le vol ou le sabotage vise, si l'on a désigné
 let masque = null;             // { manche, caches } — les réponses retirées par le 50/50
 let cleRendue = '';
 let saisieRendue = '';         // la manche dont la zone de saisie est à l'écran
@@ -283,6 +284,7 @@ function appliquer(nouvel) {
     if (etat.phase === 'manche') {
       monChoix = null;
       jokerArme = null;
+      cibleVisee = null;
       masque = null;
       filEnvoye = false;
       monNiveau = null;
@@ -644,6 +646,30 @@ function rendreJokers() {
       el('span', { class: 'joker-emoji', text: joker.emoji }),
       el('span', { class: 'joker-nom', text: joker.nom }),
     ]));
+  }
+
+  // Qui l'on vise, quand le joker armé vise quelqu'un.
+  //
+  // Par défaut le premier au classement : c'est ce que fait la moitié de la
+  // table, et personne ne doit être forcé de désigner en dix secondes. Mais
+  // viser le deuxième quand on est troisième, ou se venger de la manche
+  // précédente, valait la peine d'être possible.
+  const zoneCible = clear($('#joker-cible'));
+  const aCible = jokerArme === 'vol' || jokerArme === 'sabotage';
+  zoneCible.hidden = !aCible || !jouable || joueurs.length < 2;
+  if (!zoneCible.hidden) {
+    const parDefaut = leader && leader.id !== moi.id ? leader.id : null;
+    zoneCible.append(el('p', { class: 'muted small', text: 'Sur qui ?' }));
+    const rangee = el('div', { class: 'cible-rangee' });
+    for (const joueur of joueurs.filter((j) => j.id !== moi.id)) {
+      const vise = (cibleVisee ?? parDefaut) === joueur.id;
+      rangee.append(el('button', {
+        class: `chip${vise ? ' est-actif' : ''}`,
+        type: 'button',
+        onclick: () => { cibleVisee = cibleVisee === joueur.id ? null : joueur.id; rendreJokers(); },
+      }, joueur.id === parDefaut ? `${joueur.name} 👑` : joueur.name));
+    }
+    zoneCible.append(rangee);
   }
 
   // Ce que fait chaque joker, sous la rangée et pendant la fenêtre seulement.
@@ -1205,6 +1231,9 @@ function armerJoker(id) {
     jokerArme = 'cinquante';
   } else {
     jokerArme = jokerArme === id ? null : id;
+    // Changer de joker remet la cible à zéro : garder celle d'avant ferait
+    // saboter quelqu'un qu'on avait désigné pour un vol, sans le redire.
+    cibleVisee = null;
   }
 
   if (jokerArme) sons.joker();
@@ -1229,7 +1258,7 @@ async function repondre(valeur) {
 
   // Écho local immédiat : le tap doit se voir tout de suite, sans attendre que
   // le relais confirme. La régie reste seule juge du score.
-  monChoix = { manche: etat.manche, valeur, joker: jokerArme };
+  monChoix = { manche: etat.manche, valeur, joker: jokerArme, cible: cibleVisee };
   sons.bip();
   peindreReponses();
   rendreJokers();
@@ -1241,6 +1270,7 @@ async function repondre(valeur) {
       round: etat.manche,
       reponse: valeur,
       joker: jokerArme,
+      cible: cibleVisee,
       elapsedMs: Math.max(0, maintenant - etat.startAt),
     });
   } catch {
