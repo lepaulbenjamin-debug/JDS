@@ -38,6 +38,7 @@ export const QUESTIONS = [
   /* --- Culture générale -------------------------------------------------- */
   {
     id: 'cul-01', theme: 'culture',
+    niveau: 2,
     texte: 'Quelle est la capitale de l’Australie ?',
     reponses: ['Canberra', 'Sydney', 'Melbourne', 'Perth'],
     bonne: 0,
@@ -45,6 +46,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-02', theme: 'culture',
+    niveau: 1,
     texte: 'Quel élément chimique porte le symbole « Fe » ?',
     reponses: ['Le fer', 'Le fluor', 'Le francium', 'Le phosphore'],
     bonne: 0,
@@ -52,6 +54,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-03', theme: 'culture',
+    niveau: 1,
     texte: 'Qui a peint « La Nuit étoilée » ?',
     reponses: ['Van Gogh', 'Monet', 'Cézanne', 'Gauguin'],
     bonne: 0,
@@ -59,6 +62,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-04', theme: 'culture',
+    niveau: 2,
     texte: 'Combien de joueurs une équipe de volley aligne-t-elle sur le terrain ?',
     reponses: ['6', '5', '7', '11'],
     bonne: 0,
@@ -66,6 +70,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-05', theme: 'culture',
+    niveau: 1,
     texte: 'Quelle planète est la plus proche du Soleil ?',
     reponses: ['Mercure', 'Vénus', 'Mars', 'La Terre'],
     bonne: 0,
@@ -73,6 +78,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-06', theme: 'culture',
+    niveau: 1,
     texte: 'En quelle année le mur de Berlin est-il tombé ?',
     reponses: ['1989', '1987', '1991', '1985'],
     bonne: 0,
@@ -80,6 +86,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-07', theme: 'culture',
+    niveau: 3,
     texte: 'Quel pays compte le plus de fuseaux horaires ?',
     reponses: ['La France', 'La Russie', 'Les États-Unis', 'La Chine'],
     bonne: 0,
@@ -87,6 +94,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-08', theme: 'culture',
+    niveau: 1,
     texte: 'Quel est le plus long fleuve de France ?',
     reponses: ['La Loire', 'La Seine', 'Le Rhône', 'La Garonne'],
     bonne: 0,
@@ -94,6 +102,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-09', theme: 'culture',
+    niveau: 3,
     texte: 'D’où vient le nom « Bluetooth » ?',
     reponses: ['Du surnom d’un roi danois', 'D’un ingénieur suédois', 'D’une marque de dentifrice', 'D’un code militaire'],
     bonne: 0,
@@ -101,6 +110,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cul-10', theme: 'culture',
+    niveau: 3,
     texte: 'Combien de touches compte un piano standard ?',
     reponses: ['88', '76', '61', '96'],
     bonne: 0,
@@ -110,6 +120,7 @@ export const QUESTIONS = [
   /* --- Musique ----------------------------------------------------------- */
   {
     id: 'mus-01', theme: 'musique',
+    niveau: 2,
     texte: 'Quel groupe a sorti l’album « The Dark Side of the Moon » ?',
     reponses: ['Pink Floyd', 'Led Zeppelin', 'The Doors', 'Genesis'],
     bonne: 0,
@@ -117,6 +128,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-02', theme: 'musique',
+    niveau: 3,
     texte: 'Quel est le vrai prénom de Stromae ?',
     reponses: ['Paul', 'Pierre', 'Luc', 'Marc'],
     bonne: 0,
@@ -124,6 +136,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-03', theme: 'musique',
+    niveau: 1,
     texte: 'Qui a écrit et chanté « Ne me quitte pas » ?',
     reponses: ['Jacques Brel', 'Charles Aznavour', 'Léo Ferré', 'Serge Gainsbourg'],
     bonne: 0,
@@ -131,6 +144,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-04', theme: 'musique',
+    niveau: 1,
     texte: 'Quel groupe suédois a remporté l’Eurovision 1974 avec « Waterloo » ?',
     reponses: ['ABBA', 'Roxette', 'Europe', 'Ace of Base'],
     bonne: 0,
@@ -138,6 +152,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-05', theme: 'musique',
+    niveau: 3,
     texte: 'Comment s’intitule le premier album d’Angèle ?',
     reponses: ['Brol', 'Nonante-Cinq', 'Balance ton quoi', 'Bruxelles je t’aime'],
     bonne: 0,
@@ -145,6 +160,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-06', theme: 'musique',
+    niveau: 1,
     texte: 'Quel groupe a enregistré « Bohemian Rhapsody » ?',
     reponses: ['Queen', 'The Who', 'Deep Purple', 'The Kinks'],
     bonne: 0,
@@ -152,6 +168,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-07', theme: 'musique',
+    niveau: 3,
     texte: 'Quel album Daft Punk a-t-il sorti en 2013 ?',
     reponses: ['Random Access Memories', 'Discovery', 'Homework', 'Human After All'],
     bonne: 0,
@@ -159,6 +176,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-08', theme: 'musique',
+    niveau: 1,
     texte: 'Qui interprète « Formidable » ?',
     reponses: ['Stromae', 'Christine and the Queens', 'Vianney', 'Julien Doré'],
     bonne: 0,
@@ -166,6 +184,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-09', theme: 'musique',
+    niveau: 1,
     texte: 'Combien de cordes compte un violon ?',
     reponses: ['4', '5', '6', '3'],
     bonne: 0,
@@ -173,6 +192,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-10', theme: 'musique',
+    niveau: 2,
     texte: 'Qui a composé « La Marche turque » ?',
     reponses: ['Mozart', 'Beethoven', 'Bach', 'Haydn'],
     bonne: 0,
@@ -180,6 +200,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-11', theme: 'musique',
+    niveau: 2,
     texte: 'Quel chanteur français était surnommé « le Taulier » ?',
     reponses: ['Johnny Hallyday', 'Eddy Mitchell', 'Michel Sardou', 'Jacques Dutronc'],
     bonne: 0,
@@ -187,6 +208,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-12', theme: 'musique',
+    niveau: 2,
     texte: 'Quel groupe britannique a sorti « Wonderwall » ?',
     reponses: ['Oasis', 'Blur', 'Pulp', 'Suede'],
     bonne: 0,
@@ -194,6 +216,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mus-13', theme: 'musique',
+    niveau: 2,
     texte: 'Quel instrument Miles Davis a-t-il rendu célèbre ?',
     reponses: ['La trompette', 'Le saxophone', 'La contrebasse', 'Le piano'],
     bonne: 0,
@@ -203,6 +226,7 @@ export const QUESTIONS = [
   /* --- Cinéma & séries --------------------------------------------------- */
   {
     id: 'cin-01', theme: 'cinema',
+    niveau: 1,
     texte: 'Qui a réalisé « Pulp Fiction » ?',
     reponses: ['Quentin Tarantino', 'Martin Scorsese', 'Guy Ritchie', 'David Fincher'],
     bonne: 0,
@@ -210,6 +234,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-02', theme: 'cinema',
+    niveau: 1,
     texte: 'Dans « Le Roi Lion », comment s’appelle le frère de Mufasa ?',
     reponses: ['Scar', 'Simba', 'Rafiki', 'Zazu'],
     bonne: 0,
@@ -217,6 +242,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-03', theme: 'cinema',
+    niveau: 2,
     texte: 'Sur quel continent imaginaire se déroule « Game of Thrones » ?',
     reponses: ['Westeros', 'Essos', 'Valyria', 'Dorne'],
     bonne: 0,
@@ -224,6 +250,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-04', theme: 'cinema',
+    niveau: 1,
     texte: 'Quel acteur incarne Jack dans « Titanic » ?',
     reponses: ['Leonardo DiCaprio', 'Brad Pitt', 'Matt Damon', 'Johnny Depp'],
     bonne: 0,
@@ -231,6 +258,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-05', theme: 'cinema',
+    niveau: 2,
     texte: 'Quel film français a fait le plus d’entrées en France ?',
     reponses: ['Bienvenue chez les Ch’tis', 'Intouchables', 'Astérix : Mission Cléopâtre', 'La Grande Vadrouille'],
     bonne: 0,
@@ -238,6 +266,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-06', theme: 'cinema',
+    niveau: 1,
     texte: 'Qui joue Amélie Poulain ?',
     reponses: ['Audrey Tautou', 'Marion Cotillard', 'Ludivine Sagnier', 'Virginie Ledoyen'],
     bonne: 0,
@@ -245,6 +274,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-07', theme: 'cinema',
+    niveau: 2,
     texte: 'Dans « Breaking Bad », quel pseudonyme se donne Walter White ?',
     reponses: ['Heisenberg', 'Schrödinger', 'Bohr', 'Faraday'],
     bonne: 0,
@@ -252,6 +282,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-08', theme: 'cinema',
+    niveau: 2,
     texte: 'Quel studio a produit « Le Voyage de Chihiro » ?',
     reponses: ['Ghibli', 'Toei Animation', 'Madhouse', 'Pierrot'],
     bonne: 0,
@@ -259,6 +290,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-09', theme: 'cinema',
+    niveau: 2,
     texte: 'Combien de saisons compte la série « Friends » ?',
     reponses: ['10', '8', '12', '9'],
     bonne: 0,
@@ -266,6 +298,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-10', theme: 'cinema',
+    niveau: 1,
     texte: 'Qui incarne Hubert Bonisseur de La Bath dans « OSS 117 » ?',
     reponses: ['Jean Dujardin', 'Gad Elmaleh', 'Kad Merad', 'Guillaume Canet'],
     bonne: 0,
@@ -273,6 +306,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-11', theme: 'cinema',
+    niveau: 3,
     texte: 'Quel film a remporté le tout premier Oscar du meilleur film d’animation ?',
     reponses: ['Shrek', 'Toy Story', 'Le Roi Lion', 'Monstres et Cie'],
     bonne: 0,
@@ -280,6 +314,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-12', theme: 'cinema',
+    niveau: 2,
     texte: 'Dans « Retour vers le futur », quelle vitesse la DeLorean doit-elle atteindre ?',
     reponses: ['88 miles à l’heure', '100 miles à l’heure', '66 miles à l’heure', '120 miles à l’heure'],
     bonne: 0,
@@ -287,6 +322,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-13', theme: 'cinema',
+    niveau: 2,
     texte: 'Quelle série met en scène la famille Soprano ?',
     reponses: ['Les Soprano', 'Boardwalk Empire', 'Gomorra', 'Peaky Blinders'],
     bonne: 0,
@@ -294,6 +330,7 @@ export const QUESTIONS = [
   },
   {
     id: 'cin-14', theme: 'cinema',
+    niveau: 3,
     texte: 'Quel film de Jacques Tati suit un homme à pipe, en imperméable, qui ne dit presque rien ?',
     reponses: ['Les Vacances de Monsieur Hulot', 'Le Corniaud', 'La Grande Vadrouille', 'Le Gendarme de Saint-Tropez'],
     bonne: 0,
@@ -303,6 +340,7 @@ export const QUESTIONS = [
   /* --- Années 2000 ------------------------------------------------------- */
   {
     id: 'an2-01', theme: 'annees2000',
+    niveau: 2,
     texte: 'En quelle année Facebook a-t-il été lancé ?',
     reponses: ['2004', '2002', '2006', '2008'],
     bonne: 0,
@@ -310,6 +348,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-02', theme: 'annees2000',
+    niveau: 2,
     texte: 'En quelle année le premier iPhone est-il sorti ?',
     reponses: ['2007', '2005', '2009', '2010'],
     bonne: 0,
@@ -317,6 +356,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-03', theme: 'annees2000',
+    niveau: 2,
     texte: 'En quelle année « Loft Story » a-t-il été diffusé en France ?',
     reponses: ['2001', '2003', '1999', '2005'],
     bonne: 0,
@@ -324,6 +364,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-04', theme: 'annees2000',
+    niveau: 2,
     texte: 'Quelle console portable Nintendo est sortie en 2004 ?',
     reponses: ['La DS', 'La Game Boy Advance', 'La 3DS', 'La Switch'],
     bonne: 0,
@@ -331,6 +372,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-05', theme: 'annees2000',
+    niveau: 1,
     texte: 'Qui a gagné la première Star Academy en France ?',
     reponses: ['Jenifer', 'Nolwenn Leroy', 'Élodie Frégé', 'Magalie Vaé'],
     bonne: 0,
@@ -338,6 +380,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-06', theme: 'annees2000',
+    niveau: 2,
     texte: 'Quel groupe chantait « Dragostea din tei » ?',
     reponses: ['O-Zone', 'Las Ketchup', 'Crazy Frog', 'Eiffel 65'],
     bonne: 0,
@@ -345,6 +388,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-07', theme: 'annees2000',
+    niveau: 2,
     texte: 'Sur MSN Messenger, comment faisait-on trembler la fenêtre d’un contact ?',
     reponses: ['Un wizz', 'Un poke', 'Un buzz-off', 'Un shake'],
     bonne: 0,
@@ -352,6 +396,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-08', theme: 'annees2000',
+    niveau: 2,
     texte: 'Quelle console Sony est sortie en 2000 ?',
     reponses: ['La PlayStation 2', 'La PlayStation 3', 'La PSP', 'La PlayStation'],
     bonne: 0,
@@ -359,6 +404,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-09', theme: 'annees2000',
+    niveau: 1,
     texte: 'En quelle année les pièces et billets en euros sont-ils arrivés en France ?',
     reponses: ['2002', '1999', '2000', '2004'],
     bonne: 0,
@@ -366,6 +412,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-10', theme: 'annees2000',
+    niveau: 1,
     texte: 'Quel film de 2009 a battu le record du box-office mondial ?',
     reponses: ['Avatar', 'Titanic', 'Le Seigneur des anneaux', 'Harry Potter'],
     bonne: 0,
@@ -373,6 +420,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-11', theme: 'annees2000',
+    niveau: 3,
     texte: 'Sous quel nom Twitter a-t-il été lancé en 2006 ?',
     reponses: ['Twttr', 'Chirp', 'Status', 'Jabber'],
     bonne: 0,
@@ -380,6 +428,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-12', theme: 'annees2000',
+    niveau: 1,
     texte: 'Quel appareil Apple a été lancé en 2001 avec « mille chansons dans votre poche » ?',
     reponses: ['L’iPod', 'L’iPhone', 'L’iMac', 'L’iPad'],
     bonne: 0,
@@ -387,6 +436,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-13', theme: 'annees2000',
+    niveau: 1,
     texte: 'Quelle série médicale lancée en 2005 suit une interne nommée Meredith ?',
     reponses: ['Grey’s Anatomy', 'Dr House', 'Urgences', 'Scrubs'],
     bonne: 0,
@@ -394,6 +444,7 @@ export const QUESTIONS = [
   },
   {
     id: 'an2-14', theme: 'annees2000',
+    niveau: 1,
     texte: 'Quel disque le baladeur MP3 a-t-il chassé de nos poches ?',
     reponses: ['Le CD', 'Le vinyle', 'La disquette', 'Le DVD'],
     bonne: 0,
@@ -403,6 +454,7 @@ export const QUESTIONS = [
   /* --- Bouffe ------------------------------------------------------------ */
   {
     id: 'bof-01', theme: 'bouffe',
+    niveau: 2,
     texte: 'Quelle épice donne sa couleur au risotto milanais ?',
     reponses: ['Le safran', 'Le curcuma', 'Le paprika', 'Le carvi'],
     bonne: 0,
@@ -410,6 +462,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-02', theme: 'bouffe',
+    niveau: 2,
     texte: 'Que veut dire « tiramisu » en italien ?',
     reponses: ['Tire-moi vers le haut', 'Petit gâteau', 'Café du soir', 'Doux réconfort'],
     bonne: 0,
@@ -417,6 +470,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-03', theme: 'bouffe',
+    niveau: 1,
     texte: 'Quel fromage entre dans une vraie tartiflette ?',
     reponses: ['Le reblochon', 'Le comté', 'Le beaufort', 'Le morbier'],
     bonne: 0,
@@ -424,6 +478,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-04', theme: 'bouffe',
+    niveau: 1,
     texte: 'Quels sont les trois ingrédients d’une béchamel ?',
     reponses: ['Beurre, farine, lait', 'Beurre, œuf, lait', 'Crème, farine, lait', 'Huile, farine, eau'],
     bonne: 0,
@@ -431,6 +486,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-05', theme: 'bouffe',
+    niveau: 1,
     texte: 'Quel fruit est la base du guacamole ?',
     reponses: ['L’avocat', 'La courgette', 'Le concombre', 'Le poivron vert'],
     bonne: 0,
@@ -438,6 +494,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-06', theme: 'bouffe',
+    niveau: 3,
     texte: 'Combien de variétés de fromages de Gaulle citait-il pour décrire la France ?',
     reponses: ['246', '365', '112', '1000'],
     bonne: 0,
@@ -445,6 +502,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-07', theme: 'bouffe',
+    niveau: 1,
     texte: 'Quel alcool entre dans un mojito ?',
     reponses: ['Le rhum', 'La vodka', 'La tequila', 'Le gin'],
     bonne: 0,
@@ -452,6 +510,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-08', theme: 'bouffe',
+    niveau: 2,
     texte: 'De quelle partie du canard vient le magret ?',
     reponses: ['Le filet de la poitrine', 'La cuisse', 'L’aile', 'Le cou'],
     bonne: 0,
@@ -459,6 +518,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-09', theme: 'bouffe',
+    niveau: 2,
     texte: 'De quel animal vient le lait de la mozzarella traditionnelle ?',
     reponses: ['La bufflonne', 'La vache', 'La brebis', 'La chèvre'],
     bonne: 0,
@@ -466,6 +526,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-10', theme: 'bouffe',
+    niveau: 3,
     texte: 'Quelle molécule donne son piquant au piment ?',
     reponses: ['La capsaïcine', 'La pipérine', 'L’allicine', 'Le menthol'],
     bonne: 0,
@@ -473,6 +534,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-11', theme: 'bouffe',
+    niveau: 3,
     texte: 'D’où vient l’idée que Marco Polo aurait rapporté les pâtes de Chine ?',
     reponses: ['D’une revue professionnelle américaine', 'D’un récit de voyage', 'D’un manuscrit vénitien', 'D’un roman du XIXᵉ siècle'],
     bonne: 0,
@@ -480,6 +542,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bof-12', theme: 'bouffe',
+    niveau: 3,
     texte: 'Comment obtient-on le plus souvent un champagne rosé ?',
     reponses: ['En mélangeant du vin blanc et du vin rouge', 'En pressant très vite du raisin noir', 'En laissant le raisin sécher au soleil', 'En ajoutant un colorant naturel'],
     bonne: 0,
@@ -489,6 +552,7 @@ export const QUESTIONS = [
   /* --- Insolite ---------------------------------------------------------- */
   {
     id: 'ins-01', theme: 'insolite',
+    niveau: 2,
     texte: 'Combien de cœurs a une pieuvre ?',
     reponses: ['3', '1', '2', '5'],
     bonne: 0,
@@ -496,6 +560,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-02', theme: 'insolite',
+    niveau: 2,
     texte: 'De quelle couleur est le sang d’une pieuvre ?',
     reponses: ['Bleu', 'Rouge', 'Vert', 'Transparent'],
     bonne: 0,
@@ -503,6 +568,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-03', theme: 'insolite',
+    niveau: 1,
     texte: 'Quel animal est incapable de sauter ?',
     reponses: ['L’éléphant', 'Le rhinocéros', 'L’hippopotame', 'La girafe'],
     bonne: 0,
@@ -510,6 +576,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-04', theme: 'insolite',
+    niveau: 2,
     texte: 'Combien d’os y a-t-il dans le squelette d’un requin ?',
     reponses: ['Aucun', '68', '112', '206'],
     bonne: 0,
@@ -517,6 +584,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-05', theme: 'insolite',
+    niveau: 2,
     texte: 'Au bout de combien de temps le miel devient-il impropre à la consommation ?',
     reponses: ['Jamais', 'Deux ans', 'Dix ans', 'Cinquante ans'],
     bonne: 0,
@@ -524,6 +592,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-06', theme: 'insolite',
+    niveau: 3,
     texte: 'Combien de dents un escargot possède-t-il, environ ?',
     reponses: ['Plus de 10 000', 'Aucune', '32', '200'],
     bonne: 0,
@@ -531,6 +600,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-07', theme: 'insolite',
+    niveau: 3,
     texte: 'Quelle partie du corps humain ne contient aucun vaisseau sanguin ?',
     reponses: ['La cornée', 'Le lobe de l’oreille', 'L’ongle', 'Le tympan'],
     bonne: 0,
@@ -538,6 +608,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-08', theme: 'insolite',
+    niveau: 3,
     texte: 'Pourquoi les bananes sont-elles très légèrement radioactives ?',
     reponses: ['À cause du potassium', 'À cause des pesticides', 'À cause du transport', 'Elles ne le sont pas'],
     bonne: 0,
@@ -545,6 +616,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-09', theme: 'insolite',
+    niveau: 3,
     texte: 'Pourquoi une pomme flotte-t-elle dans l’eau ?',
     reponses: ['Elle contient un quart d’air', 'Sa peau est cirée', 'Elle est plus légère que l’eau douce', 'Elle contient du sucre'],
     bonne: 0,
@@ -552,6 +624,7 @@ export const QUESTIONS = [
   },
   {
     id: 'ins-10', theme: 'insolite',
+    niveau: 1,
     texte: 'Quel est l’animal terrestre le plus rapide ?',
     reponses: ['Le guépard', 'L’antilope', 'Le lévrier', 'Le cheval'],
     bonne: 0,
@@ -561,6 +634,7 @@ export const QUESTIONS = [
   /* --- Sport -------------------------------------------------------------- */
   {
     id: 'spo-01', theme: 'sport',
+    niveau: 1,
     texte: 'En quelle année la France a-t-elle remporté sa première Coupe du monde de football ?',
     reponses: ['1998', '1994', '2002', '1986'],
     bonne: 0,
@@ -568,6 +642,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-02', theme: 'sport',
+    niveau: 1,
     texte: 'De quelle couleur est le maillot du leader du Tour de France ?',
     reponses: ['Jaune', 'Vert', 'Blanc à pois rouges', 'Arc-en-ciel'],
     bonne: 0,
@@ -575,6 +650,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-03', theme: 'sport',
+    niveau: 1,
     texte: 'Sur quelle surface se joue le tournoi de Wimbledon ?',
     reponses: ['Le gazon', 'La terre battue', 'Le dur', 'La moquette'],
     bonne: 0,
@@ -582,6 +658,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-04', theme: 'sport',
+    niveau: 2,
     texte: 'Combien de points vaut un essai au rugby à XV ?',
     reponses: ['5', '3', '4', '7'],
     bonne: 0,
@@ -589,6 +666,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-05', theme: 'sport',
+    niveau: 1,
     texte: 'Quel pays a remporté le plus de Coupes du monde de football ?',
     reponses: ['Le Brésil', 'L’Allemagne', 'L’Italie', 'L’Argentine'],
     bonne: 0,
@@ -596,6 +674,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-06', theme: 'sport',
+    niveau: 2,
     texte: 'Quel basketteur est surnommé « His Airness » ?',
     reponses: ['Michael Jordan', 'LeBron James', 'Kobe Bryant', 'Magic Johnson'],
     bonne: 0,
@@ -603,6 +682,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-07', theme: 'sport',
+    niveau: 2,
     texte: 'Quel sport a été pratiqué sur la Lune ?',
     reponses: ['Le golf', 'Le lancer de poids', 'Le saut en hauteur', 'La course'],
     bonne: 0,
@@ -610,6 +690,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-08', theme: 'sport',
+    niveau: 3,
     texte: 'Combien de temps dure un match de basket en NBA ?',
     reponses: ['48 minutes', '40 minutes', '60 minutes', '45 minutes'],
     bonne: 0,
@@ -617,6 +698,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-09', theme: 'sport',
+    niveau: 3,
     texte: 'Que signifie le mot « judo » ?',
     reponses: ['La voie de la souplesse', 'La main vide', 'La voie du guerrier', 'Le poing fermé'],
     bonne: 0,
@@ -624,6 +706,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-10', theme: 'sport',
+    niveau: 1,
     texte: 'Que représentent les cinq anneaux olympiques ?',
     reponses: ['Les cinq continents', 'Les cinq disciplines d’origine', 'Les cinq premiers pays inscrits', 'Les cinq vertus du sportif'],
     bonne: 0,
@@ -631,6 +714,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-11', theme: 'sport',
+    niveau: 1,
     texte: 'Qui détient le record du monde du 100 mètres ?',
     reponses: ['Usain Bolt', 'Carl Lewis', 'Yohan Blake', 'Tyson Gay'],
     bonne: 0,
@@ -638,6 +722,7 @@ export const QUESTIONS = [
   },
   {
     id: 'spo-12', theme: 'sport',
+    niveau: 1,
     texte: 'Dans quel sport frappe-t-on un volant ?',
     reponses: ['Le badminton', 'Le squash', 'Le tennis de table', 'Le padel'],
     bonne: 0,
@@ -647,6 +732,7 @@ export const QUESTIONS = [
   /* --- Le monde ----------------------------------------------------------- */
   {
     id: 'mon-01', theme: 'monde',
+    niveau: 3,
     texte: 'Quel est le plus grand désert du monde ?',
     reponses: ['L’Antarctique', 'Le Sahara', 'Le Gobi', 'Le Kalahari'],
     bonne: 0,
@@ -654,6 +740,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-02', theme: 'monde',
+    niveau: 2,
     texte: 'Quel pays possède le plus long littoral du monde ?',
     reponses: ['Le Canada', 'La Russie', 'L’Indonésie', 'L’Australie'],
     bonne: 0,
@@ -661,6 +748,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-03', theme: 'monde',
+    niveau: 2,
     texte: 'Quelle est la capitale du Canada ?',
     reponses: ['Ottawa', 'Toronto', 'Montréal', 'Vancouver'],
     bonne: 0,
@@ -668,6 +756,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-04', theme: 'monde',
+    niveau: 1,
     texte: 'Quel détroit sépare l’Europe de l’Afrique ?',
     reponses: ['Le détroit de Gibraltar', 'Le Bosphore', 'Les Dardanelles', 'Le canal de Suez'],
     bonne: 0,
@@ -675,6 +764,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-05', theme: 'monde',
+    niveau: 3,
     texte: 'Quel pays est entièrement entouré par l’Afrique du Sud ?',
     reponses: ['Le Lesotho', 'L’Eswatini', 'Le Botswana', 'Le Zimbabwe'],
     bonne: 0,
@@ -682,6 +772,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-06', theme: 'monde',
+    niveau: 1,
     texte: 'Quelle grande ville est traversée par le Bosphore ?',
     reponses: ['Istanbul', 'Athènes', 'Le Caire', 'Bucarest'],
     bonne: 0,
@@ -689,6 +780,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-07', theme: 'monde',
+    niveau: 1,
     texte: 'Quel est le plus petit État du monde ?',
     reponses: ['Le Vatican', 'Monaco', 'Nauru', 'Saint-Marin'],
     bonne: 0,
@@ -696,6 +788,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-08', theme: 'monde',
+    niveau: 2,
     texte: 'Dans quel pays se trouve la ville de Tombouctou ?',
     reponses: ['Le Mali', 'Le Niger', 'Le Tchad', 'La Mauritanie'],
     bonne: 0,
@@ -703,6 +796,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-09', theme: 'monde',
+    niveau: 2,
     texte: 'Quelle est la capitale de la Nouvelle-Zélande ?',
     reponses: ['Wellington', 'Auckland', 'Christchurch', 'Dunedin'],
     bonne: 0,
@@ -710,6 +804,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-10', theme: 'monde',
+    niveau: 2,
     texte: 'Sur quel continent se trouve le Suriname ?',
     reponses: ['L’Amérique du Sud', 'L’Afrique', 'L’Asie', 'L’Océanie'],
     bonne: 0,
@@ -717,6 +812,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-11', theme: 'monde',
+    niveau: 1,
     texte: 'Laquelle de ces étendues d’eau est la plus salée ?',
     reponses: ['La mer Morte', 'La Méditerranée', 'La mer Baltique', 'Le golfe Persique'],
     bonne: 0,
@@ -724,6 +820,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mon-12', theme: 'monde',
+    niveau: 2,
     texte: 'Quelle chaîne de montagnes marque la frontière entre l’Europe et l’Asie ?',
     reponses: ['L’Oural', 'Le Caucase', 'Les Carpates', 'L’Altaï'],
     bonne: 0,
@@ -733,6 +830,7 @@ export const QUESTIONS = [
   /* --- Marques & pubs ----------------------------------------------------- */
   {
     id: 'mar-01', theme: 'marques',
+    niveau: 1,
     texte: 'Quelle marque a pour slogan « Just Do It » ?',
     reponses: ['Nike', 'Adidas', 'Reebok', 'Puma'],
     bonne: 0,
@@ -740,6 +838,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-02', theme: 'marques',
+    niveau: 2,
     texte: 'Quelles marques deux frères allemands brouillés à mort ont-ils fondées, chacun de son côté ?',
     reponses: ['Adidas et Puma', 'Nike et Reebok', 'Lacoste et Le Coq Sportif', 'Fila et Kappa'],
     bonne: 0,
@@ -747,6 +846,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-03', theme: 'marques',
+    niveau: 1,
     texte: 'Quel animal figure sur les polos Lacoste ?',
     reponses: ['Un crocodile', 'Un caïman', 'Un lézard', 'Un iguane'],
     bonne: 0,
@@ -754,6 +854,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-04', theme: 'marques',
+    niveau: 1,
     texte: 'De quel pays vient la marque IKEA ?',
     reponses: ['La Suède', 'La Norvège', 'Le Danemark', 'La Finlande'],
     bonne: 0,
@@ -761,6 +862,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-05', theme: 'marques',
+    niveau: 1,
     texte: 'Quelle marque automobile a pour emblème un cheval cabré sur fond jaune ?',
     reponses: ['Ferrari', 'Porsche', 'Lamborghini', 'Maserati'],
     bonne: 0,
@@ -768,6 +870,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-06', theme: 'marques',
+    niveau: 3,
     texte: 'Que veut dire le nom « Nike » ?',
     reponses: ['La victoire', 'La vitesse', 'L’envol', 'Le courage'],
     bonne: 0,
@@ -775,6 +878,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-07', theme: 'marques',
+    niveau: 2,
     texte: 'Quelle boisson a d’abord été vendue en pharmacie comme remède ?',
     reponses: ['Le Coca-Cola', 'Le Perrier', 'L’Orangina', 'Le Schweppes'],
     bonne: 0,
@@ -782,6 +886,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-08', theme: 'marques',
+    niveau: 2,
     texte: 'Quelle maison de luxe a commencé par fabriquer des malles de voyage ?',
     reponses: ['Louis Vuitton', 'Chanel', 'Hermès', 'Dior'],
     bonne: 0,
@@ -789,6 +894,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-09', theme: 'marques',
+    niveau: 1,
     texte: '« Parce que je le vaux bien » est le slogan de quelle marque ?',
     reponses: ['L’Oréal', 'Nivea', 'Dove', 'Yves Rocher'],
     bonne: 0,
@@ -796,6 +902,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-10', theme: 'marques',
+    niveau: 1,
     texte: 'Quel type de produit Amazon a-t-il vendu en premier ?',
     reponses: ['Des livres', 'Des disques', 'Des jouets', 'De l’électroménager'],
     bonne: 0,
@@ -803,6 +910,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-11', theme: 'marques',
+    niveau: 2,
     texte: 'D’où vient le nom « Google » ?',
     reponses: ['D’un nombre gigantesque', 'D’une paire de lunettes', 'D’un mot inventé sans aucun sens', 'D’une ville de Californie'],
     bonne: 0,
@@ -810,6 +918,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mar-12', theme: 'marques',
+    niveau: 3,
     texte: 'Quel constructeur automobile a été fondé par un fabricant de métiers à tisser ?',
     reponses: ['Toyota', 'Honda', 'Nissan', 'Subaru'],
     bonne: 0,
@@ -819,6 +928,7 @@ export const QUESTIONS = [
   /* --- Mots & expressions -------------------------------------------------- */
   {
     id: 'mot-01', theme: 'mots',
+    niveau: 2,
     texte: 'De quoi le mot « salaire » tire-t-il son origine ?',
     reponses: ['Du sel', 'D’une pièce romaine', 'Du mot « salut »', 'D’un magistrat'],
     bonne: 0,
@@ -826,6 +936,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-02', theme: 'mots',
+    niveau: 2,
     texte: 'De quelle langue le français a-t-il repris le mot « alcool » ?',
     reponses: ['L’arabe', 'Le latin', 'Le grec', 'L’espagnol'],
     bonne: 0,
@@ -833,6 +944,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-03', theme: 'mots',
+    niveau: 1,
     texte: 'Comment appelle-t-on un mot qui se lit pareil dans les deux sens ?',
     reponses: ['Un palindrome', 'Une anagramme', 'Un homonyme', 'Un acronyme'],
     bonne: 0,
@@ -840,6 +952,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-04', theme: 'mots',
+    niveau: 3,
     texte: 'D’où vient le mot « bougie » ?',
     reponses: ['D’une ville d’Algérie', 'Du nom d’un fabricant', 'D’un mot latin', 'D’une plante à cire'],
     bonne: 0,
@@ -847,6 +960,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-05', theme: 'mots',
+    niveau: 3,
     texte: 'Que signifie l’acronyme « laser » ?',
     reponses: ['Une amplification de la lumière', 'Une lentille à haute énergie', 'Un rayon de chaleur dirigé', 'Rien : c’est un nom de marque'],
     bonne: 0,
@@ -854,6 +968,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-06', theme: 'mots',
+    niveau: 1,
     texte: 'Quelle langue compte le plus de locuteurs pour qui elle est la langue maternelle ?',
     reponses: ['Le mandarin', 'L’anglais', 'L’espagnol', 'L’hindi'],
     bonne: 0,
@@ -861,6 +976,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-07', theme: 'mots',
+    niveau: 3,
     texte: 'De quelle langue le mot « ketchup » vient-il à l’origine ?',
     reponses: ['D’un dialecte chinois', 'De l’anglais', 'De l’espagnol', 'Du hindi'],
     bonne: 0,
@@ -868,6 +984,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-08', theme: 'mots',
+    niveau: 2,
     texte: 'Que veut dire le « bis » d’une adresse, comme au 12 bis ?',
     reponses: ['Deux fois', 'Le suivant', 'Le petit', 'L’annexe'],
     bonne: 0,
@@ -875,6 +992,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-09', theme: 'mots',
+    niveau: 3,
     texte: 'Comment appelle-t-on une phrase qui contient toutes les lettres de l’alphabet ?',
     reponses: ['Un pangramme', 'Un lipogramme', 'Un idiome', 'Un calligramme'],
     bonne: 0,
@@ -882,6 +1000,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-10', theme: 'mots',
+    niveau: 1,
     texte: 'Que désigne un « sobriquet » ?',
     reponses: ['Un surnom', 'Une injure', 'Un compliment forcé', 'Un titre honorifique'],
     bonne: 0,
@@ -889,6 +1008,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-11', theme: 'mots',
+    niveau: 1,
     texte: 'Que signifie l’expression latine « carpe diem » ?',
     reponses: ['Cueille le jour', 'Le jour se lève', 'Chaque jour compte', 'Prends garde au jour'],
     bonne: 0,
@@ -896,6 +1016,7 @@ export const QUESTIONS = [
   },
   {
     id: 'mot-12', theme: 'mots',
+    niveau: 2,
     texte: 'Que veut dire « éponyme » ?',
     reponses: ['Qui donne son nom à autre chose', 'Qui porte le même nom qu’un autre', 'Qui est resté célèbre', 'Qui se répète à l’identique'],
     bonne: 0,
@@ -910,6 +1031,7 @@ export const QUESTIONS = [
   // aucun, et le nom du thème décrit le sujet sans prétendre à un partenariat.
   {
     id: 'dis-01', theme: 'disney',
+    niveau: 1,
     texte: 'Quel est le premier long métrage d’animation des studios Disney ?',
     reponses: ['Blanche-Neige et les Sept Nains', 'Pinocchio', 'Fantasia', 'Dumbo'],
     bonne: 0,
@@ -917,6 +1039,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-02', theme: 'disney',
+    niveau: 1,
     texte: 'Quel est le premier long métrage entièrement réalisé en images de synthèse ?',
     reponses: ['Toy Story', 'Shrek', 'Fourmiz', 'Le Géant de fer'],
     bonne: 0,
@@ -924,6 +1047,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-03', theme: 'disney',
+    niveau: 2,
     texte: 'Dans quelle ville imaginaire se déroule « Aladdin » ?',
     reponses: ['Agrabah', 'Askaban', 'Zamunda', 'Gondor'],
     bonne: 0,
@@ -931,6 +1055,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-04', theme: 'disney',
+    niveau: 1,
     texte: 'Comment s’appelle le père de Nemo ?',
     reponses: ['Marlin', 'Dory', 'Gill', 'Bloat'],
     bonne: 0,
@@ -938,6 +1063,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-05', theme: 'disney',
+    niveau: 1,
     texte: 'Dans « Le Livre de la jungle », comment s’appelle l’ours ?',
     reponses: ['Baloo', 'Bagheera', 'Shere Khan', 'Kaa'],
     bonne: 0,
@@ -945,6 +1071,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-06', theme: 'disney',
+    niveau: 1,
     texte: 'Comment s’appelle le rat cuisinier de « Ratatouille » ?',
     reponses: ['Rémy', 'Émile', 'Django', 'Linguini'],
     bonne: 0,
@@ -952,6 +1079,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-07', theme: 'disney',
+    niveau: 2,
     texte: 'Quel studio Disney a-t-il racheté en 2006 ?',
     reponses: ['Pixar', 'DreamWorks', 'Ghibli', 'Aardman'],
     bonne: 0,
@@ -959,6 +1087,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-08', theme: 'disney',
+    niveau: 2,
     texte: 'Quel personnage apparaît pour la première fois dans « Steamboat Willie », en 1928 ?',
     reponses: ['Mickey Mouse', 'Donald Duck', 'Dingo', 'Pluto'],
     bonne: 0,
@@ -966,6 +1095,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-09', theme: 'disney',
+    niveau: 1,
     texte: 'Dans « Là-haut », qu’est-ce qui fait décoller la maison ?',
     reponses: ['Des milliers de ballons', 'Une montgolfière', 'Une tornade', 'Des hélices'],
     bonne: 0,
@@ -973,6 +1103,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-10', theme: 'disney',
+    niveau: 2,
     texte: 'Quel était le prénom complet de Walt Disney ?',
     reponses: ['Walter', 'Walton', 'Wallace', 'Walden'],
     bonne: 0,
@@ -980,6 +1111,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-11', theme: 'disney',
+    niveau: 1,
     texte: 'Dans « La Reine des neiges », comment s’appelle la sœur d’Elsa ?',
     reponses: ['Anna', 'Ariel', 'Aurore', 'Astrid'],
     bonne: 0,
@@ -987,6 +1119,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-12', theme: 'disney',
+    niveau: 1,
     texte: 'Quel film Pixar se déroule presque entièrement dans la tête d’une fillette ?',
     reponses: ['Vice-versa', 'Coco', 'Soul', 'En avant'],
     bonne: 0,
@@ -994,6 +1127,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-13', theme: 'disney',
+    niveau: 2,
     texte: 'Dans « Toy Story », comment s’appelle le petit garçon à qui appartiennent les jouets ?',
     reponses: ['Andy', 'Sid', 'Woody', 'Al'],
     bonne: 0,
@@ -1001,6 +1135,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-14', theme: 'disney',
+    niveau: 2,
     texte: 'De quelle pièce de Shakespeare « Le Roi Lion » reprend-il la trame ?',
     reponses: ['Hamlet', 'Macbeth', 'Le Roi Lear', 'Othello'],
     bonne: 0,
@@ -1008,6 +1143,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-15', theme: 'disney',
+    niveau: 3,
     texte: 'Quel compositeur signe la musique de « La Petite Sirène », « La Belle et la Bête » et « Aladdin » ?',
     reponses: ['Alan Menken', 'Hans Zimmer', 'Randy Newman', 'Michael Giacchino'],
     bonne: 0,
@@ -1015,6 +1151,7 @@ export const QUESTIONS = [
   },
   {
     id: 'dis-16', theme: 'disney',
+    niveau: 1,
     texte: 'Quel film Pixar met en scène des monstres qui récoltent les cris des enfants ?',
     reponses: ['Monstres & Cie', 'Cars', 'WALL-E', 'Les Indestructibles'],
     bonne: 0,
@@ -1029,6 +1166,7 @@ export const QUESTIONS = [
   // sur des tours de force administratifs.
   {
     id: 'reg-01', theme: 'regions',
+    niveau: 1,
     texte: 'Quelle est la préfecture de la région Bretagne ?',
     reponses: ['Rennes', 'Brest', 'Quimper', 'Vannes'],
     bonne: 0,
@@ -1036,6 +1174,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-02', theme: 'regions',
+    niveau: 1,
     texte: 'De quelle région Lyon est-elle la préfecture ?',
     reponses: ['Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Provence-Alpes-Côte d’Azur', 'Occitanie'],
     bonne: 0,
@@ -1043,6 +1182,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-03', theme: 'regions',
+    niveau: 2,
     texte: 'Combien de départements compte la Corse ?',
     reponses: ['Deux', 'Un', 'Trois', 'Quatre'],
     bonne: 0,
@@ -1050,6 +1190,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-04', theme: 'regions',
+    niveau: 2,
     texte: 'Quelle est la plus vaste région de France métropolitaine ?',
     reponses: ['Nouvelle-Aquitaine', 'Occitanie', 'Grand Est', 'Auvergne-Rhône-Alpes'],
     bonne: 0,
@@ -1057,6 +1198,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-05', theme: 'regions',
+    niveau: 2,
     texte: 'Dans quelle région se trouve le Mont-Saint-Michel ?',
     reponses: ['Normandie', 'Bretagne', 'Pays de la Loire', 'Centre-Val de Loire'],
     bonne: 0,
@@ -1064,6 +1206,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-06', theme: 'regions',
+    niveau: 1,
     texte: 'Quelle région est née en 2016 de la fusion de l’Alsace, de la Lorraine et de la Champagne-Ardenne ?',
     reponses: ['Le Grand Est', 'Les Hauts-de-France', 'La Bourgogne-Franche-Comté', 'Le Centre-Val de Loire'],
     bonne: 0,
@@ -1071,6 +1214,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-07', theme: 'regions',
+    niveau: 1,
     texte: 'Quelle est la préfecture des Hauts-de-France ?',
     reponses: ['Lille', 'Amiens', 'Arras', 'Calais'],
     bonne: 0,
@@ -1078,6 +1222,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-08', theme: 'regions',
+    niveau: 2,
     texte: 'Dans quelle région produit-on le chablis ?',
     reponses: ['Bourgogne-Franche-Comté', 'Grand Est', 'Centre-Val de Loire', 'Nouvelle-Aquitaine'],
     bonne: 0,
@@ -1085,6 +1230,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-09', theme: 'regions',
+    niveau: 2,
     texte: 'Dans quelle région se trouvent les châteaux de Chambord et de Chenonceau ?',
     reponses: ['Centre-Val de Loire', 'Pays de la Loire', 'Nouvelle-Aquitaine', 'Bourgogne-Franche-Comté'],
     bonne: 0,
@@ -1092,6 +1238,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-10', theme: 'regions',
+    niveau: 2,
     texte: 'Dans quelle région randonne-t-on sur le GR 20 ?',
     reponses: ['Corse', 'Provence-Alpes-Côte d’Azur', 'Occitanie', 'Auvergne-Rhône-Alpes'],
     bonne: 0,
@@ -1099,6 +1246,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-11', theme: 'regions',
+    niveau: 1,
     texte: 'Quelle région française compte le plus d’habitants ?',
     reponses: ['L’Île-de-France', 'L’Auvergne-Rhône-Alpes', 'La Nouvelle-Aquitaine', 'L’Occitanie'],
     bonne: 0,
@@ -1106,6 +1254,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-12', theme: 'regions',
+    niveau: 1,
     texte: 'Quelle est la préfecture de l’Occitanie ?',
     reponses: ['Toulouse', 'Montpellier', 'Nîmes', 'Perpignan'],
     bonne: 0,
@@ -1113,6 +1262,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-13', theme: 'regions',
+    niveau: 1,
     texte: 'De quelle région Nantes est-elle la préfecture ?',
     reponses: ['Pays de la Loire', 'Bretagne', 'Centre-Val de Loire', 'Nouvelle-Aquitaine'],
     bonne: 0,
@@ -1120,6 +1270,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-14', theme: 'regions',
+    niveau: 2,
     texte: 'Dans quelle région se trouvent les gorges du Verdon ?',
     reponses: ['Provence-Alpes-Côte d’Azur', 'Auvergne-Rhône-Alpes', 'Occitanie', 'Corse'],
     bonne: 0,
@@ -1127,6 +1278,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-15', theme: 'regions',
+    niveau: 2,
     texte: 'Quelle région borde à la fois la mer Méditerranée et les Pyrénées ?',
     reponses: ['L’Occitanie', 'La Nouvelle-Aquitaine', 'La Provence-Alpes-Côte d’Azur', 'La Corse'],
     bonne: 0,
@@ -1134,6 +1286,7 @@ export const QUESTIONS = [
   },
   {
     id: 'reg-16', theme: 'regions',
+    niveau: 1,
     texte: 'De quelle région le kouign-amann est-il originaire ?',
     reponses: ['La Bretagne', 'La Normandie', 'Les Hauts-de-France', 'Les Pays de la Loire'],
     bonne: 0,
@@ -2395,11 +2548,38 @@ function melangeur(aleatoire) {
   };
 }
 
-const poolDe = (themes, types) => toutesLesQuestions().filter((q) => {
-  if (themes?.length && !themes.includes(q.theme)) return false;
-  if (types?.length && !types.includes(q.type ?? 'qcm')) return false;
-  return true;
-});
+/**
+ * Les niveaux de difficulté acceptés par un réglage de partie.
+ *
+ * Trois cotes sur les QCM : 1 se sait, 2 se cherche, 3 se devine à peine. Les
+ * bandes se chevauchent volontairement — « facile » garde les questions
+ * normales, « corsé » aussi — parce que des bandes étanches videraient les
+ * thèmes les plus petits et rendraient des parties plus courtes que promis.
+ */
+export const NIVEAUX = [
+  { id: 'facile', nom: 'Accessible', cotes: [1, 2], note: 'De quoi jouer avec ceux qui ne jouent jamais.' },
+  { id: 'tout', nom: 'Tout', cotes: [1, 2, 3], note: 'La banque entière, de l’évidence au coup de chapeau.' },
+  { id: 'corse', nom: 'Corsé', cotes: [2, 3], note: 'Pour une table qui trouve tout trop facile.' },
+];
+
+export const cotesDuNiveau = (id) => (NIVEAUX.find((n) => n.id === id) ?? NIVEAUX[1]).cotes;
+
+const poolDe = (themes, types, niveau) => {
+  const cotes = niveau ? cotesDuNiveau(niveau) : null;
+  return toutesLesQuestions().filter((q) => {
+    if (themes?.length && !themes.includes(q.theme)) return false;
+    if (types?.length && !types.includes(q.type ?? 'qcm')) return false;
+    // Les questions du fil rouge ne se filtrent jamais : elles portent les
+    // indices de l'énigme, et en écarter la moitié laisserait une table
+    // chercher un mot dont elle n'aurait plus vu les traces.
+    if (q.fil) return true;
+    // Une estimation, un classement, une rafale ou un mix se jouent à points
+    // partiels : on y marque quelque chose même sans savoir. Ils valent 2, donc
+    // ils restent partout.
+    if (cotes && !cotes.includes(q.niveau ?? 2)) return false;
+    return true;
+  });
+};
 
 /**
  * Le tirage d'une partie.
@@ -2412,13 +2592,13 @@ const poolDe = (themes, types) => toutesLesQuestions().filter((q) => {
  * fin de partie seulement, plus personne n'aurait le temps de chercher.
  */
 export function tirerQuestions({
-  themes, types, nombre, aleatoire = Math.random, fil = null,
+  themes, types, nombre, aleatoire = Math.random, fil = null, niveau = null,
 }) {
   const melange = melangeur(aleatoire);
   const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
 
   const duFil = fil ? toutesLesQuestions().filter((q) => q.fil === fil) : [];
-  const reste = melange(poolDe(themes, types).filter((q) => !q.fil))
+  const reste = melange(poolDe(themes, types, niveau).filter((q) => !q.fil))
     .slice(0, Math.max(0, nombre - duFil.length));
 
   if (!duFil.length) return reste.map(preparer);
@@ -2446,8 +2626,8 @@ export function tirerQuestions({
 }
 
 /** Combien de questions un tirage peut fournir : sert à borner les réglages. */
-export function tailleDuPool(themes, types) {
-  return poolDe(themes, types).filter((q) => !q.fil).length;
+export function tailleDuPool(themes, types, niveau) {
+  return poolDe(themes, types, niveau).filter((q) => !q.fil).length;
 }
 
 /** Les types réellement représentés dans les thèmes choisis. */

@@ -11,7 +11,7 @@ import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
 import { vueDe } from './vues.js';
 import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
 import {
-  THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
+  THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
   ajouterQuestions, toutesLesQuestions,
 } from './questions.js';
 import * as packs from './packs.js';
@@ -98,6 +98,7 @@ let reglages = {
   themes: [],
   types: [],                   // vide = tous les types de manche
   nombre: 12,
+  niveau: 'tout',              // difficulté des questions : voir NIVEAUX
   dureeMs: 15000,
   persona: 'classique',
   jokers: JOKERS.map((j) => j.id),
@@ -1316,7 +1317,7 @@ function rendreReglages() {
   // Décocher un thème peut faire passer le pool sous le nombre demandé : on
   // rabote avant d'afficher les pastilles, sinon celle qui paraît active ne
   // correspond plus à ce qui sera joué.
-  const dispo = tailleDuPool(reglages.themes, reglages.types);
+  const dispo = tailleDuPool(reglages.themes, reglages.types, reglages.niveau);
   reglages.nombre = Math.min(reglages.nombre, dispo);
 
   const nombres = clear($('#choix-nombre'));
@@ -1343,6 +1344,19 @@ function rendreReglages() {
   rendrePacks();
 
   const types = clear($('#choix-types'));
+  // Le choix de la difficulté, juste après celui des thèmes : c'est le réglage
+  // qui décide si la soirée sera un plaisir ou une humiliation.
+  const niveaux = clear($('#choix-niveau'));
+  for (const option of NIVEAUX) {
+    niveaux.append(el('button', {
+      class: `chip${reglages.niveau === option.id ? ' est-actif' : ''}`,
+      type: 'button',
+      title: option.note,
+      onclick: () => { reglages.niveau = option.id; rendreReglages(); },
+    }, option.nom));
+  }
+  $('#note-niveau').textContent = NIVEAUX.find((n) => n.id === reglages.niveau)?.note ?? '';
+
   for (const type of typesDisponibles(reglages.themes)) {
     const actif = !reglages.types.length || reglages.types.includes(type.id);
     types.append(el('button', {
@@ -1574,6 +1588,7 @@ function tirerLaPartie() {
     themes: reglages.themes,
     types: reglages.types,
     nombre: reglages.nombre,
+    niveau: reglages.niveau,
     fil: fil?.id ?? null,
   });
   return { fil, questions };

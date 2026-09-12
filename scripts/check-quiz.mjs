@@ -17,7 +17,7 @@ import {
   dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS,
 } from '../web/quiz/js/emcee.js';
 import {
-  QUESTIONS, THEMES, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
+  QUESTIONS, THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
 import { handlePackRequest, accorder } from '../lib/packs.js';
@@ -1727,6 +1727,38 @@ test('on ne s’accorde pas un pack tout seul par l’API', async () => {
 
   const verif = await boutique('GET', { id: vitrine[0].id, licence: 'pirate' });
   assert.equal(verif.status, 402);
+});
+
+test('chaque niveau laisse de quoi jouer, thème par thème', () => {
+  // Les bandes se chevauchent — « accessible » garde les questions normales,
+  // « corsé » aussi — précisément pour que filtrer ne vide pas les thèmes les
+  // plus petits. Un thème joué seul dans un niveau donné n'atteindra pas
+  // toujours douze manches, et l'appli plafonne alors la longueur proposée ;
+  // en dessous de huit, en revanche, la partie ne vaudrait plus le détour.
+  const PLANCHER = 8;
+  for (const niveau of NIVEAUX) {
+    for (const theme of THEMES) {
+      const n = tailleDuPool([theme.id], null, niveau.id);
+      assert.ok(n >= PLANCHER,
+        `${theme.nom} en « ${niveau.nom} » : ${n} questions, il en faut ${PLANCHER}`);
+    }
+  }
+});
+
+test('le fil rouge traverse la partie quel que soit le niveau', () => {
+  // Ses questions portent les indices de l'énigme : les filtrer en écarterait
+  // la moitié, et la table chercherait un mot dont elle n'aurait plus vu les
+  // traces. Elles échappent donc au niveau, par construction.
+  for (const niveau of NIVEAUX) {
+    for (const fil of FILS_ROUGES) {
+      const tirage = tirerQuestions({
+        themes: [], types: [], nombre: 12, fil: fil.id, niveau: niveau.id, aleatoire: () => 0.5,
+      });
+      const duFil = tirage.filter((q) => QUESTIONS.find((x) => x.id === q.id)?.fil === fil.id);
+      assert.ok(duFil.length >= 3,
+        `${fil.id} en « ${niveau.nom} » : ${duFil.length} question(s) du fil dans la partie`);
+    }
+  }
 });
 
 test('un mix accepte assez de titres pour qu’on ne tape pas dans le vide', () => {
