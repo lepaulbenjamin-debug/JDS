@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS,
+  resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS, DUREE_SURSIS_MS,
   PLAFOND_REVELATION_MS, budgetDIntro,
 } from '../web/quiz/js/engine.js';
 import {
@@ -593,6 +593,82 @@ test('un mix reconnu n’ouvre aucun vote', () => {
 
   assert.equal(regie.phase, 'revelation', 'aucun vote ne doit s’ouvrir');
   assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, true);
+});
+
+test('on peut changer sa réponse tant que le chrono tourne', () => {
+  // Le premier tap ne doit pas être définitif : on lit la question de travers,
+  // on se reprend, et le jeu doit l'accepter. Ce qui se perd en changeant,
+  // c'est la rapidité — sinon il suffirait de taper au hasard à la première
+  // seconde pour s'acheter la prime, puis de corriger à tête reposée.
+  const regie = creerRegie({ questions: [QUESTION], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  let horloge = 0;
+  while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  const { startAt } = regie.etatPublic(JOUEURS);
+
+  // Ana se trompe, puis se ravise cinq secondes plus tard.
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 1, elapsedMs: 300 }]);
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 0, elapsedMs: 5300 }]);
+
+  horloge = startAt + DUREE + 100;
+  regie.avancer(horloge, JOUEURS);
+  const detail = regie.etatPublic(JOUEURS).resultat.detail;
+  assert.equal(detail.a.correct, true, 'la correction n’a pas été prise en compte');
+
+  // Et le chrono retenu est celui du second geste : Bo, qui a trouvé du premier
+  // coup à la même seconde, marque davantage.
+  const memeCoup = creerRegie({ questions: [QUESTION], dureeMs: DUREE });
+  memeCoup.lancer(0, JOUEURS);
+  let t2 = 0;
+  while (memeCoup.phase !== 'manche') { t2 += 100; memeCoup.avancer(t2, JOUEURS); }
+  memeCoup.encaisser([{ playerId: 'a', round: 1, reponse: 0, elapsedMs: 300 }]);
+  memeCoup.avancer(memeCoup.etatPublic(JOUEURS).startAt + DUREE + 100, JOUEURS);
+  assert.ok(memeCoup.etatPublic(JOUEURS).resultat.detail.a.points > detail.a.points,
+    'changer d’avis devrait coûter la rapidité');
+});
+
+test('une manche ne se clôt pas dans la seconde du dernier tap', () => {
+  // Sans ce sursis, le droit de se raviser n'existerait que sur le papier : le
+  // dernier à répondre fermerait la manche pour toute la table, y compris pour
+  // celui qui allait corriger.
+  const regie = creerRegie({ questions: [QUESTION], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  let horloge = 0;
+  while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  const { startAt } = regie.etatPublic(JOUEURS);
+
+  for (const joueur of JOUEURS) {
+    regie.encaisser([{ playerId: joueur.id, round: 1, reponse: 1, elapsedMs: 1000 }]);
+  }
+
+  regie.avancer(startAt + 1000 + DUREE_SURSIS_MS - 500, JOUEURS);
+  assert.equal(regie.phase, 'manche', 'la manche s’est fermée avant la fin du sursis');
+
+  // Le sursis court depuis le DERNIER geste : une correction le repousse.
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 0, elapsedMs: 3000 }]);
+  regie.avancer(startAt + 3000 + DUREE_SURSIS_MS - 500, JOUEURS);
+  assert.equal(regie.phase, 'manche', 'une correction n’a pas repoussé le sursis');
+
+  regie.avancer(startAt + 3000 + DUREE_SURSIS_MS + 100, JOUEURS);
+  assert.equal(regie.phase, 'revelation', 'la manche aurait dû se clore après le sursis');
+  assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, true);
+});
+
+test('après le chrono, plus personne ne change sa réponse', () => {
+  const regie = creerRegie({ questions: [QUESTION], dureeMs: DUREE });
+  regie.lancer(0, JOUEURS);
+  let horloge = 0;
+  while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+  const { startAt } = regie.etatPublic(JOUEURS);
+
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 1, elapsedMs: 200 }]);
+  regie.avancer(startAt + DUREE + 100, JOUEURS);
+  assert.equal(regie.phase, 'revelation');
+
+  // Le tap qui part juste après la cloche : il ne doit rien changer.
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: 0, elapsedMs: DUREE + 200 }]);
+  assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, false,
+    'une réponse arrivée après le chrono a été comptée');
 });
 
 test('la fenêtre de jokers précède la question', () => {

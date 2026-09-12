@@ -104,8 +104,12 @@ await regie.page.click('#btn-lancer');
 dire('Partie lancée. On joue…');
 
 const repondre = async ({ page }) => {
-  // Chacun tape la première réponse offerte, quelle que soit la forme de manche.
+  // Une réponse par manche, comme une vraie table. Depuis qu'on peut se
+  // raviser, retaper à chaque tour de boucle repousserait le sursis sans fin :
+  // chaque manche irait au bout du chrono et personne ne marquerait la moindre
+  // prime de rapidité — une partie que nul n'a jamais jouée.
   await page.evaluate(() => {
+    if (document.querySelector('#jeu-etat .atteinte')) return;
     const bouton = document.querySelector('#jeu-reponses button:not([disabled])');
     if (bouton) return bouton.click();
     const champ = document.querySelector('#jeu-reponses input:not([disabled])');

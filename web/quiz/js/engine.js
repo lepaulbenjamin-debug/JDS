@@ -67,6 +67,10 @@ export function jokersPossibles(type) {
 // encore par cœur, se rappeler qui mène au classement, et décider. Six
 // secondes suffisaient à taper sur un bouton, pas à choisir lequel.
 export const DUREE_JOKERS_MS = 10000;
+// Le sursis avant de clore une manche où tout le monde a répondu. C'est le
+// temps laissé au dernier pour se raviser — et à celui qui a répondu trop vite
+// pour rattraper son tap. Court : passé quelques secondes, la table attend.
+export const DUREE_SURSIS_MS = 4000;
 // Le plancher de l'ouverture, pas sa durée : c'est la longueur du clip qui
 // commande, et 5,5 s coupaient les 5,36 s de l'animateur classique — la lecture
 // ne démarre qu'au battement suivant, et il faut bien la laisser finir.
@@ -751,11 +755,15 @@ export function creerRegie({
         }
 
         if (etat.phase !== 'manche' || entree.round !== etat.manche) continue;
-        if (etat.reponses[entree.playerId]) continue;          // premier tap seulement
 
         const valeur = typeDeManche(etat.question.type).lire(entree.reponse);
         if (valeur == null) continue;
 
+        // On garde la DERNIÈRE réponse reçue, pas la première : tant que le
+        // chrono tourne, on a le droit de changer d'avis. Le temps retenu est
+        // celui du dernier geste — sinon il suffirait de taper au hasard à la
+        // première seconde pour s'acheter la prime de rapidité, puis de
+        // corriger tranquillement.
         etat.reponses[entree.playerId] = {
           valeur,
           elapsedMs: entree.elapsedMs,
@@ -807,10 +815,21 @@ export function creerRegie({
         // On n'attend pas la fin du chrono si tout le monde a déjà répondu — et
         // on n'attend pas non plus un pupitre parti se chercher à boire depuis
         // deux manches.
+        //
+        // Mais on ne clôt pas dans la seconde du dernier tap : puisqu'une
+        // réponse se change tant que le chrono tourne, fermer aussitôt
+        // reviendrait à ne jamais laisser personne se raviser — le plus lent de
+        // la table déciderait pour tous, sans le savoir. D'où le sursis :
+        // quelques secondes sans que personne ne touche à rien.
         const attendus = joueurs.filter((j) => (etat.absences[j.id] ?? 0) < ABSENCES_AVANT_SOMMEIL);
+        const dernierGeste = attendus.reduce((tard, j) => {
+          const reponse = etat.reponses[j.id];
+          return reponse ? Math.max(tard, etat.startAt + (reponse.elapsedMs ?? 0)) : tard;
+        }, etat.startAt);
         const tousRepondu = attendus.length > 0
           && attendus.every((j) => etat.reponses[j.id])
-          && now >= etat.startAt;
+          && now >= etat.startAt
+          && now >= dernierGeste + DUREE_SURSIS_MS;
         if (now >= etat.deadline || tousRepondu) {
           cloreManche(joueurs, now);
           return true;

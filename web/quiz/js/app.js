@@ -580,7 +580,7 @@ function peindreReponses() {
   vueDe(vueManche.type).peindre(vueManche, {
     manche,
     monChoix: monChoix?.valeur ?? null,
-    ouvert: etat.phase === 'manche' && net.serverNow() >= etat.startAt && !monChoix,
+    ouvert: etat.phase === 'manche' && net.serverNow() >= etat.startAt,
     revele: etat.phase === 'revelation',
     masque: etat.phase === 'manche' && masque?.manche === etat.manche ? masque.caches : [],
     niveau: niveauCourant(),
@@ -781,7 +781,10 @@ function rendreEtatManche() {
 
   if (etat.phase === 'manche') {
     if (monChoix) {
-      hote.append(el('p', { class: 'atteinte', text: 'Réponse enregistrée. On attend les autres…' }));
+      hote.append(el('p', {
+        class: 'atteinte',
+        text: 'Réponse enregistrée — tu peux encore en changer tant que le chrono tourne.',
+      }));
     }
     const total = joueurs.length;
     const repondu = etat.ontRepondu?.length ?? 0;
@@ -1166,9 +1169,14 @@ function armerJoker(id) {
  * régie validera — ici on se contente de l'écho local.
  */
 async function repondre(valeur) {
-  if (!etat || etat.phase !== 'manche' || monChoix) return;
+  if (!etat || etat.phase !== 'manche') return;
   const maintenant = net.serverNow();
   if (maintenant < etat.startAt || maintenant > etat.deadline) return;
+
+  // Tant que le chrono tourne, on a le droit de changer d'avis : la nouvelle
+  // réponse remplace l'ancienne, des deux côtés. Ce qu'on perd en changeant,
+  // c'est le temps — la régie retient le dernier geste, pas le premier.
+  const precedent = monChoix;
 
   // Écho local immédiat : le tap doit se voir tout de suite, sans attendre que
   // le relais confirme. La régie reste seule juge du score.
@@ -1188,8 +1196,11 @@ async function repondre(valeur) {
     });
   } catch {
     toast('Réponse non transmise — le relais n’a pas répondu.', 'warn');
-    monChoix = null;
+    // On revient à ce qui était affiché avant le tap, pas à rien : effacer une
+    // réponse déjà transmise ferait croire qu'on n'a rien joué.
+    monChoix = precedent;
     peindreReponses();
+    rendreEtatManche();
   }
 }
 
