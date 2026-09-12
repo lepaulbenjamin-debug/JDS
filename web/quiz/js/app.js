@@ -107,7 +107,8 @@ let reglages = {
 let monChoix = null;           // { manche, choix, joker } — écho local, avant l'aller-retour
 let jokerArme = null;
 let masque = null;             // { manche, caches } — les réponses retirées par le 50/50
-let cleRendue = '';            // phase + manche : sert à ne reconstruire que le nécessaire
+let cleRendue = '';
+let saisieRendue = '';         // la manche dont la zone de saisie est à l'écran
 let derniereVoix = '';
 let vueManche = null;          // la vue construite pour la manche en cours
 let filEnvoye = false;         // une tentative de fil rouge part sans écho immédiat
@@ -477,6 +478,18 @@ function rendreJeu() {
     // Sur un TTMC, `texte` est l'annonce de la carte ; l'énoncé joué dépend du
     // niveau et vit dans la vue, qui est seule à savoir lequel a été choisi.
     $('#jeu-question').textContent = question?.type === 'ttmc' ? '' : (question?.texte ?? '');
+  }
+
+  // La zone de saisie se reconstruit au changement de MANCHE, pas de phase.
+  //
+  // Sur une rafale ou un classement, elle est seule à savoir ce que le joueur a
+  // coché : la refabriquer à la révélation repartait de cases vides, et l'on
+  // voyait les bonnes réponses en vert sans jamais savoir lesquelles on avait
+  // ratées. Rien n'obligeait à la reconstruire — la solution arrive dans la
+  // manche passée à `peindre`, pas dans celle passée à `construire`.
+  const saisie = `${etat.manche}:${question?.id ?? ''}`;
+  if (saisie !== saisieRendue) {
+    saisieRendue = saisie;
     construireSaisie(question);
   }
 
@@ -1669,6 +1682,7 @@ async function quitter() {
   joueurs = [];
   version = -1;
   cleRendue = '';
+  saisieRendue = '';
   filRendu = '';
   derniereVoix = '';
   oublierLeSalon();
@@ -1729,6 +1743,7 @@ function brancher() {
     etat = null;
     version = -1;
     cleRendue = '';
+    saisieRendue = '';
     filRendu = '';
     derniereVoix = '';
     // Une partie solo se rejoue d'un tap : repasser par les réglages et le

@@ -873,7 +873,13 @@ export function creerRegie({
         texte: etat.question.texte,
         consigne: type.consigne,
         ...type.publier(etat.question, revele),
-        ...(revele ? { note: etat.question.note, solution: type.solutionTexte(etat.question) } : {}),
+        // `solutionTexte` et non `solution` : la seconde appartient à la manche
+        // et porte sa forme à elle — un tableau de booléens pour une rafale, un
+        // ordre d'éléments pour un classement. Écrire la phrase lisible sous le
+        // même nom l'écrasait, et le pupitre se retrouvait à lire une chaîne
+        // caractère par caractère : toutes les cases « Vrai » passaient au vert,
+        // et aucun rang n'était jamais juste.
+        ...(revele ? { note: etat.question.note, solutionTexte: type.solutionTexte(etat.question) } : {}),
       };
 
       return {

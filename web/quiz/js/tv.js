@@ -186,12 +186,12 @@ function rendreReponses(question, revele) {
     return;
   }
 
-  if (revele && question.solution) {
+  if (revele && question.solutionTexte) {
     zone.hidden = false;
     // Une rafale et un classement rendent plusieurs éléments dans une seule
     // chaîne, séparés par des points-virgules. En un seul pavé sur une télé,
     // c'est illisible : on retrouve les lignes.
-    for (const morceau of String(question.solution).split(/\s*;\s*|,\s*puis\s*/)) {
+    for (const morceau of String(question.solutionTexte).split(/\s*;\s*|,\s*puis\s*/)) {
       if (morceau.trim()) {
         zone.append(el('div', { class: 'tv-reponse est-juste', text: morceau.trim() }));
       }

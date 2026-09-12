@@ -595,6 +595,33 @@ test('un mix reconnu n’ouvre aucun vote', () => {
   assert.equal(regie.etatPublic(JOUEURS).resultat.detail.a.correct, true);
 });
 
+test('la régie publie la solution dans la forme que la manche attend', () => {
+  // Deux choses portaient le nom « solution » : la forme propre à la manche —
+  // des booléens pour une rafale, un ordre pour un classement — et la phrase
+  // lisible qu'on affiche sur la télé. La seconde écrasait la première, et le
+  // pupitre lisait alors une chaîne caractère par caractère : toutes les cases
+  // « Vrai » passaient au vert, et aucun rang n'était jamais juste.
+  const formes = {
+    rafale: (s) => Array.isArray(s) && s.length === 5 && s.every((v) => typeof v === 'boolean'),
+    ordre: (s) => Array.isArray(s) && s.every((v) => Number.isInteger(v)),
+  };
+
+  for (const [type, forme] of Object.entries(formes)) {
+    const entree = QUESTIONS.find((q) => q.type === type);
+    const carte = typeDeManche(type).preparer(entree, (l) => l);
+    const regie = creerRegie({ questions: [carte], dureeMs: DUREE });
+    regie.lancer(0, JOUEURS);
+    let horloge = 0;
+    while (regie.phase !== 'manche') { horloge += 100; regie.avancer(horloge, JOUEURS); }
+    while (regie.phase === 'manche') { horloge += 500; regie.avancer(horloge, JOUEURS); }
+
+    const { question } = regie.etatPublic(JOUEURS);
+    assert.ok(forme(question.solution), `${type} : la solution publiée a perdu sa forme`);
+    assert.equal(typeof question.solutionTexte, 'string', `${type} : pas de phrase lisible`);
+    assert.ok(question.solutionTexte.length > 0, `${type} : phrase lisible vide`);
+  }
+});
+
 test('on peut changer sa réponse tant que le chrono tourne', () => {
   // Le premier tap ne doit pas être définitif : on lit la question de travers,
   // on se reprend, et le jeu doit l'accepter. Ce qui se perd en changeant,
