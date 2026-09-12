@@ -1729,6 +1729,21 @@ test('on ne s’accorde pas un pack tout seul par l’API', async () => {
   assert.equal(verif.status, 402);
 });
 
+test('un mix accepte assez de titres pour qu’on ne tape pas dans le vide', () => {
+  // Un mix juge une question ouverte avec une liste fermée : « une chanson avec
+  // un animal dans le titre » a mille bonnes réponses. La liste ne les aura
+  // jamais toutes — le vote de la table est là pour ça — mais à vingt titres,
+  // dont dix-neuf en anglais, une table française se faisait refuser presque à
+  // chaque fois, et le vote devenait la règle au lieu de l'exception.
+  const MINIMUM = 25;
+  for (const mix of QUESTIONS.filter((q) => q.type === 'mix')) {
+    assert.ok(mix.acceptees.length >= MINIMUM,
+      `${mix.id} : ${mix.acceptees.length} titres acceptés, il en faut ${MINIMUM}`);
+    const titres = mix.acceptees.map((a) => a.titre.toLowerCase());
+    assert.equal(new Set(titres).size, titres.length, `${mix.id} : deux fois le même titre`);
+  }
+});
+
 test('un pack payant tient deux parties entières', async () => {
   // Un thème gratuit doit pouvoir remplir la plus longue partie proposée, soit
   // douze manches. Un pack acheté quatre euros ne peut pas en offrir autant :
@@ -1772,6 +1787,12 @@ test('les questions des packs sont valides comme celles de la banque', async () 
       assert.ok(THEMES.some((t) => t.id === q.theme), `${q.id} : thème inconnu`);
       // Préparable et notable, sinon la manche planterait en pleine soirée.
       const manche = type.preparer(q, (l) => l);
+      if (q.type === 'mix') {
+        // La même règle que pour la banque : sous vingt-cinq titres, une table
+        // française tape dans le vide et tout finit au vote.
+        assert.ok(q.acceptees.length >= 25,
+          `${q.id} : ${q.acceptees.length} titres acceptés, il en faut 25`);
+      }
       if (q.type === 'ttmc') {
         // Une carte n'a pas de solution commune : chacun a répondu à sa propre
         // question. Ce qui doit tenir, c'est chacun des dix niveaux.
