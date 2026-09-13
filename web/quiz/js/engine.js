@@ -71,6 +71,17 @@ export const DUREE_JOKERS_MS = 10000;
 // temps laissé au dernier pour se raviser — et à celui qui a répondu trop vite
 // pour rattraper son tap. Court : passé quelques secondes, la table attend.
 export const DUREE_SURSIS_MS = 4000;
+// Le temps de lire l'énoncé à voix haute, entre le top et l'ouverture des
+// réponses. Les réponses apparaissaient en même temps que la question : on
+// lisait la première case avant d'avoir entendu la fin de la phrase, et la
+// voix de l'animateur ne servait plus à rien. Elle sert maintenant à quelque
+// chose — on écoute, puis on répond, et le chrono ne part qu'à ce moment.
+const PLANCHER_LECTURE_MS = 1500;
+const RESPIRATION_LECTURE_S = 0.7;
+// Le débit de l'animateur, en caractères par seconde. Sert quand aucun clip
+// n'est disponible : la synthèse du navigateur parle elle aussi, et sa durée
+// n'est connue de personne à l'avance.
+const CARACTERES_PAR_SECONDE = 14;
 // Le plancher de l'ouverture, pas sa durée : c'est la longueur du clip qui
 // commande, et 5,5 s coupaient les 5,36 s de l'animateur classique — la lecture
 // ne démarre qu'au battement suivant, et il faut bien la laisser finir.
@@ -321,7 +332,7 @@ function commentaire({ detail, joueurs, manche, persona }) {
  */
 export function creerRegie({
   questions, dureeMs = 15000, persona = 'classique', themes = [], dureeRevelation,
-  jokers = JOKERS.map((j) => j.id), fil = null,
+  dureeLecture, jokers = JOKERS.map((j) => j.id), fil = null,
 }) {
   const total = questions.length;
 
@@ -332,6 +343,25 @@ export function creerRegie({
 
   /** Le chrono d'une manche : un classement demande plus de temps qu'un tap. */
   const tempsDeReponse = (manche) => Math.round(dureeMs * typeDeManche(manche.type).facteurDuree);
+
+  /**
+   * Le temps de lire l'énoncé avant d'ouvrir les réponses.
+   *
+   * Deux sources, dans cet ordre : la durée du clip, que l'appli seule connaît
+   * — les clips sont indexés sur des identifiants de banque, que le moteur
+   * ignore — puis, à défaut, une estimation par la longueur du texte. Le repli
+   * compte autant que le clip : sans banque, c'est la synthèse du navigateur qui
+   * parle, et elle prend le même temps.
+   *
+   * Un TTMC fait exception, et c'est le seul : dix énoncés différents tournent
+   * en même temps, l'animateur n'en lit aucun. Rien à attendre, donc.
+   */
+  const tempsDeLecture = (manche) => {
+    if (manche.type === 'ttmc') return 0;
+    const clip = dureeLecture?.(manche) ?? 0;
+    const secondes = clip || (manche.texte ?? '').length / CARACTERES_PAR_SECONDE;
+    return Math.max(PLANCHER_LECTURE_MS, Math.round((secondes + RESPIRATION_LECTURE_S) * 1000));
+  };
 
   /**
    * Combien de temps laisser à l'ouverture.
@@ -406,6 +436,7 @@ export function creerRegie({
     persona,
     dureeMs,
     startAt: 0,
+    reponsesAt: 0,
     niveaux: {},
     candidats: null,
     votes: {},
@@ -502,7 +533,8 @@ export function creerRegie({
     // La fenêtre d'avant-question appartient au type : le TTMC y fait annoncer
     // un niveau, ce qui demande plus que le temps de sortir un joker.
     etat.startAt = now + (typeDeManche(etat.question.type).avantQuestionMs ?? DUREE_JOKERS_MS);
-    etat.deadline = etat.startAt + tempsDeReponse(etat.question);
+    etat.reponsesAt = etat.startAt + tempsDeLecture(etat.question);
+    etat.deadline = etat.reponsesAt + tempsDeReponse(etat.question);
     etat.finPhase = etat.deadline;
     poserLAnnonce(numero === total ? 'derniereManche' : 'avantManche', {
       numero,
@@ -850,11 +882,11 @@ export function creerRegie({
         const attendus = joueurs.filter((j) => (etat.absences[j.id] ?? 0) < ABSENCES_AVANT_SOMMEIL);
         const dernierGeste = attendus.reduce((tard, j) => {
           const reponse = etat.reponses[j.id];
-          return reponse ? Math.max(tard, etat.startAt + (reponse.elapsedMs ?? 0)) : tard;
-        }, etat.startAt);
+          return reponse ? Math.max(tard, etat.reponsesAt + (reponse.elapsedMs ?? 0)) : tard;
+        }, etat.reponsesAt);
         const tousRepondu = attendus.length > 0
           && attendus.every((j) => etat.reponses[j.id])
-          && now >= etat.startAt
+          && now >= etat.reponsesAt
           && now >= dernierGeste + DUREE_SURSIS_MS;
         if (now >= etat.deadline || tousRepondu) {
           cloreManche(joueurs, now);
@@ -916,6 +948,8 @@ export function creerRegie({
         persona,
         dureeMs: etat.question ? tempsDeReponse(etat.question) : dureeMs,
         startAt: etat.startAt,
+        // Le moment où les réponses s'ouvrent : après l'énoncé, pas avant.
+        reponsesAt: etat.reponsesAt,
         deadline: etat.deadline,
         finPhase: etat.finPhase,
         // La clé dit de quelle annonce il s'agit ; les clips sont tirés une

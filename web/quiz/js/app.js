@@ -596,7 +596,7 @@ function peindreReponses() {
   vueDe(vueManche.type).peindre(vueManche, {
     manche,
     monChoix: monChoix?.valeur ?? null,
-    ouvert: etat.phase === 'manche' && net.serverNow() >= etat.startAt,
+    ouvert: etat.phase === 'manche' && net.serverNow() >= etat.reponsesAt,
     revele: etat.phase === 'revelation',
     masque: etat.phase === 'manche' && masque?.manche === etat.manche ? masque.caches : [],
     niveau: niveauCourant(),
@@ -820,6 +820,13 @@ function rendreEtatManche() {
   }
 
   if (etat.phase === 'manche') {
+    // Le temps que l'énoncé se lise, l'écran n'a ni réponses ni chrono qui
+    // bouge : sans un mot, quelques secondes de rien ressemblent à une panne.
+    const maintenant = net.serverNow();
+    if (maintenant >= etat.startAt && maintenant < etat.reponsesAt) {
+      hote.append(el('p', { class: 'atteinte', text: '🔊 Écoutez la question…' }));
+      return;
+    }
     if (monChoix) {
       hote.append(el('p', {
         class: 'atteinte',
@@ -1034,8 +1041,13 @@ function rafraichirChrono() {
 
   const maintenant = net.serverNow();
   const avantDepart = maintenant < etat.startAt;
+  // Trois temps, et non deux : la fenêtre des jokers, puis l'énoncé seul le
+  // temps qu'il soit lu, puis les réponses. Les faire apparaître avec la
+  // question revenait à lire la première case avant d'avoir entendu la fin de
+  // la phrase — et la voix de l'animateur ne servait plus à rien.
+  const enLecture = !avantDepart && maintenant < etat.reponsesAt;
   $('#jeu-question').hidden = avantDepart;
-  $('#jeu-reponses').hidden = avantDepart;
+  $('#jeu-reponses').hidden = avantDepart || enLecture;
   // Pendant qu'on répond, la phrase de l'animateur ne fait que repousser la
   // question vers le bas de l'écran : elle a déjà été dite, et lue, au décompte.
   $('#jeu-annonce').hidden = !avantDepart;
@@ -1045,6 +1057,16 @@ function rafraichirChrono() {
 
   if (avantDepart) {
     cadre.dataset.compte = String(Math.max(1, Math.ceil((etat.startAt - maintenant) / 1000)));
+    jauge.style.width = '100%';
+    jauge.classList.remove('est-urgent');
+    return;
+  }
+
+  // Pendant la lecture, la jauge reste pleine : le chrono n'a pas commencé, et
+  // la voir descendre pendant qu'on écoute donnerait l'impression de perdre du
+  // temps qu'on n'a pas encore.
+  if (enLecture) {
+    delete cadre.dataset.compte;
     jauge.style.width = '100%';
     jauge.classList.remove('est-urgent');
     return;
@@ -1250,7 +1272,7 @@ function armerJoker(id) {
 async function repondre(valeur) {
   if (!etat || etat.phase !== 'manche') return;
   const maintenant = net.serverNow();
-  if (maintenant < etat.startAt || maintenant > etat.deadline) return;
+  if (maintenant < etat.reponsesAt || maintenant > etat.deadline) return;
 
   // Tant que le chrono tourne, on a le droit de changer d'avis : la nouvelle
   // réponse remplace l'ancienne, des deux côtés. Ce qu'on perd en changeant,
@@ -1272,7 +1294,7 @@ async function repondre(valeur) {
       reponse: valeur,
       joker: jokerArme,
       cible: cibleVisee,
-      elapsedMs: Math.max(0, maintenant - etat.startAt),
+      elapsedMs: Math.max(0, maintenant - etat.reponsesAt),
     });
   } catch {
     toast('Réponse non transmise — le relais n’a pas répondu.', 'warn');
@@ -1568,6 +1590,11 @@ function construireRegie(questions, fil) {
       // réponse et son explication. Un « + 6 secondes » forfaitaire ne suffisait
       // pas — il ignorait la réplique de joker, et coupait donc l'explication à
       // chaque manche où il se passait quelque chose.
+      // Combien de temps l'énoncé prend à être lu : c'est ce qui retarde
+      // l'ouverture des réponses. Zéro quand la banque manque — le moteur
+      // retombe alors sur une estimation par la longueur du texte, parce que la
+      // synthèse du navigateur parle elle aussi.
+      dureeLecture: (question) => dureeDuClip(`question/${question.id}`),
       dureeRevelation: (question, resultat) => {
         const lu = dureeDuClip(`reponse/${question.id}`) + dureeDuClip(`note/${question.id}`);
         if (!lu) return 0;                       // pas de clips : le plancher suffit
@@ -1884,6 +1911,7 @@ function brancher() {
 
   // Le chrono ne doit pas dépendre du rythme des sondages : il s'anime tout seul.
   let jokersOuverts = null;
+  let reponsesOuvertes = null;
   setInterval(() => {
     if (etat?.phase !== 'manche') return;
     rafraichirChrono();
@@ -1902,7 +1930,21 @@ function brancher() {
       const etaitOuvert = jokersOuverts;
       jokersOuverts = ouverts;
       rendreJokers();
-      if (etaitOuvert === true && !ouverts) lireEnonce();
+      if (etaitOuvert === true && !ouverts) {
+        lireEnonce();
+        // La ligne « écoutez » doit sortir avec l'énoncé, pas au battement
+        // suivant : une demi-seconde d'écran vide se voit.
+        rendreEtatManche();
+      }
+    }
+
+    // L'ouverture des réponses tombe elle aussi sur une heure, pas sur un état
+    // publié : c'est ici qu'on la voit passer, et la ligne « écoutez » doit
+    // disparaître au même instant.
+    const repondables = net.serverNow() >= etat.reponsesAt;
+    if (repondables !== reponsesOuvertes) {
+      reponsesOuvertes = repondables;
+      rendreEtatManche();
     }
   }, 100);
 

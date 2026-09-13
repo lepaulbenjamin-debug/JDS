@@ -207,8 +207,14 @@ function rendreChrono() {
   if (etat.phase === 'manche') {
     cadre.hidden = false;
     const avantDepart = maintenant < etat.startAt;
-    if (avantDepart) {
-      cadre.dataset.compte = String(Math.max(1, Math.ceil((etat.startAt - maintenant) / 1000)));
+    // Le décompte avant le top, puis la jauge pleine le temps que l'énoncé se
+    // lise : le chrono ne part qu'avec les réponses.
+    if (avantDepart || maintenant < etat.reponsesAt) {
+      if (avantDepart) {
+        cadre.dataset.compte = String(Math.max(1, Math.ceil((etat.startAt - maintenant) / 1000)));
+      } else {
+        delete cadre.dataset.compte;
+      }
       jauge.style.width = '100%';
       jauge.classList.remove('est-urgent');
       return;
