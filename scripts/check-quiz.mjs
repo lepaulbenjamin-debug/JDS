@@ -20,6 +20,7 @@ import {
   QUESTIONS, THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
+import { creerHistorique } from '../web/quiz/js/historique.js';
 import { handlePackRequest, accorder } from '../lib/packs.js';
 import { verifierTransaction, definirRacine, racineApple } from '../lib/apple.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
@@ -2810,4 +2811,177 @@ test('la racine épinglée est bien celle d’Apple', async () => {
   // Auto-signée, et valable au-delà de toute échéance raisonnable.
   assert.ok(racine.checkIssued(racine) && racine.verify(racine.publicKey));
   assert.ok(new Date(racine.validTo) > new Date('2030-01-01'));
+});
+
+/* --- Ce qui a déjà été joué ---------------------------------------------- */
+
+/** Un stockage en mémoire : les tests n'ont pas de navigateur. */
+function stockageDeTest() {
+  const boite = new Map();
+  return {
+    getItem: (cle) => (boite.has(cle) ? boite.get(cle) : null),
+    setItem: (cle, valeur) => boite.set(cle, String(valeur)),
+    removeItem: (cle) => boite.delete(cle),
+  };
+}
+
+test('l’historique retient ce qui a été joué, d’une partie à l’autre', () => {
+  const stockage = stockageDeTest();
+  const premier = creerHistorique(stockage);
+  premier.nouvellePartie();
+  premier.marquer('cul-01');
+  premier.marquer('cul-02');
+
+  // Un rechargement de la page relit le même stockage : c'est tout l'intérêt.
+  const apres = creerHistorique(stockage);
+  assert.deepEqual(Object.keys(apres.vues()).sort(), ['cul-01', 'cul-02']);
+
+  // Et le numéro de partie avance, sinon « vu la partie dernière » et « vu il y
+  // a dix parties » se confondraient.
+  const deuxieme = apres.nouvellePartie();
+  apres.marquer('cul-03');
+  assert.equal(apres.vues()['cul-03'], deuxieme);
+  assert.ok(apres.vues()['cul-01'] < deuxieme);
+});
+
+test('un historique illisible ne casse pas le lancement d’une partie', () => {
+  const stockage = stockageDeTest();
+  stockage.setItem('quizroom.vues', '{ça n’est pas du JSON');
+  const historique = creerHistorique(stockage);
+  assert.deepEqual(historique.vues(), {});
+  // Et sans stockage du tout — navigation privée, stockage refusé.
+  assert.deepEqual(creerHistorique(null).vues(), {});
+});
+
+test('oublier l’historique remet le tirage à neuf', () => {
+  const historique = creerHistorique(stockageDeTest());
+  historique.nouvellePartie();
+  historique.marquer('cul-01');
+  historique.oublier();
+  assert.deepEqual(historique.vues(), {});
+  assert.equal(historique.bilan('culture').vues, 0);
+});
+
+test('le pourcentage déjà joué se compte thème par thème', () => {
+  const historique = creerHistorique(stockageDeTest());
+  historique.nouvellePartie();
+  const duTheme = QUESTIONS.filter((q) => q.theme === 'nature' && !q.fil);
+  for (const q of duTheme.slice(0, 9)) historique.marquer(q.id);
+
+  const bilan = historique.bilan('nature');
+  assert.equal(bilan.total, duTheme.length);
+  assert.equal(bilan.vues, 9);
+  assert.equal(bilan.pourcent, Math.round((9 / duTheme.length) * 100));
+
+  // Un autre thème n'a pas bougé, et le bilan général les additionne.
+  assert.equal(historique.bilan('histoire').vues, 0);
+  assert.equal(historique.bilan().vues, 9);
+});
+
+test('le tirage sert d’abord les questions jamais vues', () => {
+  // C'est la demande de fond : on ne veut pas revoir demain la question
+  // d'hier alors qu'il reste des inédites sous la main.
+  const pool = QUESTIONS.filter((q) => q.theme === 'fake');
+  const neuves = pool.slice(-5).map((q) => q.id);
+  const vues = Object.fromEntries(pool.slice(0, -5).map((q) => [q.id, 3]));
+
+  const tirage = tirerQuestions({ themes: ['fake'], nombre: 5, vues });
+  assert.deepEqual(tirage.map((q) => q.id).sort(), [...neuves].sort());
+});
+
+test('quand tout a été vu, le tirage reprend par les plus anciennes', () => {
+  // Refuser de jouer parce que tout a été joué serait la pire des réponses : un
+  // thème de quinze questions serait mort au deuxième tour. On recycle donc, en
+  // commençant par ce qui remonte le plus loin.
+  const pool = QUESTIONS.filter((q) => q.theme === 'fake');
+  const vues = Object.fromEntries(pool.map((q, i) => [q.id, i + 1]));
+
+  const tirage = tirerQuestions({ themes: ['fake'], nombre: 4, vues });
+  assert.equal(tirage.length, 4, 'une partie complète, même sans rien de neuf');
+  assert.deepEqual(
+    tirage.map((q) => q.id).sort(),
+    pool.slice(0, 4).map((q) => q.id).sort(),
+  );
+});
+
+test('le fil rouge traverse la partie même quand tout a déjà été vu', () => {
+  // Ses questions ne se filtrent ni par niveau ni par fraîcheur : sans elles,
+  // l'énigme n'a plus d'indices.
+  const vues = Object.fromEntries(toutesLesQuestions().map((q) => [q.id, 1]));
+  const fil = FILS_ROUGES[0];
+  const tirage = tirerQuestions({
+    themes: [], nombre: 12, fil: fil.id, vues, aleatoire: () => 0.5,
+  });
+  const duFil = tirage.filter((q) => QUESTIONS.find((x) => x.id === q.id)?.fil === fil.id);
+  assert.ok(duFil.length >= 3, `${duFil.length} question(s) du fil dans la partie`);
+});
+
+/* --- Les réponses de la table -------------------------------------------- */
+
+test('chaque type sait dire ce qu’un joueur a répondu', () => {
+  // La ligne qu'on lit à la révélation : « Bruno — 1 200 marches ». Elle vient
+  // du type de manche, pas de l'écran, pour que les deux surfaces — le pupitre
+  // et la télé — disent exactement la même chose.
+  const melange = (liste) => liste;
+  const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
+
+  const qcmManche = preparer(QUESTIONS.find((q) => (q.type ?? 'qcm') === 'qcm'));
+  assert.equal(
+    typeDeManche('qcm').resume(qcmManche, { valeur: 1 }),
+    qcmManche.reponses[1],
+  );
+
+  const est = preparer(QUESTIONS.find((q) => q.type === 'estimation'));
+  assert.equal(typeDeManche('estimation').resume(est, { valeur: 42 }), `42 ${est.unite}`);
+  assert.equal(typeDeManche('estimation').resume(est, { valeur: null }), '');
+
+  const ord = preparer(QUESTIONS.find((q) => q.type === 'ordre'));
+  assert.equal(
+    typeDeManche('ordre').resume(ord, { valeur: [3, 2, 1, 0] }),
+    [3, 2, 1, 0].map((i) => ord.elements[i]).join(' › '),
+  );
+
+  const raf = preparer(QUESTIONS.find((q) => q.type === 'rafale'));
+  assert.equal(
+    typeDeManche('rafale').resume(raf, { valeur: [true, false, null, true, false] }),
+    'V F · V F',
+  );
+
+  const leMix = preparer(QUESTIONS.find((q) => q.type === 'mix'));
+  assert.equal(typeDeManche('mix').resume(leMix, { valeur: 'Karma Police' }), '« Karma Police »');
+
+  const carte = preparer(QUESTIONS.find((q) => q.type === 'ttmc'));
+  assert.equal(
+    typeDeManche('ttmc').resume(carte, { valeur: 0, niveau: 7 }),
+    `niveau 7 — ${carte.niveaux[6].reponses[0]}`,
+  );
+  // Sans annonce, c'est le niveau par défaut qui a été joué : le dire autrement
+  // afficherait la réponse d'une question à laquelle personne n'a répondu.
+  assert.equal(
+    typeDeManche('ttmc').resume(carte, { valeur: 0 }),
+    `niveau ${NIVEAU_DEFAUT} — ${carte.niveaux[NIVEAU_DEFAUT - 1].reponses[0]}`,
+  );
+});
+
+test('la révélation publie la réponse de chacun, pas seulement son score', () => {
+  // Sans ça, aucun écran ne peut montrer ce que les autres ont répondu — et
+  // c'est précisément le moment où la table rit.
+  const { vues } = jouerUnePartie({
+    questions: troisQuestions(),
+    repondre: (vue, horloge) => (vue.phase === 'manche' && horloge > vue.reponsesAt
+      ? [
+        { playerId: 'a', round: vue.manche, reponse: 0, elapsedMs: 200 },
+        { playerId: 'b', round: vue.manche, reponse: 2, elapsedMs: 400 },
+      ]
+      : []),
+  });
+
+  const revelations = vues.filter((v) => v.phase === 'revelation');
+  assert.ok(revelations.length >= 1);
+  for (const vue of revelations) {
+    assert.equal(vue.resultat.detail.a.valeur, 0);
+    assert.equal(vue.resultat.detail.b.valeur, 2);
+    // Et l'énoncé publié porte les intitulés : la valeur seule ne se lit pas.
+    assert.equal(vue.question.reponses.length, 4);
+  }
 });

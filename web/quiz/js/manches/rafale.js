@@ -69,6 +69,17 @@ export default {
     return notes.some((n) => n.fraction > 0) ? 'partiel' : 'personne';
   },
 
+  // Cinq verdicts dans l'ordre des affirmations, qui sont juste au-dessus à
+  // l'écran : « V F V V F » se relit d'un coup d'œil, là où les cinq phrases
+  // recopiées pour chaque joueur rempliraient la page. Et c'est bien ce qu'on
+  // veut voir — celui qui a répondu vrai cinq fois de suite se reconnaît.
+  resume(manche, detail) {
+    if (!Array.isArray(detail?.valeur)) return '';
+    return detail.valeur
+      .map((v) => (v === true ? 'V' : v === false ? 'F' : '·'))
+      .join(' ');
+  },
+
   solutionTexte(manche) {
     const vraies = manche.affirmations.filter((_, i) => manche.solution[i]);
     if (!vraies.length) return 'Aucune n’était vraie.';

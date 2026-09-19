@@ -3543,6 +3543,21 @@ const poolDe = (themes, types, niveau) => {
 };
 
 /**
+ * Les questions, des plus neuves aux plus revues.
+ *
+ * Jamais vue passe devant tout le monde ; ensuite viennent les plus anciennes.
+ * On ne les ÉCARTE pas : un thème de vingt questions joué en parties de douze
+ * serait vide au deuxième tour, et refuser de jouer parce qu'on a déjà joué
+ * serait la pire des réponses. On les repousse, c'est tout — et une question
+ * revient quand il n'y a plus rien de neuf à servir.
+ */
+function parFraicheur(liste, vues) {
+  if (!vues) return liste;
+  const quand = (q) => vues[q.id] ?? -1;      // jamais vue : avant la partie 0
+  return liste.slice().sort((a, b) => quand(a) - quand(b));
+}
+
+/**
  * Le tirage d'une partie.
  *
  * Chaque entrée passe par son type de manche, qui sait la préparer — mélanger
@@ -3551,16 +3566,23 @@ const poolDe = (themes, types, niveau) => {
  * Quand un fil rouge est demandé, ses questions sont réparties dans la partie
  * plutôt que tirées au hasard : groupées, elles se verraient tout de suite ; en
  * fin de partie seulement, plus personne n'aurait le temps de chercher.
+ *
+ * `vues` est la mémoire de l'appareil : identifiant → numéro de partie où la
+ * question est passée. Voir `fraicheur` juste en dessous.
  */
 export function tirerQuestions({
-  themes, types, nombre, aleatoire = Math.random, fil = null, niveau = null,
+  themes, types, nombre, aleatoire = Math.random, fil = null, niveau = null, vues = null,
 }) {
   const melange = melangeur(aleatoire);
   const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
 
   const duFil = fil ? toutesLesQuestions().filter((q) => q.fil === fil) : [];
-  const reste = melange(poolDe(themes, types, niveau).filter((q) => !q.fil))
-    .slice(0, Math.max(0, nombre - duFil.length));
+  // Mélangé d'abord, trié par fraîcheur ensuite — le tri est stable, donc deux
+  // questions aussi neuves l'une que l'autre restent dans l'ordre du hasard.
+  // Puis remélangé après la sélection : sans ça, l'ordre des manches raconterait
+  // l'historique, les jamais-vues en premier et les revenantes à la fin.
+  const candidates = parFraicheur(melange(poolDe(themes, types, niveau).filter((q) => !q.fil)), vues);
+  const reste = melange(candidates.slice(0, Math.max(0, nombre - duFil.length)));
 
   if (!duFil.length) return reste.map(preparer);
 

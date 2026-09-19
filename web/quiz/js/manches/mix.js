@@ -133,4 +133,10 @@ export default {
     // complète s'affiche à l'écran.
     return manche.acceptees.slice(0, 3).map((t) => t.titre).join(', ');
   },
+
+  // Ce qui a été TAPÉ, pas le titre reconnu derrière : la faute de frappe et le
+  // titre inventé de toutes pièces sont la moitié du plaisir de la manche.
+  resume(manche, detail) {
+    return detail?.valeur ? `« ${detail.valeur} »` : '';
+  },
 };

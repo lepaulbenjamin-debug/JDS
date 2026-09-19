@@ -9,7 +9,9 @@ import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
 import { vueDe } from './vues.js';
+import { typeDeManche } from './manches/index.js';
 import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
+import { historique } from './historique.js';
 import {
   THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
   ajouterQuestions, toutesLesQuestions,
@@ -296,6 +298,18 @@ function appliquer(nouvel) {
         voix.precharger([`question/${etat.question.id}`, `reponse/${etat.question.id}`]);
       }
     }
+
+    // Une question posée, et vue : on la note pour ne pas la resservir demain.
+    // Sur la régie seulement — c'est elle qui tire, et l'historique d'un pupitre
+    // invité n'aurait aucune prise sur les parties qu'il ne crée pas.
+    //
+    // À la révélation, et non au tirage : une partie lancée pour montrer
+    // l'appli et abandonnée à la deuxième manche ne doit pas brûler douze
+    // questions que personne n'a entendues.
+    if (etat.phase === 'revelation' && estRegie() && etat.question?.id) {
+      historique.marquer(etat.question.id);
+    }
+
     parler();
   }
 
@@ -815,6 +829,8 @@ function rendreEtatManche() {
         text: `Réponse la plus rapide : ${etat.resultat.rapide.nom}, en ${etat.resultat.rapide.secondes} s.`,
       }));
     }
+    const dits = rendreLesDits();
+    if (dits) hote.append(dits);
     hote.append(rendreClassement());
     return;
   }
@@ -865,6 +881,72 @@ function detailDeLaManche(mien) {
     return 'Pas dans la liste de l’appli — ce qui ne veut pas dire que tu avais tort.';
   }
   return '';
+}
+
+/**
+ * Ce que toute la table a répondu.
+ *
+ * Jusqu'ici chacun ne voyait que sa propre réponse : on savait qui avait marqué,
+ * jamais ce qu'il avait osé écrire. Or c'est là qu'est la soirée — l'estimation
+ * à trois zéros près, le titre inventé de toutes pièces, les cinq « vrai »
+ * d'affilée. Les réponses étaient déjà publiées à la révélation (le moteur en a
+ * besoin pour compter) ; il ne manquait qu'un écran pour les lire.
+ *
+ * L'ordre est celui de la manche, du plus rapide au plus lent, et non celui du
+ * classement : c'est l'ordre dans lequel ça s'est joué.
+ */
+function rendreLesDits() {
+  const detail = etat.resultat?.detail;
+  if (!detail || !etat.question) return null;
+
+  const type = typeDeManche(etat.question.type);
+  const nomDe = (id) => (etat.classement ?? joueurs).find((j) => j.id === id)?.name ?? '—';
+
+  const lignes = Object.entries(detail)
+    .sort((a, b) => (a[1].elapsedMs ?? Infinity) - (b[1].elapsedMs ?? Infinity))
+    .map(([id, r]) => ({
+      id,
+      nom: nomDe(id),
+      absent: Boolean(r.absent),
+      correct: Boolean(r.correct),
+      // Une manche à points partiels n'est ni juste ni fausse : la rafale à
+      // trois sur cinq n'est pas celle à zéro, et une pastille rouge dirait le
+      // contraire du score affiché juste à côté. D'où la marque « 3/5 » là où
+      // elle existe, et rien du tout sur une estimation — le nombre est déjà là,
+      // et « faux » n'a aucun sens quand on joue au plus proche.
+      partiel: !r.correct && (r.fraction ?? 0) > 0,
+      marque: marqueDuDit(r, type),
+      texte: r.absent ? '' : (type.resume?.(etat.question, r) ?? ''),
+    }));
+
+  // Seul autour de la table, il n'y a personne dont on puisse rire.
+  if (lignes.length < 2) return null;
+
+  return el('div', { class: 'dits' }, [
+    el('p', { class: 'muted small', text: 'Ce que la table a répondu' }),
+    ...lignes.map((ligne) => el('div', {
+      class: `dit${ligne.id === moi.id ? ' est-moi' : ''}`
+        + (ligne.correct ? ' est-juste' : ligne.partiel ? ' est-partiel' : ''),
+    }, [
+      el('span', { class: 'dit-nom', text: ligne.nom }),
+      el('span', {
+        class: 'dit-texte',
+        text: ligne.absent ? 'n’a rien répondu' : (ligne.texte || '—'),
+      }),
+      el('span', { class: 'dit-marque', text: ligne.marque }),
+    ])),
+  ]);
+}
+
+/** La pastille au bout d'une ligne : juste, faux, ou le compte des positions. */
+function marqueDuDit(r, type) {
+  if (r.absent) return '';
+  const sur = type.id === 'rafale' ? etat.question.affirmations?.length
+    : type.id === 'ordre' ? etat.question.elements?.length
+      : null;
+  if (sur && r.justes != null) return `${r.justes}/${sur}`;
+  if (type.id === 'estimation') return r.correct ? '✔' : '';
+  return r.correct ? '✔' : '✘';
 }
 
 /* --- Le fil rouge --------------------------------------------------------- */
@@ -1324,17 +1406,36 @@ function rendreReglages() {
   const themes = clear($('#choix-themes'));
   for (const theme of THEMES) {
     const actif = reglages.themes.includes(theme.id);
+    // Le pourcentage déjà vu, sur la pastille du thème.
+    //
+    // C'est l'information qui manquait pour choisir : « Bouffe » à 90 % annonce
+    // une partie de retrouvailles, « Histoire » à 5 % annonce du neuf. On
+    // n'empêche ni l'un ni l'autre — on le dit, et la table tranche.
+    const part = historique.bilan(theme.id);
     themes.append(el('button', {
       class: `chip${actif ? ' est-actif' : ''}`,
       type: 'button',
+      title: `${part.vues} question${part.vues > 1 ? 's' : ''} sur ${part.total} déjà jouée${part.vues > 1 ? 's' : ''}`,
       onclick: () => {
         reglages.themes = actif
           ? reglages.themes.filter((t) => t !== theme.id)
           : [...reglages.themes, theme.id];
         rendreReglages();
       },
-    }, `${theme.emoji} ${theme.nom}`));
+    }, [
+      el('span', { text: `${theme.emoji} ${theme.nom}` }),
+      part.pourcent > 0
+        ? el('span', { class: 'chip-part', text: `${part.pourcent} %` })
+        : null,
+    ]));
   }
+
+  const bilan = historique.bilan();
+  $('#note-themes').textContent = bilan.vues
+    ? `Déjà jouées : ${bilan.vues} questions sur ${bilan.total} (${bilan.pourcent} %). `
+      + 'Le tirage sert d’abord celles que vous n’avez jamais eues.'
+    : 'Le pourcentage sur chaque thème dira ce que vous avez déjà joué, au fil des parties.';
+  $('#btn-oublier-vues').hidden = !bilan.vues;
 
   // Décocher un thème peut faire passer le pool sous le nombre demandé : on
   // rabote avant d'afficher les pastilles, sinon celle qui paraît active ne
@@ -1617,7 +1718,12 @@ function tirerLaPartie() {
     nombre: reglages.nombre,
     niveau: reglages.niveau,
     fil: fil?.id ?? null,
+    // Ce que cet appareil a déjà servi : les questions neuves passent devant.
+    vues: historique.vues(),
   });
+  // Le compteur avance ici, avant la première manche : c'est lui qui datera les
+  // questions marquées au fil de la partie.
+  historique.nouvellePartie();
   return { fil, questions };
 }
 
@@ -1827,6 +1933,19 @@ function brancher() {
 
   $('#code-cadeau')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') $('#btn-code-cadeau').click();
+  });
+
+  // Repartir de zéro. On demande confirmation : l'historique est ce qui garde
+  // les parties différentes les unes des autres, et il ne se reconstitue pas.
+  $('#btn-oublier-vues')?.addEventListener('click', async () => {
+    const sur = await confirmDialog(
+      'Oublier toutes les questions déjà jouées ? Le tirage repartira comme au premier jour.',
+      { okLabel: 'Oublier', danger: true },
+    );
+    if (!sur) return;
+    historique.oublier();
+    rendreReglages();
+    toast('Historique effacé.');
   });
 
   $('#btn-creer').addEventListener('click', () => {

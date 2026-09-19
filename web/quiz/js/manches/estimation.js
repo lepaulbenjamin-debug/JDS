@@ -94,4 +94,9 @@ export default {
   solutionTexte(manche) {
     return `${manche.valeur}${manche.unite ? ` ${manche.unite}` : ''}`;
   },
+
+  resume(manche, detail) {
+    if (!Number.isFinite(detail?.valeur)) return '';
+    return `${detail.valeur}${manche.unite ? ` ${manche.unite}` : ''}`;
+  },
 };

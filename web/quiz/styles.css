@@ -149,6 +149,12 @@ body {
   cursor: pointer;
 }
 .chip.est-actif { background: var(--accent-soft); border-color: var(--accent); }
+/* La part déjà jouée d'un thème. Discrète : c'est une indication pour choisir,
+   pas un score à battre. */
+.chip-part { margin-left: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Un bouton d'appoint, pour les actions qu'on ne fait qu'une fois par an. */
+.btn-petit { padding: 8px 12px; font-size: 13px; color: var(--muted); }
 
 /* --- Accueil ------------------------------------------------------------- */
 
@@ -611,6 +617,29 @@ body {
 .joker-legende-emoji { font-size: 13px; }
 .joker-legende b { font-weight: 600; }
 
+/* --- Ce que la table a répondu -------------------------------------------- */
+
+/* Le bloc de la révélation où l'on découvre les réponses des autres. Il vient
+   avant le classement : les points, on les regarde après avoir ri. */
+.dits { display: grid; gap: 5px; margin: 12px 0 4px; }
+.dit {
+  display: grid;
+  grid-template-columns: minmax(60px, auto) 1fr auto;
+  align-items: baseline; gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 14.5px;
+}
+.dit.est-moi { outline: 1px solid var(--accent); }
+.dit.est-juste { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); }
+.dit.est-partiel { background: color-mix(in srgb, var(--gold) 14%, var(--surface)); }
+.dit-nom { color: var(--muted); font-weight: 600; }
+/* Une estimation à cinq chiffres et un titre tapé à la va-vite tiennent sur la
+   même ligne : on coupe plutôt que de pousser la pastille hors de l'écran. */
+.dit-texte { font-weight: 600; overflow-wrap: anywhere; }
+.dit-marque { font-variant-numeric: tabular-nums; font-size: 13px; }
+
 /* --- Classement et podium ------------------------------------------------ */
 
 .classement { display: grid; gap: 6px; margin-top: 8px; }
@@ -817,6 +846,27 @@ body {
 
 /* Le classement ne quitte jamais l'écran : sur un téléphone il faut défiler
    pour le voir, et personne ne défile pendant une manche. */
+/* Les réponses de la table, à la révélation.
+   En pastilles qui s'enroulent, comme les scores juste en dessous : à trois
+   joueurs on lit une ligne, à huit on en lit trois — là où une pastille par
+   ligne aurait poussé le classement hors de l'écran dès la cinquième personne.
+   Une réponse longue — quatre éléments classés, un titre tapé au clavier —
+   prend sa propre ligne sans rien déranger. */
+.tv-dits {
+  display: flex; flex-wrap: wrap; gap: 1.2vmin;
+  margin-top: 2vmin;
+}
+.tv-dit {
+  display: flex; align-items: baseline; gap: 2vmin;
+  padding: 1vmin 2.4vmin;
+  border-radius: 999px; background: var(--surface);
+  font-size: 2.6vmin;
+}
+.tv-dit.est-juste { background: color-mix(in srgb, var(--ok) 20%, var(--surface)); }
+.tv-dit.est-partiel { background: color-mix(in srgb, var(--gold) 16%, var(--surface)); }
+.tv-dit-nom { color: var(--muted); font-weight: 600; }
+.tv-dit-texte { font-weight: 700; }
+
 .tv-scores {
   display: flex; flex-wrap: wrap; gap: 1.2vmin;
   margin-top: 3vmin; padding-top: 2vmin;

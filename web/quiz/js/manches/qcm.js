@@ -48,4 +48,8 @@ export default {
   solutionTexte(manche) {
     return manche.reponses[manche.bonne];
   },
+
+  resume(manche, detail) {
+    return manche.reponses?.[detail?.valeur] ?? '';
+  },
 };

@@ -149,8 +149,42 @@ function rendreJeu() {
   $('#tv-note').textContent = revele ? (question?.note ?? '') : '';
   $('#tv-note').hidden = !revele || !question?.note;
 
+  rendreLesDits(question, revele);
   rendreChrono();
   rendreScores();
+}
+
+/**
+ * Ce que chacun a répondu, en grand.
+ *
+ * C'est l'endroit où cet écran sert le plus : sur un téléphone, on ne voit que
+ * sa propre réponse, et l'estimation délirante du voisin passe inaperçue. Ici
+ * tout le monde lit la même ligne au même moment, et c'est de là que vient le
+ * bruit autour de la table.
+ */
+function rendreLesDits(question, revele) {
+  const zone = clear($('#tv-dits'));
+  const detail = etat.resultat?.detail;
+  zone.hidden = !revele || !detail || !question;
+  if (zone.hidden) return;
+
+  const type = typeDeManche(question.type);
+  const nomDe = (id) => (etat.classement ?? joueurs).find((j) => j.id === id)?.name ?? '—';
+
+  // Du plus rapide au plus lent : l'ordre dans lequel ça s'est joué.
+  const lignes = Object.entries(detail)
+    .sort((a, b) => (a[1].elapsedMs ?? Infinity) - (b[1].elapsedMs ?? Infinity));
+
+  for (const [id, r] of lignes) {
+    const texte = r.absent ? 'rien' : (type.resume?.(question, r) || '—');
+    const partiel = !r.correct && (r.fraction ?? 0) > 0;
+    zone.append(el('div', {
+      class: `tv-dit${r.correct ? ' est-juste' : partiel ? ' est-partiel' : ''}`,
+    }, [
+      el('span', { class: 'tv-dit-nom', text: nomDe(id) }),
+      el('span', { class: 'tv-dit-texte', text: texte }),
+    ]));
+  }
 }
 
 /**

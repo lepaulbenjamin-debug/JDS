@@ -29,6 +29,11 @@
 //                              aux autres — au plus proche, par exemple
 //   solutionTexte(manche)      la bonne réponse en clair, pour l'écran et pour
 //                              l'annonce de l'animateur
+//   resume(manche, detail)     ce QU'UN JOUEUR a répondu, en clair et en court.
+//                              Sert la révélation, où l'on affiche les réponses
+//                              de toute la table : c'est le moment où l'on rit,
+//                              et il n'existait pas — chacun ne voyait que la
+//                              sienne
 
 import qcm from './qcm.js';
 import estimation from './estimation.js';

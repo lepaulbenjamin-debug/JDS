@@ -143,4 +143,13 @@ export default {
     // Rien à énoncer : la correction est propre à chaque pupitre.
     return '';
   },
+
+  // Le niveau annoncé fait partie de la réponse : dix joueurs n'ont pas répondu
+  // à la même question, et « Ankara » ne veut rien dire sans « au niveau 4 ».
+  resume(manche, detail) {
+    if (detail?.valeur == null) return '';
+    const niveau = borner(detail.niveau ?? NIVEAU_DEFAUT);
+    const texte = manche.niveaux?.[niveau - 1]?.reponses?.[detail.valeur] ?? '';
+    return texte ? `niveau ${niveau} — ${texte}` : `niveau ${niveau}`;
+  },
 };

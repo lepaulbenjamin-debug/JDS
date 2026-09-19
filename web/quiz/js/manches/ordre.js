@@ -74,4 +74,9 @@ export default {
   solutionTexte(manche) {
     return manche.solution.map((i) => manche.elements[i]).join(', puis ');
   },
+
+  resume(manche, detail) {
+    if (!Array.isArray(detail?.valeur)) return '';
+    return detail.valeur.map((i) => manche.elements?.[i] ?? '?').join(' › ');
+  },
 };
