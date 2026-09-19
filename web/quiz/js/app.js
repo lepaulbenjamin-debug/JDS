@@ -1803,6 +1803,32 @@ async function quitter() {
 function brancher() {
   $('#mon-prenom').value = moi.name;
 
+  $('#btn-code-cadeau')?.addEventListener('click', async (event) => {
+    const champ = $('#code-cadeau');
+    const code = champ.value.trim();
+    if (!code) return;
+    event.target.disabled = true;
+    try {
+      const { packs: ouverts } = await packs.utiliserUnCode(code);
+      champ.value = '';
+      toast(ouverts.length > 1 ? `${ouverts.length} packs débloqués.` : 'Pack débloqué.');
+      // Débloquer ne télécharge pas : on enchaîne, sinon il faut redescendre
+      // taper sur chaque bouton « Télécharger » un par un.
+      await packs.synchroniser(voix.banqueCourante);
+      ajouterQuestions(packs.questionsInstallees());
+      declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
+      rendreReglages();
+    } catch (erreur) {
+      toast(erreur.message ?? 'Code refusé.', 'warn');
+    } finally {
+      event.target.disabled = false;
+    }
+  });
+
+  $('#code-cadeau')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#btn-code-cadeau').click();
+  });
+
   $('#btn-creer').addEventListener('click', () => {
     sons.debloquer();
     if (!lireMonPrenom()) return;

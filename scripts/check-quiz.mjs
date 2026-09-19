@@ -1723,6 +1723,53 @@ test('chaque question de pack a ses clips, dans toutes les voix', () => {
   }
 });
 
+test('un code cadeau ouvre les packs, un mauvais code n’ouvre rien', async () => {
+  // Offrir un pack, faire tester une soirée, se débloquer soi-même sur un
+  // téléphone qui n'a rien acheté : tout cela existait par une variable
+  // d'environnement qui ouvrait la boutique à tout internet, ou pas du tout.
+  const avant = process.env.QUIZROOM_CODES_CADEAU;
+  process.env.QUIZROOM_CODES_CADEAU = 'SOIREE-TEST, AUTRE-CODE';
+  try {
+    const refus = await boutique('POST', {}, { licence: 'invite', code: 'SOIREE-TESU' });
+    assert.equal(refus.status, 403, 'un code faux a été accepté');
+
+    // Sans identifiant, le code ouvre tout : on ne tape pas un code par pack
+    // sur cinq téléphones.
+    const ouvert = await boutique('POST', {}, { licence: 'invite', code: 'SOIREE-TEST' });
+    assert.equal(ouvert.status, 200);
+    const { body: { packs: vitrine } } = await boutique('GET', { licence: 'invite' });
+    assert.ok(vitrine.length > 0 && vitrine.every((p) => p.possede),
+      'le code n’a pas ouvert tout le catalogue');
+
+    // Et le contenu suit, c'est-à-dire les questions.
+    const { body, status } = await boutique('GET', { id: vitrine[0].id, licence: 'invite' });
+    assert.equal(status, 200);
+    assert.ok(body.questions?.length > 0, 'le pack ouvert ne rend pas ses questions');
+
+    // Une licence qui n'a pas présenté de code reste dehors.
+    const dehors = await boutique('GET', { id: vitrine[0].id, licence: 'passant' });
+    assert.equal(dehors.status, 402);
+  } finally {
+    if (avant === undefined) delete process.env.QUIZROOM_CODES_CADEAU;
+    else process.env.QUIZROOM_CODES_CADEAU = avant;
+  }
+});
+
+test('sans code actif, la boutique refuse tout code', async () => {
+  // Le cas par défaut : aucune variable d'environnement, donc aucune porte
+  // dérobée — surtout pas une qui accepterait la chaîne vide.
+  const avant = process.env.QUIZROOM_CODES_CADEAU;
+  delete process.env.QUIZROOM_CODES_CADEAU;
+  try {
+    const vide = await boutique('POST', {}, { licence: 'curieux', code: '' });
+    assert.equal(vide.status, 403);
+    const quelconque = await boutique('POST', {}, { licence: 'curieux', code: 'ouvre-toi' });
+    assert.equal(quelconque.status, 403);
+  } finally {
+    if (avant !== undefined) process.env.QUIZROOM_CODES_CADEAU = avant;
+  }
+});
+
 test('on ne s’accorde pas un pack tout seul par l’API', async () => {
   const { body: { packs: vitrine } } = await boutique('GET', {});
   const tentative = await boutique('POST', { id: vitrine[0].id }, { licence: 'pirate' });

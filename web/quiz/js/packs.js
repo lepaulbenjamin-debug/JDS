@@ -135,6 +135,28 @@ export async function installer(id, voix) {
   return contenu;
 }
 
+/**
+ * Un code cadeau : ouvre les packs à cette licence, sans passer par la caisse.
+ *
+ * C'est un POST et non un GET, contrairement au reste de ce module : un code
+ * dans une adresse finirait dans l'historique du navigateur et dans les
+ * journaux du serveur, ce qui en ferait un secret partagé avec tout le monde.
+ */
+export async function utiliserUnCode(code) {
+  const res = await fetch(new URL('/api/packs', location.href), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ licence: licence(), code }),
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw Object.assign(new Error(payload?.error ?? 'La boutique ne répond pas.'), {
+      status: res.status,
+    });
+  }
+  return payload;
+}
+
 /** Retire un pack de cet appareil. L'achat, lui, reste acquis à la licence. */
 export function desinstaller(id) {
   const cache = lireCache();
