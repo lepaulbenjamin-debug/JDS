@@ -152,6 +152,89 @@ test('quitte ou double : doublé si juste, moitié perdue si faux', () => {
   assert.equal(rate.scores.a, 400);
 });
 
+test('quitte ou double ne punit plus une rafale ratée d’un cheveu', () => {
+  // Une seule erreur sur cinq effaçait les quatre bonnes réponses ET coûtait la
+  // moitié de la mise : le joker était injouable sur les manches à points
+  // partiels, là où il aurait dû être le plus tentant. La pénalité porte
+  // désormais sur ce qui a été manqué, et rien d'autre.
+  const entree = QUESTIONS.find((q) => q.type === 'rafale');
+  const cinqAffirmations = typeDeManche('rafale').preparer(entree, (liste) => liste);
+  const presque = cinqAffirmations.solution.map((v, i) => (i === 0 ? !v : v));
+
+  const { detail } = resoudreManche({
+    manche: cinqAffirmations,
+    reponses: {
+      a: { valeur: presque, elapsedMs: 0, joker: 'double' },
+      b: { valeur: presque, elapsedMs: 0, joker: null },
+    },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+    finale: false,
+    persona: 'classique',
+  });
+
+  assert.equal(detail.b.points, 800, 'quatre sur cinq valent huit cents points');
+  // Un cinquième manqué : on perd la moitié de la mise SUR ce cinquième.
+  assert.equal(detail.a.points, 700);
+});
+
+test('quitte ou double double encore le sans-faute, et punit encore le zéro', () => {
+  const entree = QUESTIONS.find((q) => q.type === 'rafale');
+  const cinqAffirmations = typeDeManche('rafale').preparer(entree, (liste) => liste);
+  const resoudre = (valeur) => resoudreManche({
+    manche: cinqAffirmations,
+    reponses: { a: { valeur, elapsedMs: 0, joker: 'double' } },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+    finale: false,
+    persona: 'classique',
+  }).detail.a.points;
+
+  assert.equal(resoudre(cinqAffirmations.solution.slice()), 2000, 'cinq sur cinq : doublé');
+  assert.equal(resoudre(cinqAffirmations.solution.map((v) => !v)), -500, 'zéro sur cinq : la mise');
+});
+
+test('l’animateur n’annonce un naufrage que s’il y en a un', () => {
+  const entree = QUESTIONS.find((q) => q.type === 'rafale');
+  const cinqAffirmations = typeDeManche('rafale').preparer(entree, (liste) => liste);
+  const evenementsPour = (valeur) => resoudreManche({
+    manche: cinqAffirmations,
+    reponses: { a: { valeur, elapsedMs: 0, joker: 'double' } },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+    finale: false,
+    persona: 'classique',
+  }).evenements.map((e) => e.cle);
+
+  const presque = cinqAffirmations.solution.map((v, i) => (i === 0 ? !v : v));
+  assert.deepEqual(evenementsPour(presque), [], 'quatre sur cinq rapporte encore : rien à annoncer');
+  assert.deepEqual(evenementsPour(cinqAffirmations.solution.map((v) => !v)), ['doubleRate']);
+  assert.deepEqual(evenementsPour(cinqAffirmations.solution.slice()), ['doubleReussi']);
+});
+
+test('une estimation ratée de peu ne coûte pas le prix d’une réponse au hasard', () => {
+  const estimationDe = (valeurA) => resoudreManche({
+    manche: { id: 'e', type: 'estimation', texte: 'Combien ?', valeur: 100, unite: '', note: '.' },
+    reponses: {
+      a: { valeur: valeurA, elapsedMs: 0, joker: 'double' },
+      b: { valeur: 100, elapsedMs: 0, joker: null },
+    },
+    scores: {},
+    joueurs: JOUEURS,
+    dureeMs: DUREE,
+    finale: false,
+    persona: 'classique',
+  }).detail.a.points;
+
+  // À 95 au lieu de 100, on perd quelques dizaines de points ; à mille lieues,
+  // on perd la moitié de la mise, comme avant.
+  assert.ok(estimationDe(95) > -100, `${estimationDe(95)} points pour cinq de trop`);
+  assert.equal(estimationDe(10000), -500);
+});
+
 test('un total ne descend jamais sous zéro', () => {
   const { scores } = manche(
     { a: { valeur: 1, elapsedMs: 0, joker: 'double' } },

@@ -20,7 +20,7 @@ export const JOKERS = [
   {
     id: 'double', nom: 'Quitte ou double', emoji: '🎲',
     court: 'Le double, ou la moitié en moins',
-    desc: 'Bonne réponse : points doublés. Mauvaise réponse : tu perds la moitié de ce que tu aurais gagné.',
+    desc: 'Sans faute : points doublés. Sinon tu perds la moitié de la mise, au prorata de ce que tu as raté — une rafale à quatre sur cinq ne coûte presque rien.',
   },
   {
     id: 'vol', nom: 'Vol', emoji: '🥷',
@@ -184,7 +184,22 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
 
     if (reponse.joker === 'cinquante') points = Math.round(points / 2);
     if (reponse.joker === 'double') {
-      points = note.correct ? brut * 2 : -Math.round(base * vitesse / 2);
+      // Quitte ou double : le double si l'on a tout bon, sinon la moitié de la
+      // mise — mais seulement sur la part manquée.
+      //
+      // La pénalité était forfaitaire, et cela n'allait que sur les manches où
+      // l'on a bon ou faux. Sur une rafale, une seule erreur sur cinq effaçait
+      // les quatre bonnes réponses ET coûtait cinq cents points : le joker
+      // devenait injouable là où il aurait dû être le plus tentant. Une
+      // estimation ratée d'un cheveu se payait au même prix qu'un nombre pris
+      // au hasard.
+      //
+      // Sur un QCM, un mix ou un TTMC, la fraction vaut zéro ou un : la règle
+      // ne change rien — tout faux coûte toujours la moitié de la mise.
+      const manque = 1 - (note.fraction ?? 0);
+      points = note.correct
+        ? brut * 2
+        : brut - Math.round(base * vitesse * manque / 2);
     }
 
     gains[joueur.id] = points;
@@ -272,7 +287,12 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
 
   for (const [id, r] of Object.entries(detail)) {
     if (r.joker !== 'double') continue;
-    const cle = r.correct ? 'doubleReussi' : 'doubleRate';
+    // Le pari n'est « raté » que s'il a coûté quelque chose. Depuis que la
+    // pénalité ne porte que sur la part manquée, une rafale à quatre sur cinq
+    // rapporte encore sept cents points : annoncer un naufrage là-dessus ferait
+    // mentir l'animateur. Entre les deux, il se tait.
+    const cle = r.correct ? 'doubleReussi' : r.points < 0 ? 'doubleRate' : null;
+    if (!cle) continue;
     evenements.push({ type: 'double', cle, texte: repliqueDe(persona, cle, { nom: nomDe(id) }) });
   }
 
