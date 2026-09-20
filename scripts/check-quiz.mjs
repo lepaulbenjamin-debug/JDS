@@ -27,6 +27,10 @@ import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
 import { handleRoomRequest } from '../lib/rooms.js';
+import {
+  handleCompteRequest, demanderUnCode, ouvrirParCode, compteDuJeton, amisDe,
+  verifierJetonTiers, coffre, oublierLeCoffre,
+} from '../lib/comptes.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
 import * as nodeFs from 'node:fs';
@@ -3067,4 +3071,218 @@ test('la révélation publie la réponse de chacun, pas seulement son score', ()
     // Et l'énoncé publié porte les intitulés : la valeur seule ne se lit pas.
     assert.equal(vue.question.reponses.length, 4);
   }
+});
+
+/* --- Les comptes ---------------------------------------------------------- */
+
+// Facultatifs, et c'est la règle : on joue et l'on rejoint un salon sans rien
+// créer. Ce qui suit ne vérifie donc jamais qu'un compte est exigé quelque part
+// — il ne doit l'être nulle part.
+
+const compte = (options) => handleCompteRequest({ headers: {}, ...options });
+
+/** Le courriel, intercepté : les tests ne réveillent aucune boîte aux lettres. */
+function boiteAuxLettres() {
+  const recus = [];
+  return { recus, envoi: (email, code) => { recus.push({ email, code }); return { envoye: true }; } };
+}
+
+async function compteConnecte(email = 'ana@example.com') {
+  const { envoi, recus } = boiteAuxLettres();
+  await demanderUnCode(email, envoi);
+  return ouvrirParCode(email, recus.at(-1).code);
+}
+
+test('un code par courriel ouvre une session, et le code ne sert qu’une fois', async () => {
+  oublierLeCoffre();
+  const { envoi, recus } = boiteAuxLettres();
+  await demanderUnCode('Ana@Example.com ', envoi);
+  assert.equal(recus.length, 1);
+  assert.equal(recus[0].email, 'ana@example.com', 'l’adresse est normalisée');
+  assert.match(recus[0].code, /^\d{6}$/);
+
+  const { jeton, compte: profil } = await ouvrirParCode('ana@example.com', recus[0].code);
+  assert.ok(jeton?.length >= 32);
+  assert.equal(profil.email, 'ana@example.com');
+  assert.deepEqual(profil.fournisseurs, ['email']);
+
+  // Rejouer le même code ne doit rien ouvrir du tout.
+  await assert.rejects(() => ouvrirParCode('ana@example.com', recus[0].code), /expiré/);
+});
+
+test('un mauvais code est refusé, et trois essais le brûlent', async () => {
+  oublierLeCoffre();
+  const { envoi, recus } = boiteAuxLettres();
+  await demanderUnCode('bo@example.com', envoi);
+  const bon = recus[0].code;
+  const faux = String((Number(bon) + 1) % 1_000_000).padStart(6, '0');
+
+  for (let essai = 0; essai < 3; essai += 1) {
+    await assert.rejects(() => ouvrirParCode('bo@example.com', faux), /incorrect/);
+  }
+  // Le bon code lui-même ne vaut plus rien : sans ça, un code à six chiffres se
+  // devine en le demandant un million de fois.
+  await assert.rejects(() => ouvrirParCode('bo@example.com', bon), /expiré/);
+});
+
+test('on ne peut pas demander des codes à l’infini pour la même adresse', async () => {
+  oublierLeCoffre();
+  const { envoi } = boiteAuxLettres();
+  for (let i = 0; i < 5; i += 1) await demanderUnCode('spam@example.com', envoi);
+  await assert.rejects(() => demanderUnCode('spam@example.com', envoi), /Trop de demandes/);
+});
+
+test('le jeton de session n’est pas stocké en clair', async () => {
+  oublierLeCoffre();
+  const { jeton } = await compteConnecte();
+  // Une base qui fuite ne doit pas distribuer les sessions avec : le serveur
+  // garde une empreinte, pas le jeton.
+  assert.equal(await coffre().get(`quizroom:session:${jeton}`), null);
+  assert.ok(await compteDuJeton(jeton), 'le jeton reste valable, lui');
+});
+
+test('sans jeton valable, rien ne sort et rien n’entre', async () => {
+  oublierLeCoffre();
+  assert.equal((await compte({ method: 'GET', query: {} })).status, 401);
+  assert.equal((await compte({
+    method: 'POST', query: { action: 'vues' }, body: { vues: { 'cul-01': 1 } },
+  })).status, 401);
+  assert.equal((await compte({
+    method: 'POST', query: { action: 'supprimer' }, headers: { authorization: 'Bearer faux' },
+  })).status, 401);
+});
+
+test('l’historique se fusionne au lieu de s’écraser', async () => {
+  oublierLeCoffre();
+  const { jeton } = await compteConnecte();
+  const entete = { authorization: `Bearer ${jeton}` };
+
+  await compte({ method: 'POST', query: { action: 'vues' }, headers: entete, body: { vues: { 'cul-01': 3, 'cul-02': 1 } } });
+  // Un deuxième appareil, avec son propre compteur de parties.
+  const { body } = await compte({
+    method: 'POST', query: { action: 'vues' }, headers: entete, body: { vues: { 'cul-02': 5, 'cul-03': 2 } },
+  });
+
+  // On garde le plus grand numéro : deux appareils ne comptent pas les parties
+  // au même rythme, et le tirage ne regarde que l'ordre relatif.
+  assert.deepEqual(body.vues, { 'cul-01': 3, 'cul-02': 5, 'cul-03': 2 });
+});
+
+test('une partie déclarée nourrit les statistiques', async () => {
+  oublierLeCoffre();
+  const { jeton } = await compteConnecte();
+  const entete = { authorization: `Bearer ${jeton}` };
+  const partie = {
+    code: 'ABCD', points: 4200, place: 1, joueurs: 4, manches: 12, bonnes: 8,
+    themes: { nature: { manches: 6, bonnes: 5, points: 2200 }, histoire: { manches: 6, bonnes: 3, points: 2000 } },
+  };
+
+  await compte({ method: 'POST', query: { action: 'partie' }, headers: entete, body: { partie } });
+  const { body } = await compte({ method: 'POST', query: { action: 'partie' }, headers: entete, body: { partie } });
+
+  assert.equal(body.stats.parties, 2);
+  assert.equal(body.stats.points, 8400);
+  assert.equal(body.stats.victoires, 2);
+  assert.equal(body.stats.themes.nature.bonnes, 10);
+  assert.equal(body.stats.themes.histoire.manches, 12);
+
+  const vue = await compte({ method: 'GET', query: {}, headers: entete });
+  assert.equal(vue.body.parties.length, 2, 'le journal garde les parties récentes');
+  assert.equal(vue.body.parties[0].code, 'ABCD');
+});
+
+test('une partie déclarée ne croit pas l’appareil sur parole', async () => {
+  oublierLeCoffre();
+  const { jeton } = await compteConnecte();
+  const entete = { authorization: `Bearer ${jeton}` };
+  const { body } = await compte({
+    method: 'POST',
+    query: { action: 'partie' },
+    headers: entete,
+    body: { partie: { code: 'ab<script>', points: 1e12, place: -3, joueurs: 900, manches: 'douze' } },
+  });
+  assert.equal(body.partie.code, 'ABSC', 'le code est nettoyé de tout ce qui n’est pas une lettre');
+  assert.equal(body.partie.points, 1_000_000, 'les points sont bornés');
+  assert.equal(body.partie.place, 0);
+  assert.equal(body.partie.joueurs, 64);
+  assert.equal(body.partie.manches, 0);
+});
+
+test('deux comptes qui déclarent le même salon se retrouvent au classement', async () => {
+  // Pas de demande d'ami, pas de carnet d'adresses : on est « amis » avec les
+  // gens avec qui on a joué, et c'est tout ce que le jeu sait de nos relations.
+  oublierLeCoffre();
+  const ana = await compteConnecte('ana@example.com');
+  const bo = await compteConnecte('bo@example.com');
+  const jouer = (session, place) => compte({
+    method: 'POST',
+    query: { action: 'partie' },
+    headers: { authorization: `Bearer ${session.jeton}` },
+    body: { partie: { code: 'PUAJ', points: 3000, place, joueurs: 2, manches: 8, bonnes: 5 } },
+  });
+
+  await jouer(ana, 1);
+  await jouer(bo, 2);
+
+  const vuDAna = await amisDe(ana.compte.id);
+  const vuDeBo = await amisDe(bo.compte.id);
+  assert.equal(vuDAna.length, 1);
+  assert.equal(vuDAna[0].nom, 'bo');
+  assert.equal(vuDAna[0].parties, 1);
+  assert.equal(vuDeBo[0].nom, 'ana', 'le lien vaut dans les deux sens');
+  assert.equal(vuDeBo[0].victoires, 1, 'et la victoire d’Ana est comptée chez Bo');
+});
+
+test('supprimer un compte efface tout, y compris ce qui le rouvrirait', async () => {
+  oublierLeCoffre();
+  const { jeton, compte: profil } = await compteConnecte('partir@example.com');
+  const entete = { authorization: `Bearer ${jeton}` };
+  await compte({ method: 'POST', query: { action: 'vues' }, headers: entete, body: { vues: { 'cul-01': 1 } } });
+
+  const { status, body } = await compte({ method: 'POST', query: { action: 'supprimer' }, headers: entete });
+  assert.equal(status, 200);
+  assert.equal(body.supprime, true);
+
+  // La session ne vaut plus rien, et les données ont disparu.
+  assert.equal(await compteDuJeton(jeton), null);
+  assert.equal(await coffre().get(`quizroom:compte:${profil.id}:vues`), null);
+
+  // Et surtout : se reconnecter avec la même adresse donne un compte NEUF.
+  const retour = await compteConnecte('partir@example.com');
+  assert.notEqual(retour.compte.id, profil.id, 'l’ancien compte a été rouvert');
+  const vue = await compte({
+    method: 'GET', query: {}, headers: { authorization: `Bearer ${retour.jeton}` },
+  });
+  assert.deepEqual(vue.body.vues, {}, 'l’historique effacé n’est pas revenu');
+});
+
+test('une connexion tierce sans audience configurée est refusée', async () => {
+  // Sans audience, n'importe quel jeton Google valide — délivré à n'importe
+  // quelle application du monde — ouvrirait un compte ici.
+  oublierLeCoffre();
+  const avant = process.env.QUIZROOM_GOOGLE_AUD;
+  delete process.env.QUIZROOM_GOOGLE_AUD;
+  const { status } = await compte({
+    method: 'POST', query: { action: 'google' }, body: { jetonGoogle: 'a.b.c' },
+  });
+  assert.equal(status, 503);
+  if (avant !== undefined) process.env.QUIZROOM_GOOGLE_AUD = avant;
+});
+
+test('un jeton tiers mal formé ou non signé par le bon émetteur ne passe pas', async () => {
+  oublierLeCoffre();
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const bricole = `${b64({ alg: 'none', kid: 'x' })}.${b64({ sub: 'moi', aud: 'nous' })}.signature`;
+  await assert.rejects(
+    () => verifierJetonTiers(bricole, {
+      jwksUrl: 'https://exemple.invalide/keys', emetteurs: ['nous'], audiences: ['nous'],
+    }),
+    /Signature inattendue/,
+  );
+  await assert.rejects(
+    () => verifierJetonTiers('pas-un-jeton', {
+      jwksUrl: 'https://exemple.invalide/keys', emetteurs: ['nous'], audiences: ['nous'],
+    }),
+    /illisible/,
+  );
 });

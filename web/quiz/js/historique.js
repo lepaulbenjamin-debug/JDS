@@ -128,6 +128,27 @@ export function creerHistorique(stockage = stockageSur(globalThis.localStorage))
       };
     },
 
+    /**
+     * Ce que le compte sait, ramené ici.
+     *
+     * Le relais rend l'union des appareils ; on la recopie telle quelle, sans
+     * rien perdre de ce qui était local — c'est lui qui a fusionné, et il a vu
+     * les deux côtés.
+     */
+    adopter(vues) {
+      if (!vues || typeof vues !== 'object') return etat.vues;
+      for (const [id, quand] of Object.entries(vues)) {
+        const numero = Number(quand);
+        if (Number.isFinite(numero)) etat.vues[id] = Math.max(etat.vues[id] ?? 0, numero);
+      }
+      // Le compteur de parties doit rester devant l'historique adopté, sinon
+      // les questions vues ailleurs passeraient pour plus récentes que celles
+      // d'ici et le tirage les repousserait indéfiniment.
+      etat.partie = Math.max(etat.partie, ...Object.values(etat.vues), 0);
+      ecrire();
+      return etat.vues;
+    },
+
     /** Tout oublier. Demandé explicitement : on ne l'appelle jamais tout seul. */
     oublier() {
       etat = { partie: etat.partie, vues: {} };

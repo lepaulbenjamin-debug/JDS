@@ -48,6 +48,10 @@
     </div>
     <p class="muted small">Le code s’affiche sur le téléphone de celui qui a créé la partie.</p>
 
+    <h3 class="section-title">Ton compte</h3>
+    <p id="accueil-compte" class="muted small">Facultatif : on joue et on rejoint une partie sans rien créer. Un compte garde tes statistiques, ton historique et tes packs d’un appareil à l’autre.</p>
+    <button id="btn-compte" class="btn btn-ghost btn-block" type="button">Mon compte</button>
+
     <details class="reglage-avance">
       <summary>La voix de l’animateur</summary>
       <p class="muted small">Par défaut, seul l’appareil qui crée la partie parle — sinon toute la table récite la même phrase en même temps. Le bouton 🔊 en haut la coupe ou la rétablit sur cet appareil.</p>
@@ -182,6 +186,49 @@
     <div id="fin-podium" class="stack"></div>
     <div class="sticky-actions">
       <button id="btn-rejouer" class="btn btn-primary btn-block" type="button">Une autre !</button>
+    </div>
+  </section>
+
+  <!-- Le compte : facultatif, et tout ce qu'il porte est visible ici -->
+  <section class="screen" data-screen="compte" hidden>
+    <h2 class="screen-title">Mon compte</h2>
+
+    <!-- Pas encore connecté -->
+    <div id="compte-connexion">
+      <p class="muted small">Un compte garde tes statistiques, les questions déjà jouées et tes packs achetés — sur tous tes appareils. Tu peux jouer sans, et rejoindre une partie sans, toujours.</p>
+      <div id="compte-tiers" class="stack"></div>
+      <div class="field">
+        <label for="compte-email">Ton adresse</label>
+        <input id="compte-email" type="email" inputmode="email" autocomplete="email"
+               autocapitalize="none" spellcheck="false" placeholder="prenom@exemple.fr" enterkeyhint="send">
+      </div>
+      <button id="btn-compte-code" class="btn btn-primary btn-block" type="button">Recevoir un code</button>
+      <div id="compte-verif" hidden>
+        <div class="field">
+          <label for="compte-code">Le code reçu par courriel</label>
+          <input id="compte-code" class="code-input" type="text" inputmode="numeric"
+                 autocomplete="one-time-code" maxlength="6" placeholder="000000" aria-label="Code à six chiffres">
+        </div>
+        <button id="btn-compte-valider" class="btn btn-primary btn-block" type="button">Se connecter</button>
+      </div>
+      <p class="muted small">Aucun mot de passe : un code à six chiffres, valable un quart d’heure.</p>
+    </div>
+
+    <!-- Connecté -->
+    <div id="compte-profil" hidden>
+      <div id="compte-identite" class="stack"></div>
+      <h3 class="section-title">Mes statistiques</h3>
+      <div id="compte-stats" class="stats-grille"></div>
+      <div id="compte-themes" class="stack"></div>
+      <h3 class="section-title">Entre amis</h3>
+      <p class="muted small">Les gens avec qui tu as joué, et qui ont un compte eux aussi. Rien à demander, rien à accepter : une partie jouée ensemble suffit. À droite, leurs victoires sur vos parties communes.</p>
+      <div id="compte-amis" class="classement"></div>
+      <h3 class="section-title">Mes dernières parties</h3>
+      <div id="compte-parties" class="stack"></div>
+      <div class="sticky-actions">
+        <button id="btn-compte-sortir" class="btn btn-ghost btn-block" type="button">Se déconnecter</button>
+        <button id="btn-compte-supprimer" class="btn btn-ghost btn-block btn-petit" type="button">Supprimer mon compte et mes données</button>
+      </div>
     </div>
   </section>
 

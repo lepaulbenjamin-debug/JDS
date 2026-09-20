@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { runScan, MAX_BODY } from '../lib/scan.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 import { handlePackRequest } from '../lib/packs.js';
+import { handleCompteRequest } from '../lib/comptes.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
@@ -113,6 +114,27 @@ async function handlePacks(req, res) {
   return sendJson(res, status, payload);
 }
 
+async function handleComptes(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  let body;
+  if (req.method === 'POST') {
+    try {
+      const raw = await readBody(req);
+      body = raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
+    }
+  }
+  const { status, body: payload } = await handleCompteRequest({
+    method: req.method,
+    query: Object.fromEntries(url.searchParams),
+    body,
+    headers: req.headers,
+  });
+  res.setHeader('cache-control', 'private, no-store');
+  return sendJson(res, status, payload);
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const requested = decodeURIComponent(url.pathname);
@@ -161,7 +183,8 @@ function lanAddresses() {
 createServer((req, res) => {
   // Les mêmes en-têtes que sur Vercel : c'est ce serveur qu'on interroge quand
   // on essaie l'application native sur un vrai téléphone du réseau local.
-  if (req.url?.startsWith('/api/room') || req.url?.startsWith('/api/packs')) {
+  if (req.url?.startsWith('/api/room') || req.url?.startsWith('/api/packs')
+      || req.url?.startsWith('/api/compte')) {
     const cors = enTetesCors(req.headers.origin);
     if (cors) for (const [nom, valeur] of Object.entries(cors)) res.setHeader(nom, valeur);
     if (estPreflight(req.method)) {
@@ -179,6 +202,9 @@ createServer((req, res) => {
   }
   if (req.url?.startsWith('/api/packs')) {
     return handlePacks(req, res);
+  }
+  if (req.url?.startsWith('/api/compte')) {
+    return handleComptes(req, res);
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405).end('Méthode non autorisée');

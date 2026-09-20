@@ -12,6 +12,7 @@ import { vueDe } from './vues.js';
 import { typeDeManche } from './manches/index.js';
 import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
 import { historique } from './historique.js';
+import * as comptes from './compte.js';
 import {
   THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
   ajouterQuestions, toutesLesQuestions,
@@ -123,6 +124,13 @@ let mesVotes = {};             // candidat → oui/non, écho local le temps d'u
 // En solo, le relais est remplacé par cette file : les réponses y sont déposées
 // et relues au battement suivant, exactement là où le relais les aurait rendues.
 let fileSolo = [];
+
+// Ce que CET appareil a vécu de la partie en cours : une ligne par manche
+// révélée. Sert à déclarer la partie au compte, à la toute fin. Chaque pupitre
+// déclare la sienne — la régie n'a pas les jetons des autres, et n'a rien à en
+// faire.
+let monJournal = [];
+let partieDeclaree = '';
 
 const estSolo = () => Boolean(salon?.solo);
 // Solo ou hôte, c'est le même rôle : cet appareil fait tourner la régie.
@@ -281,7 +289,12 @@ function appliquer(nouvel) {
     // charger toutes les annonces d'un coup. Elles sont courtes, et les avoir
     // sous la main évite que la seconde moitié de l'annonce n'arrive après le
     // top — la fenêtre de jokers ne laisse pas de marge pour un aller-retour.
-    if (etat.phase === 'intro') voix.precharger(clipsDAnnonce(etat.persona));
+    if (etat.phase === 'intro') {
+      voix.precharger(clipsDAnnonce(etat.persona));
+      // Nouvelle partie : le journal de la précédente n'a plus cours.
+      monJournal = [];
+      partieDeclaree = '';
+    }
 
     // Nouvelle manche : l'écho local d'une réponse précédente n'a plus cours.
     if (etat.phase === 'manche') {
@@ -309,6 +322,22 @@ function appliquer(nouvel) {
     if (etat.phase === 'revelation' && estRegie() && etat.question?.id) {
       historique.marquer(etat.question.id);
     }
+
+    // Le journal de ma partie, une ligne par manche révélée. Tenu même sans
+    // compte : on peut se connecter à la fin, et il serait bête d'avoir perdu
+    // la partie qu'on vient de jouer.
+    if (etat.phase === 'revelation' && etat.question?.id) {
+      const mien = etat.resultat?.detail?.[moi.id];
+      if (mien && !monJournal.some((m) => m.id === etat.question.id)) {
+        monJournal.push({
+          id: etat.question.id,
+          theme: etat.question.theme,
+          correct: Boolean(mien.correct),
+          points: mien.points ?? 0,
+        });
+      }
+    }
+    if (etat.phase === 'podium') declarerMaPartie();
 
     parler();
   }
@@ -947,6 +976,190 @@ function marqueDuDit(r, type) {
   if (sur && r.justes != null) return `${r.justes}/${sur}`;
   if (type.id === 'estimation') return r.correct ? '✔' : '';
   return r.correct ? '✔' : '✘';
+}
+
+/* --- Le compte ------------------------------------------------------------ */
+
+/**
+ * La partie qui vient de finir, envoyée au compte.
+ *
+ * Chacun déclare la sienne, avec sa place et ses points. Deux comptes qui
+ * déclarent le même code de salon le même jour ont joué ensemble : c'est de là,
+ * et de nulle part ailleurs, que sort le classement entre amis.
+ *
+ * Silencieux par construction : sans compte il n'y a rien à envoyer, et si le
+ * réseau tombe au moment du podium, on ne va pas gâcher la fin d'une soirée
+ * avec un message d'erreur pour une statistique.
+ */
+async function declarerMaPartie() {
+  const cle = `${salon?.code ?? 'solo'}#${etat.total}`;
+  if (!comptes.connecte() || partieDeclaree === cle || !monJournal.length) return;
+  partieDeclaree = cle;
+
+  const classement = etat.classement ?? [];
+  const themes = {};
+  for (const manche of monJournal) {
+    const t = themes[manche.theme] ?? (themes[manche.theme] = { manches: 0, bonnes: 0, points: 0 });
+    t.manches += 1;
+    t.bonnes += manche.correct ? 1 : 0;
+    t.points += Math.max(0, manche.points);
+  }
+
+  try {
+    await comptes.declarerLaPartie({
+      code: estSolo() ? '' : (salon?.code ?? ''),
+      points: classement.find((j) => j.id === moi.id)?.score ?? 0,
+      place: classement.findIndex((j) => j.id === moi.id) + 1,
+      joueurs: classement.length,
+      manches: monJournal.length,
+      bonnes: monJournal.filter((m) => m.correct).length,
+      themes,
+    });
+    // L'historique aussi : les questions vues ici ne doivent pas ressortir sur
+    // l'autre appareil demain.
+    const fusion = await comptes.synchroniserLesVues(historique.vues());
+    historique.adopter(fusion);
+  } catch { /* une statistique ne vaut pas un message d'erreur en pleine fête */ }
+}
+
+/** L'écran du compte : connexion d'un côté, tout ce qu'il porte de l'autre. */
+async function rendreCompte() {
+  const connecte = comptes.connecte();
+  $('#compte-connexion').hidden = connecte;
+  $('#compte-profil').hidden = !connecte;
+
+  // Apple et Google ne s'affichent que là où ils existent vraiment : un bouton
+  // qui ne fait rien vaut moins que pas de bouton du tout.
+  const tiers = clear($('#compte-tiers'));
+  for (const [pont, nom, ouvrir] of [
+    [comptes.pontApple(), ' Se connecter avec Apple', comptes.ouvrirParApple],
+    [comptes.pontGoogle(), 'Se connecter avec Google', comptes.ouvrirParGoogle],
+  ]) {
+    if (!pont) continue;
+    tiers.append(el('button', {
+      class: 'btn btn-block',
+      type: 'button',
+      onclick: async () => {
+        try {
+          await ouvrir();
+          await apresConnexion();
+        } catch (e) {
+          if (!/annul/i.test(e?.message ?? '')) toast(e.message ?? 'Connexion refusée.', 'warn');
+        }
+      },
+    }, nom));
+  }
+
+  if (!connecte) return;
+
+  const vue = await comptes.rafraichir().catch(() => null);
+  if (!vue) return;
+
+  const identite = clear($('#compte-identite'));
+  identite.append(el('p', {}, [
+    el('strong', { text: vue.compte.nom }),
+    el('span', { class: 'muted', text: vue.compte.email ? ` — ${vue.compte.email}` : '' }),
+  ]));
+
+  const stats = vue.stats ?? {};
+  const grille = clear($('#compte-stats'));
+  const taux = stats.manches ? Math.round((stats.bonnes / stats.manches) * 100) : 0;
+  for (const [valeur, libelle] of [
+    [stats.parties ?? 0, 'parties'],
+    [stats.victoires ?? 0, 'victoires'],
+    [`${taux} %`, 'de bonnes réponses'],
+    [stats.points ?? 0, 'points cumulés'],
+  ]) {
+    grille.append(el('div', { class: 'stat' }, [
+      el('span', { class: 'stat-valeur', text: String(valeur) }),
+      el('span', { class: 'stat-libelle', text: libelle }),
+    ]));
+  }
+
+  // Les thèmes, du plus joué au moins joué : c'est le portrait du joueur.
+  const parTheme = clear($('#compte-themes'));
+  const themes = Object.entries(stats.themes ?? {})
+    .sort((a, b) => b[1].manches - a[1].manches)
+    .slice(0, 8);
+  for (const [id, t] of themes) {
+    const part = t.manches ? Math.round((t.bonnes / t.manches) * 100) : 0;
+    parTheme.append(el('div', { class: 'rang' }, [
+      el('span', { class: 'rang-place', text: THEMES.find((x) => x.id === id)?.emoji ?? '•' }),
+      el('span', { class: 'rang-nom', text: nomDuTheme(id) }),
+      el('span', { class: 'rang-score', text: `${part} %` }),
+    ]));
+  }
+  if (!themes.length) {
+    parTheme.append(el('p', { class: 'muted small', text: 'Joue une partie, et ce portrait se remplira.' }));
+  }
+
+  const amis = clear($('#compte-amis'));
+  const listeAmis = await comptes.amis().catch(() => []);
+  for (const [rang, ami] of listeAmis.entries()) {
+    amis.append(el('div', { class: 'rang' }, [
+      el('span', { class: 'rang-place', text: String(rang + 1) }),
+      el('span', { class: 'rang-nom', text: ami.nom }),
+      el('span', {
+        class: 'rang-score',
+        text: `${ami.victoires} / ${ami.parties}`,
+      }),
+    ]));
+  }
+  if (!listeAmis.length) {
+    amis.append(el('p', {
+      class: 'muted small',
+      text: 'Personne pour l’instant : il faut qu’au moins un autre joueur de la table ait un compte.',
+    }));
+  }
+
+  const parties = clear($('#compte-parties'));
+  for (const partie of (vue.parties ?? []).slice(0, 10)) {
+    const quand = new Date(partie.quand).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    parties.append(el('div', { class: 'rang' }, [
+      el('span', { class: 'rang-place', text: partie.place === 1 ? '🥇' : String(partie.place || '—') }),
+      el('span', { class: 'rang-nom', text: `${quand} — ${partie.bonnes}/${partie.manches} bonnes` }),
+      el('span', { class: 'rang-score', text: `${partie.points} pts` }),
+    ]));
+  }
+  if (!(vue.parties ?? []).length) {
+    parties.append(el('p', { class: 'muted small', text: 'Aucune partie déclarée depuis cet appareil.' }));
+  }
+}
+
+/**
+ * Ce qui suit une connexion réussie.
+ *
+ * L'historique local rejoint celui du compte, dans les deux sens : ce téléphone
+ * apporte ce qu'il a vu, et repart avec ce que les autres appareils ont vu.
+ */
+async function apresConnexion() {
+  // Le prénom du pupitre devient celui du compte, tant que personne n'en a
+  // choisi un autre : sans ça, le classement entre amis affiche des moitiés
+  // d'adresses électroniques, et « ana » n'est pas un prénom, c'est un début
+  // de courriel.
+  const profil = comptes.monProfil();
+  const auto = profil?.email ? profil.email.split('@')[0] : '';
+  if (moi.name && profil?.nom === auto && moi.name !== profil.nom) {
+    await comptes.renommer(moi.name).catch(() => { /* le nom restera celui-là */ });
+  }
+
+  try {
+    const fusion = await comptes.synchroniserLesVues(historique.vues());
+    historique.adopter(fusion);
+  } catch { /* la synchro retentera à la fin de la prochaine partie */ }
+  $('#compte-verif').hidden = true;
+  $('#compte-code').value = '';
+  await rendreCompte();
+  majAccueilCompte();
+  toast('Te voilà connecté.');
+}
+
+/** La ligne de l'accueil, qui dit d'un coup d'œil si un compte est ouvert. */
+function majAccueilCompte() {
+  const profil = comptes.monProfil();
+  $('#btn-compte').textContent = comptes.connecte()
+    ? `Mon compte${profil?.nom ? ` — ${profil.nom}` : ''}`
+    : 'Créer un compte ou se connecter';
 }
 
 /* --- Le fil rouge --------------------------------------------------------- */
@@ -1948,6 +2161,75 @@ function brancher() {
     toast('Historique effacé.');
   });
 
+  // --- Le compte ---------------------------------------------------------
+  $('#btn-compte').addEventListener('click', async () => {
+    montrer('compte');
+    await rendreCompte();
+  });
+
+  $('#btn-compte-code').addEventListener('click', async (event) => {
+    const email = $('#compte-email').value.trim();
+    if (!email) return toast('Il faut une adresse.', 'warn');
+    event.target.disabled = true;
+    try {
+      await comptes.demanderUnCode(email);
+      $('#compte-verif').hidden = false;
+      $('#compte-code').focus();
+      toast('Code envoyé. Regarde tes courriels.');
+    } catch (e) {
+      toast(e.message ?? 'Envoi impossible.', 'warn');
+    } finally {
+      event.target.disabled = false;
+    }
+  });
+
+  $('#btn-compte-valider').addEventListener('click', async (event) => {
+    const email = $('#compte-email').value.trim();
+    const code = $('#compte-code').value.trim();
+    if (code.length !== 6) return toast('Le code fait six chiffres.', 'warn');
+    event.target.disabled = true;
+    try {
+      await comptes.ouvrirParCode(email, code);
+      await apresConnexion();
+    } catch (e) {
+      toast(e.message ?? 'Connexion refusée.', 'warn');
+    } finally {
+      event.target.disabled = false;
+    }
+  });
+
+  $('#compte-email').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#btn-compte-code').click();
+  });
+  $('#compte-code').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#btn-compte-valider').click();
+  });
+
+  $('#btn-compte-sortir').addEventListener('click', async () => {
+    await comptes.seDeconnecter();
+    // L'historique local reste : il a été joué sur CET appareil, et se
+    // déconnecter n'est pas demander à oublier ses soirées.
+    await rendreCompte();
+    majAccueilCompte();
+    toast('Déconnecté.');
+  });
+
+  $('#btn-compte-supprimer').addEventListener('click', async () => {
+    const sur = await confirmDialog(
+      'Supprimer ton compte efface ton historique, tes statistiques et le lien vers tes achats, définitivement. Les packs achetés restent restaurables depuis l’App Store. Continuer ?',
+      { okLabel: 'Supprimer', danger: true },
+    );
+    if (!sur) return;
+    try {
+      await comptes.supprimerLeCompte();
+      await rendreCompte();
+      majAccueilCompte();
+      toast('Compte supprimé.');
+    } catch (e) {
+      toast(e.message ?? 'Suppression impossible.', 'warn');
+    }
+  });
+
   $('#btn-creer').addEventListener('click', () => {
     sons.debloquer();
     if (!lireMonPrenom()) return;
@@ -2156,6 +2438,16 @@ async function reprendreLaPartie() {
 try {
   brancher();
   montrer('accueil');
+  majAccueilCompte();
+  // Un compte déjà ouvert : on rapatrie ce que les autres appareils ont vu,
+  // sans rien bloquer. Si le réseau manque, l'appli démarre pareil et la
+  // synchro retentera à la fin de la prochaine partie.
+  if (comptes.connecte()) {
+    comptes.rafraichir()
+      .then(() => { majAccueilCompte(); return comptes.synchroniserLesVues(historique.vues()); })
+      .then((fusion) => historique.adopter(fusion))
+      .catch(() => { /* on jouera avec l'historique local */ });
+  }
   reprendreLaPartie();
 } catch (erreur) {
   // Sans ce filet, une API manquante laisse une page qui s'affiche normalement
