@@ -82,14 +82,43 @@ en est un. Ce n'est pas une préférence, c'est la règle 4.8 de l'App Store.
 
 ## 4. Se connecter avec Google
 
-1. console.cloud.google.com › APIs & Services › Credentials › Create OAuth
-   client ID › **iOS**, bundle `fr.quizentreamis.app` ;
-2. reporter l'identifiant client dans `clientId`, en tête de
+**D'abord l'écran de consentement**, sans quoi la création d'un client OAuth est
+refusée — c'est le bandeau jaune de la page des identifiants.
+
+1. console.cloud.google.com, projet *Quiz entre amis* › APIs & Services ›
+   **Écran de consentement OAuth** ;
+2. type d'utilisateur **Externe** (le projet n'appartient à aucune
+   organisation, et il s'agit de joueurs, pas de collègues) ;
+3. nom de l'application : `Quiz entre amis` — c'est ce que Google affichera au
+   moment de la connexion. Adresse d'assistance et contact développeur : la
+   tienne ; le logo est facultatif ;
+4. **portées** : ne rien ajouter. `openid`, `email` et `profile` sont accordées
+   d'office et ne sont pas sensibles. C'est précisément pour ça qu'aucune
+   vérification de Google n'est nécessaire — en demander davantage
+   déclencherait un examen de plusieurs semaines ;
+5. **publier l'application** (bouton *Publier* / *Passer en production*). Laissée
+   en *Test*, elle n'accepte que cent comptes inscrits à la main, et leurs
+   sessions expirent au bout de sept jours.
+
+**Ensuite le client :**
+
+6. Identifiants › Créer des identifiants › **ID client OAuth** › type
+   d'application **iOS**, bundle `fr.quizentreamis.app` ;
+7. reporter l'identifiant client dans `clientId`, en tête de
    `apple/CompteGooglePlugin.swift` ;
-3. Info.plist › URL Types › URL Schemes : le schéma inversé, de la forme
+8. Info.plist › URL Types › URL Schemes : le schéma inversé, de la forme
    `com.googleusercontent.apps.XXXXXXXX` ;
-4. déposer le fichier dans `ios/App/App/` et l'ajouter à Compile Sources ;
-5. `QUIZROOM_GOOGLE_AUD=<le même identifiant client>`.
+9. déposer le fichier dans `ios/App/App/` et l'ajouter à Compile Sources ;
+10. `QUIZROOM_GOOGLE_AUD=<le même identifiant client>`.
+
+Un client iOS n'a **pas** de secret, et c'est normal : un secret livré dans une
+application distribuée n'est pas un secret. C'est PKCE qui tient ce rôle, et le
+plugin le fait.
+
+Les deux autres entrées du menu ne servent à rien ici : une **clé API**
+identifie un projet pour compter des quotas, elle n'authentifie personne ; un
+**compte de service** est un robot qui parle à Google pour lui-même, pas un
+joueur qui se connecte.
 
 Pas de SDK Google : le plugin fait OpenID Connect avec PKCE en trois écrans de
 code. Le protocole est public et ne bouge pas, là où le SDK pèse quelques
