@@ -131,7 +131,7 @@ livrerait une application qui a l'air de marcher.**
 
 À vérifier en premier sur un vrai iPhone, interrupteur sur silencieux.
 
-### 1 bis. Ajouter les deux fichiers Swift au projet Xcode
+### 1 bis. Ajouter les fichiers Swift au projet Xcode
 
 **C'est l'étape qui manque le plus souvent, et son symptôme ne la désigne pas :**
 `Cannot find 'SessionAudio' in scope`, alors que le fichier est bien sur le
@@ -147,12 +147,13 @@ Dans Xcode, une fois pour toutes :
 1. Sélectionner le groupe **App › App** dans le navigateur de gauche (celui qui
    contient `AppDelegate.swift`).
 2. Menu **File › Add Files to "App"…**
-3. Choisir `AchatsPlugin.swift` et `SessionAudio.swift` dans `ios/App/App/`.
+3. Choisir les quatre fichiers dans `ios/App/App/` : `AchatsPlugin.swift`,
+   `SessionAudio.swift`, `CompteApplePlugin.swift` et `CompteGooglePlugin.swift`.
 4. **Décocher « Copy items if needed »** — ils y sont déjà — et **cocher la cible
    « App »** dans *Add to targets*.
 
-Les deux fichiers doivent alors apparaître dans le navigateur, à côté de
-`AppDelegate.swift`. S'ils n'y sont pas, ils ne sont pas compilés.
+Ils doivent alors apparaître dans le navigateur, à côté de `AppDelegate.swift`.
+S'ils n'y sont pas, ils ne sont pas compilés.
 
 Un glisser-déposer depuis le Finder vers le groupe **App › App** fait la même
 chose, avec les mêmes cases à régler dans la boîte de dialogue.
@@ -165,6 +166,29 @@ comme celui de la session audio.
 Le sync ne le dira pas non plus : « Found 1 Capacitor plugin » ne compte que les
 paquets npm. Un plugin local se déclare au démarrage de l'application, jamais à
 la synchronisation.
+
+### 1 ter. Les deux connexions
+
+`CompteApplePlugin.swift` et `CompteGooglePlugin.swift` suivent exactement la
+même règle que la caisse : ils obtiennent du fournisseur un jeton **signé** et
+le rendent tel quel ; c'est le relais qui vérifie signature, émetteur, audience
+et nonce (`lib/comptes.js`). Un plugin qui rendrait « connexion réussie »
+rendrait un booléen, et un booléen se falsifie.
+
+Deux réglages qui ne sont pas dans le code :
+
+- **Sign in with Apple** est une *capacité* : cible App › Signing &
+  Capabilities › + › Sign in with Apple. Sans elle, la feuille refuse de
+  s'ouvrir avec une erreur 1000 qui ne dit rien de ce qui manque.
+- **Google** a besoin de son schéma d'URL inversé dans Info.plist (URL Types ›
+  URL Schemes), sans quoi la page de connexion s'ouvre et ne revient jamais.
+
+Le détail des deux consoles — Apple et Google Cloud — et les variables
+d'environnement correspondantes sont dans `docs/mise-en-production.md`.
+
+Comme pour les achats, l'absence d'un de ces fichiers dans la cible est muette :
+le bouton ne s'affiche pas, l'appli fonctionne, et rien ne le signale. C'est
+délibéré — un bouton qui ne fait rien vaut moins que pas de bouton du tout.
 
 ### 2. Le manifeste de confidentialité
 

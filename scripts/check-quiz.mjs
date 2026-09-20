@@ -29,7 +29,7 @@ import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js'
 import { handleRoomRequest } from '../lib/rooms.js';
 import {
   handleCompteRequest, demanderUnCode, ouvrirParCode, compteDuJeton, amisDe,
-  verifierJetonTiers, coffre, oublierLeCoffre,
+  verifierJetonTiers, coffre, oublierLeCoffre, ouvrirParApple, ouvrirParGoogle,
 } from '../lib/comptes.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
@@ -3309,4 +3309,115 @@ test('se connecter fait suivre les packs déjà achetés sur cet appareil', asyn
   assert.ok((await packsDeLaLicence(body.licence)).includes(payant.id));
   // …sans avoir disparu de l'appareil, qui doit continuer de marcher déconnecté.
   assert.ok((await packsDeLaLicence('licence-de-cet-appareil')).includes(payant.id));
+});
+
+/* --- Les connexions Apple et Google ---------------------------------------- */
+
+// Tout ce qui protège ces deux chemins tient dans la vérification d'un jeton :
+// signature, émetteur, audience, expiration, nonce. Un test qui ne signerait
+// rien ne vérifierait rien — on fabrique donc une vraie paire de clés et de
+// vrais jetons.
+
+const { generateKeyPairSync, createSign, createHash: empreinteDe } = await import('node:crypto');
+
+function fournisseurDeTest() {
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'test-1', alg: 'RS256', use: 'sig' };
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+
+  return {
+    cles: [jwk],
+    signer(charge, { kid = 'test-1' } = {}) {
+      const entete = b64({ alg: 'RS256', kid, typ: 'JWT' });
+      const corps = b64({ exp: Math.floor(Date.now() / 1000) + 600, ...charge });
+      const signature = createSign('RSA-SHA256')
+        .update(`${entete}.${corps}`)
+        .sign(privateKey)
+        .toString('base64url');
+      return `${entete}.${corps}.${signature}`;
+    },
+  };
+}
+
+const APPLE = { iss: 'https://appleid.apple.com', aud: 'fr.quizentreamis.app' };
+
+test('un jeton Apple en règle ouvre un compte', async () => {
+  oublierLeCoffre();
+  const fournisseur = fournisseurDeTest();
+  process.env.QUIZROOM_APPLE_AUD = APPLE.aud;
+
+  const nonce = 'un-nonce-de-cette-connexion';
+  const jeton = fournisseur.signer({
+    ...APPLE,
+    sub: '001234.abcdef',
+    email: 'ana@icloud.com',
+    email_verified: true,
+    nonce: empreinteDe('sha256').update(nonce).digest('hex'),
+  });
+
+  const { compte: profil } = await ouvrirParApple(jeton, 'Ana', nonce, fournisseur.cles);
+  assert.equal(profil.email, 'ana@icloud.com');
+  assert.deepEqual(profil.fournisseurs, ['apple']);
+
+  // Et la deuxième connexion retombe sur le MÊME compte, pas sur un nouveau.
+  const encore = await ouvrirParApple(jeton, 'Ana', nonce, fournisseur.cles);
+  assert.equal(encore.compte.id, profil.id);
+});
+
+test('un jeton signé par quelqu’un d’autre ne passe pas', async () => {
+  oublierLeCoffre();
+  process.env.QUIZROOM_APPLE_AUD = APPLE.aud;
+  const vrai = fournisseurDeTest();
+  const faussaire = fournisseurDeTest();
+  // Le faussaire signe un jeton parfait — sauf qu'il n'a pas la clé d'Apple.
+  const jeton = faussaire.signer({ ...APPLE, sub: 'moi' });
+  await assert.rejects(() => ouvrirParApple(jeton, 'Moi', null, vrai.cles), /Signature invalide/);
+});
+
+test('un jeton destiné à une autre application ne passe pas', async () => {
+  // Le piège classique : un jeton Google parfaitement valide, délivré à une
+  // autre application. Sans vérification d'audience, il ouvrirait un compte ici.
+  oublierLeCoffre();
+  process.env.QUIZROOM_GOOGLE_AUD = 'notre-client.apps.googleusercontent.com';
+  const fournisseur = fournisseurDeTest();
+  const jeton = fournisseur.signer({
+    iss: 'https://accounts.google.com',
+    aud: 'une-autre-application.apps.googleusercontent.com',
+    sub: '42', email: 'x@gmail.com', email_verified: true,
+  });
+  await assert.rejects(() => ouvrirParGoogle(jeton, null, fournisseur.cles), /ne nous est pas destiné/);
+});
+
+test('un jeton expiré ou rejoué ne passe pas', async () => {
+  oublierLeCoffre();
+  process.env.QUIZROOM_APPLE_AUD = APPLE.aud;
+  const fournisseur = fournisseurDeTest();
+
+  const perime = fournisseur.signer({ ...APPLE, sub: 'a', exp: Math.floor(Date.now() / 1000) - 60 });
+  await assert.rejects(() => ouvrirParApple(perime, 'A', null, fournisseur.cles), /expiré/);
+
+  // Un jeton capté ailleurs, encore valide, mais qui ne répond pas au nonce de
+  // CETTE demande de connexion.
+  const dUnAutre = fournisseur.signer({
+    ...APPLE, sub: 'a', nonce: empreinteDe('sha256').update('le-nonce-de-quelqu-un-d-autre').digest('hex'),
+  });
+  await assert.rejects(
+    () => ouvrirParApple(dUnAutre, 'A', 'mon-nonce-à-moi', fournisseur.cles),
+    /rejoué/,
+  );
+});
+
+test('une adresse Google non vérifiée ne relie aucun compte', async () => {
+  // Sans ça, quelqu'un qui contrôle une adresse non vérifiée chez un
+  // fournisseur laxiste récupérerait le compte de son propriétaire légitime.
+  oublierLeCoffre();
+  process.env.QUIZROOM_GOOGLE_AUD = 'notre-client.apps.googleusercontent.com';
+  const fournisseur = fournisseurDeTest();
+  const jeton = fournisseur.signer({
+    iss: 'https://accounts.google.com',
+    aud: 'notre-client.apps.googleusercontent.com',
+    sub: '99', email: 'ana@example.com', email_verified: false,
+  });
+  const { compte: profil } = await ouvrirParGoogle(jeton, null, fournisseur.cles);
+  assert.equal(profil.email, null, 'l’adresse non vérifiée n’est pas retenue');
 });

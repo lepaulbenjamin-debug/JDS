@@ -110,8 +110,8 @@ export const pontGoogle = () => globalThis.Capacitor?.Plugins?.CompteGoogle ?? n
 export async function ouvrirParApple() {
   const pont = pontApple();
   if (!pont) throw new Error('La connexion Apple n’est pas disponible ici.');
-  const { identityToken, nom } = await pont.signIn();
-  const { jeton: neuf, compte } = await appel('apple', { jetonApple: identityToken, nom });
+  const { identityToken, nom, nonce } = await pont.signIn();
+  const { jeton: neuf, compte } = await appel('apple', { jetonApple: identityToken, nom, nonce });
   retenirLeJeton(neuf);
   profil = compte;
   await rattacherLesAchats();
@@ -121,8 +121,8 @@ export async function ouvrirParApple() {
 export async function ouvrirParGoogle() {
   const pont = pontGoogle();
   if (!pont) throw new Error('La connexion Google n’est pas disponible ici.');
-  const { idToken } = await pont.signIn();
-  const { jeton: neuf, compte } = await appel('google', { jetonGoogle: idToken });
+  const { idToken, nonce } = await pont.signIn();
+  const { jeton: neuf, compte } = await appel('google', { jetonGoogle: idToken, nonce });
   retenirLeJeton(neuf);
   profil = compte;
   await rattacherLesAchats();
