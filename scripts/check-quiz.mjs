@@ -21,7 +21,7 @@ import {
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
 import { creerHistorique } from '../web/quiz/js/historique.js';
-import { handlePackRequest, accorder } from '../lib/packs.js';
+import { handlePackRequest, accorder, packsDeLaLicence } from '../lib/packs.js';
 import { verifierTransaction, definirRacine, racineApple } from '../lib/apple.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
@@ -3285,4 +3285,28 @@ test('un jeton tiers mal formé ou non signé par le bon émetteur ne passe pas'
     }),
     /illisible/,
   );
+});
+
+test('se connecter fait suivre les packs déjà achetés sur cet appareil', async () => {
+  // Le défaut que le compte doit corriger : un pack acheté était attaché au
+  // stockage du navigateur, donc perdu en vidant les données du site.
+  oublierLeCoffre();
+  const vitrine = (await handlePackRequest({ method: 'GET', query: {} })).body.packs;
+  const payant = vitrine.find((p) => p.prix > 0) ?? vitrine[0];
+  await accorder('licence-de-cet-appareil', payant.id);
+
+  const { jeton } = await compteConnecte('achats@example.com');
+  const { body } = await compte({
+    method: 'POST',
+    query: { action: 'licence' },
+    headers: { authorization: `Bearer ${jeton}` },
+    body: { licence: 'licence-de-cet-appareil' },
+  });
+
+  assert.ok(body.licence, 'le compte rend sa propre licence');
+  assert.ok(body.verses.includes(payant.id));
+  // Le pack s'ouvre désormais sous la licence du compte…
+  assert.ok((await packsDeLaLicence(body.licence)).includes(payant.id));
+  // …sans avoir disparu de l'appareil, qui doit continuer de marcher déconnecté.
+  assert.ok((await packsDeLaLicence('licence-de-cet-appareil')).includes(payant.id));
 });

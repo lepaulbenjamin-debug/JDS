@@ -11,6 +11,7 @@
 // partagé.
 
 import { relayBase } from './net.js';
+import { licence as licenceDeLAppareil, adopterLaLicence } from './packs.js';
 
 const JETON_KEY = 'quizroom.jeton';
 
@@ -65,6 +66,21 @@ function oublier() {
   retenirLeJeton('');
   profil = null;
   derniereVue = null;
+  // On repasse sur la licence de l'appareil : ce qu'il avait acheté avant y est
+  // toujours, et ce qui a été acheté sous le compte se retrouvera en se
+  // reconnectant.
+  adopterLaLicence('');
+}
+
+/**
+ * Les achats de cet appareil rejoignent le compte, et la licence devient celle
+ * du compte. Appelé à chaque connexion, quel que soit le chemin emprunté.
+ */
+async function rattacherLesAchats() {
+  try {
+    const { licence } = await appel('licence', { licence: licenceDeLAppareil() });
+    adopterLaLicence(licence);
+  } catch { /* les packs restent lisibles avec la licence de l'appareil */ }
 }
 
 /* --- Se connecter --------------------------------------------------------- */
@@ -75,6 +91,7 @@ export async function ouvrirParCode(email, code) {
   const { jeton: neuf, compte } = await appel('email', { email, code });
   retenirLeJeton(neuf);
   profil = compte;
+  await rattacherLesAchats();
   return compte;
 }
 
@@ -82,9 +99,10 @@ export async function ouvrirParCode(email, code) {
  * Les connexions tierces.
  *
  * L'application native obtient un jeton signé par Apple ou par Google et nous
- * le passe ; le relais vérifie la signature. Sur le web, ces boutons n'existent
- * pas encore — d'où le `disponible` que l'écran interroge avant d'afficher quoi
- * que ce soit, plutôt qu'un bouton qui ne ferait rien.
+ * le passe ; le relais vérifie la signature. Sur le web, ces ponts n'existent
+ * pas — d'où les deux fonctions ci-dessous, que l'écran interroge avant
+ * d'afficher quoi que ce soit : un bouton qui ne fait rien vaut moins que pas
+ * de bouton du tout.
  */
 export const pontApple = () => globalThis.Capacitor?.Plugins?.CompteApple ?? null;
 export const pontGoogle = () => globalThis.Capacitor?.Plugins?.CompteGoogle ?? null;
@@ -96,6 +114,7 @@ export async function ouvrirParApple() {
   const { jeton: neuf, compte } = await appel('apple', { jetonApple: identityToken, nom });
   retenirLeJeton(neuf);
   profil = compte;
+  await rattacherLesAchats();
   return compte;
 }
 
@@ -106,6 +125,7 @@ export async function ouvrirParGoogle() {
   const { jeton: neuf, compte } = await appel('google', { jetonGoogle: idToken });
   retenirLeJeton(neuf);
   profil = compte;
+  await rattacherLesAchats();
   return compte;
 }
 

@@ -1147,6 +1147,15 @@ async function apresConnexion() {
     const fusion = await comptes.synchroniserLesVues(historique.vues());
     historique.adopter(fusion);
   } catch { /* la synchro retentera à la fin de la prochaine partie */ }
+
+  // Les packs du compte, y compris ceux achetés depuis un autre appareil :
+  // c'est la promesse même du compte, elle doit tenir tout de suite.
+  try {
+    await packs.synchroniser(voix.banqueCourante);
+    ajouterQuestions(packs.questionsInstallees());
+    declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
+  } catch { /* les packs se retéléchargeront depuis les réglages */ }
+
   $('#compte-verif').hidden = true;
   $('#compte-code').value = '';
   await rendreCompte();

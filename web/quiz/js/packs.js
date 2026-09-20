@@ -12,6 +12,7 @@
 // mal couvert.
 
 const LICENCE_KEY = 'quizroom.licence';
+const LICENCE_COMPTE_KEY = 'quizroom.licence.compte';
 const CACHE_KEY = 'quizroom.packs';
 
 /* --- La licence ----------------------------------------------------------- */
@@ -24,8 +25,25 @@ const CACHE_KEY = 'quizroom.packs';
  * site. Une vraie boutique doit permettre de le retrouver — par courriel, par
  * exemple — mais c'est le travail du prestataire de paiement, pas d'ici.
  */
+/**
+ * La licence d'un compte connecté, si l'on en a ouvert un.
+ *
+ * Elle prend le pas sur celle de l'appareil : un achat suit alors la personne
+ * et non le navigateur — c'est la meilleure raison de créer un compte, et ça
+ * règle le défaut décrit juste au-dessus. Se déconnecter ramène simplement la
+ * licence de l'appareil, qui n'a rien perdu.
+ */
+export function adopterLaLicence(id) {
+  try {
+    if (id) localStorage.setItem(LICENCE_COMPTE_KEY, id);
+    else localStorage.removeItem(LICENCE_COMPTE_KEY);
+  } catch { /* stockage indisponible */ }
+}
+
 export function licence() {
   try {
+    const duCompte = localStorage.getItem(LICENCE_COMPTE_KEY);
+    if (duCompte) return duCompte;
     const existante = localStorage.getItem(LICENCE_KEY);
     if (existante) return existante;
     const octets = new Uint8Array(16);
