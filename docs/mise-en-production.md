@@ -16,16 +16,40 @@ soumission part mal.
 
 À saisir dans Vercel (Settings › Environment Variables), jamais dans le dépôt.
 
-| Variable | À quoi elle sert | Sans elle |
-|---|---|---|
-| `UPSTASH_REDIS_REST_URL` | le stockage partagé | tout tourne en mémoire, donc rien ne survit d'une requête à l'autre en serverless |
-| `UPSTASH_REDIS_REST_TOKEN` | idem | idem |
-| `QUIZROOM_MAIL_CLE` | la clé API de l'expéditeur (Resend) | la connexion par courriel refuse en production |
-| `QUIZROOM_MAIL_DE` | l'adresse d'envoi, ex. `Quiz entre amis <bonjour@quizentreamis.fr>` | idem |
-| `QUIZROOM_APPLE_AUD` | l'audience acceptée des jetons Apple : `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
-| `QUIZROOM_GOOGLE_AUD` | l'identifiant client iOS de Google | « Se connecter avec Google » répond 503 |
-| `QUIZROOM_SECRET_ACHAT` | l'encaissement hors App Store | inchangé |
-| `QUIZROOM_CODES_CADEAU` | les codes d'ouverture de packs | inchangé |
+| Variable | Où se trouve la valeur | À quoi ça ressemble | Sans elle |
+|---|---|---|---|
+| `UPSTASH_REDIS_REST_URL` | console Upstash › la base › REST API | `https://eu1-xxx-12345.upstash.io` | tout tourne en mémoire : en serverless, rien ne survit d'une requête à l'autre |
+| `UPSTASH_REDIS_REST_TOKEN` | idem, bouton « copy » à côté du jeton | une longue chaîne opaque | idem |
+| `QUIZROOM_MAIL_CLE` | console Resend › API Keys | `re_XXXXXXXXXXXXXXXX` | la connexion par courriel refuse en production (503) |
+| `QUIZROOM_MAIL_DE` | toi, une fois le domaine vérifié | `Quiz entre amis <bonjour@ton-domaine.fr>` | idem |
+| `QUIZROOM_APPLE_AUD` | l'identifiant de l'app | `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
+| `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `123456-abc.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
+| `QUIZROOM_CODES_CADEAU` | toi | `NOEL2026,PRESSE,TEST42` | aucun code cadeau ne fonctionne |
+| `ORIGINES_APP` | toi, **seulement** si l'appli web est servie ailleurs que l'API | `https://quizentreamis.fr` | les appels depuis cette origine sont refusés par le navigateur |
+
+Trois variables qu'il vaut mieux **laisser vides** en production :
+
+- `QUIZROOM_SECRET_ACHAT` : elle n'ouvre l'encaissement hors App Store qu'aux
+  webhooks d'un prestataire de paiement. Tant qu'il n'y en a pas, la porte doit
+  rester fermée ;
+- `QUIZROOM_PACKS_OFFERTS` : elle offre les packs qu'elle nomme à tout le monde,
+  sans rien demander. Utile pour tester, ruineux en boutique ;
+- `APPLE_BUNDLE_ID` et `APPLE_ROOT_CA` : la première vaut déjà
+  `fr.quizentreamis.app`, la seconde n'existe que pour les hébergeurs sans
+  disque persistant — le certificat est dans `certs/`, et `vercel.json`
+  l'embarque avec la fonction.
+
+Et deux qui ne doivent **jamais** monter sur Vercel : `OPENAI_API_KEY` et
+`OPENAI_TTS_MODEL` ne servent qu'à fabriquer les clips, depuis une machine de
+développement. Le relais n'a aucune raison de parler à OpenAI.
+
+`ANTHROPIC_API_KEY` ne concerne pas le quiz : c'est `/api/scan`, pour le
+compteur de points qui vit dans le même dépôt.
+
+**Après chaque ajout, il faut redéployer** : Vercel ne relit pas les variables
+d'un déploiement déjà en ligne. Et si les déploiements de préversion doivent
+marcher, cocher aussi *Preview* — au prix d'une base partagée avec la
+production, ou d'une seconde base Upstash.
 
 Les deux `_AUD` n'ont **pas** de valeur par défaut, et c'est voulu : sans
 audience déclarée, n'importe quel jeton Google du monde — délivré à n'importe
