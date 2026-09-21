@@ -3,8 +3,8 @@
   "buildCommand": "node scripts/build-web.mjs",
   "outputDirectory": "dist/web",
   "redirects": [
-    { "source": "/quiz", "destination": "/", "permanent": false },
-    { "source": "/quiz/:chemin*", "destination": "/:chemin*", "permanent": false }
+    { "source": "/quiz", "destination": "/jouer", "permanent": false },
+    { "source": "/quiz/:chemin*", "destination": "/jouer/:chemin*", "permanent": false }
   ],
   "functions": {
     "api/scan.mjs": {

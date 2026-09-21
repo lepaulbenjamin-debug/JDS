@@ -2,15 +2,22 @@
 //
 //   node scripts/build-web.mjs
 //
-// Le dépôt héberge deux applications sous `web/` : le compteur de points à la
-// racine, le quiz dans `quiz/`. Servir `web/` en entier — ce qu'on faisait —
-// donnait un quizentreamis.fr dont l'adresse de base ouvrait le compteur de
-// points, avec tout son code source à disposition.
+// Deux choses, et une seule adresse :
 //
-// On ne masque pas le compteur : on ne le publie pas. Le paquet ne contient que
-// le quiz, ses modules communs et rien d'autre ; il n'y a donc aucune adresse à
-// deviner, aucune règle de réécriture à tenir à jour, et rien qui réapparaisse
-// le jour où quelqu'un ajoute un fichier au compteur.
+//   /            la page d'accueil, qui existe pour être trouvée — moteurs de
+//                recherche, liens partagés, fiche de l'App Store
+//   /jouer/      le jeu lui-même
+//
+// Le dépôt héberge aussi le compteur de points, à la racine de `web/`. Il n'est
+// pas masqué : il n'est pas publié. Aucune adresse à deviner, aucune règle de
+// réécriture à tenir à jour, et rien qui réapparaisse le jour où quelqu'un lui
+// ajoute un fichier.
+//
+// Pourquoi une page d'accueil séparée plutôt que le jeu à la racine : une
+// application d'une page, dont tout le contenu apparaît au tap, ne donne à
+// indexer qu'un écran de connexion et trois boutons. Ce qui se référence, ce
+// sont des phrases — ce que le jeu est, comment on y joue, ce qu'il coûte — et
+// ça n'a pas sa place dans l'appli, où ce serait du remplissage.
 //
 // Deux différences avec le paquet natif, et une seule vraie :
 //
@@ -24,28 +31,38 @@
 // L'adresse du relais n'est pas inscrite : l'appli et l'API viennent du même
 // serveur, et la chaîne vide veut dire « l'origine courante ».
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { cp, readFile, rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { RACINE, assemblerLeQuiz, poids, remplacer } from './paquet-quiz.mjs';
+import { RACINE, WEB, assemblerLeQuiz, poids, remplacer } from './paquet-quiz.mjs';
 
 const SORTIE = join(RACINE, 'dist', 'web');
+const SITE = join(WEB, 'site');
 
 async function batir() {
-  await assemblerLeQuiz(SORTIE);
+  // On repart d'un dossier vide : un paquet précédent a pu poser le jeu
+  // ailleurs, et un fichier oublié reste servi.
+  await rm(SORTIE, { recursive: true, force: true });
+  await mkdir(SORTIE, { recursive: true });
+
+  await assemblerLeQuiz(join(SORTIE, 'jouer'));
 
   // Le service worker précharge deux modules partagés, qui ont changé de place.
-  await remplacer(join(SORTIE, 'sw.js'), [['../js/', 'commun/']]);
+  await remplacer(join(SORTIE, 'jouer', 'sw.js'), [['../js/', 'commun/']]);
+
+  // La page d'accueil et ce qui va avec — `robots.txt`, `sitemap.xml`, l'image
+  // de partage — par-dessus, à la racine.
+  await cp(SITE, SORTIE, { recursive: true });
 
   const { octets, fichiers } = await poids(SORTIE);
-  const audio = await poids(join(SORTIE, 'audio'));
-  const voix = JSON.parse(await readFile(join(SORTIE, 'audio', 'voix.json'), 'utf8'))
+  const audio = await poids(join(SORTIE, 'jouer', 'audio'));
+  const voix = JSON.parse(await readFile(join(SORTIE, 'jouer', 'audio', 'voix.json'), 'utf8'))
     .voix.map((v) => v.id).join(', ');
 
   console.log('\nSite prêt dans dist/web/');
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
-  console.log(`  dont audio : ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo`);
-  console.log(`  voix       : ${voix}`);
+  console.log(`  /          la page d’accueil`);
+  console.log(`  /jouer/    le jeu — ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo, voix : ${voix}`);
   console.log('  le compteur de points n’est pas dedans, et c’est le but.\n');
 }
 

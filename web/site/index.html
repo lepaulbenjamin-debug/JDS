@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f1116">
+
+<title>Quiz entre amis — le quiz de soirée où chaque téléphone devient un pupitre</title>
+<meta name="description" content="Un quiz à jouer chez soi, sans animateur et sans inscription : chacun répond sur son téléphone, l’appli pose les questions à voix haute. 409 questions, 19 thèmes, jusqu’à 16 joueurs.">
+<link rel="canonical" href="https://www.quizentreamis.fr/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quiz entre amis">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Quiz entre amis — le quiz de soirée sur vos téléphones">
+<meta property="og:description" content="Chacun répond sur son téléphone, l’appli fait l’animateur. Sans inscription, sans matériel, jusqu’à 16 joueurs.">
+<meta property="og:url" content="https://www.quizentreamis.fr/">
+<meta property="og:image" content="https://www.quizentreamis.fr/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="/jouer/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/jouer/icons/apple-touch-icon.png">
+
+<style>
+:root {
+  /* Les mêmes jetons que l'application : le site et le jeu doivent se
+     ressembler au pixel près, sinon l'un a l'air d'être la copie de l'autre. */
+  --bg: #0f1116;
+  --surface: #171a22;
+  --surface-2: #1e222c;
+  --border: #2a2f3c;
+  --text: #e9ebf2;
+  --muted: #99a1b3;
+  --accent: #6366f1;
+  --accent-soft: #6366f133;
+  --gold: #f5c518;
+  --ok: #34d399;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: inherit; }
+img { max-width: 100%; height: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.enveloppe { width: min(1060px, 100% - 40px); margin-inline: auto; }
+
+/* --- En-tête -------------------------------------------------------------- */
+
+.entete {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.entete .enveloppe {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0;
+}
+.marque { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
+.marque img { width: 34px; height: 34px; border-radius: 9px; }
+.entete nav { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.entete nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+.entete nav a:hover { color: var(--text); }
+@media (max-width: 720px) { .entete nav a.lien-menu { display: none; } }
+
+/* --- Boutons -------------------------------------------------------------- */
+
+.bouton {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 22px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-2); color: var(--text);
+  font-weight: 650; text-decoration: none;
+  white-space: nowrap;
+}
+.bouton-primaire { background: var(--accent); border-color: transparent; color: #fff; }
+.bouton-primaire:hover { filter: brightness(1.08); }
+.bouton:hover { border-color: var(--accent); }
+.bouton-petit { padding: 9px 16px; font-size: 15px; }
+
+/* --- Hero ----------------------------------------------------------------- */
+
+.hero { padding: 74px 0 60px; text-align: center; }
+.hero-logo { width: 104px; height: 104px; border-radius: 26px; box-shadow: 0 18px 50px #0008; }
+h1 {
+  margin: 26px 0 0;
+  font-size: clamp(34px, 6.4vw, 60px); line-height: 1.08; letter-spacing: -0.02em;
+}
+.hero-sous {
+  margin: 18px auto 0; max-width: 40ch;
+  font-size: clamp(17px, 2.4vw, 21px); color: var(--muted);
+}
+.hero-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.hero-note { margin-top: 16px; font-size: 14.5px; color: var(--muted); }
+
+.chiffres {
+  margin: 56px 0 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;
+  list-style: none; padding: 0;
+}
+.chiffres li {
+  padding: 18px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.chiffres b { display: block; font-size: 28px; line-height: 1.1; }
+.chiffres span { color: var(--muted); font-size: 14.5px; }
+
+/* --- Sections ------------------------------------------------------------- */
+
+section { padding: 62px 0; border-top: 1px solid var(--border); }
+h2 { margin: 0 0 10px; font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.01em; }
+.chapo { margin: 0 0 32px; max-width: 62ch; color: var(--muted); }
+
+.grille { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+.carte {
+  padding: 22px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.carte h3 { margin: 0 0 8px; font-size: 18px; }
+.carte p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.carte .emoji { font-size: 26px; display: block; margin-bottom: 10px; }
+
+ol.etapes { counter-reset: etape; list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+ol.etapes li {
+  counter-increment: etape;
+  padding: 22px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+ol.etapes li::before {
+  content: counter(etape);
+  display: grid; place-items: center;
+  width: 34px; height: 34px; margin-bottom: 12px;
+  border-radius: 999px; background: var(--accent-soft); color: #c7c9ff;
+  font-weight: 800;
+}
+ol.etapes h3 { margin: 0 0 6px; font-size: 18px; }
+ol.etapes p { margin: 0; color: var(--muted); font-size: 15.5px; }
+
+.themes { display: flex; flex-wrap: wrap; gap: 9px; padding: 0; margin: 0; list-style: none; }
+.themes li {
+  padding: 9px 15px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); font-size: 15px;
+}
+
+.prix { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.prix article { padding: 26px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.prix article.en-avant { border-color: var(--accent); }
+.prix .montant { font-size: 30px; font-weight: 800; }
+.prix ul { margin: 16px 0 0; padding-left: 20px; color: var(--muted); font-size: 15.5px; }
+.prix li { margin-bottom: 6px; }
+
+details.question {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); padding: 18px 22px; margin-bottom: 10px;
+}
+details.question summary { cursor: pointer; font-weight: 650; }
+details.question p { margin: 12px 0 0; color: var(--muted); font-size: 15.5px; }
+
+.rappel {
+  margin-top: 40px; padding: 34px; text-align: center;
+  border: 1px solid var(--accent); border-radius: 20px;
+  background: linear-gradient(160deg, #241f4d 0%, var(--surface) 70%);
+}
+.rappel h2 { margin-bottom: 8px; }
+
+footer { border-top: 1px solid var(--border); padding: 34px 0 54px; color: var(--muted); font-size: 14.5px; }
+footer .enveloppe { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; }
+footer a { color: var(--muted); }
+footer .droite { margin-left: auto; }
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.quizentreamis.fr/#site",
+      "url": "https://www.quizentreamis.fr/",
+      "name": "Quiz entre amis",
+      "inLanguage": "fr-FR"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Quiz entre amis",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "iOS, Android, Web",
+      "inLanguage": "fr-FR",
+      "url": "https://www.quizentreamis.fr/",
+      "description": "Quiz de soirée multijoueur : chaque téléphone devient un pupitre, l’application pose les questions à voix haute et compte les points. Sans inscription, jusqu’à 16 joueurs.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Faut-il créer un compte pour jouer ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Non. On crée une partie ou on rejoint un salon avec un code à quatre lettres, sans compte et sans installation. Le compte est facultatif : il sert à garder ses statistiques, son historique et ses packs d’un appareil à l’autre." }
+        },
+        {
+          "@type": "Question",
+          "name": "Combien de joueurs peuvent participer ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Jusqu’à seize téléphones dans le même salon. Un seul joueur suffit aussi : le mode solo joue la même partie contre le chrono." }
+        },
+        {
+          "@type": "Question",
+          "name": "Faut-il une télévision ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Non, tout tient sur les téléphones. Une page d’écran commun existe pour afficher la question, le chrono et les scores en grand sur une télé ou un vidéoprojecteur, mais elle est facultative." }
+        },
+        {
+          "@type": "Question",
+          "name": "Le jeu est-il gratuit ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui. Quatre cent neuf questions et dix-neuf thèmes sont inclus, sans publicité. Des packs de questions supplémentaires sont vendus à l’unité, et un seul joueur de la table a besoin de les acheter." }
+        },
+        {
+          "@type": "Question",
+          "name": "Qui anime la partie ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "L’application. Elle lit les questions à voix haute avec une voix enregistrée, commente les réponses et annonce le classement : personne ne reste sur la touche pour tenir le rôle de l’animateur." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+
+<header class="entete">
+  <div class="enveloppe">
+    <a class="marque" href="/">
+      <img src="/jouer/icons/icon-192.png" alt="" width="34" height="34">
+      <span>Quiz entre amis</span>
+    </a>
+    <nav>
+      <a class="lien-menu" href="#comment">Comment ça marche</a>
+      <a class="lien-menu" href="#manches">Les manches</a>
+      <a class="lien-menu" href="#questions">Questions</a>
+      <a class="bouton bouton-primaire bouton-petit" href="/jouer/">Jouer</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="enveloppe">
+    <div class="hero">
+      <img class="hero-logo" src="/jouer/icons/icon-512.png" alt="Logo de Quiz entre amis" width="104" height="104">
+      <h1>Le quiz de soirée où chaque téléphone devient un pupitre</h1>
+      <p class="hero-sous">Vous êtes deux ou seize autour d’une table. L’appli pose les questions à voix haute, compte les points et chambre les perdants. Personne n’a besoin de tenir le rôle de l’animateur.</p>
+      <div class="hero-actions">
+        <a class="bouton bouton-primaire" href="/jouer/">Jouer maintenant</a>
+        <a class="bouton" href="#comment">Comment ça marche</a>
+      </div>
+      <p class="hero-note">Sans inscription, sans publicité. Une seule personne lance la partie, les autres tapent un code.</p>
+    </div>
+
+    <ul class="chiffres">
+      <li><b>409</b><span>questions écrites à la main</span></li>
+      <li><b>19</b><span>thèmes, du cinéma aux fake news</span></li>
+      <li><b>6</b><span>formes de manches</span></li>
+      <li><b>16</b><span>joueurs au maximum</span></li>
+    </ul>
+  </div>
+
+  <section id="comment">
+    <div class="enveloppe">
+      <h2>Trois minutes, et la soirée démarre</h2>
+      <p class="chapo">Pas de plateau, pas de cartes, pas de feuille de scores. Un téléphone par personne, et c’est tout.</p>
+      <ol class="etapes">
+        <li>
+          <h3>Quelqu’un crée la partie</h3>
+          <p>Il choisit les thèmes, la longueur et le ton de l’animateur. Un code à quatre lettres s’affiche.</p>
+        </li>
+        <li>
+          <h3>Les autres tapent le code</h3>
+          <p>Dans le navigateur ou dans l’application, sans compte à créer ni rien à installer. Leur téléphone devient leur pupitre.</p>
+        </li>
+        <li>
+          <h3>L’appli anime</h3>
+          <p>Elle lit l’énoncé, ouvre les réponses, compte les points à la seconde près, puis explique la bonne réponse — c’est le moment où tout le monde apprend quelque chose.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="manches">
+    <div class="enveloppe">
+      <h2>Six façons de jouer, pas une</h2>
+      <p class="chapo">Une soirée qui enchaîne quarante QCM s’essouffle au bout de dix. Les formes alternent, et chacune change ce qu’on fait de son téléphone.</p>
+      <div class="grille">
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">❓</span>
+          <h3>La question</h3>
+          <p>Quatre réponses, un tap. Plus vous répondez vite, plus vous marquez.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">📏</span>
+          <h3>L’estimation</h3>
+          <p>Un nombre à deviner. Le plus proche rafle la mise, et la vitesse ne compte plus : on a le droit de réfléchir.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🔢</span>
+          <h3>Dans l’ordre</h3>
+          <p>Quatre éléments à remettre en place. On marque à chaque position juste, donc on marque même en se trompant à moitié.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">⚡</span>
+          <h3>La rafale</h3>
+          <p>Cinq affirmations, vrai ou faux, d’affilée. Le ton monte d’un cran.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🎚️</span>
+          <h3>Le mix</h3>
+          <p>« Une chanson avec une couleur dans le titre. » Réponse libre, et le premier à sortir un titre valable marque le plus.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🎯</span>
+          <h3>Tu te mets combien ?</h3>
+          <p>Chacun annonce sa difficulté de 1 à 10 avant de voir sa question. Se connaître rapporte plus que tout savoir.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="enveloppe">
+      <h2>Ce qui ne se trouve pas ailleurs</h2>
+      <div class="grille">
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🔊</span>
+          <h3>Une vraie voix, pas une synthèse</h3>
+          <p>Les questions, les réponses et les explications sont enregistrées à l’avance : même voix pour toute la table, aucune latence, et ça marche sans réseau.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🧵</span>
+          <h3>Le fil rouge</h3>
+          <p>Un même mot se cache dans les bonnes réponses de plusieurs manches. Le nommer rapporte une prime — qui fond à chaque manche, alors mieux vaut être tôt que sûr.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🎲</span>
+          <h3>Cinq jokers</h3>
+          <p>Doubler la mise, voler des points au leader, le saboter, désigner sa victime. À jouer avant de voir la question : c’est un pari, pas une évidence.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">📺</span>
+          <h3>Un écran commun</h3>
+          <p>Une télé ou un vidéoprojecteur affiche la question, le chrono et le classement en grand. Facultatif, mais c’est là qu’on rit des réponses des autres.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🎭</span>
+          <h3>Quatre animateurs</h3>
+          <p>Classique, chambreur, pince-sans-rire ou clasheur. Le même jeu ne se joue pas du tout pareil selon celui qui commente.</p>
+        </article>
+        <article class="carte">
+          <span class="emoji" aria-hidden="true">🙈</span>
+          <h3>Aucune inscription</h3>
+          <p>Ni compte obligatoire, ni publicité, ni pistage. Les invités tapent un code et jouent : c’est la règle depuis le premier jour.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="themes">
+    <div class="enveloppe">
+      <h2>Dix-neuf thèmes, et de quoi tenir des soirées</h2>
+      <p class="chapo">Choisissez-en un, trois ou tous. L’appli retient les questions déjà posées et sert d’abord celles que vous n’avez jamais vues.</p>
+      <ul class="themes">
+        <li>🧠 Culture générale</li>
+        <li>🎧 Musique</li>
+        <li>🍿 Cinéma &amp; séries</li>
+        <li>📼 Années 2000</li>
+        <li>🍽️ Bouffe</li>
+        <li>🤯 Insolite</li>
+        <li>⚽ Sport</li>
+        <li>🌍 Le monde</li>
+        <li>🏷️ Marques &amp; pubs</li>
+        <li>💬 Mots &amp; expressions</li>
+        <li>🏰 Disney &amp; Pixar</li>
+        <li>🗺️ Les régions de France</li>
+        <li>🌿 Nature</li>
+        <li>🏛️ Histoire</li>
+        <li>📰 Fake news ou pas ?</li>
+        <li>🧙 Harry Potter</li>
+        <li>⚡ Pokémon</li>
+        <li>🔎 Serial killers</li>
+        <li>🌐 Géopolitique</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="prix">
+    <div class="enveloppe">
+      <h2>Gratuit, et honnête</h2>
+      <p class="chapo">On ne vend jamais une règle du jeu, seulement du contenu. Ce qui s’épuise, c’est la banque de questions.</p>
+      <div class="prix">
+        <article class="en-avant">
+          <p class="montant">Gratuit</p>
+          <p style="color:var(--muted);margin:6px 0 0">Le jeu entier, pour tout le monde.</p>
+          <ul>
+            <li>409 questions, 19 thèmes</li>
+            <li>Les six formes de manches, les jokers, le fil rouge</li>
+            <li>L’écran commun et le mode solo</li>
+            <li>Aucune publicité, aucun compte obligatoire</li>
+          </ul>
+        </article>
+        <article>
+          <p class="montant">3,99 €</p>
+          <p style="color:var(--muted);margin:6px 0 0">Par pack de questions, à l’unité.</p>
+          <ul>
+            <li>Trente questions écrites autour d’un thème</li>
+            <li>Années 80-90, Spécial Noël, et d’autres à venir</li>
+            <li>Un seul joueur de la table a besoin de l’acheter</li>
+            <li>Aucun abonnement, jamais</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="questions">
+    <div class="enveloppe">
+      <h2>Les questions qu’on nous pose</h2>
+
+      <details class="question">
+        <summary>Faut-il créer un compte pour jouer&nbsp;?</summary>
+        <p>Non. On crée une partie ou on rejoint un salon avec un code à quatre lettres, sans compte et sans installation. Le compte est facultatif : il sert à garder ses statistiques, son historique et ses packs d’un appareil à l’autre.</p>
+      </details>
+
+      <details class="question">
+        <summary>Combien de joueurs peuvent participer&nbsp;?</summary>
+        <p>Jusqu’à seize téléphones dans le même salon. Un seul joueur suffit aussi : le mode solo joue la même partie contre le chrono, ce qui est pratique pour découvrir le jeu avant une soirée.</p>
+      </details>
+
+      <details class="question">
+        <summary>Faut-il une télévision&nbsp;?</summary>
+        <p>Non, tout tient sur les téléphones. Une page d’écran commun existe pour afficher la question, le chrono et les scores en grand sur une télé ou un vidéoprojecteur — elle ne joue pas, elle regarde.</p>
+      </details>
+
+      <details class="question">
+        <summary>Ça marche sur Android&nbsp;?</summary>
+        <p>Oui : le jeu tourne dans le navigateur, sur n’importe quel téléphone, et peut s’ajouter à l’écran d’accueil. L’application iOS arrive sur l’App&nbsp;Store.</p>
+      </details>
+
+      <details class="question">
+        <summary>Qui anime la partie&nbsp;?</summary>
+        <p>L’application. Elle lit les questions à voix haute avec une voix enregistrée, commente ce que la table a répondu et annonce le classement. Personne ne reste sur la touche pour tenir le rôle de l’animateur — c’est précisément ce qui manquait aux quiz de soirée.</p>
+      </details>
+
+      <details class="question">
+        <summary>Est-ce que ça marche sans connexion&nbsp;?</summary>
+        <p>Les questions et les enregistrements vivent dans l’appli, donc une coupure ne gâche pas la soirée. Il faut en revanche un réseau — même le Wi-Fi de la maison — pour que les téléphones se parlent entre eux.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="enveloppe">
+    <div class="rappel">
+      <h2>On joue&nbsp;?</h2>
+      <p style="color:var(--muted);max-width:46ch;margin:0 auto 22px">Ouvrez le jeu, choisissez vos thèmes, et faites tourner le code autour de la table.</p>
+      <a class="bouton bouton-primaire" href="/jouer/">Lancer une partie</a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="enveloppe">
+    <span>© Quiz entre amis</span>
+    <a href="/jouer/">Jouer</a>
+    <a href="mailto:bonjour@mail.quizentreamis.fr">Nous écrire</a>
+    <span class="droite">Fait en France, pour les soirées qui s’éternisent.</span>
+  </div>
+</footer>
+
+</body>
+</html>

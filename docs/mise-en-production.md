@@ -68,24 +68,33 @@ Si un jour l'apex devient le domaine principal dans Vercel, il faut refaire
 `npm run build:ios` et resoumettre : les installations existantes garderont
 l'ancienne adresse jusqu'à leur mise à jour.
 
-## 1 ter. Le site ne publie que le quiz
+## 1 ter. Ce que le site publie, et à quelle adresse
 
-Le dépôt héberge deux applications sous `web/` : le compteur de points à la
-racine, le quiz dans `quiz/`. Servir `web/` en entier donnait un
-quizentreamis.fr dont l'adresse de base ouvrait le compteur de points, avec
-tout son code source à disposition.
+    /            la page d'accueil, qui existe pour être trouvée
+    /jouer/      le jeu
+    /jouer/tv.html   l'écran commun (en `noindex` : une page vide n'a rien à
+                     faire dans des résultats de recherche)
+
+Le dépôt héberge aussi le compteur de points, à la racine de `web/`. Servir
+`web/` en entier donnait un quizentreamis.fr dont l'adresse de base ouvrait le
+compteur, avec tout son code source à disposition.
 
 Le déploiement passe donc par `scripts/build-web.mjs`, qui assemble `dist/web/`
-avec le quiz à la racine et rien d'autre — même fabrique que pour le paquet
-natif, `scripts/paquet-quiz.mjs`. On ne masque pas le compteur, on ne le publie
-pas : il n'y a aucune adresse à deviner, et rien ne réapparaît le jour où
+et n'y met que ce qui précède — l'assemblage du jeu est partagé avec le paquet
+natif, dans `scripts/paquet-quiz.mjs`. On ne masque pas le compteur, on ne le
+publie pas : aucune adresse à deviner, et rien ne réapparaît le jour où
 quelqu'un lui ajoute un fichier.
+
+La page d'accueil vit dans `web/site/`, avec `robots.txt`, `sitemap.xml` et
+l'image de partage. Elle est en HTML et en CSS, sans une ligne de JavaScript :
+ce qui se référence, ce sont des phrases, et elles doivent être là avant que
+quoi que ce soit ne s'exécute.
 
 Trois conséquences :
 
-- **le quiz passe de `/quiz/` à `/`.** Les anciennes adresses redirigent, en
-  307 et non en 308 : une redirection permanente se grave dans les navigateurs,
-  et on ne veut pas d'un choix irréversible sur un déménagement d'un jour ;
+- **le quiz vit sous `/jouer/`.** Les anciennes adresses `/quiz/…` redirigent,
+  en 307 et non en 308 : une redirection permanente se grave dans les
+  navigateurs, et on ne veut pas d'un choix irréversible sur un déménagement ;
 - **`api/scan.mjs` n'est plus déployé** (`.vercelignore`). C'est la route du
   compteur de points : elle envoie une photo à l'API d'Anthropic avec la clé du
   projet, sans aucun garde-fou, et plus personne ne l'appelle depuis ce
@@ -183,6 +192,10 @@ Connect. Elle doit dire, en français, ce que le dépôt fait déjà :
 - comment partir : bouton **Supprimer mon compte et mes données** dans l'appli,
   qui efface tout, y compris les index d'identité — se reconnecter avec la même
   adresse donne un compte neuf, et un test le vérifie.
+
+Les deux URL demandées par App Store Connect — politique de confidentialité et
+page d'assistance — vivront sur ce domaine, à côté de la page d'accueil, dans
+`web/site/`.
 
 Apple demande aussi une **page web** de suppression de compte, accessible sans
 installer l'application. La page du quiz sur le web fait l'affaire : c'est la

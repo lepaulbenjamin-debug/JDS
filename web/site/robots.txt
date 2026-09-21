@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# L'écran commun n'a rien à faire dans des résultats de recherche : c'est une
+# page vide tant qu'un code de salon ne lui est pas donné.
+Disallow: /jouer/tv.html
+
+Sitemap: https://www.quizentreamis.fr/sitemap.xml
