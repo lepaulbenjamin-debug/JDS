@@ -43,8 +43,9 @@ Et deux qui ne doivent **jamais** monter sur Vercel : `OPENAI_API_KEY` et
 `OPENAI_TTS_MODEL` ne servent qu'à fabriquer les clips, depuis une machine de
 développement. Le relais n'a aucune raison de parler à OpenAI.
 
-`ANTHROPIC_API_KEY` ne concerne pas le quiz : c'est `/api/scan`, pour le
-compteur de points qui vit dans le même dépôt.
+`ANTHROPIC_API_KEY` ne sert plus à rien sur ce projet : sa seule route,
+`/api/scan`, appartient au compteur de points et n'est plus déployée ici
+(voir 1 ter). Autant la retirer — une clé qui n'est nulle part ne fuite pas.
 
 **Après chaque ajout, il faut redéployer** : Vercel ne relit pas les variables
 d'un déploiement déjà en ligne. Et si les déploiements de préversion doivent
@@ -66,6 +67,37 @@ vise donc `https://www.quizentreamis.fr`, l'hôte qui répond pour de bon.
 Si un jour l'apex devient le domaine principal dans Vercel, il faut refaire
 `npm run build:ios` et resoumettre : les installations existantes garderont
 l'ancienne adresse jusqu'à leur mise à jour.
+
+## 1 ter. Le site ne publie que le quiz
+
+Le dépôt héberge deux applications sous `web/` : le compteur de points à la
+racine, le quiz dans `quiz/`. Servir `web/` en entier donnait un
+quizentreamis.fr dont l'adresse de base ouvrait le compteur de points, avec
+tout son code source à disposition.
+
+Le déploiement passe donc par `scripts/build-web.mjs`, qui assemble `dist/web/`
+avec le quiz à la racine et rien d'autre — même fabrique que pour le paquet
+natif, `scripts/paquet-quiz.mjs`. On ne masque pas le compteur, on ne le publie
+pas : il n'y a aucune adresse à deviner, et rien ne réapparaît le jour où
+quelqu'un lui ajoute un fichier.
+
+Trois conséquences :
+
+- **le quiz passe de `/quiz/` à `/`.** Les anciennes adresses redirigent, en
+  307 et non en 308 : une redirection permanente se grave dans les navigateurs,
+  et on ne veut pas d'un choix irréversible sur un déménagement d'un jour ;
+- **`api/scan.mjs` n'est plus déployé** (`.vercelignore`). C'est la route du
+  compteur de points : elle envoie une photo à l'API d'Anthropic avec la clé du
+  projet, sans aucun garde-fou, et plus personne ne l'appelle depuis ce
+  domaine. La laisser en ligne, c'était laisser ouverte une porte qui dépense ;
+- **le compteur de points n'est plus en ligne du tout.** Pour l'y remettre, il
+  lui faut son propre projet Vercel sur ce même dépôt, avec
+  `outputDirectory: web` — et, tant qu'à faire, un secret partagé devant
+  `/api/scan`, qui n'en a jamais eu.
+
+Un détail sans conséquence, mais qui surprend : ceux qui ont déjà ouvert
+`/quiz/` ont un service worker enregistré sur cette portée-là. Il ne contrôle
+pas la nouvelle racine, ne sert donc rien de périmé, et disparaît de lui-même.
 
 ## 2. L'expéditeur de courriels
 

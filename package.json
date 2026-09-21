@@ -13,7 +13,8 @@
     "build:ios": "node scripts/build-ios.mjs",
     "ios:add": "cap add ios",
     "ios:sync": "npm run build:ios && cap sync ios",
-    "ios:open": "cap open ios"
+    "ios:open": "cap open ios",
+    "build:web": "node scripts/build-web.mjs"
   },
   "engines": {
     "node": ">=20"

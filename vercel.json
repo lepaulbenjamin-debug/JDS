@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "web",
+  "buildCommand": "node scripts/build-web.mjs",
+  "outputDirectory": "dist/web",
+  "redirects": [
+    { "source": "/quiz", "destination": "/", "permanent": false },
+    { "source": "/quiz/:chemin*", "destination": "/:chemin*", "permanent": false }
+  ],
   "functions": {
     "api/scan.mjs": {
       "maxDuration": 60

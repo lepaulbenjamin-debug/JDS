@@ -21,12 +21,11 @@
 //  - pas de réglage « adresse du relais ». Utile en développement, c'est dans
 //    une application publiée un bouton pour tout casser.
 
-import { cp, mkdir, readFile, writeFile, rm, readdir, stat } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFile, writeFile, rm, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
-const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
-const WEB = join(RACINE, 'web');
+import { RACINE, assemblerLeQuiz, poids, remplacer } from './paquet-quiz.mjs';
+
 const SORTIE = join(RACINE, 'dist', 'ios');
 
 // L'adresse est GRAVÉE dans le paquet : une application déjà installée
@@ -43,30 +42,6 @@ const SORTIE = join(RACINE, 'dist', 'ios');
 const RELAIS_DEFAUT = 'https://www.quizentreamis.fr';
 const relais = (process.argv.find((a) => a.startsWith('--relais=')) ?? '')
   .split('=').slice(1).join('=') || RELAIS_DEFAUT;
-
-/** Poids d'un dossier, pour vérifier d'un coup d'œil ce qu'on embarque. */
-async function poids(chemin) {
-  let total = 0;
-  let fichiers = 0;
-  for (const entree of await readdir(chemin, { withFileTypes: true })) {
-    const complet = join(chemin, entree.name);
-    if (entree.isDirectory()) {
-      const sous = await poids(complet);
-      total += sous.octets;
-      fichiers += sous.fichiers;
-    } else {
-      total += (await stat(complet)).size;
-      fichiers += 1;
-    }
-  }
-  return { octets: total, fichiers };
-}
-
-const remplacer = async (chemin, paires) => {
-  let texte = await readFile(chemin, 'utf8');
-  for (const [avant, apres] of paires) texte = texte.split(avant).join(apres);
-  await writeFile(chemin, texte, 'utf8');
-};
 
 /**
  * Une seule banque de voix dans le paquet, sauf demande contraire.
@@ -112,29 +87,14 @@ async function taillerLesVoix() {
 }
 
 async function batir() {
-  await rm(SORTIE, { recursive: true, force: true });
-  await mkdir(SORTIE, { recursive: true });
-
-  // Le quiz devient la racine — ses icônes lui appartiennent et le suivent.
-  await cp(join(WEB, 'quiz'), SORTIE, { recursive: true });
-  // Les deux modules partagés avec le compteur de points le suivent aussi, à
-  // une place qui ne se heurte pas au `js/` du quiz.
-  await mkdir(join(SORTIE, 'commun'), { recursive: true });
-  for (const module of ['ui.js', 'speech.js']) {
-    await cp(join(WEB, 'js', module), join(SORTIE, 'commun', module));
-  }
+  // Le quiz seul, à la racine, avec ses modules communs : la même fabrique que
+  // pour le site.
+  await assemblerLeQuiz(SORTIE);
 
   // Le service worker n'a plus lieu d'être : tout est dans le paquet.
   await rm(join(SORTIE, 'sw.js'), { force: true });
 
   const voixEmbarquees = await taillerLesVoix();
-
-  // Les chemins que la remontée d'un cran vient de casser.
-  for (const module of await readdir(join(SORTIE, 'js'))) {
-    if (module.endsWith('.js')) {
-      await remplacer(join(SORTIE, 'js', module), [['../../js/', '../commun/']]);
-    }
-  }
 
   let page = await readFile(join(SORTIE, 'index.html'), 'utf8');
 
