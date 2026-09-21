@@ -177,29 +177,33 @@ Pas de SDK Google : le plugin fait OpenID Connect avec PKCE en trois écrans de
 code. Le protocole est public et ne bouge pas, là où le SDK pèse quelques
 mégaoctets et réclame des mises à jour.
 
-## 5. La politique de confidentialité
+## 5. La politique de confidentialité et l'assistance
 
-Obligatoire dès qu'il y a des comptes, et l'URL est demandée dans App Store
-Connect. Elle doit dire, en français, ce que le dépôt fait déjà :
+Les deux pages sont écrites et en ligne :
 
-- ce qui est collecté : une adresse électronique (ou l'identifiant relayé par
-  Apple), un prénom d'affichage, des compteurs de parties et la liste des
-  questions déjà vues ;
-- ce qui ne l'est pas : aucune publicité, aucun pistage, aucun carnet
-  d'adresses, aucune revente, aucun partage avec un tiers hors hébergeur ;
-- où : Vercel et Upstash, en Europe si la région est réglée ainsi ;
-- combien de temps : tant que le compte existe ;
-- comment partir : bouton **Supprimer mon compte et mes données** dans l'appli,
-  qui efface tout, y compris les index d'identité — se reconnecter avec la même
-  adresse donne un compte neuf, et un test le vérifie.
+    https://www.quizentreamis.fr/confidentialite
+    https://www.quizentreamis.fr/assistance
 
-Les deux URL demandées par App Store Connect — politique de confidentialité et
-page d'assistance — vivront sur ce domaine, à côté de la page d'accueil, dans
-`web/site/`.
+Ce sont les deux URL que réclame App Store Connect. La page de confidentialité
+décrit ce que le code fait vraiment — les durées y sont celles des constantes
+(trois heures pour un salon, quinze minutes pour un code, treize mois pour une
+session), et les prestataires sont nommés un par un. Si une de ces valeurs
+change dans le code, cette page doit changer avec.
 
-Apple demande aussi une **page web** de suppression de compte, accessible sans
-installer l'application. La page du quiz sur le web fait l'affaire : c'est la
-même application, et le bouton y est.
+Deux points à confirmer de ton côté :
+
+- **les régions** de tes fonctions Vercel et de ta base Upstash. La page dit
+  aujourd'hui que les données peuvent être traitées hors de l'Union
+  européenne, avec les clauses contractuelles types — ce qui est vrai dans
+  tous les cas. Si les deux sont bien en Europe, on peut l'écrire, et c'est
+  meilleur à lire ;
+- **l'adresse de contact** : `bonjour@mail.quizentreamis.fr` est celle qui
+  figure sur les deux pages. Elle doit recevoir vraiment, sans quoi la
+  première demande de suppression restera sans réponse.
+
+Apple demande en plus une page de suppression de compte accessible **sans
+installer l'application** : c'est l'encadré de la page d'assistance, qui
+renvoie vers le jeu sur le web, où le bouton existe.
 
 ## 6. Les réponses « App Privacy » dans App Store Connect
 

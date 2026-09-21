@@ -2,9 +2,27 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "node scripts/build-web.mjs",
   "outputDirectory": "dist/web",
+  "rewrites": [
+    {
+      "source": "/confidentialite",
+      "destination": "/confidentialite.html"
+    },
+    {
+      "source": "/assistance",
+      "destination": "/assistance.html"
+    }
+  ],
   "redirects": [
-    { "source": "/quiz", "destination": "/jouer", "permanent": false },
-    { "source": "/quiz/:chemin*", "destination": "/jouer/:chemin*", "permanent": false }
+    {
+      "source": "/quiz",
+      "destination": "/jouer",
+      "permanent": false
+    },
+    {
+      "source": "/quiz/:chemin*",
+      "destination": "/jouer/:chemin*",
+      "permanent": false
+    }
   ],
   "functions": {
     "api/scan.mjs": {
