@@ -21,7 +21,7 @@ soumission part mal.
 | `UPSTASH_REDIS_REST_URL` | console Upstash › la base › REST API | `https://eu1-xxx-12345.upstash.io` | tout tourne en mémoire : en serverless, rien ne survit d'une requête à l'autre |
 | `UPSTASH_REDIS_REST_TOKEN` | idem, bouton « copy » à côté du jeton | une longue chaîne opaque | idem |
 | `QUIZROOM_MAIL_CLE` | console Resend › API Keys | `re_XXXXXXXXXXXXXXXX` | la connexion par courriel refuse en production (503) |
-| `QUIZROOM_MAIL_DE` | toi, une fois le domaine vérifié | `Quiz entre amis <bonjour@ton-domaine.fr>` | idem |
+| `QUIZROOM_MAIL_DE` | toi, sur le **sous-domaine vérifié** chez Resend | `Quiz entre amis <bonjour@mail.quizentreamis.fr>` | idem |
 | `QUIZROOM_APPLE_AUD` | l'identifiant de l'app | `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
 | `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `123456-abc.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
 | `QUIZROOM_CODES_CADEAU` | toi | `NOEL2026,PRESSE,TEST42` | aucun code cadeau ne fonctionne |
@@ -54,6 +54,18 @@ production, ou d'une seconde base Upstash.
 Les deux `_AUD` n'ont **pas** de valeur par défaut, et c'est voulu : sans
 audience déclarée, n'importe quel jeton Google du monde — délivré à n'importe
 quelle application — ouvrirait un compte ici. Un test le vérifie.
+
+## 1 bis. Le domaine, et l'hôte qui compte
+
+`quizentreamis.fr` est branché sur Vercel, et l'apex **redirige en 308 vers
+`www`**. Ça n'a l'air de rien pour un navigateur, mais l'adresse du relais est
+gravée dans le paquet iOS : la viser sur l'apex ferait passer chaque battement
+de la partie — toutes les 450 ms sur la régie — par une redirection. Le paquet
+vise donc `https://www.quizentreamis.fr`, l'hôte qui répond pour de bon.
+
+Si un jour l'apex devient le domaine principal dans Vercel, il faut refaire
+`npm run build:ios` et resoumettre : les installations existantes garderont
+l'ancienne adresse jusqu'à leur mise à jour.
 
 ## 2. L'expéditeur de courriels
 
@@ -162,8 +174,9 @@ publicitaire n'est branchée.
 ## 7. Avant d'appuyer sur « Soumettre »
 
 - [ ] `npm run check:quiz` au vert (194 tests) ;
-- [ ] `node scripts/repetition.mjs` : une partie entière à quatre pupitres et
-      une télé, contre le relais de production ;
+- [ ] `node scripts/repetition.mjs https://www.quizentreamis.fr/quiz/` : une
+      partie entière à quatre pupitres et une télé, contre le relais de
+      production ;
 - [ ] une partie jouée sur un vrai téléphone, sans compte, du salon au podium ;
 - [ ] une connexion par courriel, une par Apple, une par Google, puis la
       suppression du compte — et la vérification que le jeu continue après ;

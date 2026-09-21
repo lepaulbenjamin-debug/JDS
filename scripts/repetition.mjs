@@ -7,7 +7,7 @@
 //
 //   npm start                         # dans un autre terminal
 //   node scripts/repetition.mjs
-//   node scripts/repetition.mjs https://quiz-entre-amis.vercel.app/quiz/
+//   node scripts/repetition.mjs https://www.quizentreamis.fr/quiz/
 //
 // Playwright n'est pas une dépendance du projet : il ne sert qu'ici et pèse
 // plus que tout le reste réuni.
@@ -93,6 +93,16 @@ await regie.page.waitForFunction(
   () => document.querySelectorAll('#liste-joueurs > *').length >= 4,
   null, { timeout: 25000 },
 ).catch(() => soucis.push('la régie ne voit pas les quatre joueurs'));
+
+// La télé sonde toutes les 900 ms, et contre un relais en ligne il faut y
+// ajouter l'aller-retour : lire la liste dans la foulée du dernier arrivant, on
+// lit forcément l'écran d'avant. Le premier essai signalait donc « la télé voit
+// 0 joueurs » sur une télé qui les affichait une seconde plus tard — une alerte
+// qui crie au loup vaut moins que pas d'alerte du tout.
+await tele.waitForFunction(
+  () => document.querySelectorAll('#tv-joueurs .tv-joueur').length >= 4,
+  null, { timeout: 20000 },
+).catch(() => { /* le décompte ci-dessous dira ce qui manque */ });
 
 const vus = await tele.$$eval('#tv-joueurs .tv-joueur', (n) => n.map((e) => e.textContent));
 dire('Vus sur la télé :', vus.join(', ') || '(aucun)');

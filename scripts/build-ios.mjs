@@ -29,7 +29,18 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = join(RACINE, 'web');
 const SORTIE = join(RACINE, 'dist', 'ios');
 
-const RELAIS_DEFAUT = 'https://quiz-entre-amis.vercel.app';
+// L'adresse est GRAVÉE dans le paquet : une application déjà installée
+// continuera de l'appeler, et le jour où elle ne répondrait plus, ces
+// installations-là s'arrêteraient de fonctionner sans mise à jour. C'est donc un
+// choix définitif, à faire avant la première soumission — d'où le domaine
+// propre plutôt que le sous-domaine `.vercel.app`, qui dépend d'un hébergeur.
+//
+// `www` et non l'apex : `quizentreamis.fr` répond 308 vers `www`, et chaque
+// battement de la partie — toutes les 450 ms sur la régie — passerait par cette
+// redirection. Doublement de la latence sur le chemin le plus chaud du jeu, et
+// un en-tête `Authorization` qui n'a aucune raison de survivre à un saut
+// d'hôte. On vise donc l'hôte canonique, celui qui répond pour de bon.
+const RELAIS_DEFAUT = 'https://www.quizentreamis.fr';
 const relais = (process.argv.find((a) => a.startsWith('--relais=')) ?? '')
   .split('=').slice(1).join('=') || RELAIS_DEFAUT;
 
