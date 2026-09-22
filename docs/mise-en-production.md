@@ -23,7 +23,7 @@ soumission part mal.
 | `QUIZROOM_MAIL_CLE` | console Resend › API Keys | `re_XXXXXXXXXXXXXXXX` | la connexion par courriel refuse en production (503) |
 | `QUIZROOM_MAIL_DE` | toi, sur le **sous-domaine vérifié** chez Resend | `Quiz entre amis <bonjour@mail.quizentreamis.fr>` | idem |
 | `QUIZROOM_APPLE_AUD` | l'identifiant de l'app | `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
-| `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `123456-abc.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
+| `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
 | `QUIZROOM_CONTACT_A` | toi — plusieurs adresses séparées par des virgules | `moi@agence.fr,moi@gmail.com` | les messages partent vers la seule adresse inscrite dans `lib/contact.js` |
 | `QUIZROOM_CODES_CADEAU` | toi | `NOEL2026,PRESSE,TEST42` | aucun code cadeau ne fonctionne |
 | `ORIGINES_APP` | toi, **seulement** si l'appli web est servie ailleurs que l'API | `https://quizentreamis.fr` | les appels depuis cette origine sont refusés par le navigateur |
@@ -156,14 +156,15 @@ refusée — c'est le bandeau jaune de la page des identifiants.
 
 **Ensuite le client :**
 
-6. Identifiants › Créer des identifiants › **ID client OAuth** › type
-   d'application **iOS**, bundle `fr.quizentreamis.app` ;
-7. reporter l'identifiant client dans `clientId`, en tête de
-   `apple/CompteGooglePlugin.swift` ;
-8. Info.plist › URL Types › URL Schemes : le schéma inversé, de la forme
-   `com.googleusercontent.apps.XXXXXXXX` ;
+6. ~~Identifiants › Créer des identifiants › **ID client OAuth** › type
+   d'application **iOS**, bundle `fr.quizentreamis.app`~~ — fait ;
+7. ~~reporter l'identifiant client dans `clientId`~~ — fait, en tête de
+   `apple/CompteGooglePlugin.swift` :
+   `1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee.apps.googleusercontent.com` ;
+8. Info.plist › URL Types › URL Schemes : le schéma inversé, soit ici
+   `com.googleusercontent.apps.1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee` ;
 9. déposer le fichier dans `ios/App/App/` et l'ajouter à Compile Sources ;
-10. `QUIZROOM_GOOGLE_AUD=<le même identifiant client>`.
+10. `QUIZROOM_GOOGLE_AUD=` ce même identifiant client, celui de l'étape 7.
 
 Un client iOS n'a **pas** de secret, et c'est normal : un secret livré dans une
 application distribuée n'est pas un secret. C'est PKCE qui tient ce rôle, et le

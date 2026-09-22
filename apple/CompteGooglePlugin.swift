@@ -15,14 +15,16 @@
 //  qui permet de se passer de secret client, lequel n'aurait de toute façon
 //  aucun sens dans une application distribuée.
 //
-//  À faire une fois dans la console Google Cloud :
-//    1. créer un identifiant OAuth de type « iOS » avec le bundle
-//       fr.quizentreamis.app ;
-//    2. reporter l'identifiant client ci-dessous (clientId) ;
-//    3. déclarer le schéma inversé dans Info.plist (URL Types › URL Schemes) :
-//       com.googleusercontent.apps.XXXXXXXX ;
-//    4. mettre ce même identifiant client dans QUIZROOM_GOOGLE_AUD, côté
-//       serveur — sans quoi le jeton sera refusé, et c'est voulu.
+//  Côté console Google Cloud, l'identifiant client iOS existe (bundle
+//  fr.quizentreamis.app) et il est reporté plus bas dans `clientId`. Il reste
+//  deux choses à faire, une de chaque côté :
+//    • dans Info.plist (URL Types › URL Schemes), déclarer le schéma inversé —
+//      celui que `signIn` recalcule à partir de clientId, donc exactement :
+//      com.googleusercontent.apps.1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee
+//    • côté serveur, mettre ce même identifiant client dans
+//      QUIZROOM_GOOGLE_AUD — sans quoi le jeton sera refusé, et c'est voulu :
+//      un jeton Google valable pour une AUTRE application n'est pas une preuve
+//      que la personne s'est connectée à celle-ci.
 
 import Foundation
 @preconcurrency import Capacitor
@@ -39,7 +41,7 @@ public class CompteGooglePlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     /// L'identifiant client iOS, tel que la console Google le donne.
-    private let clientId = "REMPLACER.apps.googleusercontent.com"
+    private let clientId = "1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee.apps.googleusercontent.com"
 
     private var session: ASWebAuthenticationSession?
 

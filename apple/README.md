@@ -182,6 +182,15 @@ Deux réglages qui ne sont pas dans le code :
   s'ouvrir avec une erreur 1000 qui ne dit rien de ce qui manque.
 - **Google** a besoin de son schéma d'URL inversé dans Info.plist (URL Types ›
   URL Schemes), sans quoi la page de connexion s'ouvre et ne revient jamais.
+  L'identifiant client est renseigné, le schéma à coller est donc connu :
+
+  ```
+  com.googleusercontent.apps.1054167637145-93loo4s7vnuv5nb534bnh2risdc3svee
+  ```
+
+  Ce n'est pas un secret — un identifiant client iOS voyage dans le binaire et
+  dans l'URL de connexion, il est public par construction. Ce qui tient, c'est
+  PKCE côté application et la vérification de l'audience côté relais.
 
 Le détail des deux consoles — Apple et Google Cloud — et les variables
 d'environnement correspondantes sont dans `docs/mise-en-production.md`.
