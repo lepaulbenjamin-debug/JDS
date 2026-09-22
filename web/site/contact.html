@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f1116">
+
+<title>Nous écrire — Quiz entre amis</title>
+<meta name="description" content="Une question, un problème pendant une partie, une réponse qui vous semble fausse, une demande sur vos données : écrivez-nous, on répond à tout le monde.">
+<link rel="canonical" href="https://www.quizentreamis.fr/contact">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Quiz entre amis">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Nous écrire — Quiz entre amis">
+<meta property="og:description" content="Une question, un problème, une idée : on répond à tout le monde.">
+<meta property="og:url" content="https://www.quizentreamis.fr/contact">
+<meta property="og:image" content="https://www.quizentreamis.fr/og.png">
+
+<link rel="icon" href="/jouer/icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+<header class="entete">
+  <div class="enveloppe">
+    <a class="marque" href="/">
+      <img src="/jouer/icons/icon-192.png" alt="" width="34" height="34">
+      <span>Quiz entre amis</span>
+    </a>
+    <nav>
+      <a class="lien-menu" href="/assistance">Assistance</a>
+      <a class="bouton bouton-primaire bouton-petit" href="/jouer/">Jouer</a>
+    </nav>
+  </div>
+</header>
+
+<main class="texte">
+  <div class="enveloppe">
+
+    <h1>Nous écrire</h1>
+    <p class="date">On répond à tout le monde, en général sous deux jours.</p>
+
+    <p>Avant d’écrire, <a href="/assistance">la page d’assistance</a> règle la plupart des cas : un code qui ne passe plus, un animateur muet, un code de connexion qui n’arrive pas, un achat à restaurer.</p>
+
+    <form method="post" action="/api/contact" class="formulaire">
+      <div class="champ">
+        <label for="nom">Votre prénom</label>
+        <input id="nom" name="nom" type="text" maxlength="60" autocomplete="given-name" placeholder="Facultatif">
+      </div>
+
+      <div class="champ">
+        <label for="email">Votre adresse</label>
+        <input id="email" name="email" type="email" maxlength="160" autocomplete="email" required
+               inputmode="email" autocapitalize="none" spellcheck="false" placeholder="prenom@exemple.fr">
+        <p class="aide">Elle ne sert qu’à vous répondre.</p>
+      </div>
+
+      <div class="champ">
+        <label for="message">Votre message</label>
+        <textarea id="message" name="message" rows="8" maxlength="5000" required
+                  placeholder="Ce qui s’est passé, sur quel appareil, et le code du salon si vous l’avez."></textarea>
+      </div>
+
+      <!-- Le pot de miel : invisible, et aucun humain ne le remplit. -->
+      <div class="pot-de-miel" aria-hidden="true">
+        <label for="site">Ne remplissez pas ce champ</label>
+        <input id="site" name="site" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button class="bouton bouton-primaire" type="submit">Envoyer le message</button>
+    </form>
+
+    <h2>Ce qu’il advient de votre message</h2>
+    <p>Il arrive dans une boîte aux lettres, et nulle part ailleurs : il n’est pas stocké sur ce site, pas analysé, pas transmis. Votre adresse sert à vous répondre, et rien d’autre. Voir <a href="/confidentialite">la page confidentialité</a>.</p>
+
+    <div class="encadre">
+      <h3>Supprimer votre compte</h3>
+      <p>Pas besoin de nous écrire : <strong>Mon compte</strong> → <strong>Supprimer mon compte et mes données</strong>, dans <a href="/jouer/">le jeu</a> comme dans l’application. Tout part, y compris ce qui permettrait de rouvrir le compte. Si vous préférez que nous le fassions, ce formulaire suffit.</p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="enveloppe">
+    <span>© Quiz entre amis</span>
+    <a href="/">Accueil</a>
+    <a href="/jouer/">Jouer</a>
+    <a href="/assistance">Assistance</a>
+    <a href="/confidentialite">Confidentialité</a>
+  </div>
+</footer>
+
+</body>
+</html>

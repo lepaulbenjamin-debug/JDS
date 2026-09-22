@@ -27,6 +27,7 @@ import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
 import ttmc, { NIVEAU_MAX, NIVEAU_DEFAUT } from '../web/quiz/js/manches/ttmc.js';
 import { handleRoomRequest } from '../lib/rooms.js';
+import { envoyerUnMessage, handleContactRequest } from '../lib/contact.js';
 import {
   handleCompteRequest, demanderUnCode, ouvrirParCode, compteDuJeton, amisDe,
   verifierJetonTiers, coffre, oublierLeCoffre, ouvrirParApple, ouvrirParGoogle,
@@ -3420,4 +3421,82 @@ test('une adresse Google non vérifiée ne relie aucun compte', async () => {
   });
   const { compte: profil } = await ouvrirParGoogle(jeton, null, fournisseur.cles);
   assert.equal(profil.email, null, 'l’adresse non vérifiée n’est pas retenue');
+});
+
+/* --- Le formulaire de contact ---------------------------------------------- */
+
+const messageDeTest = { email: 'ana@example.com', nom: 'Ana', message: 'La question har-03 me semble fausse.' };
+const courriers = () => {
+  const boite = [];
+  return { boite, envoi: (m) => { boite.push(m); return { ok: true, envoye: true }; } };
+};
+
+test('un message part vers la boîte configurée, et répond à son auteur', async () => {
+  oublierLeCoffre();
+  const { boite, envoi } = courriers();
+  await envoyerUnMessage(messageDeTest, { envoi });
+  assert.equal(boite.length, 1);
+  assert.equal(boite[0].email, 'ana@example.com', 'l’adresse sert à pouvoir répondre');
+  assert.match(boite[0].message, /har-03/);
+  assert.ok(boite[0].a?.includes('@'), 'la destination ne vient jamais du formulaire');
+});
+
+test('un message sans adresse ou trop court est refusé', async () => {
+  oublierLeCoffre();
+  const { envoi } = courriers();
+  await assert.rejects(() => envoyerUnMessage({ ...messageDeTest, email: 'pas-une-adresse' }, { envoi }), /adresse/);
+  await assert.rejects(() => envoyerUnMessage({ ...messageDeTest, message: 'salut' }, { envoi }), /court/);
+});
+
+test('le pot de miel avale les robots sans le leur dire', async () => {
+  // Un robot à qui l'on dit non recommence ; un robot à qui l'on dit oui s'en va.
+  oublierLeCoffre();
+  const { boite, envoi } = courriers();
+  const reponse = await envoyerUnMessage({ ...messageDeTest, site: 'https://une-offre.example' }, { envoi });
+  assert.equal(reponse.ok, true, 'le robot croit avoir réussi');
+  assert.equal(boite.length, 0, 'et rien n’est parti');
+});
+
+test('une même adresse IP ne peut pas arroser la boîte', async () => {
+  oublierLeCoffre();
+  const { boite, envoi } = courriers();
+  for (let i = 0; i < 5; i += 1) await envoyerUnMessage(messageDeTest, { ip: '203.0.113.7', envoi });
+  await assert.rejects(
+    () => envoyerUnMessage(messageDeTest, { ip: '203.0.113.7', envoi }),
+    /Trop de messages/,
+  );
+  // Quelqu'un d'autre n'est pas puni pour autant.
+  await envoyerUnMessage(messageDeTest, { ip: '203.0.113.8', envoi });
+  assert.equal(boite.length, 6);
+});
+
+test('une ligne d’en-tête ne peut pas transporter un second destinataire', async () => {
+  // Un retour à la ligne dans le sujet, et l'on ajoute des en-têtes au courriel.
+  oublierLeCoffre();
+  const { boite, envoi } = courriers();
+  await envoyerUnMessage({ ...messageDeTest, nom: 'Ana\r\nBcc: ailleurs@example.com' }, { envoi });
+  assert.ok(!boite[0].nom.includes('\n') && !boite[0].nom.includes('\r'));
+});
+
+test('le formulaire répond en HTML, pas en JSON, et renvoie vers un remerciement', async () => {
+  // Personne ne doit avoir besoin de JavaScript pour signaler un problème : le
+  // navigateur envoie un formulaire ordinaire, et suit une redirection.
+  oublierLeCoffre();
+  const corps = new URLSearchParams({ ...messageDeTest }).toString();
+  const enTetes = { 'content-type': 'application/x-www-form-urlencoded' };
+
+  const ok = await handleContactRequest({ method: 'POST', body: corps, headers: enTetes });
+  assert.equal(ok.status, 303);
+  assert.equal(ok.redirection, '/merci');
+
+  const rate = await handleContactRequest({
+    method: 'POST',
+    body: new URLSearchParams({ email: 'x', message: 'court' }).toString(),
+    headers: enTetes,
+  });
+  assert.equal(rate.status, 400);
+  assert.match(rate.html, /<!doctype html>/i, 'une erreur doit s’afficher sans JavaScript');
+  assert.match(rate.html, /adresse/);
+
+  assert.equal((await handleContactRequest({ method: 'GET', headers: {} })).status, 405);
 });

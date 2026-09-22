@@ -10,17 +10,25 @@
     {
       "source": "/assistance",
       "destination": "/assistance.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact.html"
+    },
+    {
+      "source": "/merci",
+      "destination": "/merci.html"
     }
   ],
   "redirects": [
     {
       "source": "/quiz",
-      "destination": "/jouer",
+      "destination": "/jouer/",
       "permanent": false
     },
     {
-      "source": "/quiz/:chemin*",
-      "destination": "/jouer/:chemin*",
+      "source": "/quiz/(.*)",
+      "destination": "/jouer/$1",
       "permanent": false
     }
   ],

@@ -24,6 +24,7 @@ soumission part mal.
 | `QUIZROOM_MAIL_DE` | toi, sur le **sous-domaine vérifié** chez Resend | `Quiz entre amis <bonjour@mail.quizentreamis.fr>` | idem |
 | `QUIZROOM_APPLE_AUD` | l'identifiant de l'app | `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
 | `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `123456-abc.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
+| `QUIZROOM_CONTACT_A` | toi, si les messages doivent arriver ailleurs | `benjamin@creawebconseil.fr` | les messages partent quand même vers l'adresse inscrite dans `lib/contact.js` |
 | `QUIZROOM_CODES_CADEAU` | toi | `NOEL2026,PRESSE,TEST42` | aucun code cadeau ne fonctionne |
 | `ORIGINES_APP` | toi, **seulement** si l'appli web est servie ailleurs que l'API | `https://quizentreamis.fr` | les appels depuis cette origine sont refusés par le navigateur |
 
@@ -190,16 +191,14 @@ décrit ce que le code fait vraiment — les durées y sont celles des constante
 session), et les prestataires sont nommés un par un. Si une de ces valeurs
 change dans le code, cette page doit changer avec.
 
-Deux points à confirmer de ton côté :
+Les deux pages renvoient vers `/contact`, un formulaire qui envoie les
+messages par Resend — aucune adresse n'est écrite sur le site, donc aucune
+adresse à récolter. La destination se change par `QUIZROOM_CONTACT_A` sans
+toucher au code.
 
-- **les régions** de tes fonctions Vercel et de ta base Upstash. La page dit
-  aujourd'hui que les données peuvent être traitées hors de l'Union
-  européenne, avec les clauses contractuelles types — ce qui est vrai dans
-  tous les cas. Si les deux sont bien en Europe, on peut l'écrire, et c'est
-  meilleur à lire ;
-- **l'adresse de contact** : `bonjour@mail.quizentreamis.fr` est celle qui
-  figure sur les deux pages. Elle doit recevoir vraiment, sans quoi la
-  première demande de suppression restera sans réponse.
+Les régions sont dites parce qu'elles sont connues : le relais s'exécute à
+Paris (`cdg1`), la base Upstash est à Francfort. Si l'une des deux déménage,
+cette phrase de la page doit déménager avec.
 
 Apple demande en plus une page de suppression de compte accessible **sans
 installer l'application** : c'est l'encadré de la page d'assistance, qui

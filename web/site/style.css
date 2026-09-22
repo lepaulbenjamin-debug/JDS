@@ -210,3 +210,28 @@ table.donnees td { color: #c8cdda; }
 }
 .encadre h3 { margin-top: 0; }
 .encadre p:last-child { margin-bottom: 0; }
+
+/* --- Le formulaire de contact -------------------------------------------- */
+
+.formulaire { display: grid; gap: 18px; margin: 26px 0 10px; max-width: 34rem; }
+.champ { display: grid; gap: 6px; }
+.champ label { font-size: 14.5px; color: var(--muted); }
+.champ input, .champ textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text);
+  font: inherit;
+}
+.champ textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+.champ input:focus-visible, .champ textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.champ .aide { margin: 0; font-size: 13.5px; color: var(--muted); }
+.formulaire button { justify-self: start; }
+
+/* Le pot de miel. Ni `display:none` ni `hidden` : certains robots les
+   reconnaissent et sautent le champ, ce qui lui ôte tout intérêt. On le sort
+   de l'écran, et on le retire du parcours au clavier. */
+.pot-de-miel {
+  position: absolute; left: -9999px;
+  width: 1px; height: 1px; overflow: hidden;
+}

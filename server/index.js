@@ -18,6 +18,7 @@ import { runScan, MAX_BODY } from '../lib/scan.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 import { handlePackRequest } from '../lib/packs.js';
 import { handleCompteRequest } from '../lib/comptes.js';
+import { handleContactRequest } from '../lib/contact.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
@@ -135,6 +136,32 @@ async function handleComptes(req, res) {
   return sendJson(res, status, payload);
 }
 
+async function handleContact(req, res) {
+  let body;
+  try {
+    body = await readBody(req);
+  } catch (error) {
+    return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
+  }
+  const { status, body: payload, html, redirection } = await handleContactRequest({
+    method: req.method,
+    // Le formulaire envoie du `x-www-form-urlencoded` : on passe le texte brut,
+    // `lib/contact.js` sait lire les deux.
+    body,
+    headers: req.headers,
+  });
+  res.setHeader('cache-control', 'no-store');
+  if (redirection) {
+    res.writeHead(status, { location: redirection }).end();
+    return;
+  }
+  if (html) {
+    res.writeHead(status, { 'content-type': 'text/html; charset=utf-8' }).end(html);
+    return;
+  }
+  return sendJson(res, status, payload);
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const requested = decodeURIComponent(url.pathname);
@@ -205,6 +232,9 @@ createServer((req, res) => {
   }
   if (req.url?.startsWith('/api/compte')) {
     return handleComptes(req, res);
+  }
+  if (req.url?.startsWith('/api/contact')) {
+    return handleContact(req, res);
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405).end('Méthode non autorisée');
