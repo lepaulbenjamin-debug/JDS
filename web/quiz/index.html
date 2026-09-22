@@ -225,7 +225,10 @@
       <div id="compte-amis" class="classement"></div>
       <h3 class="section-title">Mes dernières parties</h3>
       <div id="compte-parties" class="stack"></div>
-      <div class="sticky-actions">
+      <!-- En fin de page, et non dans une barre collante : ces deux actions-là
+           ne sont jamais urgentes, et la barre recouvrait le classement. Une
+           action destructrice se trouve au bout de ce qu'elle détruit. -->
+      <div class="actions-compte">
         <button id="btn-compte-sortir" class="btn btn-ghost btn-block" type="button">Se déconnecter</button>
         <button id="btn-compte-supprimer" class="btn btn-ghost btn-block btn-petit" type="button">Supprimer mon compte et mes données</button>
       </div>

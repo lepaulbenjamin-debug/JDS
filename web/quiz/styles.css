@@ -920,3 +920,8 @@ body {
   border-radius: 999px; background: var(--surface-2); color: var(--warn);
   font-size: 2.2vmin;
 }
+
+/* Les deux actions du bas de l'écran « Mon compte ». Pas de barre collante :
+   elle recouvrait le classement entre amis, et ni la déconnexion ni la
+   suppression n'ont à rester sous le pouce pendant qu'on lit ses statistiques. */
+.actions-compte { margin: 30px 0 calc(24px + var(--safe-b)); }

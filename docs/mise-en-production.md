@@ -226,6 +226,14 @@ Ce qu'il faut déclarer, tel que le code se comporte :
 « Pistage » est non partout : rien ne quitte le relais, et aucune régie
 publicitaire n'est branchée.
 
+## 6 bis. La fiche elle-même
+
+Le nom, le sous-titre, les mots-clés, la description, les notes à
+l'examinateur, la classification par âge et les fiches des deux achats
+intégrés sont écrits d'avance dans **`docs/fiche-app-store.md`**, prêts à
+coller. Les captures d'écran, prises dans une vraie partie à quatre joueurs et
+au bon format, sont dans `docs/captures-app-store/`.
+
 ## 7. Avant d'appuyer sur « Soumettre »
 
 - [ ] `npm run check:quiz` au vert (194 tests) ;
@@ -237,11 +245,8 @@ publicitaire n'est branchée.
       suppression du compte — et la vérification que le jeu continue après ;
 - [ ] un achat de pack en bac à sable, puis **Restaurer les achats** sur un
       second appareil connecté au même compte ;
-- [ ] les captures d'écran de l'App Store : elles doivent montrer une partie,
-      pas un écran de connexion ;
-- [ ] la note à l'examinateur : « L'application se joue sans compte. Pour tester
-      un salon, ouvrir l'application sur deux appareils, ou utiliser le mode
-      *Jouer seul*. » ;
+- [ ] les captures d'écran et les textes de la fiche : voir
+      `docs/fiche-app-store.md`, tout y est écrit ;
 - [ ] `npm run build:ios` refait après la dernière modification du web.
 
 ## 8. Ce qui n'est pas fait, et qu'il faudra décider
