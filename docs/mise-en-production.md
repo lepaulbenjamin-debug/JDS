@@ -24,7 +24,7 @@ soumission part mal.
 | `QUIZROOM_MAIL_DE` | toi, sur le **sous-domaine vérifié** chez Resend | `Quiz entre amis <bonjour@mail.quizentreamis.fr>` | idem |
 | `QUIZROOM_APPLE_AUD` | l'identifiant de l'app | `fr.quizentreamis.app` | « Se connecter avec Apple » répond 503 |
 | `QUIZROOM_GOOGLE_AUD` | console Google Cloud › Credentials › client iOS | `123456-abc.apps.googleusercontent.com` | « Se connecter avec Google » répond 503 |
-| `QUIZROOM_CONTACT_A` | toi, si les messages doivent arriver ailleurs | `benjamin@creawebconseil.fr` | les messages partent quand même vers l'adresse inscrite dans `lib/contact.js` |
+| `QUIZROOM_CONTACT_A` | toi — plusieurs adresses séparées par des virgules | `moi@agence.fr,moi@gmail.com` | les messages partent vers la seule adresse inscrite dans `lib/contact.js` |
 | `QUIZROOM_CODES_CADEAU` | toi | `NOEL2026,PRESSE,TEST42` | aucun code cadeau ne fonctionne |
 | `ORIGINES_APP` | toi, **seulement** si l'appli web est servie ailleurs que l'API | `https://quizentreamis.fr` | les appels depuis cette origine sont refusés par le navigateur |
 
@@ -194,7 +194,14 @@ change dans le code, cette page doit changer avec.
 Les deux pages renvoient vers `/contact`, un formulaire qui envoie les
 messages par Resend — aucune adresse n'est écrite sur le site, donc aucune
 adresse à récolter. La destination se change par `QUIZROOM_CONTACT_A` sans
-toucher au code.
+toucher au code, et accepte **plusieurs adresses séparées par des virgules**.
+
+En mettre deux, chez deux fournisseurs différents, n'est pas de la précaution
+gratuite : le premier message de production a été accepté par le serveur du
+destinataire — « Delivered » côté expéditeur — et n'est arrivé dans aucune
+boîte de réception, pendant que les mêmes envois atterrissaient sans problème
+chez un autre fournisseur. Un canal d'assistance qui dépend du filtre
+anti-spam d'une seule boîte n'est pas un canal d'assistance.
 
 Les régions sont dites parce qu'elles sont connues : le relais s'exécute à
 Paris (`cdg1`), la base Upstash est à Francfort. Si l'une des deux déménage,

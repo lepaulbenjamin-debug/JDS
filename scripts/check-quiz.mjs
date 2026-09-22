@@ -3438,7 +3438,21 @@ test('un message part vers la boîte configurée, et répond à son auteur', asy
   assert.equal(boite.length, 1);
   assert.equal(boite[0].email, 'ana@example.com', 'l’adresse sert à pouvoir répondre');
   assert.match(boite[0].message, /har-03/);
-  assert.ok(boite[0].a?.includes('@'), 'la destination ne vient jamais du formulaire');
+  assert.ok(boite[0].a.every((a) => a.includes('@')), 'la destination ne vient jamais du formulaire');
+});
+
+test('l’assistance peut écrire à plusieurs boîtes à la fois', async () => {
+  // Un message d'assistance ne doit pas dépendre du filtre anti-spam d'une
+  // seule boîte : le premier essai en production a été accepté par le serveur
+  // du destinataire et n'est arrivé nulle part.
+  oublierLeCoffre();
+  const avant = process.env.QUIZROOM_CONTACT_A;
+  process.env.QUIZROOM_CONTACT_A = ' une@exemple.fr , deux@exemple.fr ,';
+  const { boite, envoi } = courriers();
+  await envoyerUnMessage(messageDeTest, { envoi });
+  assert.deepEqual(boite[0].a, ['une@exemple.fr', 'deux@exemple.fr']);
+  if (avant === undefined) delete process.env.QUIZROOM_CONTACT_A;
+  else process.env.QUIZROOM_CONTACT_A = avant;
 });
 
 test('un message sans adresse ou trop court est refusé', async () => {
