@@ -1,0 +1,358 @@
+{
+  "id": "enfamille",
+  "nom": "En famille",
+  "emoji": "🧸",
+  "resume": "Des questions que les plus jeunes peuvent gagner, et des explications que les adultes ne connaissaient pas. Le seul pack où les petits battent les grands.",
+  "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.enfamille",
+  "questions": [
+    {
+      "id": "fam-01",
+      "theme": "nature",
+      "texte": "Combien de pattes a une araignée ?",
+      "reponses": ["Huit", "Six", "Dix", "Quatre"],
+      "bonne": 0,
+      "note": "Huit pattes, et c’est ce qui fait qu’une araignée n’est pas un insecte : les insectes en ont six, sans exception."
+    },
+    {
+      "id": "fam-02",
+      "theme": "disney",
+      "texte": "Dans « Le Roi lion », comment s’appelle le père de Simba ?",
+      "reponses": ["Mufasa", "Scar", "Rafiki", "Zazu"],
+      "bonne": 0,
+      "note": "« Simba » veut simplement dire « lion » en swahili, « Rafiki » veut dire « ami », et « Pumbaa » veut dire « étourdi »."
+    },
+    {
+      "id": "fam-03",
+      "theme": "nature",
+      "texte": "Quel est le plus grand animal du monde ?",
+      "reponses": ["La baleine bleue", "L’éléphant d’Afrique", "Le requin-baleine", "La girafe"],
+      "bonne": 0,
+      "note": "Jusqu’à trente mètres et cent cinquante tonnes. Sa langue à elle seule pèse autant qu’un éléphant."
+    },
+    {
+      "id": "fam-04",
+      "theme": "bouffe",
+      "texte": "Quel légume fait pleurer quand on le coupe ?",
+      "reponses": ["L’oignon", "Le poireau", "Le céleri", "Le navet"],
+      "bonne": 0,
+      "note": "Coupé, il libère un gaz qui devient acide au contact des larmes. L’œil pleure pour le rincer, ce qui empire tout."
+    },
+    {
+      "id": "fam-05",
+      "theme": "monde",
+      "texte": "Quelle est la capitale de l’Italie ?",
+      "reponses": ["Rome", "Milan", "Venise", "Naples"],
+      "bonne": 0,
+      "note": "Un pays entier tient à l’intérieur de Rome : le Vatican, quarante-quatre hectares, le plus petit État du monde."
+    },
+    {
+      "id": "fam-06",
+      "theme": "nature",
+      "texte": "Quel animal change de couleur selon son humeur ?",
+      "reponses": ["Le caméléon", "Le crapaud", "Le lézard vert", "La salamandre"],
+      "bonne": 0,
+      "note": "Contrairement à la légende, il ne se camoufle presque jamais : il change surtout pour parler aux autres caméléons et pour régler sa température."
+    },
+    {
+      "id": "fam-07",
+      "theme": "pokemon",
+      "texte": "Quel Pokémon jaune est la mascotte de toute la série ?",
+      "reponses": ["Pikachu", "Salamèche", "Bulbizarre", "Carapuce"],
+      "bonne": 0,
+      "note": "Il n’était pas prévu pour ce rôle : c’est Mélofée qui devait être la mascotte, écartée au moment de lancer le dessin animé."
+    },
+    {
+      "id": "fam-08",
+      "theme": "nature",
+      "texte": "Quel animal marin a huit bras ?",
+      "reponses": ["La pieuvre", "Le calmar", "L’étoile de mer", "La méduse"],
+      "bonne": 0,
+      "note": "Huit bras, trois cœurs et un sang bleu. Le calmar, lui, a huit bras plus deux tentacules : ce n’est pas la même chose."
+    },
+    {
+      "id": "fam-09",
+      "theme": "cinema",
+      "texte": "Quel personnage a un nez qui s’allonge quand il ment ?",
+      "reponses": ["Pinocchio", "Peter Pan", "Aladdin", "Le Petit Prince"],
+      "bonne": 0,
+      "note": "Dans le livre italien de 1883, il est nettement moins gentil que chez Disney : il commence par écraser le grillon parlant."
+    },
+    {
+      "id": "fam-10",
+      "theme": "regions",
+      "texte": "Quel monument parisien devait être démonté vingt ans après sa construction ?",
+      "reponses": ["La tour Eiffel", "L’Arc de triomphe", "Le Sacré-Cœur", "L’Opéra Garnier"],
+      "bonne": 0,
+      "note": "Bâtie pour l’Exposition de 1889, elle devait disparaître en 1909. Elle a été sauvée parce qu’elle servait d’antenne de radio."
+    },
+    {
+      "id": "fam-11",
+      "theme": "nature",
+      "texte": "Quel oiseau ne sait pas voler et vit en Antarctique ?",
+      "reponses": ["Le manchot", "Le pingouin", "Le héron", "Le cormoran"],
+      "bonne": 0,
+      "note": "Le pingouin, lui, vit dans l’hémisphère nord et vole très bien. En Antarctique, ce sont des manchots — l’anglais dit « penguin » pour les deux."
+    },
+    {
+      "id": "fam-12",
+      "theme": "bouffe",
+      "texte": "Avec quoi fabrique-t-on le chocolat ?",
+      "reponses": ["Des fèves de cacao", "Des noisettes", "Des haricots noirs", "Des graines de café"],
+      "bonne": 0,
+      "note": "Les fèves poussent dans de gros fruits accrochés directement au tronc. Crues, elles sont amères et immangeables : tout vient de la fermentation."
+    },
+    {
+      "id": "fam-13",
+      "theme": "culture",
+      "texte": "Qui prépare la potion magique dans « Astérix » ?",
+      "reponses": ["Panoramix", "Assurancetourix", "Abraracourcix", "Ordralfabétix"],
+      "bonne": 0,
+      "note": "Tous les noms gaulois finissent en « -ix », comme Vercingétorix. Panoramix vient de « panorama » : celui qui voit tout."
+    },
+    {
+      "id": "fam-14",
+      "theme": "nature",
+      "texte": "Combien de bosses a un dromadaire ?",
+      "reponses": ["Une", "Deux", "Trois", "Aucune"],
+      "bonne": 0,
+      "note": "Une seule — le chameau en a deux. Le moyen de s’en souvenir : couchez le D de dromadaire, il fait une bosse ; le C de chameau, deux."
+    },
+    {
+      "id": "fam-15",
+      "theme": "nature",
+      "texte": "Quel animal peut dormir debout ?",
+      "reponses": ["Le cheval", "Le chat", "Le lapin", "Le hérisson"],
+      "bonne": 0,
+      "note": "Ses pattes se bloquent toutes seules, sans effort de muscle. Il doit quand même se coucher quelques minutes par jour pour rêver."
+    },
+    {
+      "id": "fam-16",
+      "theme": "monde",
+      "texte": "Quelle mer borde la Côte d’Azur ?",
+      "reponses": ["La Méditerranée", "L’Atlantique", "La mer du Nord", "La Manche"],
+      "bonne": 0,
+      "note": "« Méditerranée » veut dire « au milieu des terres ». Sans le détroit de Gibraltar, large de quatorze kilomètres, elle s’assécherait."
+    },
+    {
+      "id": "fam-17",
+      "theme": "musique",
+      "texte": "Combien de cordes a une guitare classique ?",
+      "reponses": ["Six", "Quatre", "Huit", "Douze"],
+      "bonne": 0,
+      "note": "Six. La basse en a quatre, le violon aussi, et l’ukulélé quatre également — d’où les confusions à la première leçon."
+    },
+    {
+      "id": "fam-18",
+      "theme": "sport",
+      "texte": "Combien de joueurs une équipe de football aligne-t-elle sur le terrain ?",
+      "reponses": ["Onze", "Neuf", "Treize", "Quinze"],
+      "bonne": 0,
+      "note": "Onze, gardien compris. Quinze au rugby à XV, treize au rugby à XIII, cinq au basket : chaque sport a choisi son compte."
+    },
+    {
+      "id": "fam-19",
+      "theme": "insolite",
+      "texte": "Quel animal sert d’emblème au WWF, l’association de protection de la nature ?",
+      "reponses": ["Le panda", "Le tigre", "Le dauphin", "L’ours blanc"],
+      "bonne": 0,
+      "note": "Choisi en 1961 parce qu’un logo en noir et blanc coûtait moins cher à imprimer. La raison est aussi simple que ça."
+    },
+    {
+      "id": "fam-20",
+      "theme": "mots",
+      "texte": "Que veut dire « bouquiner » ?",
+      "reponses": ["Lire", "Ranger", "Bavarder", "Bricoler"],
+      "bonne": 0,
+      "note": "Le mot vient du néerlandais « boeckijn », petit livre. Un bouquiniste vend des livres d’occasion, souvent au bord de la Seine."
+    },
+    {
+      "id": "fam-21",
+      "theme": "nature",
+      "texte": "Quel insecte fabrique le miel ?",
+      "reponses": ["L’abeille", "La guêpe", "Le bourdon", "La fourmi"],
+      "bonne": 0,
+      "note": "Il faut le travail d’une vie entière à une abeille pour produire un douzième de cuillère à café. Un pot demande des milliers d’ouvrières."
+    },
+    {
+      "id": "fam-22",
+      "theme": "nature",
+      "type": "estimation",
+      "texte": "Combien de dents a un adulte, dents de sagesse comprises ?",
+      "valeur": 32,
+      "unite": "dents",
+      "note": "Trente-deux à l’âge adulte, contre vingt dents de lait chez l’enfant. Certaines personnes n’ont jamais de dents de sagesse du tout."
+    },
+    {
+      "id": "fam-23",
+      "theme": "monde",
+      "type": "estimation",
+      "texte": "Combien de pays font partie de l’Union européenne ?",
+      "valeur": 27,
+      "unite": "pays",
+      "note": "Vingt-sept depuis le départ du Royaume-Uni, en 2020. Ils étaient six au tout début, en 1957."
+    },
+    {
+      "id": "fam-24",
+      "theme": "nature",
+      "type": "estimation",
+      "texte": "Combien de mois dure la grossesse d’une éléphante ?",
+      "valeur": 22,
+      "unite": "mois",
+      "note": "Presque deux ans, le record du monde animal. Le bébé pèse déjà cent kilos à la naissance et marche dans l’heure."
+    },
+    {
+      "id": "fam-25",
+      "theme": "nature",
+      "type": "ordre",
+      "texte": "Ces animaux, du plus petit au plus grand",
+      "elements": ["La souris", "Le chat", "Le cheval", "L’éléphant"],
+      "note": "Entre la souris et l’éléphant, il y a un rapport de poids de plus de cent mille. Et pourtant, presque les mêmes organes."
+    },
+    {
+      "id": "fam-26",
+      "theme": "nature",
+      "type": "ordre",
+      "texte": "Les planètes, en partant du Soleil",
+      "elements": ["Mercure", "Vénus", "La Terre", "Mars"],
+      "note": "Mercure est la plus proche, mais c’est Vénus la plus chaude : son épaisse atmosphère garde la chaleur comme une couverture."
+    },
+    {
+      "id": "fam-27",
+      "theme": "nature",
+      "type": "rafale",
+      "texte": "Bêtes et bestioles",
+      "affirmations": [
+        { "texte": "Le dauphin est un mammifère.", "vrai": true },
+        { "texte": "L’autruche est le plus grand oiseau du monde.", "vrai": true },
+        { "texte": "La girafe a beaucoup plus de vertèbres au cou que nous.", "vrai": false },
+        { "texte": "Un poisson rouge n’a que trois secondes de mémoire.", "vrai": false },
+        { "texte": "Les chauves-souris sont des mammifères.", "vrai": true }
+      ],
+      "note": "La girafe a sept vertèbres cervicales, exactement comme nous — elles sont juste immenses. Et le poisson rouge retient des mois."
+    },
+    {
+      "id": "fam-28",
+      "theme": "insolite",
+      "type": "rafale",
+      "texte": "Dans ton corps",
+      "affirmations": [
+        { "texte": "Le cœur est un muscle.", "vrai": true },
+        { "texte": "Un bébé a plus d’os qu’un adulte.", "vrai": true },
+        { "texte": "Les éternuements peuvent dépasser cent kilomètres-heure.", "vrai": true },
+        { "texte": "Les cheveux poussent d’un centimètre par jour.", "vrai": false },
+        { "texte": "On n’utilise que dix pour cent de son cerveau.", "vrai": false }
+      ],
+      "note": "Un bébé naît avec environ trois cents os, dont beaucoup se soudent : il en reste deux cent six. Les cheveux, eux, poussent d’un centimètre par mois."
+    },
+    {
+      "id": "fam-29",
+      "theme": "cinema",
+      "type": "mix",
+      "texte": "Un film d’animation",
+      "acceptees": [
+        { "titre": "Le Roi lion", "artiste": "Disney" },
+        { "titre": "La Reine des neiges", "artiste": "Disney" },
+        { "titre": "Vaiana", "artiste": "Disney" },
+        { "titre": "Raiponce", "artiste": "Disney" },
+        { "titre": "Aladdin", "artiste": "Disney" },
+        { "titre": "La Belle et la Bête", "artiste": "Disney" },
+        { "titre": "Le Livre de la jungle", "artiste": "Disney" },
+        { "titre": "Zootopie", "artiste": "Disney" },
+        { "titre": "Encanto", "artiste": "Disney" },
+        { "titre": "Le Monde de Nemo", "artiste": "Pixar" },
+        { "titre": "Toy Story", "artiste": "Pixar" },
+        { "titre": "Là-haut", "artiste": "Pixar" },
+        { "titre": "Vice-versa", "artiste": "Pixar" },
+        { "titre": "Ratatouille", "artiste": "Pixar" },
+        { "titre": "Les Indestructibles", "artiste": "Pixar" },
+        { "titre": "Wall-E", "artiste": "Pixar" },
+        { "titre": "Coco", "artiste": "Pixar" },
+        { "titre": "Shrek", "artiste": "DreamWorks" },
+        { "titre": "Madagascar", "artiste": "DreamWorks" },
+        { "titre": "Kung Fu Panda", "artiste": "DreamWorks" },
+        { "titre": "Dragons", "artiste": "DreamWorks" },
+        { "titre": "L’Âge de glace", "artiste": "Blue Sky" },
+        { "titre": "Moi, moche et méchant", "artiste": "Illumination" },
+        { "titre": "Comme des bêtes", "artiste": "Illumination" },
+        { "titre": "Les Minions", "artiste": "Illumination" },
+        { "titre": "Mon voisin Totoro", "artiste": "Studio Ghibli" },
+        { "titre": "Le Voyage de Chihiro", "artiste": "Studio Ghibli" },
+        { "titre": "Princesse Mononoké", "artiste": "Studio Ghibli" },
+        { "titre": "Kirikou et la Sorcière", "artiste": "Michel Ocelot" },
+        { "titre": "Les Triplettes de Belleville", "artiste": "Sylvain Chomet" },
+        { "titre": "Spider-Man : New Generation", "artiste": "Sony" }
+      ],
+      "note": "Trente et un titres acceptés. « Toy Story » est le premier long métrage entièrement fabriqué par ordinateur, en 1995."
+    },
+    {
+      "id": "fam-30",
+      "theme": "culture",
+      "type": "ttmc",
+      "texte": "En famille — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "De quelle couleur est le soleil dessiné par les enfants ?",
+          "reponses": ["Jaune", "Vert", "Bleu", "Violet"],
+          "bonne": 0,
+          "note": "Vu depuis l’espace, le Soleil est en réalité blanc. C’est notre atmosphère qui lui donne sa teinte jaune ou orangée."
+        },
+        {
+          "texte": "Combien de pattes a un chien ?",
+          "reponses": ["Quatre", "Deux", "Six", "Huit"],
+          "bonne": 0,
+          "note": "Quatre, dont deux doigts qui ne touchent presque jamais le sol. Un chien marche sur ses doigts, jamais sur ses talons."
+        },
+        {
+          "texte": "Quelle est la couleur obtenue en mélangeant du bleu et du jaune ?",
+          "reponses": ["Le vert", "L’orange", "Le violet", "Le marron"],
+          "bonne": 0,
+          "note": "En peinture, oui. Avec de la lumière, c’est l’inverse : bleu et jaune donnent du blanc, et les règles changent complètement."
+        },
+        {
+          "texte": "Combien de jours compte une année bissextile ?",
+          "reponses": ["366", "365", "364", "367"],
+          "bonne": 0,
+          "note": "Un jour de plus tous les quatre ans, parce que la Terre met en réalité 365 jours et six heures à faire le tour du Soleil."
+        },
+        {
+          "texte": "Quel est le plus grand océan du monde ?",
+          "reponses": ["Le Pacifique", "L’Atlantique", "L’océan Indien", "L’Arctique"],
+          "bonne": 0,
+          "note": "À lui seul, il couvre un tiers de la planète — davantage que toutes les terres émergées réunies."
+        },
+        {
+          "texte": "Quel métal est liquide à température ambiante ?",
+          "reponses": ["Le mercure", "Le plomb", "L’étain", "L’aluminium"],
+          "bonne": 0,
+          "note": "Le seul. C’est lui qui montait dans les anciens thermomètres, jusqu’à ce qu’on découvre à quel point il est toxique."
+        },
+        {
+          "texte": "Quel animal peut repousser une patte entière s’il la perd ?",
+          "reponses": ["L’étoile de mer", "Le chat", "Le pigeon", "Le lapin"],
+          "bonne": 0,
+          "note": "Certaines espèces reconstituent le corps entier à partir d’un seul bras, à condition qu’il emporte un morceau du centre."
+        },
+        {
+          "texte": "Quel pays a inventé les Jeux olympiques ?",
+          "reponses": ["La Grèce", "L’Italie", "L’Égypte", "La France"],
+          "bonne": 0,
+          "note": "Vers 776 avant notre ère, à Olympie. Les guerres s’interrompaient le temps des Jeux, et les athlètes concouraient sans vêtements."
+        },
+        {
+          "texte": "Combien de touches compte un piano de concert ?",
+          "reponses": ["88", "64", "72", "96"],
+          "bonne": 0,
+          "note": "Cinquante-deux blanches et trente-six noires. En dessous et au-dessus, l’oreille humaine distingue mal les notes."
+        },
+        {
+          "texte": "Quel est l’animal terrestre au cerveau le plus lourd ?",
+          "reponses": ["L’éléphant", "L’humain", "Le gorille", "Le rhinocéros"],
+          "bonne": 0,
+          "note": "Cinq kilos, contre un kilo trois cents pour nous. Ce n’est donc pas la taille du cerveau qui décide de l’intelligence."
+        }
+      ]
+    }
+  ]
+}

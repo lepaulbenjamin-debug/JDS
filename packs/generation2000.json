@@ -1,0 +1,374 @@
+{
+  "id": "generation2000",
+  "nom": "Génération 2000-2010",
+  "emoji": "💾",
+  "resume": "MSN, Skyblog, le premier iPhone et la Star Ac'. La décennie de ceux qui ont eu vingt ans avant le smartphone.",
+  "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.generation2000",
+  "questions": [
+    {
+      "id": "gen-01",
+      "theme": "annees2000",
+      "texte": "Quelle radio française a lancé la plateforme de blogs Skyblog en 2002 ?",
+      "reponses": ["Skyrock", "NRJ", "Fun Radio", "Europe 2"],
+      "bonne": 0,
+      "note": "Plus de trente millions de blogs ouverts. La plateforme a fermé en 2023, après avoir archivé une bonne part de l’adolescence française."
+    },
+    {
+      "id": "gen-02",
+      "theme": "marques",
+      "texte": "Quel baladeur sorti en 2001 se pilotait avec une molette circulaire ?",
+      "reponses": ["L’iPod", "Le Zune", "Le Diamond Rio", "Le MiniDisc"],
+      "bonne": 0,
+      "note": "« Mille chansons dans votre poche », disait l’annonce. La molette était mécanique sur le premier modèle, tactile ensuite."
+    },
+    {
+      "id": "gen-03",
+      "theme": "musique",
+      "texte": "Quel duo américain chantait « Hey Ya! » en 2003 ?",
+      "reponses": ["OutKast", "Gnarls Barkley", "N.E.R.D", "The Neptunes"],
+      "bonne": 0,
+      "note": "Le refrain invite à secouer « comme une photo Polaroid ». Polaroid a dû préciser publiquement qu’il ne fallait surtout pas secouer ses photos."
+    },
+    {
+      "id": "gen-04",
+      "theme": "cinema",
+      "texte": "Quel film de 2001 suit une serveuse de Montmartre qui fabrique le bonheur des autres ?",
+      "reponses": [
+        "Le Fabuleux Destin d’Amélie Poulain",
+        "Les Poupées russes",
+        "Le Goût des autres",
+        "La Môme"
+      ],
+      "bonne": 0,
+      "note": "Huit millions et demi d’entrées en France, et un café de la place Blanche transformé pour vingt ans en lieu de pèlerinage."
+    },
+    {
+      "id": "gen-05",
+      "theme": "annees2000",
+      "texte": "Quelle messagerie de Microsoft permettait d’envoyer un « wizz » qui faisait trembler l’écran ?",
+      "reponses": ["MSN Messenger", "ICQ", "AIM", "Caramail"],
+      "bonne": 0,
+      "note": "Le wizz faisait vibrer la fenêtre du correspondant. Utilisé trois fois d’affilée, il constituait une déclaration de guerre."
+    },
+    {
+      "id": "gen-06",
+      "theme": "musique",
+      "texte": "Quelle émission de TF1 a révélé Jenifer en 2002 ?",
+      "reponses": ["Star Academy", "Popstars", "Nouvelle Star", "Graines de star"],
+      "bonne": 0,
+      "note": "Première saison, première gagnante. Le château de Dammarie-les-Lys a fait plus pour la téléréalité française que n’importe quelle île."
+    },
+    {
+      "id": "gen-07",
+      "theme": "sport",
+      "texte": "Quelle équipe a remporté la Coupe du monde de football 2006 ?",
+      "reponses": ["L’Italie", "La France", "Le Brésil", "L’Allemagne"],
+      "bonne": 0,
+      "note": "Aux tirs au but, et sans Zidane, expulsé à la 110e minute pour un coup de tête resté plus célèbre que le trophée."
+    },
+    {
+      "id": "gen-08",
+      "theme": "marques",
+      "texte": "Quel Nokia sorti en 2000 est devenu le symbole du téléphone indestructible ?",
+      "reponses": ["Le 3310", "Le 8210", "Le N95", "Le Communicator"],
+      "bonne": 0,
+      "note": "Cent vingt-six millions d’exemplaires, une autonomie d’une semaine, et le jeu Snake II. Sa réputation d’incassable lui a survécu."
+    },
+    {
+      "id": "gen-09",
+      "theme": "annees2000",
+      "texte": "Quel site de partage de vidéos Google a-t-il racheté en 2006 ?",
+      "reponses": ["YouTube", "Dailymotion", "Vimeo", "Metacafe"],
+      "bonne": 0,
+      "note": "Un milliard six cent cinquante millions de dollars pour un site de vingt mois, que beaucoup jugeaient alors payé bien trop cher."
+    },
+    {
+      "id": "gen-10",
+      "theme": "disney",
+      "texte": "Quel film Pixar de 2003 part à la recherche d’un poisson-clown ?",
+      "reponses": ["Le Monde de Nemo", "Ratatouille", "Les Indestructibles", "Wall-E"],
+      "bonne": 0,
+      "note": "Le film a fait exploser les ventes de poissons-clowns en animalerie, ce qui est exactement le contraire de sa morale."
+    },
+    {
+      "id": "gen-11",
+      "theme": "musique",
+      "texte": "Quel groupe français chantait « Le Chemin » avec Sita en 2003 ?",
+      "reponses": ["Kyo", "Superbus", "Luke", "Pleymo"],
+      "bonne": 0,
+      "note": "Le duo a passé onze semaines en tête des ventes. Sita Rasoanaivo n’était alors créditée que sous son prénom."
+    },
+    {
+      "id": "gen-12",
+      "theme": "annees2000",
+      "texte": "Quelle console de Nintendo, sortie en 2006, se joue en agitant sa manette ?",
+      "reponses": ["La Wii", "La GameCube", "La PS3", "La Xbox 360"],
+      "bonne": 0,
+      "note": "Plus de cent millions d’exemplaires, et une génération de lampes de salon fracassées par une manette mal tenue."
+    },
+    {
+      "id": "gen-13",
+      "theme": "insolite",
+      "texte": "Quel désastre informatique annoncé pour minuit le 1er janvier 2000 n’a finalement rien cassé ?",
+      "reponses": ["Le bug de l’an 2000", "Le ver Blaster", "Le virus I Love You", "Le krach du Nasdaq"],
+      "bonne": 0,
+      "note": "Des centaines de milliards dépensés en corrections. On ne saura jamais si c’était une panique inutile ou la raison pour laquelle rien n’est arrivé."
+    },
+    {
+      "id": "gen-14",
+      "theme": "cinema",
+      "texte": "Quel film de James Cameron sorti en 2009 se déroule sur la lune Pandora ?",
+      "reponses": ["Avatar", "Prometheus", "District 9", "Oblivion"],
+      "bonne": 0,
+      "note": "Premier film à dépasser deux milliards de dollars, et déclencheur de la vague de 3D qui a suivi dans toutes les salles."
+    },
+    {
+      "id": "gen-15",
+      "theme": "marques",
+      "texte": "Combien d’applications pouvait-on installer sur le premier iPhone, en 2007 ?",
+      "reponses": ["Aucune", "Une dizaine", "Une centaine", "Un millier"],
+      "bonne": 0,
+      "note": "L’App Store n’est arrivé qu’en juillet 2008. Apple proposait d’écrire des sites web « comme des applications », ce qui n’a convaincu personne."
+    },
+    {
+      "id": "gen-16",
+      "theme": "musique",
+      "texte": "Quelle chanteuse britannique a sorti l’album « Back to Black » en 2006 ?",
+      "reponses": ["Amy Winehouse", "Adele", "Duffy", "Lily Allen"],
+      "bonne": 0,
+      "note": "Cinq Grammy Awards en une soirée. L’album a rouvert la porte à toute une génération de voix soul britanniques."
+    },
+    {
+      "id": "gen-17",
+      "theme": "annees2000",
+      "texte": "Quel service d’échange de fichiers musicaux a été condamné puis fermé en 2001 ?",
+      "reponses": ["Napster", "eMule", "BitTorrent", "Kazaa"],
+      "bonne": 0,
+      "note": "Le procès a été porté par le groupe Metallica. Napster est revenu ensuite en service payant, sans jamais retrouver ses foules."
+    },
+    {
+      "id": "gen-18",
+      "theme": "cinema",
+      "texte": "Quelle série lancée en 2004 suit les survivants d’un crash sur une île mystérieuse ?",
+      "reponses": ["Lost", "Prison Break", "Heroes", "Battlestar Galactica"],
+      "bonne": 0,
+      "note": "Six saisons, et une fin dont on discute encore. La série a imposé le cliffhanger de fin d’épisode comme norme."
+    },
+    {
+      "id": "gen-19",
+      "theme": "sport",
+      "texte": "Quel nageur a remporté huit médailles d’or aux Jeux de Pékin en 2008 ?",
+      "reponses": ["Michael Phelps", "Ian Thorpe", "Alain Bernard", "Ryan Lochte"],
+      "bonne": 0,
+      "note": "Huit courses, huit titres, sept records du monde. Le relais 4 × 100 mètres s’est joué à cinq centièmes de seconde."
+    },
+    {
+      "id": "gen-20",
+      "theme": "culture",
+      "texte": "Dans quelle université le futur Facebook a-t-il été lancé en 2004 ?",
+      "reponses": ["Harvard", "Stanford", "Yale", "Berkeley"],
+      "bonne": 0,
+      "note": "Il s’appelait « TheFacebook » et n’était ouvert qu’aux étudiants munis d’une adresse universitaire. L’article a disparu en 2005."
+    },
+    {
+      "id": "gen-21",
+      "theme": "cinema",
+      "texte": "Quelle comédie de 2008 envoie un employé de La Poste muté dans le Nord ?",
+      "reponses": [
+        "Bienvenue chez les Ch’tis",
+        "Les Visiteurs",
+        "Camping",
+        "Le Dîner de cons"
+      ],
+      "bonne": 0,
+      "note": "Plus de vingt millions d’entrées, record du cinéma français encore invaincu. Bergues a vu ses visiteurs se multiplier par vingt."
+    },
+    {
+      "id": "gen-22",
+      "theme": "marques",
+      "type": "estimation",
+      "texte": "Combien de gigaoctets pouvait stocker le tout premier iPod, en 2001 ?",
+      "valeur": 5,
+      "unite": "Go",
+      "note": "Cinq gigaoctets, soit environ mille chansons — l’argument de vente tenait dans cette phrase, et le disque dur faisait du bruit."
+    },
+    {
+      "id": "gen-23",
+      "theme": "cinema",
+      "type": "estimation",
+      "texte": "Combien de films compte la saga Harry Potter au cinéma ?",
+      "valeur": 8,
+      "unite": "films",
+      "note": "Huit films pour sept livres : le dernier tome a été coupé en deux, une habitude que le cinéma n’a plus jamais perdue."
+    },
+    {
+      "id": "gen-24",
+      "theme": "annees2000",
+      "type": "estimation",
+      "texte": "Combien de caractères un message Twitter pouvait-il contenir à son lancement, en 2006 ?",
+      "valeur": 140,
+      "unite": "caractères",
+      "note": "Cent quarante, pour tenir dans un SMS de cent soixante en laissant la place au nom de l’expéditeur. La limite a doublé en 2017."
+    },
+    {
+      "id": "gen-25",
+      "theme": "annees2000",
+      "type": "ordre",
+      "texte": "Ces inventions, dans l’ordre d’apparition",
+      "elements": ["Le premier iPod", "Facebook", "YouTube", "Le premier iPhone"],
+      "note": "2001, 2004, 2005, 2007. Six ans séparent le baladeur du téléphone qui allait le rendre inutile."
+    },
+    {
+      "id": "gen-26",
+      "theme": "cinema",
+      "type": "ordre",
+      "texte": "Ces films, dans l’ordre de sortie",
+      "elements": [
+        "Le Fabuleux Destin d’Amélie Poulain",
+        "Le Monde de Nemo",
+        "Bienvenue chez les Ch’tis",
+        "Avatar"
+      ],
+      "note": "2001, 2003, 2008, 2009. Les deux derniers sont sortis à dix-huit mois d’écart, et détiennent chacun un record d’entrées."
+    },
+    {
+      "id": "gen-27",
+      "theme": "annees2000",
+      "type": "rafale",
+      "texte": "Le web des années 2000",
+      "affirmations": [
+        { "texte": "Wikipédia a été lancé en 2001.", "vrai": true },
+        { "texte": "Facebook s’est d’abord appelé « TheFacebook ».", "vrai": true },
+        { "texte": "Le premier iPhone n’avait pas de boutique d’applications.", "vrai": true },
+        { "texte": "Google a été créé en 2005.", "vrai": false },
+        { "texte": "YouTube appartient à Microsoft.", "vrai": false }
+      ],
+      "note": "Google date de 1998, et YouTube appartient à Google depuis 2006. Les trois premières sont vraies."
+    },
+    {
+      "id": "gen-28",
+      "theme": "musique",
+      "type": "rafale",
+      "texte": "La musique de la décennie",
+      "affirmations": [
+        { "texte": "Daft Punk a sorti l’album « Discovery » en 2001.", "vrai": true },
+        { "texte": "« Back to Black » d’Amy Winehouse est sorti en 2006.", "vrai": true },
+        { "texte": "Stromae a chanté « Alors on danse » en 2009.", "vrai": true },
+        { "texte": "« Gangnam Style » est sorti en 2005.", "vrai": false },
+        { "texte": "Britney Spears a chanté « Baby One More Time » en 2005.", "vrai": false }
+      ],
+      "note": "« Gangnam Style » date de 2012 et « Baby One More Time » de 1998 : les deux débordent de la décennie, dans les deux sens."
+    },
+    {
+      "id": "gen-29",
+      "theme": "musique",
+      "type": "mix",
+      "texte": "Un tube des années 2000",
+      "acceptees": [
+        { "titre": "Hey Ya!", "artiste": "OutKast" },
+        { "titre": "Crazy in Love", "artiste": "Beyoncé" },
+        { "titre": "Umbrella", "artiste": "Rihanna" },
+        { "titre": "Poker Face", "artiste": "Lady Gaga" },
+        { "titre": "Viva la Vida", "artiste": "Coldplay" },
+        { "titre": "Clocks", "artiste": "Coldplay" },
+        { "titre": "Seven Nation Army", "artiste": "The White Stripes" },
+        { "titre": "Mr. Brightside", "artiste": "The Killers" },
+        { "titre": "Toxic", "artiste": "Britney Spears" },
+        { "titre": "Hips Don’t Lie", "artiste": "Shakira" },
+        { "titre": "I Gotta Feeling", "artiste": "The Black Eyed Peas" },
+        { "titre": "Rehab", "artiste": "Amy Winehouse" },
+        { "titre": "One More Time", "artiste": "Daft Punk" },
+        { "titre": "In the End", "artiste": "Linkin Park" },
+        { "titre": "Numb", "artiste": "Linkin Park" },
+        { "titre": "Lose Yourself", "artiste": "Eminem" },
+        { "titre": "Stan", "artiste": "Eminem" },
+        { "titre": "Hung Up", "artiste": "Madonna" },
+        { "titre": "Beautiful Day", "artiste": "U2" },
+        { "titre": "Bad Day", "artiste": "Daniel Powter" },
+        { "titre": "Chasing Cars", "artiste": "Snow Patrol" },
+        { "titre": "Boulevard of Broken Dreams", "artiste": "Green Day" },
+        { "titre": "Dragostea Din Tei", "artiste": "O-Zone" },
+        { "titre": "Sex Bomb", "artiste": "Tom Jones" },
+        { "titre": "Alors on danse", "artiste": "Stromae" },
+        { "titre": "Le Chemin", "artiste": "Kyo" },
+        { "titre": "Femme Like U", "artiste": "K-Maro" },
+        { "titre": "Sous le vent", "artiste": "Garou et Céline Dion" },
+        { "titre": "J’ai demandé à la lune", "artiste": "Indochine" },
+        { "titre": "Moi… Lolita", "artiste": "Alizée" },
+        { "titre": "Manhattan-Kaboul", "artiste": "Renaud et Axelle Red" },
+        { "titre": "Ces soirées-là", "artiste": "Yannick" }
+      ],
+      "note": "Trente-deux titres acceptés. « Seven Nation Army » n’a jamais été numéro un nulle part, et se chante pourtant dans tous les stades."
+    },
+    {
+      "id": "gen-30",
+      "theme": "annees2000",
+      "type": "ttmc",
+      "texte": "Génération 2000 — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "Quelle console portable de Nintendo, sortie en 2004, a deux écrans ?",
+          "reponses": ["La DS", "La Game Boy Advance", "La PSP", "La Game Gear"],
+          "bonne": 0,
+          "note": "« DS » pour « dual screen ». L’écran du bas était tactile, et se pilotait avec un stylet qu’on perdait en trois jours."
+        },
+        {
+          "texte": "Quel réseau social a été lancé en 2004 par Mark Zuckerberg ?",
+          "reponses": ["Facebook", "Twitter", "MySpace", "LinkedIn"],
+          "bonne": 0,
+          "note": "Twitter date de 2006, MySpace de 2003 et LinkedIn de 2002 : la décennie a tout inventé en cinq ans."
+        },
+        {
+          "texte": "Quel moteur de recherche est devenu un verbe dans les années 2000 ?",
+          "reponses": ["Google", "Yahoo!", "Lycos", "AltaVista"],
+          "bonne": 0,
+          "note": "« Googler » est entré au dictionnaire américain en 2006, au grand déplaisir de l’entreprise, qui y voyait un risque pour sa marque."
+        },
+        {
+          "texte": "Quel film d’animation de 2001 met en scène un ogre vert et un âne bavard ?",
+          "reponses": ["Shrek", "Madagascar", "L’Âge de glace", "Kung Fu Panda"],
+          "bonne": 0,
+          "note": "Premier lauréat de l’Oscar du meilleur film d’animation, créé cette année-là. En français, l’âne parle avec la voix d’Éddy Mitchell."
+        },
+        {
+          "texte": "Quelle marque a commercialisé la première clé USB grand public, en 2000 ?",
+          "reponses": ["IBM", "Sony", "Philips", "Nokia"],
+          "bonne": 0,
+          "note": "Huit mégaoctets, soit six disquettes. La paternité de l’invention est encore revendiquée par trois entreprises de trois pays."
+        },
+        {
+          "texte": "Quelle encyclopédie en ligne, ouverte en 2001, s’écrit par ses lecteurs ?",
+          "reponses": ["Wikipédia", "Encarta", "Universalis", "Larousse en ligne"],
+          "bonne": 0,
+          "note": "Encarta, l’encyclopédie de Microsoft vendue sur CD-ROM, a fermé en 2009 sans jamais avoir compris ce qui lui arrivait."
+        },
+        {
+          "texte": "Quel système d’exploitation de Microsoft, sorti en 2007, a été un échec retentissant ?",
+          "reponses": ["Windows Vista", "Windows ME", "Windows 8", "Windows NT"],
+          "bonne": 0,
+          "note": "Lent, bavard en alertes de sécurité, incompatible avec la moitié du matériel. Windows 7 est arrivé deux ans plus tard le réparer."
+        },
+        {
+          "texte": "Quelle chanson roumaine de 2003 a envahi l’Europe avec son « Maïa hi » ?",
+          "reponses": ["Dragostea Din Tei", "Numa Numa", "Despacito", "Macarena"],
+          "bonne": 0,
+          "note": "« Numa Numa » est le surnom donné par les internautes, tiré du refrain. Le titre roumain signifie « l’amour sous les tilleuls »."
+        },
+        {
+          "texte": "Quel navigateur web est né en 2004 des cendres de Netscape ?",
+          "reponses": ["Firefox", "Chrome", "Opera", "Safari"],
+          "bonne": 0,
+          "note": "Chrome n’est arrivé qu’en 2008. Firefox a repris jusqu’à un tiers du web à Internet Explorer, ce que personne ne croyait possible."
+        },
+        {
+          "texte": "Quel format de compression audio, mis au point en Allemagne, a rendu le partage de musique possible ?",
+          "reponses": ["Le MP3", "Le WAV", "Le FLAC", "L’AAC"],
+          "bonne": 0,
+          "note": "Mis au point à l’institut Fraunhofer. Le morceau utilisé pour l’affiner était « Tom’s Diner » de Suzanne Vega, écouté des milliers de fois."
+        }
+      ]
+    }
+  ]
+}

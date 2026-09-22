@@ -2263,6 +2263,46 @@ test('le plafond de révélation couvre la plus longue explication de la banque'
   );
 });
 
+test('le plafond de révélation couvre aussi les questions des packs', async () => {
+  // Le test précédent ne regarde que la banque gratuite, alors que c'est dans un
+  // pack que le risque vit : on y écrit trente questions d'affilée, loin des
+  // repères de la banque, et une explication trop longue ne se voit qu'en
+  // soirée — l'animateur est coupé au milieu d'une phrase qu'on a payée.
+  const { readFileSync, readdirSync, existsSync } = await import('node:fs');
+  if (!existsSync('packs/audio')) return;    // clips de packs pas encore générés
+
+  const voix = readdirSync('packs/audio').filter((v) => v !== 'blanc');
+  const fichiers = readdirSync('packs').filter((f) => f.endsWith('.json'));
+
+  for (const v of voix) {
+    // L'en-tête de la révélation se lit dans la banque de base : les répliques
+    // de l'animateur sont les mêmes pour tout le monde, packs compris.
+    const base = JSON.parse(readFileSync(`web/quiz/audio/${v}/manifeste.json`, 'utf8'));
+    const maxDeLaCle = (cle) => {
+      const ids = Object.keys(base.clips).filter((i) => i.startsWith(`emcee/classique/${cle}/`));
+      return ids.length ? Math.max(...ids.map((i) => base.clips[i])) : 0;
+    };
+    const enTete = Math.max(...['personne', 'tous', 'unSeul', 'plusieurs', 'plusProche',
+      'partiel', 'mixTrouve', 'ttmcTrouve'].map(maxDeLaCle))
+      + Math.max(...['vol', 'sabotage', 'doubleReussi', 'doubleRate', 'filTrouve'].map(maxDeLaCle));
+
+    for (const fichier of fichiers) {
+      const pack = JSON.parse(readFileSync(join('packs', fichier), 'utf8'));
+      const chemin = join('packs/audio', v, pack.id, 'manifeste.json');
+      if (!existsSync(chemin)) continue;      // vérifié par le test des clips
+      const clips = JSON.parse(readFileSync(chemin, 'utf8')).clips;
+
+      for (const q of pack.questions) {
+        const total = (enTete + (clips[`reponse/${q.id}`] ?? 0) + (clips[`note/${q.id}`] ?? 0)) * 1000;
+        assert.ok(
+          PLAFOND_REVELATION_MS >= total,
+          `${v}/${pack.id}/${q.id} : ${Math.round(total)} ms de révélation pour un plafond de ${PLAFOND_REVELATION_MS}`,
+        );
+      }
+    }
+  }
+});
+
 test('une réplique se budgète sur sa variante la plus longue', () => {
   // Chaque appareil tire sa variante au sort : la régie doit laisser le temps à
   // celui qui a tiré la plus longue, pas au premier venu.

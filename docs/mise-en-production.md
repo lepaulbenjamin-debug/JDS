@@ -230,14 +230,36 @@ publicitaire n'est branchée.
 ## 6 bis. La fiche elle-même
 
 Le nom, le sous-titre, les mots-clés, la description, les notes à
-l'examinateur, la classification par âge et les fiches des deux achats
+l'examinateur, la classification par âge et les fiches des sept achats
 intégrés sont écrits d'avance dans **`docs/fiche-app-store.md`**, prêts à
 coller. Les captures d'écran, prises dans une vraie partie à quatre joueurs et
 au bon format, sont dans `docs/captures-app-store/`.
 
+## 6 ter. Le poids des packs, et le mur qui arrive
+
+Les packs ne sont pas servis en statique : ils partent avec la fonction
+`api/packs.mjs`, via `includeFiles` dans `vercel.json`. Tout leur audio voyage
+donc **à l'intérieur du paquet de la fonction**, dont la limite est de 250 Mo
+décompressés.
+
+| | |
+|---|---|
+| Aujourd'hui, 7 packs, 2 voix | **122 Mo** |
+| Coût d'un pack de plus | ≈ 17 Mo |
+| Place restante | ≈ 7 packs |
+
+Ce n'est pas un problème maintenant, et c'en sera un d'un coup : le déploiement
+échouera, sans que rien dans le code n'ait changé. Le jour où l'on approche, la
+sortie est connue — déplacer l'audio des packs vers un stockage d'objets et le
+servir par URL signée à durée courte, ce que la licence permet déjà puisqu'elle
+est vérifiée avant de rendre quoi que ce soit. À faire **avant** d'être coincé,
+pas le soir où la mise en production tombe.
+
 ## 7. Avant d'appuyer sur « Soumettre »
 
-- [ ] `npm run check:quiz` au vert (194 tests) ;
+- [ ] `npm run check:quiz` au vert (202 tests) ;
+- [ ] les **sept** produits d'achat intégré créés dans App Store Connect, un par
+      pack, identifiants et textes dans `docs/fiche-app-store.md` ;
 - [ ] `node scripts/repetition.mjs https://www.quizentreamis.fr/quiz/` : une
       partie entière à quatre pupitres et une télé, contre le relais de
       production ;

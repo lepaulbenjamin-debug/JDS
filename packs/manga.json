@@ -1,0 +1,393 @@
+{
+  "id": "manga",
+  "nom": "Manga & anime",
+  "emoji": "🍥",
+  "resume": "Du Club Dorothée à Jujutsu Kaisen. Trente questions pour départager ceux qui ont lu et ceux qui regardaient par-dessus l’épaule.",
+  "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.manga",
+  "questions": [
+    {
+      "id": "mga-01",
+      "theme": "cinema",
+      "texte": "Quel manga suit un pirate au chapeau de paille parti chercher un trésor ?",
+      "reponses": ["One Piece", "Bleach", "Hunter × Hunter", "Fairy Tail"],
+      "bonne": 0,
+      "note": "Publié sans interruption depuis 1997, c’est la bande dessinée la plus vendue au monde par un seul auteur : plus de cinq cents millions d’exemplaires."
+    },
+    {
+      "id": "mga-02",
+      "theme": "cinema",
+      "texte": "Comment s’appelle le héros de « Dragon Ball » ?",
+      "reponses": ["Son Goku", "Vegeta", "Son Gohan", "Krilin"],
+      "bonne": 0,
+      "note": "Son personnage est inspiré du Roi des singes, héros d’un roman chinois du XVIe siècle — d’où la queue et le bâton magique du début."
+    },
+    {
+      "id": "mga-03",
+      "theme": "cinema",
+      "texte": "Dans « Naruto », quel animal à neuf queues est scellé dans le héros ?",
+      "reponses": ["Un renard", "Un loup", "Un dragon", "Un tigre"],
+      "bonne": 0,
+      "note": "Le renard à neuf queues vient du folklore japonais, le kitsune : un esprit malicieux qui gagne une queue tous les cent ans."
+    },
+    {
+      "id": "mga-04",
+      "theme": "cinema",
+      "texte": "Quel studio japonais a produit « Le Voyage de Chihiro » ?",
+      "reponses": ["Le studio Ghibli", "Le studio Trigger", "Madhouse", "Toei Animation"],
+      "bonne": 0,
+      "note": "Seul film en langue étrangère à avoir remporté l’Oscar du meilleur film d’animation, et premier à dépasser trois cents millions de dollars."
+    },
+    {
+      "id": "mga-05",
+      "theme": "culture",
+      "texte": "Dans quel sens se lit un manga en version originale ?",
+      "reponses": [
+        "De droite à gauche",
+        "De gauche à droite",
+        "De bas en haut",
+        "En colonnes, de haut en bas"
+      ],
+      "bonne": 0,
+      "note": "Les premières éditions françaises inversaient les pages, ce qui rendait tous les personnages gauchers. Les éditeurs y ont renoncé dans les années 2000."
+    },
+    {
+      "id": "mga-06",
+      "theme": "cinema",
+      "texte": "Quel manga met en scène un carnet qui tue celui dont on y écrit le nom ?",
+      "reponses": ["Death Note", "Monster", "Another", "Erased"],
+      "bonne": 0,
+      "note": "Le duel se joue presque entièrement assis, en raisonnements — et il a pourtant été interdit dans plusieurs écoles de Chine et de Russie."
+    },
+    {
+      "id": "mga-07",
+      "theme": "cinema",
+      "texte": "Dans « L’Attaque des Titans », qu’est-ce qui protège l’humanité des titans ?",
+      "reponses": ["Des murs", "Un champ de force", "Un océan", "Une armée de robots"],
+      "bonne": 0,
+      "note": "Trois enceintes concentriques de cinquante mètres. L’auteur a expliqué les avoir imaginées en travaillant dans un cybercafé, face à un client inquiétant."
+    },
+    {
+      "id": "mga-08",
+      "theme": "culture",
+      "texte": "Comment appelle-t-on les mangas qui visent un public de jeunes garçons ?",
+      "reponses": ["Le shōnen", "Le shōjo", "Le seinen", "Le josei"],
+      "bonne": 0,
+      "note": "Shōnen pour les garçons, shōjo pour les filles, seinen pour les hommes adultes, josei pour les femmes. Ce sont des cibles d’éditeur, pas des genres."
+    },
+    {
+      "id": "mga-09",
+      "theme": "cinema",
+      "texte": "Quel film d’animation de 1988 se déroule dans la ville de Neo-Tokyo ?",
+      "reponses": ["Akira", "Ghost in the Shell", "Perfect Blue", "Paprika"],
+      "bonne": 0,
+      "note": "Son action est située en 2019, l’année des Jeux olympiques de Tokyo — que le film annonce, et qui ont bien eu lieu, avec un an de retard."
+    },
+    {
+      "id": "mga-10",
+      "theme": "cinema",
+      "texte": "Dans « Sailor Moon », quels objets donnent leurs noms aux héroïnes ?",
+      "reponses": ["Les planètes", "Les fleurs", "Les pierres précieuses", "Les constellations"],
+      "bonne": 0,
+      "note": "Mercure, Mars, Jupiter, Vénus… et la Lune pour l’héroïne. Chaque tenue reprend d’ailleurs les couleurs associées à son astre."
+    },
+    {
+      "id": "mga-11",
+      "theme": "sport",
+      "texte": "Quel manga raconte l’ascension d’une équipe de volley-ball de lycée ?",
+      "reponses": ["Haikyū!!", "Slam Dunk", "Kuroko’s Basket", "Captain Tsubasa"],
+      "bonne": 0,
+      "note": "Les licences de volley-ball ont bondi au Japon pendant sa diffusion. « Slam Dunk » avait fait la même chose pour le basket dans les années 1990."
+    },
+    {
+      "id": "mga-12",
+      "theme": "cinema",
+      "texte": "Dans « Demon Slayer », que chasse Tanjirō ?",
+      "reponses": ["Des démons", "Des pirates", "Des dragons", "Des fantômes"],
+      "bonne": 0,
+      "note": "Le film tiré de la série est devenu en 2020 le plus gros succès de l’histoire du cinéma japonais, dans des salles pourtant à moitié vides."
+    },
+    {
+      "id": "mga-13",
+      "theme": "culture",
+      "texte": "Quel auteur est surnommé « le dieu du manga » ?",
+      "reponses": ["Osamu Tezuka", "Akira Toriyama", "Hayao Miyazaki", "Katsuhiro Ōtomo"],
+      "bonne": 0,
+      "note": "Créateur d’Astro Boy, et médecin de formation. Il a dessiné plus de cent cinquante mille pages, et inventé au passage la plupart des codes du genre."
+    },
+    {
+      "id": "mga-14",
+      "theme": "cinema",
+      "texte": "Dans « Evangelion », que pilote Shinji Ikari ?",
+      "reponses": ["Un robot géant", "Un vaisseau spatial", "Un sous-marin", "Un dragon"],
+      "bonne": 0,
+      "note": "La série a été produite dans une telle urgence que les deux derniers épisodes se déroulent presque entièrement dans la tête du héros."
+    },
+    {
+      "id": "mga-15",
+      "theme": "bouffe",
+      "texte": "Quel plat Naruto réclame-t-il à chaque occasion ?",
+      "reponses": ["Les ramen", "Les sushis", "Les takoyaki", "Le curry"],
+      "bonne": 0,
+      "note": "Son prénom désigne aussi la tranche de pâte de poisson en spirale qu’on pose sur les ramen. Le motif est repris sur son bandeau."
+    },
+    {
+      "id": "mga-16",
+      "theme": "cinema",
+      "texte": "Dans « My Hero Academia », comment nomme-t-on les super-pouvoirs ?",
+      "reponses": ["Les alters", "Les dons", "Les sorts", "Les gènes"],
+      "bonne": 0,
+      "note": "« Quirk » en version originale, soit « bizarrerie ». Quatre-vingts pour cent de la population en possède un : c’est n’avoir aucun pouvoir qui est anormal."
+    },
+    {
+      "id": "mga-17",
+      "theme": "marques",
+      "texte": "Sur quelle chaîne française était diffusé le « Club Dorothée » ?",
+      "reponses": ["TF1", "France 2", "La Cinq", "M6"],
+      "bonne": 0,
+      "note": "L’émission a fait découvrir les animes japonais à toute une génération — et déclenché des débats parlementaires sur la violence à la télévision."
+    },
+    {
+      "id": "mga-18",
+      "theme": "cinema",
+      "texte": "Dans quel film de Miyazaki croise-t-on un chat-bus à douze pattes ?",
+      "reponses": [
+        "Mon voisin Totoro",
+        "Le Château ambulant",
+        "Ponyo sur la falaise",
+        "Kiki la petite sorcière"
+      ],
+      "bonne": 0,
+      "note": "Totoro est devenu l’emblème du studio Ghibli. Le film a d’abord été un échec en salles, et s’est rattrapé pendant trente ans en vidéo."
+    },
+    {
+      "id": "mga-19",
+      "theme": "mots",
+      "texte": "Que signifie à peu près le mot « manga » en japonais ?",
+      "reponses": [
+        "Images dérisoires",
+        "Histoires dessinées",
+        "Livres d’images",
+        "Petits romans"
+      ],
+      "bonne": 0,
+      "note": "Deux caractères : « involontaire » et « image ». Le peintre Hokusai l’a popularisé en 1814 pour des carnets de croquis pris sur le vif."
+    },
+    {
+      "id": "mga-20",
+      "theme": "cinema",
+      "texte": "Dans « Fullmetal Alchemist », quel principe régit toute l’alchimie ?",
+      "reponses": [
+        "L’échange équivalent",
+        "La loi du plus fort",
+        "Le cycle éternel",
+        "Le secret du sang"
+      ],
+      "bonne": 0,
+      "note": "« Pour obtenir quelque chose, il faut donner quelque chose de valeur égale. » Toute l’histoire consiste à découvrir le prix réel de cette règle."
+    },
+    {
+      "id": "mga-21",
+      "theme": "culture",
+      "texte": "Quel pays est le deuxième marché mondial du manga, derrière le Japon ?",
+      "reponses": ["La France", "Les États-Unis", "L’Italie", "La Corée du Sud"],
+      "bonne": 0,
+      "note": "La France achète plus de mangas par habitant que n’importe quel pays hors Japon, et cela dure depuis les années 1990."
+    },
+    {
+      "id": "mga-22",
+      "theme": "cinema",
+      "type": "estimation",
+      "texte": "Combien de tomes compte le manga « Dragon Ball » dans son édition d’origine ?",
+      "valeur": 42,
+      "unite": "tomes",
+      "note": "Quarante-deux, publiés entre 1984 et 1995. Toriyama voulait s’arrêter bien plus tôt ; son éditeur a tenu bon pendant des années."
+    },
+    {
+      "id": "mga-23",
+      "theme": "cinema",
+      "type": "estimation",
+      "texte": "Combien d’épisodes compte la première série animée « Naruto », avant « Shippuden » ?",
+      "valeur": 220,
+      "unite": "épisodes",
+      "note": "Deux cent vingt, dont une bonne centaine d’épisodes inventés pour laisser le manga prendre de l’avance sur le dessin animé."
+    },
+    {
+      "id": "mga-24",
+      "theme": "cinema",
+      "type": "estimation",
+      "texte": "Combien de Dragon Balls faut-il réunir pour invoquer le dragon ?",
+      "valeur": 7,
+      "unite": "boules",
+      "note": "Sept, marquées d’une à sept étoiles. Une fois le vœu exaucé, elles se dispersent sur toute la planète et redeviennent des pierres pendant un an."
+    },
+    {
+      "id": "mga-25",
+      "theme": "cinema",
+      "type": "ordre",
+      "texte": "Ces mangas, du plus ancien au plus récent",
+      "elements": ["Astro Boy", "Dragon Ball", "One Piece", "Demon Slayer"],
+      "note": "1952, 1984, 1997, 2016. Soixante-quatre ans séparent le premier du dernier, et tous les quatre ont battu des records de vente à leur époque."
+    },
+    {
+      "id": "mga-26",
+      "theme": "cinema",
+      "type": "ordre",
+      "texte": "Les films de Miyazaki, dans l’ordre de sortie",
+      "elements": [
+        "Nausicaä de la vallée du vent",
+        "Mon voisin Totoro",
+        "Princesse Mononoké",
+        "Le Voyage de Chihiro"
+      ],
+      "note": "1984, 1988, 1997, 2001. « Nausicaä » est antérieur au studio Ghibli, fondé en 1985 grâce au succès… de « Nausicaä »."
+    },
+    {
+      "id": "mga-27",
+      "theme": "culture",
+      "type": "rafale",
+      "texte": "Le monde du manga",
+      "affirmations": [
+        { "texte": "Un manga se lit de droite à gauche.", "vrai": true },
+        { "texte": "« Shōnen » désigne les mangas visant les garçons.", "vrai": true },
+        { "texte": "La France est le deuxième marché mondial du manga.", "vrai": true },
+        { "texte": "« One Piece » est publié depuis les années 1980.", "vrai": false },
+        { "texte": "Les mangas sont imprimés en couleur au Japon.", "vrai": false }
+      ],
+      "note": "« One Piece » a commencé en 1997, et les mangas paraissent en noir et blanc — la couleur coûterait trop cher pour un rythme hebdomadaire."
+    },
+    {
+      "id": "mga-28",
+      "theme": "cinema",
+      "type": "rafale",
+      "texte": "Les héros",
+      "affirmations": [
+        { "texte": "Luffy a un corps en caoutchouc.", "vrai": true },
+        { "texte": "Naruto porte en lui un renard à neuf queues.", "vrai": true },
+        { "texte": "Tanjirō, dans « Demon Slayer », cherche à sauver sa sœur.", "vrai": true },
+        { "texte": "Son Goku est un humain de naissance.", "vrai": false },
+        { "texte": "Totoro est un personnage de « Pokémon ».", "vrai": false }
+      ],
+      "note": "Son Goku est un Saiyan, envoyé enfant détruire la Terre — une origine ajoutée bien après le début de la série. Totoro appartient au studio Ghibli."
+    },
+    {
+      "id": "mga-29",
+      "theme": "cinema",
+      "type": "mix",
+      "texte": "Un manga ou un anime",
+      "acceptees": [
+        { "titre": "Dragon Ball", "artiste": "Akira Toriyama" },
+        { "titre": "One Piece", "artiste": "Eiichirō Oda" },
+        { "titre": "Naruto", "artiste": "Masashi Kishimoto" },
+        { "titre": "Bleach", "artiste": "Tite Kubo" },
+        { "titre": "Death Note", "artiste": "Ōba et Obata" },
+        { "titre": "L’Attaque des Titans", "artiste": "Hajime Isayama" },
+        { "titre": "Demon Slayer", "artiste": "Koyoharu Gotōge" },
+        { "titre": "My Hero Academia", "artiste": "Kōhei Horikoshi" },
+        { "titre": "Jujutsu Kaisen", "artiste": "Gege Akutami" },
+        { "titre": "Chainsaw Man", "artiste": "Tatsuki Fujimoto" },
+        { "titre": "Spy × Family", "artiste": "Tatsuya Endō" },
+        { "titre": "Fullmetal Alchemist", "artiste": "Hiromu Arakawa" },
+        { "titre": "Hunter × Hunter", "artiste": "Yoshihiro Togashi" },
+        { "titre": "Haikyū!!", "artiste": "Haruichi Furudate" },
+        { "titre": "Slam Dunk", "artiste": "Takehiko Inoue" },
+        { "titre": "Vagabond", "artiste": "Takehiko Inoue" },
+        { "titre": "Sailor Moon", "artiste": "Naoko Takeuchi" },
+        { "titre": "Card Captor Sakura", "artiste": "CLAMP" },
+        { "titre": "Fruits Basket", "artiste": "Natsuki Takaya" },
+        { "titre": "Nana", "artiste": "Ai Yazawa" },
+        { "titre": "Détective Conan", "artiste": "Gōshō Aoyama" },
+        { "titre": "Ranma ½", "artiste": "Rumiko Takahashi" },
+        { "titre": "Inuyasha", "artiste": "Rumiko Takahashi" },
+        { "titre": "GTO", "artiste": "Tōru Fujisawa" },
+        { "titre": "Berserk", "artiste": "Kentarō Miura" },
+        { "titre": "Monster", "artiste": "Naoki Urasawa" },
+        { "titre": "20th Century Boys", "artiste": "Naoki Urasawa" },
+        { "titre": "Astro Boy", "artiste": "Osamu Tezuka" },
+        { "titre": "Akira", "artiste": "Katsuhiro Ōtomo" },
+        { "titre": "Evangelion", "artiste": "Hideaki Anno" },
+        { "titre": "Cowboy Bebop", "artiste": "Shinichirō Watanabe" },
+        { "titre": "Captain Tsubasa", "artiste": "Yōichi Takahashi" },
+        { "titre": "Saint Seiya", "artiste": "Masami Kurumada" },
+        { "titre": "Ken le Survivant", "artiste": "Buronson et Tetsuo Hara" },
+        { "titre": "Mon voisin Totoro", "artiste": "Hayao Miyazaki" },
+        { "titre": "Le Voyage de Chihiro", "artiste": "Hayao Miyazaki" }
+      ],
+      "note": "Trente-six titres acceptés. « Détective Conan » paraît depuis 1994 : son héros a passé plus de trente ans dans le corps d’un enfant de sept ans."
+    },
+    {
+      "id": "mga-30",
+      "theme": "culture",
+      "type": "ttmc",
+      "texte": "Manga & anime — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "De quel pays viennent les mangas ?",
+          "reponses": ["Le Japon", "La Chine", "La Corée du Sud", "Taïwan"],
+          "bonne": 0,
+          "note": "Les bandes dessinées coréennes s’appellent des manhwa, les chinoises des manhua. Trois mots pour les mêmes caractères d’origine."
+        },
+        {
+          "texte": "De quelle couleur est Pikachu ?",
+          "reponses": ["Jaune", "Orange", "Rouge", "Bleu"],
+          "bonne": 0,
+          "note": "Son nom japonais imite deux bruits : le crépitement d’une étincelle et le couinement d’une souris. Tout le personnage tient dans ces deux sons."
+        },
+        {
+          "texte": "Quel héros de manga porte un chapeau de paille ?",
+          "reponses": ["Luffy", "Goku", "Naruto", "Ichigo"],
+          "bonne": 0,
+          "note": "Le chapeau appartenait à Shanks, qui le lui a confié. C’est le seul objet que Luffy refuse absolument de risquer."
+        },
+        {
+          "texte": "Dans « Pokémon », que lance-t-on pour capturer une créature ?",
+          "reponses": ["Une Poké Ball", "Un filet", "Une carte", "Un anneau"],
+          "bonne": 0,
+          "note": "Le jeu d’origine est né de la passion de son créateur pour la collecte d’insectes, enfant, dans la banlieue de Tokyo."
+        },
+        {
+          "texte": "Quel est le prénom du héros de « Death Note » ?",
+          "reponses": ["Light", "Ryuk", "Near", "Mello"],
+          "bonne": 0,
+          "note": "Ryuk n’est pas humain : c’est le dieu de la mort qui a laissé tomber le carnet, uniquement parce qu’il s’ennuyait."
+        },
+        {
+          "texte": "Quel animal accompagne Chihiro sous la forme d’un dragon blanc ?",
+          "reponses": ["Haku", "Totoro", "Jiji", "Calcifer"],
+          "bonne": 0,
+          "note": "Haku est l’esprit d’une rivière recouverte par la ville. Chihiro retrouve son nom, et c’est ce qui le libère."
+        },
+        {
+          "texte": "Comment s’appelle le magazine japonais où paraissent « One Piece » et « Naruto » ?",
+          "reponses": ["Shōnen Jump", "Shōnen Magazine", "Big Comic", "Morning"],
+          "bonne": 0,
+          "note": "Hebdomadaire, imprimé sur papier recyclé de couleur, et vendu à plus de six millions d’exemplaires par semaine dans les années 1990."
+        },
+        {
+          "texte": "Quel réalisateur a fondé le studio Ghibli avec Hayao Miyazaki ?",
+          "reponses": ["Isao Takahata", "Mamoru Hosoda", "Makoto Shinkai", "Satoshi Kon"],
+          "bonne": 0,
+          "note": "Auteur du « Tombeau des lucioles », que beaucoup citent comme le film d’animation le plus dur jamais réalisé."
+        },
+        {
+          "texte": "Que désigne le mot « mangaka » ?",
+          "reponses": [
+            "L’auteur d’un manga",
+            "Un fan de manga",
+            "Une librairie spécialisée",
+            "Un studio d’animation"
+          ],
+          "bonne": 0,
+          "note": "Le suffixe « -ka » marque le spécialiste. Un mangaka rend en moyenne dix-neuf pages par semaine, dessin et scénario compris."
+        },
+        {
+          "texte": "Quel manga de Naoki Urasawa suit un chirurgien poursuivi par un ancien patient ?",
+          "reponses": ["Monster", "Pluto", "Billy Bat", "Asadora"],
+          "bonne": 0,
+          "note": "L’histoire se déroule en Allemagne, juste après la chute du Mur, et se lit comme un roman policier européen plus que comme un manga."
+        }
+      ]
+    }
+  ]
+}

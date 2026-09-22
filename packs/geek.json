@@ -1,0 +1,379 @@
+{
+  "id": "geek",
+  "nom": "Geek",
+  "emoji": "🕹️",
+  "resume": "Science-fiction, jeux vidéo, super-héros et petites histoires d’informatique. Trente questions pour celui qui corrige tout le monde depuis le début de la soirée.",
+  "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.geek",
+  "questions": [
+    {
+      "id": "gek-01",
+      "theme": "cinema",
+      "texte": "Dans « Star Wars », quel est le véritable nom de Dark Vador ?",
+      "reponses": ["Anakin Skywalker", "Obi-Wan Kenobi", "Ben Solo", "Sheev Palpatine"],
+      "bonne": 0,
+      "note": "L’acteur qui portait le costume ne l’a appris qu’en voyant le film : la réplique tournée sur le plateau disait tout autre chose."
+    },
+    {
+      "id": "gek-02",
+      "theme": "culture",
+      "texte": "Dans « Le Guide du voyageur galactique », quelle est la réponse à la grande question sur la vie, l’univers et le reste ?",
+      "reponses": ["42", "7", "0", "1 000"],
+      "bonne": 0,
+      "note": "Sept millions et demi d’années de calcul pour ce résultat — le problème étant que plus personne ne se souvenait de la question."
+    },
+    {
+      "id": "gek-03",
+      "theme": "cinema",
+      "texte": "Dans « Matrix », quelle pilule Neo avale-t-il ?",
+      "reponses": ["La rouge", "La bleue", "La verte", "La blanche"],
+      "bonne": 0,
+      "note": "La bleue le renvoyait à sa vie ordinaire. Le choix est devenu une métaphore employée partout, y compris par des gens qui n’ont jamais vu le film."
+    },
+    {
+      "id": "gek-04",
+      "theme": "marques",
+      "texte": "À quoi le langage de programmation Python doit-il son nom ?",
+      "reponses": [
+        "À la troupe des Monty Python",
+        "Au serpent",
+        "À un dieu grec",
+        "Aux initiales de son auteur"
+      ],
+      "bonne": 0,
+      "note": "Son créateur lisait les scripts du « Flying Circus » pendant les fêtes de Noël 1989. Le serpent n’est arrivé qu’après, sur les logos."
+    },
+    {
+      "id": "gek-05",
+      "theme": "insolite",
+      "texte": "Quel animal a été retrouvé coincé dans un ordinateur en 1947, donnant sa légende au mot « bug » ?",
+      "reponses": ["Un papillon de nuit", "Une araignée", "Un cafard", "Une fourmi"],
+      "bonne": 0,
+      "note": "Collé dans le journal de bord du Mark II avec la mention « premier cas réel de bug trouvé ». Le mot, lui, existait déjà du temps d’Edison."
+    },
+    {
+      "id": "gek-06",
+      "theme": "cinema",
+      "texte": "Dans « Le Seigneur des anneaux », qui a forgé l’Anneau unique ?",
+      "reponses": ["Sauron", "Saroumane", "Gandalf", "Isildur"],
+      "bonne": 0,
+      "note": "Forgé en secret dans la Montagne du Destin, ce qui est aussi le seul endroit où il peut être détruit. Toute l’histoire tient dans cette symétrie."
+    },
+    {
+      "id": "gek-07",
+      "theme": "annees2000",
+      "texte": "Quel jeu lancé en 2009 fait bâtir un monde entier en cubes ?",
+      "reponses": ["Minecraft", "Roblox", "Terraria", "Fortnite"],
+      "bonne": 0,
+      "note": "Vendu inachevé dès la première année, ce qui a financé la suite. C’est aujourd’hui le jeu vidéo le plus vendu de l’histoire."
+    },
+    {
+      "id": "gek-08",
+      "theme": "cinema",
+      "texte": "Quel super-héros Marvel est un milliardaire enfermé dans une armure ?",
+      "reponses": ["Iron Man", "Batman", "Ant-Man", "Black Panther"],
+      "bonne": 0,
+      "note": "Batman est un milliardaire, mais chez le concurrent : il appartient à DC. La confusion vaut chaque année des disputes de comptoir."
+    },
+    {
+      "id": "gek-09",
+      "theme": "marques",
+      "texte": "Quelle entreprise a créé la PlayStation ?",
+      "reponses": ["Sony", "Sega", "Nintendo", "Panasonic"],
+      "bonne": 0,
+      "note": "Elle devait être un lecteur de CD pour Nintendo. L’accord a capoté, et Sony a sorti la console seul — une des ruptures les plus coûteuses du secteur."
+    },
+    {
+      "id": "gek-10",
+      "theme": "cinema",
+      "texte": "Dans « Doctor Who », comment s’appelle la machine à voyager dans le temps ?",
+      "reponses": ["Le TARDIS", "Le Delorean", "Le Continuum", "Le Chronos"],
+      "bonne": 0,
+      "note": "Elle est bloquée sous la forme d’une cabine de police bleue depuis 1963 : le circuit qui devait la déguiser est tombé en panne dès le deuxième épisode."
+    },
+    {
+      "id": "gek-11",
+      "theme": "cinema",
+      "texte": "Dans « Retour vers le futur », en quelle année Marty atterrit-il d’abord ?",
+      "reponses": ["1955", "1885", "2015", "1945"],
+      "bonne": 0,
+      "note": "Trente ans avant 1985, l’année du tournage. Les deux autres dates, 2015 et 1885, arrivent dans les suites."
+    },
+    {
+      "id": "gek-12",
+      "theme": "culture",
+      "texte": "Quel métier J. R. R. Tolkien exerçait-il à Oxford ?",
+      "reponses": [
+        "Professeur de langues anciennes",
+        "Médecin",
+        "Ingénieur",
+        "Bibliothécaire"
+      ],
+      "bonne": 0,
+      "note": "Il a inventé ses langues elfiques d’abord, et la Terre du Milieu ensuite, pour donner à ces langues un endroit où être parlées."
+    },
+    {
+      "id": "gek-13",
+      "theme": "marques",
+      "texte": "De quel mot le nom « Google » est-il une déformation ?",
+      "reponses": ["Googol", "Goggles", "Gogol", "Googie"],
+      "bonne": 0,
+      "note": "Un googol, c’est un 1 suivi de cent zéros. L’orthographe fautive vient du dépôt du nom de domaine, jamais corrigé depuis."
+    },
+    {
+      "id": "gek-14",
+      "theme": "cinema",
+      "texte": "À bord de quel vaisseau se déroule le premier « Alien » ?",
+      "reponses": ["Le Nostromo", "Le Sulaco", "Le Serenity", "Le Rocinante"],
+      "bonne": 0,
+      "note": "Nommé d’après un roman de Joseph Conrad, comme plusieurs vaisseaux de la saga. Le Sulaco, dans « Aliens », vient du même livre."
+    },
+    {
+      "id": "gek-15",
+      "theme": "culture",
+      "texte": "Quel jeu de rôle créé en 1974 se joue avec un dé à vingt faces ?",
+      "reponses": ["Donjons & Dragons", "Warhammer", "L’Appel de Cthulhu", "Shadowrun"],
+      "bonne": 0,
+      "note": "Il a été accusé dans les années 1980 de pousser au satanisme, ce qui lui a offert la meilleure campagne de publicité de son histoire."
+    },
+    {
+      "id": "gek-16",
+      "theme": "annees2000",
+      "texte": "Quel jeu de 2016 a envoyé des millions de personnes capturer des créatures dans la rue ?",
+      "reponses": ["Pokémon GO", "Ingress", "Harry Potter Wizards Unite", "Zombies, Run!"],
+      "bonne": 0,
+      "note": "Il reposait sur les cartes d’un jeu précédent du même studio, qui avait passé quatre ans à faire cartographier le monde par ses joueurs."
+    },
+    {
+      "id": "gek-17",
+      "theme": "marques",
+      "texte": "Quelle entreprise a racheté Marvel en 2009 ?",
+      "reponses": ["Disney", "Warner", "Sony", "Netflix"],
+      "bonne": 0,
+      "note": "Quatre milliards de dollars, jugés déraisonnables à l’époque. La saga des Avengers en a rapporté plusieurs fois autant."
+    },
+    {
+      "id": "gek-18",
+      "theme": "mots",
+      "texte": "Que veut dire qu’un logiciel est « open source » ?",
+      "reponses": [
+        "Son code est consultable par tous",
+        "Il est forcément gratuit",
+        "Il fonctionne sans internet",
+        "Il n’a pas de propriétaire"
+      ],
+      "bonne": 0,
+      "note": "Ouvert ne veut pas dire gratuit, ni sans règles : les licences libres imposent souvent de partager à son tour ce qu’on modifie."
+    },
+    {
+      "id": "gek-19",
+      "theme": "cinema",
+      "texte": "Dans « Dune », quelle substance ne se trouve que sur la planète Arrakis ?",
+      "reponses": ["L’Épice", "Le Cristal", "Le Naquadah", "L’Unobtainium"],
+      "bonne": 0,
+      "note": "Elle permet la navigation spatiale, prolonge la vie et rend dépendant. Frank Herbert l’a écrite en 1965 en pensant au pétrole."
+    },
+    {
+      "id": "gek-20",
+      "theme": "sport",
+      "texte": "Quel jeu vidéo remplit des stades entiers pour sa finale mondiale annuelle ?",
+      "reponses": ["League of Legends", "FIFA", "Tetris", "Mario Kart"],
+      "bonne": 0,
+      "note": "La finale 2017 s’est tenue dans le Nid d’oiseau de Pékin, celui des Jeux olympiques. Des dizaines de millions de personnes la suivent en ligne."
+    },
+    {
+      "id": "gek-21",
+      "theme": "culture",
+      "texte": "Quel test, imaginé en 1950, évalue si une machine peut se faire passer pour un humain ?",
+      "reponses": ["Le test de Turing", "Le test de Voight-Kampff", "Le test de Gödel", "Le test de Shannon"],
+      "bonne": 0,
+      "note": "Le test de Voight-Kampff, lui, est celui de « Blade Runner » : une invention de fiction, calquée sur celle-ci."
+    },
+    {
+      "id": "gek-22",
+      "theme": "marques",
+      "type": "estimation",
+      "texte": "Combien coûtait l’Apple I, en dollars, à sa sortie en 1976 ?",
+      "valeur": 666,
+      "unite": "dollars",
+      "note": "Six cent soixante-six dollars et soixante-six cents. Ses créateurs ont juré que c’était une simple marge d’un tiers, sans arrière-pensée."
+    },
+    {
+      "id": "gek-23",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien de faces a le dé emblématique de Donjons & Dragons ?",
+      "valeur": 20,
+      "unite": "faces",
+      "note": "Vingt. Un 20 naturel est une réussite éclatante, un 1 une catastrophe — et c’est la seule règle que tout le monde connaît."
+    },
+    {
+      "id": "gek-24",
+      "theme": "marques",
+      "type": "estimation",
+      "texte": "Combien de bits affichait fièrement la Super Nintendo sur sa boîte ?",
+      "valeur": 16,
+      "unite": "bits",
+      "note": "Seize, contre huit pour la génération précédente. Le nombre de bits a servi d’argument de vente jusqu’à ce qu’il ne veuille plus rien dire."
+    },
+    {
+      "id": "gek-25",
+      "theme": "cinema",
+      "type": "ordre",
+      "texte": "Ces quatre films, dans l’ordre de sortie",
+      "elements": ["Star Wars", "Blade Runner", "Matrix", "Avatar"],
+      "note": "1977, 1982, 1999, 2009. « Blade Runner » a été un échec commercial complet, et met vingt ans à devenir un classique."
+    },
+    {
+      "id": "gek-26",
+      "theme": "marques",
+      "type": "ordre",
+      "texte": "Les consoles, dans l’ordre d’apparition",
+      "elements": ["La NES", "La PlayStation", "La Xbox", "La Nintendo Switch"],
+      "note": "1983, 1994, 2001, 2017. La NES a relancé un marché que le krach du jeu vidéo de 1983 avait laissé pour mort aux États-Unis."
+    },
+    {
+      "id": "gek-27",
+      "theme": "culture",
+      "type": "rafale",
+      "texte": "Culture geek",
+      "affirmations": [
+        { "texte": "La réponse à la grande question est 42.", "vrai": true },
+        { "texte": "Le langage Python doit son nom aux Monty Python.", "vrai": true },
+        { "texte": "Le mot « bug » est lié à un vrai insecte retrouvé dans une machine.", "vrai": true },
+        { "texte": "« Star Wars » se déroule dans le futur.", "vrai": false },
+        { "texte": "Tolkien a écrit « Le Seigneur des anneaux » avant « Bilbo le Hobbit ».", "vrai": false }
+      ],
+      "note": "« Il y a bien longtemps, dans une galaxie lointaine » : c’est le passé. Et « Bilbo » date de 1937, « Le Seigneur des anneaux » de 1954."
+    },
+    {
+      "id": "gek-28",
+      "theme": "marques",
+      "type": "rafale",
+      "texte": "Jeux vidéo",
+      "affirmations": [
+        { "texte": "Minecraft est le jeu le plus vendu de l’histoire.", "vrai": true },
+        { "texte": "Tetris a été créé en Union soviétique.", "vrai": true },
+        { "texte": "La Nintendo Switch se joue aussi bien sur un téléviseur qu’en portable.", "vrai": true },
+        { "texte": "Sega fabrique encore des consoles.", "vrai": false },
+        { "texte": "Pac-Man est un jeu américain.", "vrai": false }
+      ],
+      "note": "Sega a arrêté après la Dreamcast, en 2001, et ne fait plus que des jeux. Pac-Man est japonais, sorti en 1980 chez Namco."
+    },
+    {
+      "id": "gek-29",
+      "theme": "cinema",
+      "type": "mix",
+      "texte": "Un film ou une série de science-fiction",
+      "acceptees": [
+        { "titre": "Star Wars", "artiste": "George Lucas" },
+        { "titre": "Blade Runner", "artiste": "Ridley Scott" },
+        { "titre": "Alien", "artiste": "Ridley Scott" },
+        { "titre": "Seul sur Mars", "artiste": "Ridley Scott" },
+        { "titre": "Matrix", "artiste": "Les Wachowski" },
+        { "titre": "Retour vers le futur", "artiste": "Robert Zemeckis" },
+        { "titre": "E.T. l’extra-terrestre", "artiste": "Steven Spielberg" },
+        { "titre": "Jurassic Park", "artiste": "Steven Spielberg" },
+        { "titre": "Minority Report", "artiste": "Steven Spielberg" },
+        { "titre": "Terminator", "artiste": "James Cameron" },
+        { "titre": "Aliens", "artiste": "James Cameron" },
+        { "titre": "Avatar", "artiste": "James Cameron" },
+        { "titre": "Interstellar", "artiste": "Christopher Nolan" },
+        { "titre": "Inception", "artiste": "Christopher Nolan" },
+        { "titre": "Tenet", "artiste": "Christopher Nolan" },
+        { "titre": "Dune", "artiste": "Denis Villeneuve" },
+        { "titre": "Premier Contact", "artiste": "Denis Villeneuve" },
+        { "titre": "2001, l’Odyssée de l’espace", "artiste": "Stanley Kubrick" },
+        { "titre": "Orange mécanique", "artiste": "Stanley Kubrick" },
+        { "titre": "Gravity", "artiste": "Alfonso Cuarón" },
+        { "titre": "Ex Machina", "artiste": "Alex Garland" },
+        { "titre": "District 9", "artiste": "Neill Blomkamp" },
+        { "titre": "Le Cinquième Élément", "artiste": "Luc Besson" },
+        { "titre": "Bienvenue à Gattaca", "artiste": "Andrew Niccol" },
+        { "titre": "Stranger Things", "artiste": "Les frères Duffer" },
+        { "titre": "Black Mirror", "artiste": "Charlie Brooker" },
+        { "titre": "Doctor Who", "artiste": "BBC" },
+        { "titre": "Star Trek", "artiste": "Gene Roddenberry" },
+        { "titre": "Battlestar Galactica", "artiste": "Ronald D. Moore" },
+        { "titre": "The Mandalorian", "artiste": "Jon Favreau" },
+        { "titre": "Firefly", "artiste": "Joss Whedon" },
+        { "titre": "Westworld", "artiste": "Nolan et Joy" }
+      ],
+      "note": "Trente-deux titres acceptés. « 2001 » est sorti un an avant que le premier homme ne marche sur la Lune, et n’a presque pas vieilli."
+    },
+    {
+      "id": "gek-30",
+      "theme": "culture",
+      "type": "ttmc",
+      "texte": "Geek — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "Dans « Star Wars », que dit-on pour souhaiter bonne chance ?",
+          "reponses": [
+            "Que la Force soit avec toi",
+            "Vis longtemps et prospère",
+            "Winter is coming",
+            "Ainsi soit-il"
+          ],
+          "bonne": 0,
+          "note": "« Vis longtemps et prospère » vient de « Star Trek » : confondre les deux sagas est le meilleur moyen de se fâcher avec la table."
+        },
+        {
+          "texte": "De quelle couleur est le sabre laser de Dark Vador ?",
+          "reponses": ["Rouge", "Bleu", "Vert", "Violet"],
+          "bonne": 0,
+          "note": "Rouge du côté obscur, bleu et vert chez les Jedi. Un seul personnage porte un sabre violet, et c’est parce que l’acteur l’avait demandé."
+        },
+        {
+          "texte": "Quel personnage de Nintendo porte une casquette rouge avec un M ?",
+          "reponses": ["Mario", "Luigi", "Wario", "Yoshi"],
+          "bonne": 0,
+          "note": "Luigi porte un L et du vert, Wario un W et du jaune. Le M et le L ont été inversés dans plusieurs traductions des années 1980."
+        },
+        {
+          "texte": "Dans « Harry Potter », comment s’appelle l’école de sorcellerie ?",
+          "reponses": ["Poudlard", "Beauxbâtons", "Durmstrang", "Ilvermorny"],
+          "bonne": 0,
+          "note": "« Hogwarts » en anglais, soit « verrues de cochon ». La traduction française a préféré un mot qui sonne comme un vieux château."
+        },
+        {
+          "texte": "Quel réseau a rendu les ordinateurs du monde entier capables de se parler ?",
+          "reponses": ["Internet", "Le Bluetooth", "Le Wi-Fi", "Le GPS"],
+          "bonne": 0,
+          "note": "Son ancêtre, Arpanet, reliait quatre ordinateurs en 1969. Le premier message envoyé devait dire « LOGIN » : la machine a planté après deux lettres."
+        },
+        {
+          "texte": "Quel personnage de « Star Trek » a les oreilles pointues et ne montre aucune émotion ?",
+          "reponses": ["Spock", "Data", "Worf", "Scotty"],
+          "bonne": 0,
+          "note": "Data, lui, est un androïde qui rêve justement d’éprouver des émotions : les deux personnages sont construits en miroir l’un de l’autre."
+        },
+        {
+          "texte": "Quelle entreprise a créé le système d’exploitation Windows ?",
+          "reponses": ["Microsoft", "IBM", "Apple", "Xerox"],
+          "bonne": 0,
+          "note": "L’idée des fenêtres et de la souris vient des laboratoires de Xerox, qui n’a jamais su quoi en faire commercialement."
+        },
+        {
+          "texte": "Dans « Le Seigneur des anneaux », quel peuple habite la Comté ?",
+          "reponses": ["Les Hobbits", "Les Elfes", "Les Nains", "Les Ents"],
+          "bonne": 0,
+          "note": "Tolkien les décrivait comme des Anglais de la campagne miniaturisés — jusqu’aux six repas par jour et au goût pour la pipe."
+        },
+        {
+          "texte": "Quel jeu de 1984, né en Union soviétique, empile des pièces de quatre carrés ?",
+          "reponses": ["Tetris", "Columns", "Puyo Puyo", "Lumines"],
+          "bonne": 0,
+          "note": "Son auteur n’a touché aucun droit pendant dix ans : le jeu appartenait à l’État soviétique, et la bataille juridique a duré des années."
+        },
+        {
+          "texte": "Quelle loi énoncée en 1965 prévoit le doublement régulier du nombre de transistors ?",
+          "reponses": ["La loi de Moore", "La loi de Metcalfe", "La loi d’Amdahl", "La loi de Wirth"],
+          "bonne": 0,
+          "note": "Tous les deux ans environ. Ce n’est pas une loi physique mais une prévision d’industriel, devenue une feuille de route que le secteur a suivie."
+        }
+      ]
+    }
+  ]
+}

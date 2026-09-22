@@ -1,0 +1,383 @@
+{
+  "id": "jeux-societe",
+  "nom": "Jeux de société modernes",
+  "emoji": "🎲",
+  "resume": "Catane, Dixit, Pandemic, Wingspan et les autres. Le pack qui départage enfin celui qui possède l’étagère et celui qui lit vraiment les règles.",
+  "prix": "3,99 €",
+  "produitApple": "fr.quizentreamis.pack.jeuxsociete",
+  "questions": [
+    {
+      "id": "jds-01",
+      "theme": "culture",
+      "texte": "Quel jeu allemand de 1995 fait coloniser une île avec du bois, de l’argile et du blé ?",
+      "reponses": ["Les Colons de Catane", "Agricola", "Puerto Rico", "Small World"],
+      "bonne": 0,
+      "note": "Son auteur était prothésiste dentaire et concevait des jeux le soir. Catane a vendu plus de trente millions de boîtes et ouvert le marché moderne."
+    },
+    {
+      "id": "jds-02",
+      "theme": "culture",
+      "texte": "Dans « Dixit », sur quoi les joueurs votent-ils ?",
+      "reponses": ["Une carte illustrée", "Un mot écrit", "Un dé", "Une tuile"],
+      "bonne": 0,
+      "note": "Le jeu a été imaginé par un pédopsychiatre pour faire parler ses jeunes patients. Il a ensuite gagné le Spiel des Jahres."
+    },
+    {
+      "id": "jds-03",
+      "theme": "culture",
+      "texte": "Quel jeu fait poser des wagons sur une carte pour relier des villes ?",
+      "reponses": ["Les Aventuriers du rail", "Ticket to Ride Junior", "Trans Europa", "Brass"],
+      "bonne": 0,
+      "note": "Les règles tiennent en une page, ce qui était l’objectif : son auteur voulait un jeu explicable pendant qu’on distribue les cartes."
+    },
+    {
+      "id": "jds-04",
+      "theme": "culture",
+      "texte": "Dans « Les Loups-Garous de Thiercelieux », quel rôle découvre chaque nuit l’identité d’un joueur ?",
+      "reponses": ["La Voyante", "La Sorcière", "Le Chasseur", "Cupidon"],
+      "bonne": 0,
+      "note": "C’est le rôle le plus puissant et le plus dangereux : dès qu’elle parle, elle se désigne aux loups. Savoir et se taire est tout le problème."
+    },
+    {
+      "id": "jds-05",
+      "theme": "culture",
+      "texte": "Quel jeu d’ambiance fait deviner les mêmes cartes trois fois, chaque fois avec moins de moyens ?",
+      "reponses": ["Time’s Up!", "Concept", "Just One", "Dobble"],
+      "bonne": 0,
+      "note": "D’abord une description libre, puis un seul mot, puis un mime. La troisième manche est drôle parce que la première a fatigué tout le monde."
+    },
+    {
+      "id": "jds-06",
+      "theme": "culture",
+      "texte": "Quel prix récompense chaque année le meilleur jeu de société en Allemagne ?",
+      "reponses": ["Le Spiel des Jahres", "L’As d’Or", "Le Golden Geek", "Le Kennerspiel Award"],
+      "bonne": 0,
+      "note": "Décerné depuis 1979, c’est la seule récompense capable de multiplier les ventes d’un jeu par dix en une semaine."
+    },
+    {
+      "id": "jds-07",
+      "theme": "culture",
+      "texte": "Combien d’âges compte une partie de « 7 Wonders » ?",
+      "reponses": ["Trois", "Deux", "Quatre", "Cinq"],
+      "bonne": 0,
+      "note": "Trois âges de six cartes. Tout le monde joue en même temps : une partie à sept dure autant qu’une partie à trois, ce qui était l’idée de départ."
+    },
+    {
+      "id": "jds-08",
+      "theme": "culture",
+      "texte": "Quel jeu coopératif fait combattre quatre maladies sur une carte du monde ?",
+      "reponses": ["Pandemic", "Zombicide", "Robinson Crusoé", "Horreur à Arkham"],
+      "bonne": 0,
+      "note": "Sorti en 2008, il a rendu le jeu coopératif respectable — jusque-là, on considérait qu’un jeu sans perdant n’était pas un jeu."
+    },
+    {
+      "id": "jds-09",
+      "theme": "culture",
+      "texte": "Dans « Carcassonne », comment appelle-t-on les petits pions de bois qu’on pose sur les tuiles ?",
+      "reponses": ["Des meeples", "Des pitons", "Des jetons", "Des sbires"],
+      "bonne": 0,
+      "note": "Le mot a été inventé en 2000 par une joueuse américaine, contraction de « my people ». Il est aujourd’hui employé dans le monde entier."
+    },
+    {
+      "id": "jds-10",
+      "theme": "culture",
+      "texte": "Quel jeu fait deviner des mots à deux équipes à partir d’une grille de vingt-cinq cartes ?",
+      "reponses": ["Codenames", "Similo", "Mot pour mot", "Décrypto"],
+      "bonne": 0,
+      "note": "Un seul indice, un seul nombre, et l’angoisse de faire toucher la carte noire. Son auteur tchèque l’a conçu pour des salons professionnels."
+    },
+    {
+      "id": "jds-11",
+      "theme": "histoire",
+      "texte": "De quel pays le jeu de go est-il originaire ?",
+      "reponses": ["La Chine", "Le Japon", "La Corée", "La Mongolie"],
+      "bonne": 0,
+      "note": "Plus de deux mille cinq cents ans. Le Japon l’a codifié et diffusé, ce qui explique que presque tout son vocabulaire soit japonais."
+    },
+    {
+      "id": "jds-12",
+      "theme": "culture",
+      "texte": "Quel jeu d’adresse demande de retirer des blocs de bois sans faire tomber la tour ?",
+      "reponses": ["Jenga", "Kapla", "Mikado", "Villa Paletti"],
+      "bonne": 0,
+      "note": "Son nom vient du swahili « kujenga », construire. Sa créatrice y jouait enfant au Ghana, avec des cubes de bois de récupération."
+    },
+    {
+      "id": "jds-13",
+      "theme": "culture",
+      "texte": "Dans « Splendor », que collectionne-t-on ?",
+      "reponses": ["Des pierres précieuses", "Des épices", "Des tableaux", "Des navires"],
+      "bonne": 0,
+      "note": "Les jetons sont lourds et cliquettent, ce qui n’a aucun effet sur les règles et beaucoup sur le plaisir de jouer. L’éditeur l’assume."
+    },
+    {
+      "id": "jds-14",
+      "theme": "insolite",
+      "texte": "Quel jeu célèbre a été conçu à l’origine pour dénoncer l’accaparement des terres ?",
+      "reponses": ["Le Monopoly", "Le Cluedo", "Le Risk", "Le Scrabble"],
+      "bonne": 0,
+      "note": "Elizabeth Magie a déposé « The Landlord’s Game » en 1904 pour montrer les ravages de la rente. Le message s’est perdu en route."
+    },
+    {
+      "id": "jds-15",
+      "theme": "culture",
+      "texte": "Dans « Azul », que pose-t-on sur son plateau personnel ?",
+      "reponses": [
+        "Des carreaux de faïence",
+        "Des cartes",
+        "Des cubes de ressources",
+        "Des tuiles de paysage"
+      ],
+      "bonne": 0,
+      "note": "Le jeu s’inspire des azulejos portugais, que le roi Manuel Ier fit poser dans son palais après les avoir découverts en Espagne."
+    },
+    {
+      "id": "jds-16",
+      "theme": "nature",
+      "texte": "Quel jeu de 2019 fait attirer des oiseaux dans des réserves naturelles ?",
+      "reponses": ["Wingspan", "Everdell", "Cascadia", "Fauna"],
+      "bonne": 0,
+      "note": "Son autrice a conçu le jeu pour elle-même, faute d’en trouver un sur les oiseaux. Les cartes portent des données réelles sur chaque espèce."
+    },
+    {
+      "id": "jds-17",
+      "theme": "marques",
+      "texte": "Quelle plateforme de financement participatif a fait naître une bonne part des jeux de société récents ?",
+      "reponses": ["Kickstarter", "Leetchi", "Patreon", "GoFundMe"],
+      "bonne": 0,
+      "note": "Elle permet d’imprimer une boîte pleine de figurines sans avance de trésorerie. Elle a aussi rendu normaux les jeux à trois cents euros."
+    },
+    {
+      "id": "jds-18",
+      "theme": "monde",
+      "texte": "Dans quelle ville allemande se tient le plus grand salon du jeu de société au monde ?",
+      "reponses": ["Essen", "Nuremberg", "Cologne", "Berlin"],
+      "bonne": 0,
+      "note": "Plus de deux cent mille visiteurs en quatre jours. Les éditeurs y calent la sortie de leurs nouveautés comme le cinéma cale les siennes sur Cannes."
+    },
+    {
+      "id": "jds-19",
+      "theme": "culture",
+      "texte": "Que désigne exactement le terme « jeu de deck-building » ?",
+      "reponses": [
+        "On construit son paquet de cartes en jouant",
+        "On construit un bâtiment",
+        "On joue debout",
+        "On mélange deux jeux"
+      ],
+      "bonne": 0,
+      "note": "Inventé par « Dominion » en 2008 : on commence tous avec le même paquet minable, et la partie consiste à l’améliorer carte après carte."
+    },
+    {
+      "id": "jds-20",
+      "theme": "culture",
+      "texte": "Dans « Les Aventuriers du rail », que faut-il accomplir pour marquer sur une carte Destination ?",
+      "reponses": [
+        "Relier deux villes par un chemin continu",
+        "Poser le plus de wagons",
+        "Contrôler une capitale",
+        "Traverser toute la carte"
+      ],
+      "bonne": 0,
+      "note": "Une destination non terminée retire ses points au lieu d’en donner : c’est ce qui rend la fin de partie si désagréable, et si bonne."
+    },
+    {
+      "id": "jds-21",
+      "theme": "bouffe",
+      "texte": "Quel jeu fait gérer une ferme, nourrir sa famille et labourer ses champs ?",
+      "reponses": ["Agricola", "Catane", "Carcassonne", "Cluedo"],
+      "bonne": 0,
+      "note": "Son auteur a été boulanger avant d’être auteur de jeux, ce qui s’entend dans ses thèmes : pain, fermes, récoltes et ressources qui manquent."
+    },
+    {
+      "id": "jds-22",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien de cases compte un échiquier ?",
+      "valeur": 64,
+      "unite": "cases",
+      "note": "Soixante-quatre. La légende du grain de blé doublé sur chaque case donne un total qui dépasse la production mondiale de plusieurs siècles."
+    },
+    {
+      "id": "jds-23",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien de tuiles contient la boîte de base de « Carcassonne » ?",
+      "valeur": 72,
+      "unite": "tuiles",
+      "note": "Soixante-douze, dont une posée d’avance au centre. Une partie dure donc exactement le temps de les épuiser, ni plus ni moins."
+    },
+    {
+      "id": "jds-24",
+      "theme": "culture",
+      "type": "estimation",
+      "texte": "Combien de propriétés peut-on acheter sur un plateau de Monopoly ?",
+      "valeur": 28,
+      "unite": "propriétés",
+      "note": "Vingt-deux terrains, quatre gares et deux compagnies. Les gares sont le meilleur achat du début de partie, et presque personne ne le sait."
+    },
+    {
+      "id": "jds-25",
+      "theme": "histoire",
+      "type": "ordre",
+      "texte": "Ces jeux, du plus ancien au plus récent",
+      "elements": ["Le jeu de go", "Les échecs", "Le Monopoly", "Les Colons de Catane"],
+      "note": "Environ 2500 ans, le VIe siècle, 1935 et 1995. Les deux premiers ont traversé les empires ; les deux derniers ont créé une industrie."
+    },
+    {
+      "id": "jds-26",
+      "theme": "culture",
+      "type": "ordre",
+      "texte": "Ces boîtes, dans l’ordre de sortie",
+      "elements": ["Le Trivial Pursuit", "Les Aventuriers du rail", "Dixit", "Azul"],
+      "note": "1981, 2004, 2008, 2017. Le premier a été inventé par deux Canadiens qui cherchaient des pièces manquantes de leur Scrabble."
+    },
+    {
+      "id": "jds-27",
+      "theme": "culture",
+      "type": "rafale",
+      "texte": "Le jeu de société moderne",
+      "affirmations": [
+        { "texte": "Le Spiel des Jahres est un prix allemand.", "vrai": true },
+        { "texte": "« Pandemic » se joue en coopération.", "vrai": true },
+        { "texte": "« Les Colons de Catane » a été créé en Allemagne.", "vrai": true },
+        { "texte": "Le Monopoly a été inventé pour faire l’éloge de la propriété.", "vrai": false },
+        { "texte": "« Les Aventuriers du rail » se joue avec des dés.", "vrai": false }
+      ],
+      "note": "Le Monopoly dénonçait l’accaparement des terres, et les Aventuriers du rail n’ont aucun dé : tout passe par des cartes de couleur."
+    },
+    {
+      "id": "jds-28",
+      "theme": "histoire",
+      "type": "rafale",
+      "texte": "Les jeux d’avant",
+      "affirmations": [
+        { "texte": "Au go, on pose les pierres sur les intersections, pas dans les cases.", "vrai": true },
+        { "texte": "Les échecs viennent d’Inde.", "vrai": true },
+        { "texte": "Le Scrabble a été inventé par un architecte au chômage.", "vrai": true },
+        { "texte": "Le Trivial Pursuit est un jeu français.", "vrai": false },
+        { "texte": "Le backgammon se joue sans dés.", "vrai": false }
+      ],
+      "note": "Le Trivial Pursuit est canadien, né à Montréal en 1981. Et le backgammon repose entièrement sur deux dés : c’est ce qui le rend jouable à tout âge."
+    },
+    {
+      "id": "jds-29",
+      "theme": "culture",
+      "type": "mix",
+      "texte": "Un jeu de société",
+      "acceptees": [
+        { "titre": "Les Colons de Catane", "artiste": "Klaus Teuber" },
+        { "titre": "Les Aventuriers du rail", "artiste": "Alan R. Moon" },
+        { "titre": "Carcassonne", "artiste": "Klaus-Jürgen Wrede" },
+        { "titre": "Dixit", "artiste": "Jean-Louis Roubira" },
+        { "titre": "Pandemic", "artiste": "Matt Leacock" },
+        { "titre": "7 Wonders", "artiste": "Antoine Bauza" },
+        { "titre": "Time’s Up!", "artiste": "Peter Sarrett" },
+        { "titre": "Codenames", "artiste": "Vlaada Chvátil" },
+        { "titre": "Azul", "artiste": "Michael Kiesling" },
+        { "titre": "Wingspan", "artiste": "Elizabeth Hargrave" },
+        { "titre": "Splendor", "artiste": "Marc André" },
+        { "titre": "Dominion", "artiste": "Donald X. Vaccarino" },
+        { "titre": "Agricola", "artiste": "Uwe Rosenberg" },
+        { "titre": "Terraforming Mars", "artiste": "Jacob Fryxelius" },
+        { "titre": "Puerto Rico", "artiste": "Andreas Seyfarth" },
+        { "titre": "Small World", "artiste": "Philippe Keyaerts" },
+        { "titre": "Les Loups-Garous de Thiercelieux", "artiste": "des Pallières et Marly" },
+        { "titre": "Concept", "artiste": "Rivollet et Beaujannot" },
+        { "titre": "Just One", "artiste": "Sautter et Roudy" },
+        { "titre": "Dobble", "artiste": "Denis Blanchot" },
+        { "titre": "Jungle Speed", "artiste": "Thomas Vuarchex" },
+        { "titre": "Skull", "artiste": "Hervé Marly" },
+        { "titre": "Unlock!", "artiste": "Space Cowboys" },
+        { "titre": "Le Monopoly", "artiste": "Elizabeth Magie" },
+        { "titre": "Le Trivial Pursuit", "artiste": "Haney et Abbott" },
+        { "titre": "Le Scrabble", "artiste": "Alfred Butts" },
+        { "titre": "Le Cluedo", "artiste": "Anthony Pratt" },
+        { "titre": "Le Risk", "artiste": "Albert Lamorisse" },
+        { "titre": "Le Mille Bornes", "artiste": "Edmond Dujardin" },
+        { "titre": "Le Uno", "artiste": "Merle Robbins" },
+        { "titre": "Jenga", "artiste": "Leslie Scott" },
+        { "titre": "Les échecs", "artiste": "traditionnel" },
+        { "titre": "Le jeu de go", "artiste": "traditionnel" },
+        { "titre": "Les dames", "artiste": "traditionnel" },
+        { "titre": "Le backgammon", "artiste": "traditionnel" },
+        { "titre": "Le tarot", "artiste": "traditionnel" }
+      ],
+      "note": "Trente-six titres acceptés. Le Risk a été inventé par Albert Lamorisse, réalisateur du « Ballon rouge » et Palme d’or à Cannes."
+    },
+    {
+      "id": "jds-30",
+      "theme": "culture",
+      "type": "ttmc",
+      "texte": "Jeux de société — tu te mets combien ?",
+      "note": "Chacun a répondu à sa propre question : la correction est sur votre écran.",
+      "niveaux": [
+        {
+          "texte": "Avec quoi joue-t-on au Monopoly pour avancer ?",
+          "reponses": ["Deux dés", "Une roue", "Un sablier", "Des cartes"],
+          "bonne": 0,
+          "note": "Deux dés, et un double rejoue — sauf trois fois de suite, ce qui envoie directement en prison. Peu de gens appliquent cette règle."
+        },
+        {
+          "texte": "Combien de joueurs faut-il au minimum pour une partie d’échecs ?",
+          "reponses": ["Deux", "Un", "Trois", "Quatre"],
+          "bonne": 0,
+          "note": "Deux, et c’est ce qui a rendu les échecs si pratiques à informatiser : le programme n’a qu’un seul adversaire à modéliser."
+        },
+        {
+          "texte": "Dans quel jeu crie-t-on son nom quand il ne reste qu’une carte en main ?",
+          "reponses": ["Uno", "Dobble", "Skyjo", "Jungle Speed"],
+          "bonne": 0,
+          "note": "Oublier de le crier coûte deux cartes de pénalité. La règle a été inventée par un coiffeur de l’Ohio qui fabriquait le jeu chez lui."
+        },
+        {
+          "texte": "Combien de suspects compte le Cluedo d’origine ?",
+          "reponses": ["Six", "Quatre", "Huit", "Dix"],
+          "bonne": 0,
+          "note": "Moutarde, Rose, Violet, Olive, Leblanc et Pervenche : chaque suspect porte le nom de sa couleur, et c’est tout le principe du plateau."
+        },
+        {
+          "texte": "Dans « Carcassonne », que construit-on avec les tuiles ?",
+          "reponses": ["Un paysage médiéval", "Une station spatiale", "Un métro", "Un jardin"],
+          "bonne": 0,
+          "note": "Routes, villes, abbayes et champs. Le jeu porte le nom d’une vraie cité fortifiée, dont les remparts ont été restaurés au XIXe siècle."
+        },
+        {
+          "texte": "Quel matériau est traditionnellement utilisé pour les pions de qualité ?",
+          "reponses": ["Le bois", "Le plastique", "Le verre", "Le métal"],
+          "bonne": 0,
+          "note": "Le bois reste la marque des éditions soignées, et coûte trois à quatre fois plus cher que le plastique à fabriquer et à transporter."
+        },
+        {
+          "texte": "Que désigne un jeu dit « à l’allemande » ?",
+          "reponses": [
+            "Un jeu de gestion sans élimination",
+            "Un jeu de guerre",
+            "Un jeu pour enfants",
+            "Un jeu de cartes rapide"
+          ],
+          "bonne": 0,
+          "note": "Peu de hasard, aucun joueur éliminé, une partie d’une heure. Le modèle s’est imposé en France dans les années 2000 sous ce nom."
+        },
+        {
+          "texte": "Quel jeu coopératif se joue contre un sablier et une bande sonore, en une heure ?",
+          "reponses": ["Unlock!", "Catane", "Azul", "Splendor"],
+          "bonne": 0,
+          "note": "L’escape game en boîte est né vers 2015 et a envahi les rayons en trois ans, au point d’avoir aujourd’hui sa propre étagère."
+        },
+        {
+          "texte": "Quel auteur français a signé « 7 Wonders » et « Takenoko » ?",
+          "reponses": ["Antoine Bauza", "Bruno Cathala", "Bruno Faidutti", "Ludovic Maublanc"],
+          "bonne": 0,
+          "note": "Il a été bibliothécaire avant d’être auteur. Ses jeux ont raflé le Spiel des Jahres et l’As d’Or la même année."
+        },
+        {
+          "texte": "Quel site américain classe les jeux de société par note des joueurs depuis 2000 ?",
+          "reponses": ["BoardGameGeek", "Tric Trac", "Ludovox", "Philibert"],
+          "bonne": 0,
+          "note": "Son classement fait et défait les réputations. Y figurer dans les cent premiers change la vie commerciale d’un jeu."
+        }
+      ]
+    }
+  ]
+}

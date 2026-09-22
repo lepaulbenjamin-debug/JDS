@@ -1,10 +1,10 @@
 # La fiche App Store, prête à coller
 
 Tout ce qu'App Store Connect demande, écrit d'avance. Les chiffres sont relus
-dans le code : 409 questions, 19 thèmes, 6 formes de manches, 16 joueurs, 5
-jokers, 4 fils rouges, 4 animateurs, packs à 3,99 €. Si la banque grossit, ces
-nombres changent ici aussi — une fiche qui gonfle ses chiffres se fait
-rattraper à la première partie.
+dans le code : 409 questions offertes, 19 thèmes, 6 formes de manches, 16
+joueurs, 5 jokers, 4 fils rouges, 4 animateurs, 7 packs à 3,99 €. Si la banque
+grossit, ces nombres changent ici aussi — une fiche qui gonfle ses chiffres se
+fait rattraper à la première partie.
 
 ---
 
@@ -46,8 +46,9 @@ dans le nom et le sous-titre est déjà indexé, et la place vaut cher.
 soirée à thème.*
 
 ```
-Nouveau : quatre thèmes de plus — Harry Potter, Pokémon, Serial killers et
-Géopolitique. 409 questions, et l'appli fait toujours l'animateur.
+Cinq nouveaux packs : Génération 2000-2010, En famille, Manga & anime, Geek et
+Jeux de société modernes. Toujours 409 questions offertes, et toujours
+l'appli qui fait l'animateur.
 ```
 
 ## Description
@@ -168,9 +169,17 @@ Le questionnaire se remplit honnêtement, et deux réponses ne vont pas de soi :
 - **Alcool, tabac ou drogues — « peu fréquents / légers ».** Quelques questions
   parlent de vin ou de cocktails.
 
-Le reste est à « aucun ». Le résultat attendu est **12+**. Viser 4+ en
-répondant « aucun » partout serait une fausse déclaration, et c'est le genre
-d'écart qui se paie au contrôle suivant.
+Le reste est à « aucun ». Viser 4+ en répondant « aucun » partout serait une
+fausse déclaration, et c'est le genre d'écart qui se paie au contrôle suivant.
+
+**Résultat obtenu :** **12+** dans 172 pays, 13+ dans quelques-uns, **A14** au
+Brésil, 12+ au Vietnam et en Corée du Sud. Conforme à ce qui était prévu.
+
+Cette classification a une conséquence sur la boutique, et c'est pour ça
+qu'elle est écrite ici : **aucun pack ne doit annoncer un âge inférieur à 12
+ans**. Le pack familial s'appelle donc « En famille », sans mention d'âge — un
+produit vendu « dès 8 ans » à l'intérieur d'une application classée 12+ est une
+contradiction que l'examinateur voit avant nous.
 
 ---
 
@@ -185,16 +194,26 @@ reste est à « non collecté ».
 
 ## Les achats intégrés
 
-Deux produits non consommables. Chacun demande un nom d'affichage, une
-description, une capture d'écran de revue et un prix.
+Sept produits non consommables, un par pack. Chacun demande un nom d'affichage,
+une description, une capture d'écran de revue et un prix.
 
 | Identifiant | Nom affiché | Description |
 |---|---|---|
 | `fr.quizentreamis.pack.annees80_90` | Pack Années 80-90 | 30 questions sur les années 80 et 90 : Walkman, Minitel, Dragon Ball et disquettes. Pour ceux qui ont connu, et pour ceux qui feront semblant. |
 | `fr.quizentreamis.pack.noel` | Pack Spécial Noël | 30 questions de Noël : traditions, films, chansons et repas de fête. De quoi occuper la table entre la dinde et la bûche. |
+| `fr.quizentreamis.pack.generation2000` | Pack Génération 2000-2010 | 30 questions sur la décennie du MSN, du Skyblog et du premier iPhone. Pour ceux qui ont eu vingt ans avant le smartphone. |
+| `fr.quizentreamis.pack.enfamille` | Pack En famille | 30 questions que les plus jeunes peuvent gagner, et des explications que les adultes ne connaissaient pas. Le pack où les petits battent les grands. |
+| `fr.quizentreamis.pack.manga` | Pack Manga & anime | 30 questions du Club Dorothée à Jujutsu Kaisen. De quoi départager ceux qui ont lu et ceux qui regardaient par-dessus l'épaule. |
+| `fr.quizentreamis.pack.geek` | Pack Geek | 30 questions de science-fiction, de jeux vidéo, de super-héros et d'histoire de l'informatique. Pour celui qui corrige tout le monde depuis le début de la soirée. |
+| `fr.quizentreamis.pack.jeuxsociete` | Pack Jeux de société modernes | 30 questions sur Catane, Dixit, Pandemic, Wingspan et les autres. Le pack qui départage celui qui possède l'étagère et celui qui lit les règles. |
 
 Prix : palier 3,99 €. La capture de revue peut être celle de la boutique dans
-les réglages de la partie — Apple veut voir où le produit est proposé.
+les réglages de la partie — Apple veut voir où le produit est proposé, et la
+même capture sert pour les sept.
+
+Les identifiants n'ont ni tiret ni accent : App Store Connect les refuse, et le
+refus tombe au moment de créer le produit, pas à l'écriture du pack. Un test
+(`scripts/check-quiz.mjs`) le vérifie à chaque exécution.
 
 ---
 
