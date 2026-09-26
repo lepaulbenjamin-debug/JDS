@@ -72,7 +72,8 @@ node -v                    # doit afficher 22 ou plus (exigence de Capacitor 8)
 npm install
 rm -rf ios                 # seulement si un essai précédent en a laissé un
 npm run ios:add            # c'est cette commande qui crée ios/
-cp apple/AchatsPlugin.swift apple/SessionAudio.swift ios/App/App/
+cp apple/*.swift apple/PrivacyInfo.xcprivacy ios/App/App/
+rm ios/App/App/AppDelegate-exemple.swift   # un modèle à lire, pas à compiler
 npm run ios:sync           # rebâtit le paquet web, puis le synchronise
 npm run ios:open
 ```
