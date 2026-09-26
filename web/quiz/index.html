@@ -73,6 +73,15 @@
   <section class="screen" data-screen="reglages" hidden>
     <h2 class="screen-title">La partie</h2>
 
+    <!-- N'apparaît qu'une fois un pack installé : une seule ligne « Jeu de
+         base » n'apprendrait rien à personne. -->
+    <section id="bloc-packs" hidden>
+      <h3 class="section-title">D’où viennent les questions</h3>
+      <p class="muted small">Aucun de coché : on pioche partout.</p>
+      <div id="choix-sources" class="chip-row"></div>
+      <p id="note-sources" class="muted small"></p>
+    </section>
+
     <h3 class="section-title">Thèmes</h3>
     <p class="muted small">Aucun de coché : on pioche dans tout.</p>
     <div id="choix-themes" class="chip-row"></div>

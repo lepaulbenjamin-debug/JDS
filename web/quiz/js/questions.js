@@ -39,6 +39,7 @@ export const THEMES = [
   { id: 'pokemon', nom: 'Pokémon', emoji: '⚡' },
   { id: 'crimes', nom: 'Serial killers', emoji: '🔎' },
   { id: 'geopolitique', nom: 'Géopolitique', emoji: '🌐' },
+  { id: 'telerealite', nom: 'Télé-réalité', emoji: '📺' },
 ];
 
 export const QUESTIONS = [
@@ -4065,6 +4066,167 @@ export const QUESTIONS = [
     note: 'Il aurait fait garder ses champs le jour et laissé les voleurs se servir la nuit, le temps de rendre le tubercule désirable.',
   },
   {
+    id: 'tel-01', theme: 'telerealite',
+    niveau: 1,
+    texte: 'Comment appelle-t-on les candidats de « Koh-Lanta » ?',
+    reponses: ['Des aventuriers', 'Des explorateurs', 'Des naufragés', 'Des survivants'],
+    bonne: 0,
+    note: 'Jamais « candidats » à l’antenne. Le vocabulaire fait partie du format : on n’y joue pas, on y survit.',
+  },
+  {
+    id: 'tel-02', theme: 'telerealite',
+    niveau: 1,
+    texte: 'Dans « Koh-Lanta », que remporte l’équipe qui gagne l’épreuve de confort ou d’immunité ?',
+    reponses: ['Un totem', 'Une carte au trésor', 'Une clé', 'Un drapeau'],
+    bonne: 0,
+    note: 'Le totem d’immunité épargne le conseil. C’est l’objet le plus filmé de l’émission, et il ne sert qu’une fois.',
+  },
+  {
+    id: 'tel-03', theme: 'telerealite',
+    niveau: 1,
+    texte: 'Dans « The Voice », comment les coachs découvrent-ils les candidats au premier tour ?',
+    reponses: ['Dos tourné, sans les voir', 'Sur dossier', 'Par vidéo', 'En répétition'],
+    bonne: 0,
+    note: 'L’audition à l’aveugle est l’argument du format : on choisit sur la voix, et le fauteuil ne se retourne qu’après.',
+  },
+  {
+    id: 'tel-04', theme: 'telerealite',
+    niveau: 1,
+    texte: 'Dans « Top Chef », que jouent les candidats éliminés pour rester dans le concours ?',
+    reponses: ['La dernière chance', 'Le repêchage', 'La finale B', 'Le duel des chefs'],
+    bonne: 0,
+    note: 'Un plat en un temps très court, jugé à l’aveugle. C’est souvent là que se révèlent ceux qui iront loin.',
+  },
+  {
+    id: 'tel-05', theme: 'telerealite',
+    niveau: 1,
+    texte: 'Quelle émission fait rencontrer des agriculteurs et des prétendants venus par courrier ?',
+    reponses: ['L’amour est dans le pré', 'Le Bachelor', 'Mariés au premier regard', 'Les Cœurs solitaires'],
+    bonne: 0,
+    note: 'Adaptée d’un format britannique, elle a produit plus de mariages et d’enfants que toutes les autres émissions de rencontre réunies.',
+  },
+  {
+    id: 'tel-06', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Dans « Pékin Express », de quelle somme les binômes disposent-ils par jour et par personne ?',
+    reponses: ['1 euro', '5 euros', '10 euros', 'Rien du tout'],
+    bonne: 0,
+    note: 'Un euro par jour : tout le reste — le transport, les repas, le toit — se demande aux habitants. C’est le vrai sujet de l’émission.',
+  },
+  {
+    id: 'tel-07', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Quelle émission enferme des candidats dans une maison où chacun cache un secret ?',
+    reponses: ['Secret Story', 'Loft Story', 'Big Brother', 'La Villa des cœurs brisés'],
+    bonne: 0,
+    note: 'La Voix, personnage invisible, mène le jeu. Le format a été inventé en France, ce qui est rare : presque tous les autres sont importés.',
+  },
+  {
+    id: 'tel-08', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Dans « Danse avec les stars », avec qui chaque célébrité fait-elle équipe ?',
+    reponses: ['Un danseur professionnel', 'Une autre célébrité', 'Un membre du jury', 'Un téléspectateur'],
+    bonne: 0,
+    note: 'Le professionnel chorégraphie, porte et rattrape. Il n’est pas noté, alors qu’il fait la moitié du numéro.',
+  },
+  {
+    id: 'tel-09', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Quelle émission de W9 suit une bande de jeunes en villa, saison après saison ?',
+    reponses: ['Les Marseillais', 'Les Ch’tis', 'La Villa', 'Les Anges'],
+    bonne: 0,
+    note: 'Née en 2012, elle a essaimé partout : Cancún, Dubaï, l’Afrique du Sud. Le lieu change, le principe non.',
+  },
+  {
+    id: 'tel-10', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Quelle émission de M6 fait s’affronter des pâtissiers amateurs sous une tente ?',
+    reponses: ['Le Meilleur Pâtissier', 'Top Chef', 'Objectif Top Chef', 'Cauchemar en cuisine'],
+    bonne: 0,
+    note: 'Adaptée du « Great British Bake Off ». Son succès tient à ce qu’il ne s’y passe presque rien : personne ne se dispute, et c’est reposant.',
+  },
+  {
+    id: 'tel-11', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Dans « Koh-Lanta », quelle épreuve oppose traditionnellement les deux derniers aventuriers ?',
+    reponses: ['Les poteaux', 'Le parcours du combattant', 'Le radeau', 'Le labyrinthe'],
+    bonne: 0,
+    note: 'Debout sur un poteau planté dans l’eau, parfois plus de deux heures. L’épreuve ne demande aucune force, seulement de ne pas bouger.',
+  },
+  {
+    id: 'tel-12', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Quelle émission fait rénover et revendre des logements par des candidats ?',
+    reponses: ['Maison à vendre', 'D&CO', 'Chasseurs d’appart’', 'Recherche appartement ou maison'],
+    bonne: 0,
+    note: 'Stéphane Plaza y est devenu si populaire qu’il a donné son nom à un réseau d’agences immobilières — le chemin inverse de l’habitude.',
+  },
+  {
+    id: 'tel-13', theme: 'telerealite',
+    niveau: 2,
+    texte: 'Dans « Mariés au premier regard », sur quoi repose l’appariement des candidats ?',
+    reponses: [
+      'Des tests scientifiques',
+      'Le vote du public',
+      'Le choix d’un jury',
+      'Le hasard intégral',
+    ],
+    bonne: 0,
+    note: 'Des questionnaires de compatibilité analysés par des spécialistes. Les couples se découvrent devant le maire, et le mariage est bien réel.',
+  },
+  {
+    id: 'tel-14', theme: 'telerealite',
+    niveau: 3,
+    texte: 'Qui présentait « Loft Story » sur M6 en 2001 ?',
+    reponses: ['Benjamin Castaldi', 'Arthur', 'Christophe Dechavanne', 'Jean-Luc Delarue'],
+    bonne: 0,
+    note: 'Il enchaînera ensuite sur « Secret Story » pendant onze saisons : une carrière entière bâtie sur des gens enfermés dans une maison.',
+  },
+  {
+    id: 'tel-15', theme: 'telerealite',
+    niveau: 3,
+    texte: 'De quel pays vient « Big Brother », le format dont « Loft Story » est une adaptation ?',
+    reponses: ['Les Pays-Bas', 'Le Royaume-Uni', 'Les États-Unis', 'La Suède'],
+    bonne: 0,
+    note: 'Créé par Endemol en 1999. Le nom vient du roman « 1984 » d’Orwell, ce qui n’a gêné personne.',
+  },
+  {
+    id: 'tel-16', theme: 'telerealite',
+    niveau: 3,
+    texte: 'Quelle émission américaine fait s’affronter des créateurs de mode sous l’œil de Heidi Klum ?',
+    reponses: ['Project Runway', 'America’s Next Top Model', 'The Hills', 'Making the Cut'],
+    bonne: 0,
+    note: 'Sa formule de renvoi — « Auf Wiedersehen » — est devenue une réplique culte. Klum a ensuite quitté l’émission pour en créer une concurrente.',
+  },
+  {
+    id: 'tel-17', theme: 'telerealite',
+    type: 'estimation',
+    texte: 'Combien d’euros remporte le vainqueur de « Koh-Lanta » ?',
+    valeur: 100000,
+    unite: 'euros',
+    note: 'Cent mille euros, votés par le jury final — les aventuriers éliminés. On ne gagne donc pas contre eux, mais grâce à eux.',
+  },
+  {
+    id: 'tel-18', theme: 'telerealite',
+    type: 'ordre',
+    texte: 'Ces émissions, de la plus ancienne à la plus récente',
+    elements: ['Loft Story', 'Secret Story', 'Top Chef', 'Les Marseillais'],
+    note: '2001, 2007, 2010 et 2012. Onze ans pour passer de l’enfermement filmé au concours de métier : la télé-réalité a changé de sujet.',
+  },
+  {
+    id: 'tel-19', theme: 'telerealite',
+    type: 'rafale',
+    texte: 'Télé-réalité',
+    affirmations: [
+      { texte: 'Dans « The Voice », les coachs commencent dos aux candidats.', vrai: true },
+      { texte: '« Big Brother » a été créé aux Pays-Bas.', vrai: true },
+      { texte: 'Dans « Pékin Express », les binômes voyagent avec un euro par jour.', vrai: true },
+      { texte: '« Koh-Lanta » est une invention française.', vrai: false },
+      { texte: 'Le vainqueur de « Koh-Lanta » est désigné par le public.', vrai: false },
+    ],
+    note: 'Le format vient de Suède — « Expedition Robinson », 1997 — et le vainqueur est élu par les aventuriers éliminés, jamais par les téléspectateurs.',
+  },
+  {
     id: 'pom-04', theme: 'culture', fil: 'pomme',
     texte: 'Dans la mythologie grecque, quel objet gravé « à la plus belle » déclenche la guerre de Troie ?',
     reponses: ['Une pomme d’or', 'Un miroir', 'Une couronne', 'Une flèche'],
@@ -4205,9 +4367,27 @@ export const NIVEAUX = [
 
 export const cotesDuNiveau = (id) => (NIVEAUX.find((n) => n.id === id) ?? NIVEAUX[1]).cotes;
 
-const poolDe = (themes, types, niveau) => {
+/**
+ * L'origine d'une question : le jeu de base, ou l'identifiant de son pack.
+ *
+ * Les questions de la banque n'ont pas de champ `pack` ; celles qui viennent
+ * d'un pack le portent, posé à l'installation.
+ */
+export const PROVENANCE_BASE = 'base';
+export const provenanceDe = (question) => question.pack ?? PROVENANCE_BASE;
+
+/** Les provenances réellement présentes dans la banque, jeu de base compris. */
+export function provenancesDisponibles() {
+  return [...new Set(toutesLesQuestions().map(provenanceDe))];
+}
+
+const poolDe = (themes, types, niveau, sources) => {
   const cotes = niveau ? cotesDuNiveau(niveau) : null;
   return toutesLesQuestions().filter((q) => {
+    // La provenance se filtre AVANT le fil rouge, contrairement au niveau : un
+    // fil rouge appartient au jeu de base, et le laisser passer ramènerait des
+    // questions de la banque dans une soirée qu'on a voulue « pack seul ».
+    if (sources?.length && !sources.includes(provenanceDe(q))) return false;
     if (themes?.length && !themes.includes(q.theme)) return false;
     if (types?.length && !types.includes(q.type ?? 'qcm')) return false;
     // Les questions du fil rouge ne se filtrent jamais : elles portent les
@@ -4252,16 +4432,22 @@ function parFraicheur(liste, vues) {
  */
 export function tirerQuestions({
   themes, types, nombre, aleatoire = Math.random, fil = null, niveau = null, vues = null,
+  sources = null,
 }) {
   const melange = melangeur(aleatoire);
   const preparer = (entree) => typeDeManche(entree.type).preparer(entree, melange);
 
-  const duFil = fil ? toutesLesQuestions().filter((q) => q.fil === fil) : [];
+  // Le fil rouge appartient au jeu de base : demander un pack seul l'exclut,
+  // sinon la partie mêlerait justement ce qu'on a voulu écarter.
+  const filPossible = fil && (!sources?.length || sources.includes(PROVENANCE_BASE));
+  const duFil = filPossible ? toutesLesQuestions().filter((q) => q.fil === fil) : [];
   // Mélangé d'abord, trié par fraîcheur ensuite — le tri est stable, donc deux
   // questions aussi neuves l'une que l'autre restent dans l'ordre du hasard.
   // Puis remélangé après la sélection : sans ça, l'ordre des manches raconterait
   // l'historique, les jamais-vues en premier et les revenantes à la fin.
-  const candidates = parFraicheur(melange(poolDe(themes, types, niveau).filter((q) => !q.fil)), vues);
+  const candidates = parFraicheur(
+    melange(poolDe(themes, types, niveau, sources).filter((q) => !q.fil)), vues,
+  );
   const reste = melange(candidates.slice(0, Math.max(0, nombre - duFil.length)));
 
   if (!duFil.length) return reste.map(preparer);
@@ -4289,14 +4475,20 @@ export function tirerQuestions({
 }
 
 /** Combien de questions un tirage peut fournir : sert à borner les réglages. */
-export function tailleDuPool(themes, types, niveau) {
-  return poolDe(themes, types, niveau).filter((q) => !q.fil).length;
+export function tailleDuPool(themes, types, niveau, sources = null) {
+  return poolDe(themes, types, niveau, sources).filter((q) => !q.fil).length;
 }
 
-/** Les types réellement représentés dans les thèmes choisis. */
-export function typesDisponibles(themes) {
-  const presents = new Set(poolDe(themes).map((q) => q.type ?? 'qcm'));
+/** Les types réellement représentés dans ce qui est choisi. */
+export function typesDisponibles(themes, sources = null) {
+  const presents = new Set(poolDe(themes, null, null, sources).map((q) => q.type ?? 'qcm'));
   return TYPES.filter((t) => presents.has(t.id));
+}
+
+/** Les thèmes réellement représentés dans les provenances choisies. */
+export function themesDisponibles(sources = null) {
+  const presents = new Set(poolDe(null, null, null, sources).map((q) => q.theme));
+  return THEMES.filter((t) => presents.has(t.id));
 }
 
 export const nomDuTheme = (id) => THEMES.find((t) => t.id === id)?.nom ?? id;

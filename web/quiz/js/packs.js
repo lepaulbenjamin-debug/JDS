@@ -77,7 +77,16 @@ function ecrireCache(packs) {
 
 /** Les questions de tous les packs déjà téléchargés sur cet appareil. */
 export function questionsInstallees() {
-  return Object.values(lireCache()).flatMap((pack) => pack.questions ?? []);
+  // Chaque question emporte l'identifiant de son pack. C'est ce qui permet de
+  // jouer « une soirée manga » : sans cette étiquette, les questions du pack se
+  // fondent dans les thèmes existants et ressortent diluées — vingt questions
+  // de manga noyées dans les vingt-trois de « Cinéma & séries ».
+  //
+  // Posé à la lecture et non au rangement : les caches déjà écrits n'ont rien à
+  // migrer, et un pack ne peut pas perdre son étiquette en cours de route.
+  return Object.values(lireCache()).flatMap(
+    (pack) => (pack.questions ?? []).map((question) => ({ ...question, pack: pack.id })),
+  );
 }
 
 export function packsInstalles() {

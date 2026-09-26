@@ -9,18 +9,18 @@
     {
       "id": "fam-01",
       "theme": "nature",
-      "texte": "Combien de pattes a une araignée ?",
-      "reponses": ["Huit", "Six", "Dix", "Quatre"],
+      "texte": "Quel animal transporte sa maison sur son dos ?",
+      "reponses": ["L’escargot", "La taupe", "Le hérisson", "La fourmi"],
       "bonne": 0,
-      "note": "Huit pattes, et c’est ce qui fait qu’une araignée n’est pas un insecte : les insectes en ont six, sans exception."
+      "note": "Sa coquille grandit avec lui, par le bord, en spirale. Il ne peut donc jamais en changer, ni en sortir."
     },
     {
       "id": "fam-02",
       "theme": "disney",
-      "texte": "Dans « Le Roi lion », comment s’appelle le père de Simba ?",
-      "reponses": ["Mufasa", "Scar", "Rafiki", "Zazu"],
+      "texte": "Dans « La Reine des neiges », comment s’appelle le bonhomme de neige ?",
+      "reponses": ["Olaf", "Sven", "Kristoff", "Marshmallow"],
       "bonne": 0,
-      "note": "« Simba » veut simplement dire « lion » en swahili, « Rafiki » veut dire « ami », et « Pumbaa » veut dire « étourdi »."
+      "note": "Il rêve d’été sans savoir ce que la chaleur lui ferait. Sven est le renne, Kristoff le livreur de glace."
     },
     {
       "id": "fam-03",
@@ -41,10 +41,10 @@
     {
       "id": "fam-05",
       "theme": "monde",
-      "texte": "Quelle est la capitale de l’Italie ?",
-      "reponses": ["Rome", "Milan", "Venise", "Naples"],
+      "texte": "Quelle est la capitale de l’Espagne ?",
+      "reponses": ["Madrid", "Barcelone", "Séville", "Valence"],
       "bonne": 0,
-      "note": "Un pays entier tient à l’intérieur de Rome : le Vatican, quarante-quatre hectares, le plus petit État du monde."
+      "note": "C’est la capitale d’Europe la plus haute en altitude, à six cent cinquante mètres — d’où ses hivers bien plus froids qu’on ne l’imagine."
     },
     {
       "id": "fam-06",
@@ -145,10 +145,10 @@
     {
       "id": "fam-18",
       "theme": "sport",
-      "texte": "Combien de joueurs une équipe de football aligne-t-elle sur le terrain ?",
-      "reponses": ["Onze", "Neuf", "Treize", "Quinze"],
+      "texte": "Dans quel sport marque-t-on un « panier » ?",
+      "reponses": ["Le basket", "Le handball", "Le volley", "Le rugby"],
       "bonne": 0,
-      "note": "Onze, gardien compris. Quinze au rugby à XV, treize au rugby à XIII, cinq au basket : chaque sport a choisi son compte."
+      "note": "Le panier était à l’origine une vraie corbeille de pêches, clouée au mur. Il fallait une échelle pour récupérer le ballon après chaque point."
     },
     {
       "id": "fam-19",

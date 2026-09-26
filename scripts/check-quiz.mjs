@@ -3755,3 +3755,171 @@ test('le jeton App Store Connect est signé au format que JWT attend', async () 
   assert.ok(verify('sha256', Buffer.from(`${entete}.${corps}`),
     { key: createPublicKey(privateKey), dsaEncoding: 'ieee-p1363' }, brute), 'signature invalide');
 });
+
+/* --- D'où viennent les questions ------------------------------------------ */
+
+test('un pack se joue seul, sans rien de la banque gratuite', async () => {
+  // Le manque que ça comble : une question de pack se fond dans les thèmes
+  // existants. « Manga & anime » verse vingt questions dans « Cinéma & séries »,
+  // qui en compte déjà vingt-trois — une soirée manga tombait donc à une
+  // question sur deux, alors que c'est précisément ce qu'on a vendu.
+  const { provenanceDe, PROVENANCE_BASE, provenancesDisponibles } = await import('../web/quiz/js/questions.js');
+
+  try {
+    assert.deepEqual(provenancesDisponibles(), [PROVENANCE_BASE], 'la banque de base n’est pas seule');
+
+    ajouterQuestions([
+      { id: 'essai-pack-1', pack: 'essai', theme: 'cinema', texte: 'Une question de pack ?',
+        reponses: ['Oui', 'Non', 'Peut-être', 'Jamais'], bonne: 0, note: 'Elle vient d’un pack.' },
+      { id: 'essai-pack-2', pack: 'essai', theme: 'cinema', texte: 'Une deuxième ?',
+        reponses: ['Oui', 'Non', 'Peut-être', 'Jamais'], bonne: 0, note: 'Elle aussi.' },
+    ]);
+
+    assert.equal(provenanceDe({ id: 'x' }), PROVENANCE_BASE, 'une question sans pack vient de la base');
+    assert.equal(provenanceDe({ id: 'x', pack: 'essai' }), 'essai');
+
+    const base = tailleDuPool(null, null, null, [PROVENANCE_BASE]);
+    assert.equal(tailleDuPool(null, null, null, ['essai']), 2, 'le pack seul ne rend pas ses deux questions');
+    assert.equal(tailleDuPool(null, null, null, null), base + 2, 'sans filtre, tout doit être là');
+    assert.equal(tailleDuPool(null, null, null, ['essai', PROVENANCE_BASE]), base + 2);
+
+    // Le tirage, pas seulement le compte : c'est lui qui sert la partie.
+    const tirage = tirerQuestions({
+      themes: [], types: [], nombre: 2, sources: ['essai'], aleatoire: () => 0.5,
+    });
+    assert.equal(tirage.length, 2);
+    assert.deepEqual(tirage.map((q) => q.id).sort(), ['essai-pack-1', 'essai-pack-2']);
+  } finally {
+    oublierLesPacks();
+  }
+});
+
+test('demander un pack seul écarte aussi le fil rouge', async () => {
+  // Le fil rouge appartient à la banque gratuite, et ses questions échappent au
+  // filtre de niveau — par conception, puisqu'elles portent les indices. Sans
+  // précaution, elles auraient donc échappé au filtre de provenance aussi, et
+  // une « soirée manga » aurait ramené quatre questions de culture générale.
+  const { FILS_ROUGES: fils } = await import('../web/quiz/js/questions.js');
+  const fil = fils[0]?.id;
+  assert.ok(fil, 'aucun fil rouge dans la banque');
+
+  try {
+    ajouterQuestions(Array.from({ length: 12 }, (_, i) => ({
+      id: `essai-fil-${i}`, pack: 'essai', theme: 'cinema', texte: `Question ${i} ?`,
+      reponses: ['Oui', 'Non', 'Peut-être', 'Jamais'], bonne: 0, note: 'Venue d’un pack.',
+    })));
+
+    const sansBase = tirerQuestions({
+      themes: [], types: [], nombre: 12, fil, sources: ['essai'], aleatoire: () => 0.5,
+    });
+    assert.ok(sansBase.every((q) => q.id.startsWith('essai-fil-')),
+      'une question de la banque s’est glissée dans une partie « pack seul »');
+
+    // Et quand la base est demandée, le fil revient : on n'a pas cassé l'autre cas.
+    const avecBase = tirerQuestions({
+      themes: [], types: [], nombre: 12, fil, sources: ['essai', 'base'], aleatoire: () => 0.5,
+    });
+    assert.ok(avecBase.some((q) => !q.id.startsWith('essai-fil-')),
+      'le fil rouge a disparu alors que la banque était demandée');
+  } finally {
+    oublierLesPacks();
+  }
+});
+
+test('les thèmes proposés suivent les provenances cochées', async () => {
+  // Un thème coché mais absent du tirage annoncerait une partie qui n'aura pas
+  // lieu : l'écran ne doit montrer que ce qui est réellement jouable.
+  const { themesDisponibles } = await import('../web/quiz/js/questions.js');
+  try {
+    assert.equal(themesDisponibles(null).length, THEMES.length);
+
+    ajouterQuestions([{ id: 'essai-theme-1', pack: 'essai', theme: 'cinema', texte: 'Une question ?',
+      reponses: ['Oui', 'Non', 'Peut-être', 'Jamais'], bonne: 0, note: 'Venue d’un pack.' }]);
+
+    assert.deepEqual(themesDisponibles(['essai']).map((t) => t.id), ['cinema']);
+    assert.equal(themesDisponibles(['base']).length, THEMES.length);
+  } finally {
+    oublierLesPacks();
+  }
+});
+
+test('aucun énoncé n’apparaît deux fois, niveaux des cartes compris', async () => {
+  // Le contrôle existait, mais il ne descendait pas dans les dix niveaux des
+  // cartes « tu te mets combien ? » de la banque. Quatre questions du pack
+  // familial reprenaient donc mot pour mot le niveau 1 d'une carte — le genre
+  // de répétition qui se remarque en soirée et nulle part avant.
+  const { readFileSync, readdirSync } = await import('node:fs');
+
+  const normaliser = (texte) => String(texte ?? '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+  const vus = new Map();
+  const doublons = [];
+  const voir = (ou, id, texte) => {
+    const cle = normaliser(texte);
+    if (!cle) return;
+    if (vus.has(cle)) doublons.push(`${ou}/${id} reprend ${vus.get(cle)} : « ${texte} »`);
+    else vus.set(cle, `${ou}/${id}`);
+  };
+  const parcourir = (ou, liste) => {
+    for (const q of liste) {
+      voir(ou, q.id, q.texte);
+      (q.niveaux ?? []).forEach((n, i) => voir(ou, `${q.id} niveau ${i + 1}`, n.texte));
+    }
+  };
+
+  parcourir('banque', QUESTIONS);
+  for (const fichier of readdirSync('packs').filter(estUnFichierDePack)) {
+    const pack = JSON.parse(readFileSync(join('packs', fichier), 'utf8'));
+    parcourir(pack.id, pack.questions);
+  }
+
+  assert.deepEqual(doublons, [], `${doublons.length} énoncé(s) en double`);
+});
+
+test('aucun clip ne lit un texte périmé', async () => {
+  // Le défaut que ça attrape : reformuler une question garde son ancien
+  // enregistrement. L'identifiant du clip ne change pas, le fichier existe, et
+  // tous les contrôles d'existence passent — mais l'animateur lit à voix haute
+  // une question différente de celle affichée à l'écran. Ça ne se découvre
+  // qu'en soirée, et ça ressemble à un bug de l'application plutôt qu'à un
+  // enregistrement oublié.
+  //
+  // Le manifeste note une empreinte par clip. On la recalcule ici : la
+  // signature du fournisseur est une pure fonction du modèle, de la voix et de
+  // la direction, donc reproductible sans clé d'API.
+  const { readFileSync, readdirSync, existsSync } = await import('node:fs');
+  const { createHash } = await import('node:crypto');
+  const { inventaire: inventaireDeLaBanque, inventaireDuPack, directionDe } = await import('./generate-audio.mjs');
+
+  if (!existsSync('web/quiz/audio')) return;             // clips pas encore générés
+
+  const MODELE = process.env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts';
+  const empreinte = (voix, clip) => createHash('sha1')
+    .update(`${MODELE}|${voix}|${directionDe(clip.id)}\u0000${clip.texte}`)
+    .digest('hex').slice(0, 12);
+
+  const perimes = [];
+  const confronter = (voix, chemin, clips) => {
+    if (!existsSync(chemin)) return;
+    const { empreintes } = JSON.parse(readFileSync(chemin, 'utf8'));
+    if (!empreintes) return;                             // manifeste d'avant les empreintes
+    for (const clip of clips) {
+      if (!(clip.id in empreintes)) continue;            // absent : l'autre test le dit
+      if (empreintes[clip.id] !== empreinte(voix, clip)) perimes.push(`${voix}/${clip.id}`);
+    }
+  };
+
+  for (const voix of readdirSync('web/quiz/audio').filter((v) => v !== 'blanc' && !v.endsWith('.json'))) {
+    confronter(voix, join('web/quiz/audio', voix, 'manifeste.json'), inventaireDeLaBanque());
+
+    if (!existsSync('packs/audio')) continue;
+    for (const fichier of readdirSync('packs').filter(estUnFichierDePack)) {
+      const { pack, clips } = await inventaireDuPack(join('packs', fichier));
+      confronter(voix, join('packs/audio', voix, pack.id, 'manifeste.json'), clips);
+    }
+  }
+
+  assert.deepEqual(perimes, [], `${perimes.length} clip(s) lisent un texte qui a changé depuis`);
+});

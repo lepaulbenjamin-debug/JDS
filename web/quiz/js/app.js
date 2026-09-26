@@ -14,8 +14,8 @@ import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
 import { historique } from './historique.js';
 import * as comptes from './compte.js';
 import {
-  THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, typesDisponibles, nomDuTheme,
-  ajouterQuestions, toutesLesQuestions,
+  THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, nomDuTheme,
+  typesDisponibles, themesDisponibles, ajouterQuestions, toutesLesQuestions,
 } from './questions.js';
 import * as packs from './packs.js';
 import * as achats from './achats.js';
@@ -98,6 +98,7 @@ let boucle = null;
 let erreurs = 0;
 
 let reglages = {
+  sources: [],                 // vide = le jeu de base et tous les packs
   themes: [],
   types: [],                   // vide = tous les types de manche
   nombre: 12,
@@ -1625,8 +1626,45 @@ function lireMonPrenom() {
 }
 
 function rendreReglages() {
+  // D'où viennent les questions. Sans cette rangée, un pack acheté se dilue
+  // dans les thèmes existants : « Manga & anime » verse vingt questions dans
+  // « Cinéma & séries », qui en compte déjà vingt-trois — une soirée manga
+  // tombait donc à une question sur deux. Le bloc reste caché tant qu'aucun
+  // pack n'est installé : une seule pastille « Jeu de base » n'apprend rien.
+  const installes = packs.packsInstalles();
+  $('#bloc-packs').hidden = installes.length === 0;
+  if (installes.length) {
+    const sources = clear($('#choix-sources'));
+    // Ni 🎲 ni 🧠 : le premier est au pack « Jeux de société modernes », le
+    // second au thème « Culture générale ». Deux pastilles identiques dans le
+    // même écran ne distinguent rien.
+    const choix = [{ id: 'base', nom: 'Jeu de base', emoji: '🏠' }, ...installes];
+    for (const source of choix) {
+      const actif = reglages.sources.includes(source.id);
+      sources.append(el('button', {
+        class: `chip${actif ? ' est-actif' : ''}`,
+        type: 'button',
+        onclick: () => {
+          reglages.sources = actif
+            ? reglages.sources.filter((s) => s !== source.id)
+            : [...reglages.sources, source.id];
+          // Les thèmes cochés peuvent ne plus exister dans ce qui reste : un
+          // thème coché mais absent du tirage annoncerait une partie qui n'aura
+          // pas lieu. On les rabote sur ce qui est réellement disponible.
+          const possibles = new Set(themesDisponibles(reglages.sources).map((t) => t.id));
+          reglages.themes = reglages.themes.filter((t) => possibles.has(t));
+          rendreReglages();
+        },
+      }, `${source.emoji ?? '🎁'} ${source.nom}`));
+    }
+    const seulsPacks = reglages.sources.length && !reglages.sources.includes('base');
+    $('#note-sources').textContent = seulsPacks
+      ? 'Le jeu de base est écarté, fil rouge compris : la partie ne tirera que dans ces packs.'
+      : 'Cocher un pack seul donne une soirée entièrement consacrée à ce pack.';
+  }
+
   const themes = clear($('#choix-themes'));
-  for (const theme of THEMES) {
+  for (const theme of themesDisponibles(reglages.sources)) {
     const actif = reglages.themes.includes(theme.id);
     // Le pourcentage déjà vu, sur la pastille du thème.
     //
@@ -1662,7 +1700,7 @@ function rendreReglages() {
   // Décocher un thème peut faire passer le pool sous le nombre demandé : on
   // rabote avant d'afficher les pastilles, sinon celle qui paraît active ne
   // correspond plus à ce qui sera joué.
-  const dispo = tailleDuPool(reglages.themes, reglages.types, reglages.niveau);
+  const dispo = tailleDuPool(reglages.themes, reglages.types, reglages.niveau, reglages.sources);
   reglages.nombre = Math.min(reglages.nombre, dispo);
 
   const nombres = clear($('#choix-nombre'));
@@ -1702,7 +1740,7 @@ function rendreReglages() {
   }
   $('#note-niveau').textContent = NIVEAUX.find((n) => n.id === reglages.niveau)?.note ?? '';
 
-  for (const type of typesDisponibles(reglages.themes)) {
+  for (const type of typesDisponibles(reglages.themes, reglages.sources)) {
     const actif = !reglages.types.length || reglages.types.includes(type.id);
     types.append(el('button', {
       class: `chip${actif ? ' est-actif' : ''}`,
@@ -1711,7 +1749,7 @@ function rendreReglages() {
       onclick: () => {
         const courant = reglages.types.length
           ? reglages.types
-          : typesDisponibles(reglages.themes).map((t) => t.id);
+          : typesDisponibles(reglages.themes, reglages.sources).map((t) => t.id);
         const suivant = actif ? courant.filter((t) => t !== type.id) : [...courant, type.id];
         // Tout décocher n'aurait aucun sens : on remet tout.
         reglages.types = suivant.length ? suivant : [];
@@ -1982,6 +2020,7 @@ function tirerLaPartie() {
   const questions = tirerQuestions({
     themes: reglages.themes,
     types: reglages.types,
+    sources: reglages.sources,
     nombre: reglages.nombre,
     niveau: reglages.niveau,
     fil: fil?.id ?? null,
