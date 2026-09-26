@@ -255,6 +255,18 @@ servir par URL signée à durée courte, ce que la licence permet déjà puisqu'
 est vérifiée avant de rendre quoi que ce soit. À faire **avant** d'être coincé,
 pas le soir où la mise en production tombe.
 
+## 6 quater. Publier depuis GitHub Actions
+
+Le workflow `.github/workflows/ios-store.yml` archive sur un runner macOS et
+dépose sur App Store Connect, à partir d'un tag `v*`. Les cinq secrets à
+déposer et le premier essai à blanc sont dans **`docs/publication-ios.md`**.
+
+Il ne remplace pas la configuration Xcode, qui se fait une fois à la main puis
+se versionne (`ios/` n'est plus ignoré) : un projet neuf compile et se publie
+très bien sans la session audio, sans la boutique et sans les connexions, en
+silence. `npm run ios:verifier` est le seul moyen de s'en apercevoir avant
+qu'un joueur ne le fasse.
+
 ## 7. Avant d'appuyer sur « Soumettre »
 
 - [ ] `npm run check:quiz` au vert (202 tests) ;
@@ -273,6 +285,10 @@ pas le soir où la mise en production tombe.
       second appareil connecté au même compte ;
 - [ ] les captures d'écran et les textes de la fiche : voir
       `docs/fiche-app-store.md`, tout y est écrit ;
+- [ ] `npm run ios:verifier` au vert : les quatre fichiers Swift et le manifeste
+      de confidentialité sont bien construits par la cible — c'est muet sinon ;
+- [ ] un build d'essai du workflow iOS, sans téléversement, pour éprouver la
+      signature avant d'engager un numéro auprès d'Apple ;
 - [ ] `npm run build:ios` refait après la dernière modification du web.
 
 ## 8. Ce qui n'est pas fait, et qu'il faudra décider

@@ -1,0 +1,233 @@
+# Archive l'application iOS et la dépose sur App Store Connect.
+#
+# Ce que ce workflow ne peut pas remplacer : la configuration Xcode. Elle se
+# fait une fois, à la main, sur un Mac — les fichiers Swift dans la cible, la
+# capacité « Sign in with Apple », le schéma d'URL de Google — puis le dossier
+# `ios/` est versionné. À partir de là, tout est reproductible ici.
+#
+# Un build qui échoue parce qu'un fichier n'est pas dans la cible échoue en
+# vingt secondes, avant de signer quoi que ce soit : c'est le rôle de l'étape
+# « Vérifier la cible ». Les défauts qu'elle attrape sont muets à l'exécution.
+
+name: iOS — archive et dépôt sur l’App Store
+
+on:
+  push:
+    tags: ['v*']            # v1.0.0, v1.1.0… : la version part du tag
+  workflow_dispatch:
+    inputs:
+      televerser:
+        description: 'Téléverser sur App Store Connect (sinon, archive seule)'
+        type: boolean
+        default: false
+      version:
+        description: 'Version affichée (défaut : celle du projet Xcode)'
+        type: string
+        default: ''
+
+# Deux archives en parallèle se disputeraient le même numéro de build.
+concurrency:
+  group: ios-store
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # L'équipe Apple. Ce n'est pas un secret : il figure dans chaque application
+  # publiée, et le garder ici évite un secret de plus à renouveler.
+  EQUIPE: Y7265GT5W3
+  BUNDLE: fr.quizentreamis.app
+  PROJET: ios/App/App.xcodeproj
+  SCHEMA: App
+
+jobs:
+  archiver:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      # Le paquet embarque 120 Mo de clips : une banque incomplète ou une
+      # explication qui déborde du plafond de révélation ne doit pas partir
+      # jusqu'à l'App Store pour être découverte.
+      - name: Tests
+        run: npm run check:quiz
+
+      # Avant de signer : les défauts muets. Vingt secondes ici contre une
+      # version publiée sans son et sans boutique.
+      - name: Vérifier la cible
+        run: node scripts/verifier-cible-ios.mjs
+
+      # `build:ios` assemble le paquet web ET repose l'icône (cap sync ne le
+      # fait pas). `cap sync` copie ensuite le tout dans le projet natif.
+      - name: Assembler le paquet et synchroniser
+        run: |
+          npm run build:ios
+          npx cap sync ios
+
+      # Le numéro de build doit être unique et croissant pour App Store Connect,
+      # sans quoi le téléversement est refusé après coup. `run_number` ne
+      # redescend jamais. La version affichée, elle, vient du tag.
+      - name: Numéroter
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "BUILD=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Build ${GITHUB_RUN_NUMBER}${VERSION:+, version $VERSION}"
+
+      # Le certificat de distribution, dans un trousseau jetable créé pour ce
+      # seul build. Le trousseau par défaut du runner n'est pas touché, et
+      # l'étape de nettoyage le supprime même si le build échoue.
+      - name: Ouvrir un trousseau temporaire
+        env:
+          P12: ${{ secrets.APPLE_CERTIFICAT_P12 }}
+          MOTDEPASSE_P12: ${{ secrets.APPLE_CERTIFICAT_MOTDEPASSE }}
+        run: |
+          if [ -z "$P12" ]; then
+            echo "::error::Le secret APPLE_CERTIFICAT_P12 est absent. Voir docs/publication-ios.md."
+            exit 1
+          fi
+          TROUSSEAU="$RUNNER_TEMP/build.keychain-db"
+          MOTDEPASSE=$(uuidgen)
+          security create-keychain -p "$MOTDEPASSE" "$TROUSSEAU"
+          security set-keychain-settings -lut 3600 "$TROUSSEAU"
+          security unlock-keychain -p "$MOTDEPASSE" "$TROUSSEAU"
+
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$TROUSSEAU" \
+            -P "$MOTDEPASSE_P12" -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+          # Sans cette ligne, codesign ouvre une boîte de dialogue que personne
+          # ne viendra valider, et le build reste bloqué jusqu'au délai.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$MOTDEPASSE" "$TROUSSEAU" > /dev/null
+          security list-keychains -d user -s "$TROUSSEAU" $(security list-keychains -d user | tr -d '"')
+          echo "TROUSSEAU=$TROUSSEAU" >> "$GITHUB_ENV"
+
+      # La clé d'API App Store Connect. Elle sert deux fois : à laisser
+      # xcodebuild créer le profil d'approvisionnement tout seul
+      # (-allowProvisioningUpdates), et à téléverser. C'est ce qui évite d'avoir
+      # à gérer un profil en secret, qui expire tous les ans.
+      - name: Déposer la clé App Store Connect
+        env:
+          CLE_P8: ${{ secrets.APPLE_ASC_CLE_P8 }}
+          CLE_ID: ${{ secrets.APPLE_ASC_CLE_ID }}
+        run: |
+          if [ -z "$CLE_P8" ] || [ -z "$CLE_ID" ]; then
+            echo "::error::Les secrets APPLE_ASC_CLE_P8 / APPLE_ASC_CLE_ID sont absents."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/cles"
+          echo "$CLE_P8" | base64 --decode > "$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8"
+          chmod 600 "$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8"
+          echo "CLE_CHEMIN=$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8" >> "$GITHUB_ENV"
+
+      - name: Archiver
+        env:
+          CLE_ID: ${{ secrets.APPLE_ASC_CLE_ID }}
+          EMETTEUR: ${{ secrets.APPLE_ASC_EMETTEUR }}
+        run: |
+          set -o pipefail
+          FORMATEUR=cat; command -v xcbeautify > /dev/null && FORMATEUR=xcbeautify
+          xcodebuild archive \
+            -project "$PROJET" \
+            -scheme "$SCHEMA" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/QuizEntreAmis.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$CLE_CHEMIN" \
+            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyIssuerID "$EMETTEUR" \
+            DEVELOPMENT_TEAM="$EQUIPE" \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE" \
+            CURRENT_PROJECT_VERSION="$BUILD" \
+            ${VERSION:+MARKETING_VERSION=$VERSION} \
+            CODE_SIGN_STYLE=Automatic \
+            | $FORMATEUR
+
+      # `destination: upload` fait signer ET déposer par xcodebuild, sans
+      # altool ni Transporter. En exécution manuelle sans téléversement, on
+      # s'arrête à l'export : de quoi éprouver toute la signature sans rien
+      # envoyer à Apple, ce qui est le bon premier essai.
+      - name: Options d’export
+        run: |
+          DESTINATION=export
+          if [ "${{ inputs.televerser }}" = "true" ] || [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            DESTINATION=upload
+          fi
+          echo "Destination : $DESTINATION"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>$DESTINATION</string>
+            <key>teamID</key><string>$EQUIPE</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          echo "DESTINATION=$DESTINATION" >> "$GITHUB_ENV"
+
+      - name: Exporter et déposer
+        env:
+          CLE_ID: ${{ secrets.APPLE_ASC_CLE_ID }}
+          EMETTEUR: ${{ secrets.APPLE_ASC_EMETTEUR }}
+        run: |
+          set -o pipefail
+          FORMATEUR=cat; command -v xcbeautify > /dev/null && FORMATEUR=xcbeautify
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/QuizEntreAmis.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$CLE_CHEMIN" \
+            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyIssuerID "$EMETTEUR" \
+            | $FORMATEUR
+
+      # Sur un essai sans téléversement, l'ipa est récupérable : c'est ce qui
+      # permet de vérifier la signature, la taille et l'icône avant d'engager
+      # un numéro de build auprès d'Apple.
+      - name: Garder l’ipa
+        if: env.DESTINATION == 'export'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quiz-entre-amis-build-${{ env.BUILD }}
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+      # `always()` : un build interrompu laisserait sinon une clé privée et un
+      # certificat de distribution sur un runner partagé.
+      - name: Nettoyer
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/cles"
+          [ -n "$TROUSSEAU" ] && security delete-keychain "$TROUSSEAU" || true
+
+      - name: Ce qui reste à faire
+        if: success() && env.DESTINATION == 'upload'
+        run: |
+          echo "### Build ${BUILD} déposé sur App Store Connect" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Le traitement du binaire prend dix à trente minutes. Ensuite, à la main :" >> "$GITHUB_STEP_SUMMARY"
+          echo "- rattacher ce build à la version dans App Store Connect ;" >> "$GITHUB_STEP_SUMMARY"
+          echo "- vérifier que les huit achats intégrés sont soumis avec elle ;" >> "$GITHUB_STEP_SUMMARY"
+          echo "- appuyer sur « Soumettre ». Les textes sont dans \`docs/fiche-app-store.md\`." >> "$GITHUB_STEP_SUMMARY"

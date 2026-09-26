@@ -3665,3 +3665,36 @@ test('l’icône n’est pas celle du compteur de points', async () => {
   const compteur = readFileSync('web/icons/icon-512.png');
   assert.ok(!quiz.equals(compteur), 'le quiz sert l’icône du compteur de points');
 });
+
+/* --- Le projet Xcode ------------------------------------------------------ */
+
+test('le garde-fou distingue un fichier construit d’un fichier seulement posé', async () => {
+  // C'est toute la subtilité du piège qu'il attrape : Xcode référence un
+  // fichier (PBXFileReference) sans forcément le construire (PBXBuildFile).
+  // Sur le disque, les deux cas sont identiques.
+  const { manquantsDansLaCible } = await import('./verifier-cible-ios.mjs');
+
+  const construit = (nom, phase) => `\t\tAB01 /* ${nom} in ${phase} */ = {isa = PBXBuildFile; };`;
+  const posePasConstruit = (nom) => `\t\tCD02 /* ${nom} */ = {isa = PBXFileReference; path = ${nom}; };`;
+
+  const complet = [
+    ...['SessionAudio.swift', 'AchatsPlugin.swift', 'CompteApplePlugin.swift',
+      'CompteGooglePlugin.swift'].map((n) => construit(n, 'Sources')),
+    construit('PrivacyInfo.xcprivacy', 'Resources'),
+  ].join('\n');
+  assert.deepEqual(manquantsDansLaCible(complet), []);
+
+  // Le cas réel : le fichier est dans le projet, mais pas dans la cible.
+  const sansAudio = complet
+    .replace(construit('SessionAudio.swift', 'Sources'), posePasConstruit('SessionAudio.swift'));
+  assert.deepEqual(manquantsDansLaCible(sansAudio), ['SessionAudio.swift']);
+
+  // Le manifeste est une ressource, pas une source : le confondre le rendrait
+  // invisible au contrôle, et le dépôt serait refusé avant la revue.
+  const manifesteEnSource = complet
+    .replace(construit('PrivacyInfo.xcprivacy', 'Resources'),
+      construit('PrivacyInfo.xcprivacy', 'Sources'));
+  assert.deepEqual(manquantsDansLaCible(manifesteEnSource), ['PrivacyInfo.xcprivacy']);
+
+  assert.equal(manquantsDansLaCible('').length, 5, 'un projet vide doit tout signaler');
+});

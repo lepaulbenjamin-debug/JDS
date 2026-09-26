@@ -16,10 +16,20 @@ scripts/questions-brouillon.json
 # navigateur, c'est-à-dire sur le défaut qu'on a passé une soirée à corriger.
 web/quiz/audio/**/*.wav
 
-# Le projet natif, engendré par `npm run ios:add` sur un Mac. Il ne se versionne
-# pas depuis ici : il contient les réglages de signature et le paquet web copié.
-# Les sources qui lui sont destinées vivent dans `apple/`.
-ios/
+# Le projet natif est maintenant VERSIONNÉ, et ce n'est plus le même choix
+# qu'au début. La raison : la configuration Xcode — les fichiers Swift dans la
+# cible, la capacité « Sign in with Apple », le schéma d'URL de Google — ne se
+# rejoue pas automatiquement. Un `cap add ios` neuf donne un projet qui compile
+# et se publie très bien SANS rien de tout cela, en silence. La construire une
+# fois puis la versionner est la seule façon d'en faire quelque chose de
+# reproductible, et c'est ce que le workflow iOS attend.
+#
+# Ce qui reste ignoré : le paquet web recopié à chaque build par `cap sync`, et
+# les artefacts de compilation. Aucun secret de signature n'y est écrit — la CI
+# signe avec une clé d'API, et un développeur avec son propre compte.
+ios/App/App/public/
+ios/App/build/
+ios/DerivedData/
 android/
 
 # Les clips d'essai des packs : du silence, comme ceux de la banque de base.
