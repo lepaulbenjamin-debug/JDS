@@ -230,7 +230,7 @@ publicitaire n'est branchée.
 ## 6 bis. La fiche elle-même
 
 Le nom, le sous-titre, les mots-clés, la description, les notes à
-l'examinateur, la classification par âge et les fiches des sept achats
+l'examinateur, la classification par âge et les fiches des huit achats
 intégrés sont écrits d'avance dans **`docs/fiche-app-store.md`**, prêts à
 coller. Les captures d'écran, prises dans une vraie partie à quatre joueurs et
 au bon format, sont dans `docs/captures-app-store/`.
@@ -258,8 +258,11 @@ pas le soir où la mise en production tombe.
 ## 7. Avant d'appuyer sur « Soumettre »
 
 - [ ] `npm run check:quiz` au vert (202 tests) ;
-- [ ] les **sept** produits d'achat intégré créés dans App Store Connect, un par
-      pack, identifiants et textes dans `docs/fiche-app-store.md` ;
+- [ ] les **huit** produits d'achat intégré créés dans App Store Connect — un par
+      pack, plus l'offre groupée à 9,99 € — identifiants et textes dans
+      `docs/fiche-app-store.md` ;
+- [ ] un achat de l'**offre groupée** en bac à sable : elle doit ouvrir les sept
+      packs d'un coup, et non un seul ;
 - [ ] `node scripts/repetition.mjs https://www.quizentreamis.fr/quiz/` : une
       partie entière à quatre pupitres et une télé, contre le relais de
       production ;

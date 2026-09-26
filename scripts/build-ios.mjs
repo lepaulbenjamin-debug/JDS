@@ -25,6 +25,7 @@ import { readFile, writeFile, rm, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { RACINE, assemblerLeQuiz, poids, remplacer } from './paquet-quiz.mjs';
+import { poserLIconeIOS } from './icones-ios.mjs';
 
 const SORTIE = join(RACINE, 'dist', 'ios');
 
@@ -121,11 +122,17 @@ async function batir() {
 
   const { octets, fichiers } = await poids(SORTIE);
   const audio = await poids(join(SORTIE, 'audio'));
+
+  // L'icône, reposée à chaque build : `cap sync` ne la touche pas, et le
+  // catalogue d'Xcode retomberait sur le carré gris du gabarit de Capacitor.
+  const icone = await poserLIconeIOS(RACINE);
+
   console.log(`\nPaquet prêt dans dist/ios/`);
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
   console.log(`  dont audio : ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo`);
   console.log(`  voix       : ${voixEmbarquees?.join(', ') ?? 'aucune'}  (--voix=toutes pour toutes les embarquer)`);
   console.log(`  relais     : ${relais}`);
+  console.log(`  icône      : ${icone.message}`);
   console.log('\nEnsuite, sur un Mac :  npm run ios:sync && npm run ios:open\n');
 }
 

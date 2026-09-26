@@ -2,9 +2,9 @@
 
 Tout ce qu'App Store Connect demande, écrit d'avance. Les chiffres sont relus
 dans le code : 409 questions offertes, 19 thèmes, 6 formes de manches, 16
-joueurs, 5 jokers, 4 fils rouges, 4 animateurs, 7 packs à 3,99 €. Si la banque
-grossit, ces nombres changent ici aussi — une fiche qui gonfle ses chiffres se
-fait rattraper à la première partie.
+joueurs, 5 jokers, 4 fils rouges, 4 animateurs, 7 packs à 3,99 € — ou 9,99 €
+l'ensemble. Si la banque grossit, ces nombres changent ici aussi : une fiche qui
+gonfle ses chiffres se fait rattraper à la première partie.
 
 ---
 
@@ -102,8 +102,8 @@ deux taps.
 
 GRATUIT, ET HONNÊTE
 Les 409 questions et les 19 thèmes sont inclus. Des packs de questions
-s'achètent à l'unité, sans abonnement — et un seul joueur de la table a besoin
-de les acheter : ses questions sont posées à tout le monde.
+s'achètent à l'unité ou tous ensemble, sans abonnement — et un seul joueur de
+la table a besoin de les acheter : ses questions sont posées à tout le monde.
 ```
 
 ## Nouveautés de cette version
@@ -148,7 +148,8 @@ courriel, ou avec Apple ou Google. Il se supprime depuis l'application :
 « Mon compte » → « Supprimer mon compte et mes données », et la même fonction
 existe sur le web, sans installer l'application.
 
-Achats intégrés : deux packs de questions non consommables, à restaurer par
+Achats intégrés : des packs de questions non consommables, plus une offre qui
+les réunit, à restaurer par
 « Restaurer les achats » dans les réglages de la partie. Ils ne débloquent
 aucune mécanique de jeu, seulement du contenu supplémentaire.
 
@@ -194,26 +195,47 @@ reste est à « non collecté ».
 
 ## Les achats intégrés
 
-Sept produits non consommables, un par pack. Chacun demande un nom d'affichage,
-une description, une capture d'écran de revue et un prix.
+**Huit produits non consommables** : un par pack, plus l'offre groupée. Chacun
+demande un nom d'affichage, une description, une capture d'écran de revue et un
+prix.
 
-| Identifiant | Nom affiché | Description |
-|---|---|---|
-| `fr.quizentreamis.pack.annees80_90` | Pack Années 80-90 | 30 questions sur les années 80 et 90 : Walkman, Minitel, Dragon Ball et disquettes. Pour ceux qui ont connu, et pour ceux qui feront semblant. |
-| `fr.quizentreamis.pack.noel` | Pack Spécial Noël | 30 questions de Noël : traditions, films, chansons et repas de fête. De quoi occuper la table entre la dinde et la bûche. |
-| `fr.quizentreamis.pack.generation2000` | Pack Génération 2000-2010 | 30 questions sur la décennie du MSN, du Skyblog et du premier iPhone. Pour ceux qui ont eu vingt ans avant le smartphone. |
-| `fr.quizentreamis.pack.enfamille` | Pack En famille | 30 questions que les plus jeunes peuvent gagner, et des explications que les adultes ne connaissaient pas. Le pack où les petits battent les grands. |
-| `fr.quizentreamis.pack.manga` | Pack Manga & anime | 30 questions du Club Dorothée à Jujutsu Kaisen. De quoi départager ceux qui ont lu et ceux qui regardaient par-dessus l'épaule. |
-| `fr.quizentreamis.pack.geek` | Pack Geek | 30 questions de science-fiction, de jeux vidéo, de super-héros et d'histoire de l'informatique. Pour celui qui corrige tout le monde depuis le début de la soirée. |
-| `fr.quizentreamis.pack.jeuxsociete` | Pack Jeux de société modernes | 30 questions sur Catane, Dixit, Pandemic, Wingspan et les autres. Le pack qui départage celui qui possède l'étagère et celui qui lit les règles. |
+| Identifiant | Nom affiché | Prix | Description |
+|---|---|---|---|
+| `fr.quizentreamis.pack.tout` | Tout le catalogue | **9,99 €** | Les sept packs d'un coup, 210 questions, au lieu de les prendre un par un. Et un pack ajouté plus tard est compris, sans rien payer de plus. |
+| `fr.quizentreamis.pack.annees80_90` | Pack Années 80-90 | 3,99 € | 30 questions sur les années 80 et 90 : Walkman, Minitel, Dragon Ball et disquettes. Pour ceux qui ont connu, et pour ceux qui feront semblant. |
+| `fr.quizentreamis.pack.noel` | Pack Spécial Noël | 3,99 € | 30 questions de Noël : traditions, films, chansons et repas de fête. De quoi occuper la table entre la dinde et la bûche. |
+| `fr.quizentreamis.pack.generation2000` | Pack Génération 2000-2010 | 3,99 € | 30 questions sur la décennie du MSN, du Skyblog et du premier iPhone. Pour ceux qui ont eu vingt ans avant le smartphone. |
+| `fr.quizentreamis.pack.enfamille` | Pack En famille | 3,99 € | 30 questions que les plus jeunes peuvent gagner, et des explications que les adultes ne connaissaient pas. Le pack où les petits battent les grands. |
+| `fr.quizentreamis.pack.manga` | Pack Manga & anime | 3,99 € | 30 questions du Club Dorothée à Jujutsu Kaisen. De quoi départager ceux qui ont lu et ceux qui regardaient par-dessus l'épaule. |
+| `fr.quizentreamis.pack.geek` | Pack Geek | 3,99 € | 30 questions de science-fiction, de jeux vidéo, de super-héros et d'histoire de l'informatique. Pour celui qui corrige tout le monde depuis le début de la soirée. |
+| `fr.quizentreamis.pack.jeuxsociete` | Pack Jeux de société modernes | 3,99 € | 30 questions sur Catane, Dixit, Pandemic, Wingspan et les autres. Le pack qui départage celui qui possède l'étagère et celui qui lit les règles. |
 
-Prix : palier 3,99 €. La capture de revue peut être celle de la boutique dans
-les réglages de la partie — Apple veut voir où le produit est proposé, et la
-même capture sert pour les sept.
+La capture de revue peut être celle de la boutique dans les réglages de la
+partie — Apple veut voir où le produit est proposé, et la même capture sert
+pour les huit.
 
 Les identifiants n'ont ni tiret ni accent : App Store Connect les refuse, et le
 refus tombe au moment de créer le produit, pas à l'écriture du pack. Un test
 (`scripts/check-quiz.mjs`) le vérifie à chaque exécution.
+
+### Ce que l'offre groupée implique, et qu'il faut savoir avant de la créer
+
+**Apple ne sait pas créditer un non-consommable déjà acheté.** Qui possède déjà
+un pack à 3,99 € et prend ensuite l'offre repaie ce pack. Il n'existe aucun
+mécanisme d'échelon ou de mise à niveau pour les non-consommables — seuls les
+abonnements en ont un, et un abonnement contredirait ce que la fiche promet.
+L'application le dit donc **avant** l'achat : la carte de l'offre affiche
+« tu possèdes déjà N de ces packs », et suggère de prendre les autres à l'unité
+si c'est moins cher. Pour un geste commercial, un code cadeau
+(`QUIZROOM_CODES_CADEAU`) ouvre tout le catalogue sans passer par la caisse.
+
+**L'offre comprend les packs à venir.** `packs/offres.json` déclare
+`"packs": "tous"` : un pack ajouté plus tard est ouvert aux détenteurs de
+l'offre à leur synchronisation suivante. C'est ce que « Tout le catalogue »
+veut dire, et un acheteur qui verrait un pack neuf verrouillé après avoir payé
+aurait raison de se sentir floué. Pour figer l'offre à son périmètre du jour,
+remplacer `"tous"` par la liste des identifiants — une seule valeur à changer,
+le reste du code ne bouge pas.
 
 ---
 

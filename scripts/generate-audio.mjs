@@ -26,6 +26,9 @@ import { QUESTIONS, nomDuTheme } from '../web/quiz/js/questions.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { inventaireDesParoles } from '../web/quiz/js/emcee.js';
 import { direLesNombres } from './nombres.mjs';
+// Le dossier `packs/` ne contient pas que des packs : l'exclusion vient de là,
+// pour qu'on ne tente pas de faire lire une offre groupée à l'animateur.
+import { estUnFichierDePack } from '../lib/packs.js';
 
 const BANQUES = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'quiz', 'audio');
 
@@ -485,7 +488,7 @@ async function main() {
  */
 async function lesPacks({ fournisseur, tout, blanc }) {
   const { readdir } = await import('node:fs/promises');
-  const fichiers = (await readdir(PACKS)).filter((f) => f.endsWith('.json')).sort();
+  const fichiers = (await readdir(PACKS)).filter(estUnFichierDePack).sort();
   if (!fichiers.length) {
     console.log('\nAucun pack dans packs/.\n');
     return;

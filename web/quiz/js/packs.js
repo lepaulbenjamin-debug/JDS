@@ -127,6 +127,22 @@ export async function catalogue() {
 }
 
 /**
+ * Les offres groupées, s'il y en a.
+ *
+ * Séparé du catalogue plutôt que mêlé aux packs : une offre n'a ni questions ni
+ * clips, ne se télécharge pas, et ne doit jamais se retrouver dans une liste
+ * qu'on parcourt pour installer quelque chose. Hors-ligne, elle ne rend rien —
+ * on ne propose pas un achat qu'on ne saurait pas encaisser.
+ */
+export async function offresGroupees() {
+  try {
+    return (await appel({ licence: licence() })).offres ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Télécharge un pack débloqué et le range en local. Renvoie ce qui a été
  * installé, ou lève avec un statut 402 si la licence ne l'ouvre pas.
  *

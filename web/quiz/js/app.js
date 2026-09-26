@@ -1781,6 +1781,7 @@ async function rendrePacks() {
   if (!hote) return;
 
   const disponibles = await packs.catalogue().catch(() => []);
+  const offres = await packs.offresGroupees().catch(() => []);
   clear(hote);
 
   if (!disponibles.length) {
@@ -1791,9 +1792,55 @@ async function rendrePacks() {
   // Les prix viennent de l'App Store quand il est là : ils arrivent dans la
   // devise du compte, et une étiquette « 3,99 € » montrée à un compte canadien
   // serait fausse.
-  const prix = achats.disponible()
-    ? await achats.prixDuStore(disponibles.map((p) => p.produitApple).filter(Boolean))
-    : new Map();
+  const produits = [...disponibles, ...offres].map((p) => p.produitApple).filter(Boolean);
+  const prix = achats.disponible() ? await achats.prixDuStore(produits) : new Map();
+
+  // L'offre groupée en premier : c'est l'offre d'entrée, et la voir après sept
+  // cartes à 3,99 € revient à ne pas la proposer. Une offre déjà soldée
+  // disparaît — elle n'a plus rien à vendre.
+  for (const offre of offres.filter((o) => !o.possede && o.packs?.length)) {
+    if (!achats.disponible() || !offre.produitApple) continue;
+
+    hote.append(el('div', { class: 'carte-pack carte-offre' }, [
+      el('div', { class: 'pack-tete' }, [
+        el('span', { class: 'pack-nom', text: `${offre.emoji ?? '🎁'} ${offre.nom}` }),
+        el('span', { class: 'pack-etat', text: prix.get(offre.produitApple) ?? offre.prix ?? '' }),
+      ]),
+      el('p', { class: 'pack-resume muted small', text: offre.resume ?? '' }),
+      el('p', { class: 'muted small', text: `${offre.packs.length} packs, ${offre.nombre} questions` }),
+      // Le seul point désagréable de l'offre, dit avant l'achat et non après :
+      // Apple ne sait pas déduire un non-consommable déjà payé.
+      offre.dejaPossedes
+        ? el('p', {
+            class: 'muted small',
+            text: `Tu possèdes déjà ${offre.dejaPossedes} de ces packs. L’App Store ne sait pas les déduire :`
+              + ' ils seraient repayés. Il peut être plus avantageux de prendre les autres à l’unité.',
+          })
+        : null,
+      el('button', {
+        class: 'btn btn-primary btn-block',
+        type: 'button',
+        onclick: async (event) => {
+          event.target.disabled = true;
+          try {
+            await achats.acheter(offre.produitApple, packs.licence(), net.relayBase());
+            toast(`${offre.nom} débloqué.`);
+            await packs.synchroniser(voix.banqueCourante);
+            ajouterQuestions(packs.questionsInstallees());
+            declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
+            rendreReglages();
+          } catch (erreur) {
+            if (erreur?.name === 'AchatAbandonne') {
+              if (erreur.enAttente) toast(erreur.message);
+            } else {
+              toast(erreur.message ?? 'Achat non abouti.', 'warn');
+            }
+            event.target.disabled = false;
+          }
+        },
+      }, `Tout débloquer — ${prix.get(offre.produitApple) ?? offre.prix ?? ''}`),
+    ]));
+  }
 
   for (const pack of disponibles) {
     const etat = pack.installe ? 'Installé'
@@ -1819,7 +1866,6 @@ async function rendrePacks() {
                 toast(`${pack.nom} débloqué.`);
                 await packs.synchroniser(voix.banqueCourante);
                 ajouterQuestions(packs.questionsInstallees());
-      declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
                 declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
                 rendreReglages();
               } catch (erreur) {
@@ -1876,7 +1922,6 @@ async function rendrePacks() {
           const { accordes } = await achats.restaurer(packs.licence(), net.relayBase());
           await packs.synchroniser(voix.banqueCourante);
           ajouterQuestions(packs.questionsInstallees());
-      declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
           declarerLesClipsDesPacks(packs.clipsInstalles(voix.banqueCourante));
           toast(accordes.length
             ? `${accordes.length} pack${accordes.length > 1 ? 's' : ''} restauré${accordes.length > 1 ? 's' : ''}.`

@@ -217,6 +217,19 @@ body {
   background: var(--surface);
 }
 .carte-pack.est-installe { border-color: var(--ok); }
+
+/* L'offre groupée. Elle est posée au-dessus des packs et doit se distinguer
+   d'eux au premier coup d'œil, sinon elle se lit comme un pack de plus — et
+   une offre d'entrée qu'on ne remarque pas ne sert à rien. */
+.carte-offre {
+  border-color: var(--accent);
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface));
+}
+.carte-offre .pack-etat {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: var(--accent);
+}
 .pack-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .pack-nom { font-weight: 600; }
 .pack-etat {

@@ -179,8 +179,7 @@ Deux réglages qui ne sont pas dans le code :
 
 - **Sign in with Apple** est une *capacité* : cible App › Signing &
   Capabilities › + › Sign in with Apple. Sans elle, la feuille refuse de
-  s'ouvrir avec une erreur 1000 qui ne dit rien de ce qui manque.
-- **Google** a besoin de son schéma d'URL inversé dans Info.plist (URL Types ›
+  s'ouvrir avec une erreur 1000 qui ne dit rien de ce qui manque.- **Google** a besoin de son schéma d'URL inversé dans Info.plist (URL Types ›
   URL Schemes), sans quoi la page de connexion s'ouvre et ne revient jamais.
   L'identifiant client est renseigné, le schéma à coller est donc connu :
 
@@ -217,6 +216,31 @@ entre les deux est un motif de rejet.
 
 iPhone seulement, portrait seulement — l'appli est écrite pour un téléphone tenu
 à la verticale. Sinon Apple la testera sur iPad et jugera la mise en page.
+
+## L'icône : rien à faire, mais il faut savoir pourquoi
+
+`cap sync` copie le paquet web et les plugins, et **ne touche pas aux icônes**.
+Sans intervention, le catalogue d'assets reste celui du gabarit de Capacitor —
+un carré gris — et c'est lui qu'on retrouve sur le téléphone, dans TestFlight
+et sur la fiche App Store. Rien ne prévient : l'application se compile, se
+signe et se publie très bien avec l'icône de personne.
+
+`npm run build:ios` pose donc l'icône lui-même, à chaque exécution, depuis
+`assets/icon.png` vers
+`ios/App/App/Assets.xcassets/AppIcon.appiconset/`. Comme `ios:sync` enchaîne
+`build:ios` puis `cap sync`, il n'y a rien de plus à faire — et la ligne
+`icône : …` en fin de build dit ce qui s'est passé. Si elle dit *projet natif
+pas encore engendré*, c'est qu'il faut d'abord `npm run ios:add`.
+
+Deux refus d'Apple sont vérifiés avant l'écriture, et par un test :
+
+- l'icône doit faire **1024 × 1024** ;
+- elle ne doit contenir **aucune transparence**. Une icône avec canal alpha est
+  rejetée par App Store Connect (ITMS-90717) *après* le téléversement,
+  c'est-à-dire après l'archive, la signature et vingt minutes d'attente.
+
+Pour changer l'icône : remplacer `assets/icon.png`, relancer `npm run ios:sync`.
+Ne pas la modifier dans Xcode — le build suivant la réécrirait.
 
 ## Les achats intégrés
 

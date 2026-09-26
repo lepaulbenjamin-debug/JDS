@@ -1,0 +1,11 @@
+[
+  {
+    "id": "tout",
+    "nom": "Tout le catalogue",
+    "emoji": "🎁",
+    "resume": "Tous les packs d’un coup, au lieu de les prendre un par un. Et un pack ajouté plus tard est compris, sans rien payer de plus.",
+    "prix": "9,99 €",
+    "produitApple": "fr.quizentreamis.pack.tout",
+    "packs": "tous"
+  }
+]

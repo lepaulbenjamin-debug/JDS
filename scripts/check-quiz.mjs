@@ -21,7 +21,10 @@ import {
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
 } from '../web/quiz/js/questions.js';
 import { creerHistorique } from '../web/quiz/js/historique.js';
-import { handlePackRequest, accorder, packsDeLaLicence } from '../lib/packs.js';
+import {
+  handlePackRequest, accorder, packsDeLaLicence, estUnFichierDePack,
+  enregistrerAchatsApple,
+} from '../lib/packs.js';
 import { verifierTransaction, definirRacine, racineApple } from '../lib/apple.js';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import mix, { reconnu } from '../web/quiz/js/manches/mix.js';
@@ -1797,7 +1800,7 @@ test('chaque question de pack a ses clips, dans toutes les voix', () => {
   assert.ok(voix.length > 0, 'aucune voix de pack');
 
   for (const v of voix) {
-    for (const fichier of readdirSync('packs').filter((f) => f.endsWith('.json'))) {
+    for (const fichier of readdirSync('packs').filter(estUnFichierDePack)) {
       const pack = JSON.parse(readFileSync(join('packs', fichier), 'utf8'));
       const racine = join('packs/audio', v, pack.id);
       assert.ok(existsSync(join(racine, 'manifeste.json')), `manifeste manquant : ${v}/${pack.id}`);
@@ -1943,6 +1946,77 @@ test('les identifiants de produit passent les règles d’Apple', async () => {
 test('un pack inconnu répond 404, pas 402', async () => {
   const absent = await boutique('GET', { id: 'pack-qui-nexiste-pas', licence: 'peu-importe' });
   assert.equal(absent.status, 404);
+});
+
+/* --- L'offre groupée ------------------------------------------------------ */
+
+test('une offre groupée n’est pas un pack, et ne se vend pas comme tel', async () => {
+  // `offres.json` vit dans `packs/` parce que c'est là que le catalogue est
+  // servi, et il n'a pas de questions. Chargé comme un pack, il apparaîtrait à
+  // la boutique avec zéro question et ferait tomber la génération des clips.
+  assert.equal(estUnFichierDePack('offres.json'), false);
+  assert.equal(estUnFichierDePack('noel.json'), true);
+
+  const { body } = await boutique('GET', {});
+  assert.ok(body.packs.every((p) => p.id !== 'tout'), 'l’offre s’est glissée dans les packs');
+  for (const pack of body.packs) assert.ok(pack.nombre > 0, `${pack.id} : pack sans questions`);
+});
+
+test('l’offre groupée annonce ce qu’elle ouvre, et ce qui serait repayé', async () => {
+  // Apple ne sait pas créditer un non-consommable déjà acheté : qui possède un
+  // pack et prend l'offre le repaie. On ne peut pas l'éviter, seulement le dire
+  // avant — d'où `dejaPossedes`, qui n'existe que pour ça.
+  const nue = (await boutique('GET', { licence: 'offre-neuve' })).body.offres;
+  assert.equal(nue.length, 1);
+  const [offre] = nue;
+  assert.equal(offre.dejaPossedes, 0);
+  assert.equal(offre.possede, false);
+  assert.ok(offre.packs.length >= 7, `l’offre n’ouvre que ${offre.packs.length} packs`);
+  assert.ok(offre.nombre >= offre.packs.length * 24, 'le compte de questions est faux');
+  assert.match(offre.produitApple, /^[A-Za-z0-9._]+$/, 'identifiant refusé par App Store Connect');
+
+  await accorder('offre-partielle', 'noel');
+  const partielle = (await boutique('GET', { licence: 'offre-partielle' })).body.offres[0];
+  assert.equal(partielle.dejaPossedes, 1);
+  assert.equal(partielle.possede, false, 'un seul pack acquis ne solde pas l’offre');
+
+  for (const id of offre.packs) await accorder('offre-complete', id);
+  const soldee = (await boutique('GET', { licence: 'offre-complete' })).body.offres[0];
+  assert.equal(soldee.possede, true, 'tout acquis : l’offre n’a plus rien à vendre');
+});
+
+test('acheter l’offre groupée ouvre tous les packs d’un coup', async () => {
+  // C'est le seul endroit où un produit App Store en ouvre plusieurs. Sans ce
+  // test, l'offre s'encaisserait très bien et n'ouvrirait rien : le produit
+  // serait simplement « inconnu », et l'acheteur aurait payé 9,99 € pour rien.
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const { offres: [offre] } = (await boutique('GET', {})).body;
+
+    const jws = signerTransaction(autorite, transactionType({ productId: offre.produitApple }));
+    const { accordes } = await enregistrerAchatsApple('acheteur-offre', [jws]);
+
+    assert.deepEqual([...accordes].sort(), [...offre.packs].sort());
+    const acquis = await packsDeLaLicence('acheteur-offre');
+    for (const id of offre.packs) {
+      assert.ok(acquis.includes(id), `${id} n’a pas été ouvert par l’offre`);
+      const { status } = await boutique('GET', { id, licence: 'acheteur-offre' });
+      assert.equal(status, 200, `${id} reste fermé après l’achat de l’offre`);
+    }
+  });
+});
+
+test('un produit App Store inconnu n’ouvre toujours rien', async () => {
+  // Le pendant du test précédent : élargir un produit à plusieurs packs ne doit
+  // pas transformer un identifiant inconnu en passe-partout.
+  await avecAutorite(async (autorite) => {
+    const { signerTransaction, transactionType } = await import('./faux-apple.mjs');
+    const jws = signerTransaction(autorite, transactionType({ productId: 'fr.quizentreamis.pack.inexistant' }));
+    const { accordes, refuses } = await enregistrerAchatsApple('curieux', [jws]);
+    assert.deepEqual(accordes, []);
+    assert.equal(refuses.length, 1);
+    assert.deepEqual(await packsDeLaLicence('curieux'), []);
+  });
 });
 
 test('les questions des packs sont valides comme celles de la banque', async () => {
@@ -2272,7 +2346,7 @@ test('le plafond de révélation couvre aussi les questions des packs', async ()
   if (!existsSync('packs/audio')) return;    // clips de packs pas encore générés
 
   const voix = readdirSync('packs/audio').filter((v) => v !== 'blanc');
-  const fichiers = readdirSync('packs').filter((f) => f.endsWith('.json'));
+  const fichiers = readdirSync('packs').filter(estUnFichierDePack);
 
   for (const v of voix) {
     // L'en-tête de la révélation se lit dans la banque de base : les répliques
@@ -3553,4 +3627,41 @@ test('le formulaire répond en HTML, pas en JSON, et renvoie vers un remerciemen
   assert.match(rate.html, /adresse/);
 
   assert.equal((await handleContactRequest({ method: 'GET', headers: {} })).status, 405);
+});
+
+/* --- L'icône de l'application --------------------------------------------- */
+
+test('l’icône source est prête pour l’App Store', async () => {
+  // Deux refus qui n'arrivent qu'au téléversement, c'est-à-dire après l'archive,
+  // la signature et vingt minutes d'attente : une icône qui ne fait pas
+  // 1024 × 1024, et une icône transparente (ITMS-90717). Rien dans Xcode ne
+  // prévient avant. Ce test coûte une milliseconde et fait gagner une demi-journée.
+  const { lireLEnTetePng, reprochesALIcone } = await import('./icones-ios.mjs');
+  const { readFileSync } = await import('node:fs');
+
+  const entete = lireLEnTetePng(readFileSync('assets/icon.png'));
+  assert.deepEqual(reprochesALIcone(entete), [], 'assets/icon.png ne passera pas à l’envoi');
+});
+
+test('le garde-fou de l’icône attrape bien ce qu’Apple refuse', async () => {
+  // Un test qui ne vérifie que le cas conforme ne prouve rien : il passerait
+  // aussi avec une fonction qui ne renvoie jamais rien.
+  const { reprochesALIcone } = await import('./icones-ios.mjs');
+
+  assert.equal(reprochesALIcone({ largeur: 512, hauteur: 512, typeDeCouleur: 2 }).length, 1);
+  assert.match(reprochesALIcone({ largeur: 1024, hauteur: 1024, typeDeCouleur: 6 })[0], /alpha/);
+  assert.match(reprochesALIcone({ largeur: 1024, hauteur: 1024, typeDeCouleur: 2, tRNS: true })[0], /tRNS/);
+  assert.equal(reprochesALIcone({ largeur: 1024, hauteur: 1024, typeDeCouleur: 2 }).length, 0);
+});
+
+test('l’icône n’est pas celle du compteur de points', async () => {
+  // Les deux applications vivent dans le même dépôt et ont chacune leurs
+  // icônes. Un copier-coller entre `web/icons/` et `web/quiz/icons/` est arrivé
+  // une fois, et personne ne l'a vu avant d'ouvrir l'application.
+  const { readFileSync, existsSync } = await import('node:fs');
+  if (!existsSync('web/icons/icon-512.png')) return;   // le compteur n'est pas là
+
+  const quiz = readFileSync('web/quiz/icons/icon-512.png');
+  const compteur = readFileSync('web/icons/icon-512.png');
+  assert.ok(!quiz.equals(compteur), 'le quiz sert l’icône du compteur de points');
 });
