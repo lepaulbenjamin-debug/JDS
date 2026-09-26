@@ -8,11 +8,6 @@
 //                recherche, liens partagés, fiche de l'App Store
 //   /jouer/      le jeu lui-même
 //
-// Le dépôt héberge aussi le compteur de points, à la racine de `web/`. Il n'est
-// pas masqué : il n'est pas publié. Aucune adresse à deviner, aucune règle de
-// réécriture à tenir à jour, et rien qui réapparaisse le jour où quelqu'un lui
-// ajoute un fichier.
-//
 // Pourquoi une page d'accueil séparée plutôt que le jeu à la racine : une
 // application d'une page, dont tout le contenu apparaît au tap, ne donne à
 // indexer qu'un écran de connexion et trois boutons. Ce qui se référence, ce
@@ -21,9 +16,7 @@
 //
 // Deux différences avec le paquet natif, et une seule vraie :
 //
-//  - le service worker reste, puisque la page vient du réseau. Ses chemins sont
-//    réécrits comme les autres — sans quoi il précharge deux fichiers qui
-//    n'existent plus à cette place, et l'installation échoue en silence ;
+//  - le service worker reste, puisque la page vient du réseau ;
 //  - toutes les voix restent. Sur le web rien n'est téléchargé avant d'être
 //    joué : le choix peut rester entier, contrairement au paquet natif où
 //    chaque banque pèse soixante mégaoctets dans la décision d'installer.
@@ -47,9 +40,6 @@ async function batir() {
 
   await assemblerLeQuiz(join(SORTIE, 'jouer'));
 
-  // Le service worker précharge deux modules partagés, qui ont changé de place.
-  await remplacer(join(SORTIE, 'jouer', 'sw.js'), [['../js/', 'commun/']]);
-
   // La page d'accueil et ce qui va avec — `robots.txt`, `sitemap.xml`, l'image
   // de partage — par-dessus, à la racine.
   await cp(SITE, SORTIE, { recursive: true });
@@ -63,7 +53,7 @@ async function batir() {
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
   console.log(`  /          la page d’accueil`);
   console.log(`  /jouer/    le jeu — ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo, voix : ${voix}`);
-  console.log('  le compteur de points n’est pas dedans, et c’est le but.\n');
+  console.log('');
 }
 
 batir().catch((erreur) => {

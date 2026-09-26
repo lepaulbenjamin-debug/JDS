@@ -2,7 +2,7 @@
 //
 // Le moteur ne connaissait qu'une forme : quatre réponses, un tap, des points à
 // la rapidité. Une soirée qui ne fait que ça s'essouffle — d'où un module par
-// type, sur le modèle de `web/js/games/` pour le compteur de points : le moteur
+// type — comme un jeu de société a ses règles propres : le moteur
 // orchestre le temps et les scores, chaque module dit comment SA manche se
 // prépare, s'affiche, se lit et se note.
 //

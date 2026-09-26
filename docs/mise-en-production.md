@@ -44,9 +44,9 @@ Et deux qui ne doivent **jamais** monter sur Vercel : `OPENAI_API_KEY` et
 `OPENAI_TTS_MODEL` ne servent qu'à fabriquer les clips, depuis une machine de
 développement. Le relais n'a aucune raison de parler à OpenAI.
 
-`ANTHROPIC_API_KEY` ne sert plus à rien sur ce projet : sa seule route,
-`/api/scan`, appartient au compteur de points et n'est plus déployée ici
-(voir 1 ter). Autant la retirer — une clé qui n'est nulle part ne fuite pas.
+`ANTHROPIC_API_KEY` n'a plus rien à faire ici non plus : sa seule route,
+`/api/scan`, appartenait au compteur de points, parti dans son propre dépôt.
+Autant la retirer de Vercel — une clé qui n'est nulle part ne fuite pas.
 
 **Après chaque ajout, il faut redéployer** : Vercel ne relit pas les variables
 d'un déploiement déjà en ligne. Et si les déploiements de préversion doivent
@@ -96,14 +96,12 @@ Trois conséquences :
 - **le quiz vit sous `/jouer/`.** Les anciennes adresses `/quiz/…` redirigent,
   en 307 et non en 308 : une redirection permanente se grave dans les
   navigateurs, et on ne veut pas d'un choix irréversible sur un déménagement ;
-- **`api/scan.mjs` n'est plus déployé** (`.vercelignore`). C'est la route du
-  compteur de points : elle envoie une photo à l'API d'Anthropic avec la clé du
-  projet, sans aucun garde-fou, et plus personne ne l'appelle depuis ce
-  domaine. La laisser en ligne, c'était laisser ouverte une porte qui dépense ;
-- **le compteur de points n'est plus en ligne du tout.** Pour l'y remettre, il
-  lui faut son propre projet Vercel sur ce même dépôt, avec
-  `outputDirectory: web` — et, tant qu'à faire, un secret partagé devant
-  `/api/scan`, qui n'en a jamais eu.
+- **le compteur de points a quitté ce dépôt.** Il vit dans
+  [JDS-compteur](https://github.com/lepaulbenjamin-debug/JDS-compteur), et avec
+  lui `api/scan.mjs` — la route qui envoyait une photo à l'API d'Anthropic avec
+  la clé du projet, sans aucun garde-fou. Pour le remettre en ligne, il lui faut
+  son propre projet Vercel depuis ce dépôt-là, et, tant qu'à faire, un secret
+  partagé devant cette route, qui n'en a jamais eu.
 
 Un détail sans conséquence, mais qui surprend : ceux qui ont déjà ouvert
 `/quiz/` ont un service worker enregistré sur cette portée-là. Il ne contrôle

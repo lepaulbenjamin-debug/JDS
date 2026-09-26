@@ -1,21 +1,7 @@
 # Ce qui ne part pas sur quizentreamis.fr.
 #
-# Le dépôt héberge deux applications. Le site ne publie que le quiz — c'est
-# `scripts/build-web.mjs` qui l'assemble — mais les fonctions de `api/` partent
-# toutes, elles, sans passer par ce script.
-#
-# `api/scan.mjs` appartient au compteur de points : il envoie une photo de
-# feuille de scores à l'API d'Anthropic, avec la clé du projet. Plus personne ne
-# l'appelle depuis ce domaine, et le laisser en ligne reviendrait à laisser
-# ouverte une porte qui dépense de l'argent, sans aucun garde-fou devant.
-#
-# Le jour où le compteur de points aura son propre projet Vercel, il faudra y
-# retirer cette ligne — et, tant qu'à faire, mettre un secret partagé devant
-# cette route, qui n'en a jamais eu.
-api/scan.mjs
-
-# Le poids inutile : ni l'un ni l'autre n'est servi, et les packs payants sont
-# joints à leur fonction par `includeFiles`.
+# Le poids inutile : rien de tout cela n'est servi, et les packs payants sont
+# joints à leur fonction par `includeFiles` dans vercel.json.
 apple/
 docs/
 scripts/repetition.mjs

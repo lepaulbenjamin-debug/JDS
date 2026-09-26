@@ -3,13 +3,8 @@
 //   node scripts/build-ios.mjs [--relais=https://…]
 //
 // Capacitor sert un dossier depuis le paquet de l'application : sa racine doit
-// être le quiz, et lui seul. Le dépôt, lui, héberge deux applications sous
-// `web/` — copier le tout embarquerait le compteur de points et sa clé d'API
-// dans une appli de quiz, pour rien.
-//
-// D'où ce script plutôt qu'une copie : il ne prend que ce dont le quiz a
-// besoin, remonte les fichiers partagés dans `commun/`, et réécrit les trois
-// chemins que ce déplacement casse.
+// être le quiz, et rien d'autre. `web/` porte aussi la page d'accueil du site,
+// qui n'a aucune raison de voyager dans le paquet.
 //
 // Trois différences assumées avec la version web :
 //

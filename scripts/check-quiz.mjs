@@ -1721,20 +1721,18 @@ test('l’icône livrée à l’App Store est carrée et sans transparence', () 
   assert.ok(![4, 6].includes(entete[9]), 'l’icône a une couche alpha');
 });
 
-test('le quiz et le compteur de points n’ont pas la même icône', () => {
-  // Les deux applications vivent sous le même toit, et le quiz a longtemps
-  // emprunté `web/icons/` au compteur. Y déposer l'icône du quiz a donc changé
-  // l'icône du compteur sur tous les écrans d'accueil où il était installé —
-  // sans que rien ne le signale. Chacun a désormais son dossier, et ce test
-  // existe pour que la confusion ne revienne pas.
-  for (const nom of ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) {
-    const site = nodeFs.readFileSync(join('web/icons', nom));
-    const quiz = nodeFs.readFileSync(join('web/quiz/icons', nom));
-    assert.ok(!site.equals(quiz), `${nom} est le même fichier pour les deux applis`);
-  }
+test('le quiz ne va chercher ses icônes nulle part ailleurs', () => {
+  // Le compteur de points a longtemps vécu dans ce dépôt, et le quiz empruntait
+  // ses icônes par `../icons/`. Y déposer l'icône du quiz changeait alors
+  // l'icône du compteur sur tous les écrans d'accueil où il était installé,
+  // sans que rien ne le signale. Le compteur est parti dans son propre dépôt,
+  // mais le chemin relatif, lui, ne pointerait désormais plus nulle part.
   for (const page of ['web/quiz/index.html', 'web/quiz/tv.html', 'web/quiz/manifest.webmanifest']) {
     assert.doesNotMatch(nodeFs.readFileSync(page, 'utf8'), /\.\.\/icons\//,
-      `${page} emprunte encore les icônes du compteur`);
+      `${page} cherche ses icônes hors de web/quiz/`);
+  }
+  for (const nom of ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) {
+    assert.ok(nodeFs.existsSync(join('web/quiz/icons', nom)), `icône manquante : ${nom}`);
   }
 });
 
@@ -2762,8 +2760,8 @@ test('le paquet natif ne garde aucun chemin de la mise en page web', () => {
   }
   for (const module of nodeFs.readdirSync(`${paquet.racine}/js`)) {
     if (!module.endsWith('.js')) continue;
-    assert.doesNotMatch(paquet.lire(`js/${module}`), /\.\.\/\.\.\/js\//,
-      `js/${module} importe encore depuis l’arborescence du site`);
+    assert.doesNotMatch(paquet.lire(`js/${module}`), /\.\.\//,
+      `js/${module} importe hors de sa propre arborescence`);
   }
 });
 
@@ -2771,7 +2769,7 @@ test('le paquet natif embarque tout ce que l’appli demande', () => {
   const paquet = paquetIos();
   if (!paquet) return;
   for (const chemin of [
-    'commun/ui.js', 'commun/speech.js',      // les deux modules partagés
+    'js/ui.js', 'js/speech.js',
     'icons/icon-192.png', 'styles.css',
     'audio/voix.json',
     'js/app.js', 'js/engine.js', 'js/emcee.js', 'js/questions.js',
@@ -3654,17 +3652,7 @@ test('le garde-fou de l’icône attrape bien ce qu’Apple refuse', async () =>
   assert.equal(reprochesALIcone({ largeur: 1024, hauteur: 1024, typeDeCouleur: 2 }).length, 0);
 });
 
-test('l’icône n’est pas celle du compteur de points', async () => {
-  // Les deux applications vivent dans le même dépôt et ont chacune leurs
-  // icônes. Un copier-coller entre `web/icons/` et `web/quiz/icons/` est arrivé
-  // une fois, et personne ne l'a vu avant d'ouvrir l'application.
-  const { readFileSync, existsSync } = await import('node:fs');
-  if (!existsSync('web/icons/icon-512.png')) return;   // le compteur n'est pas là
 
-  const quiz = readFileSync('web/quiz/icons/icon-512.png');
-  const compteur = readFileSync('web/icons/icon-512.png');
-  assert.ok(!quiz.equals(compteur), 'le quiz sert l’icône du compteur de points');
-});
 
 /* --- Le projet Xcode ------------------------------------------------------ */
 

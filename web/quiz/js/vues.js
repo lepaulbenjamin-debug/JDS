@@ -15,7 +15,7 @@
 // `ctx.repondre(valeur)` envoie la réponse. `etat` porte `{ ouvert, revele,
 // monChoix, manche }`.
 
-import { el, clear } from '../../js/ui.js';
+import { el, clear } from './ui.js';
 
 /* --- QCM ------------------------------------------------------------------ */
 

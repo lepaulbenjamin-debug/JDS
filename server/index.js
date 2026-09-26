@@ -1,20 +1,17 @@
-// Serveur optionnel.
-//   1. sert la PWA (dossier web/) ;
-//   2. expose POST /api/scan, qui relaie la photo à l'API Claude avec une clé
-//      API qui reste côté serveur.
+// Le serveur de développement.
 //
-//   ANTHROPIC_API_KEY=sk-ant-... npm start
+//   npm start        # http://localhost:8080/quiz/
 //
-// Sans ce serveur, l'appli fonctionne quand même : le scoring est entièrement
-// local, et la lecture IA peut appeler l'API directement depuis le navigateur
-// avec une clé saisie dans les réglages.
+// Il sert `web/` en statique et expose les mêmes routes que les fonctions de
+// `api/` sur Vercel — salons, packs, comptes, contact. C'est lui qu'on
+// interroge quand on essaie l'application sur un vrai téléphone du réseau
+// local, avant de déployer.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
 import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runScan, MAX_BODY } from '../lib/scan.js';
 import { handleRoomRequest } from '../lib/rooms.js';
 import { handlePackRequest } from '../lib/packs.js';
 import { handleCompteRequest } from '../lib/comptes.js';
@@ -22,7 +19,12 @@ import { handleContactRequest } from '../lib/contact.js';
 import { enTetesCors, estPreflight } from '../lib/cors.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
+const SITE = join(ROOT, 'site');
 const PORT = Number(process.env.PORT ?? 8080);
+
+// Le plafond d'un corps de requête. Les routes du quiz échangent du JSON court
+// — un état de salon, une réponse, un jeton — jamais un fichier.
+const MAX_BODY = 1024 * 1024;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -52,7 +54,7 @@ function readBody(req) {
     req.on('data', (chunk) => {
       size += chunk.length;
       if (size > MAX_BODY) {
-        reject(new Error('Image trop lourde.'));
+        reject(new Error('Corps de requête trop lourd.'));
         req.destroy();
         return;
       }
@@ -61,17 +63,6 @@ function readBody(req) {
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     req.on('error', reject);
   });
-}
-
-async function handleScan(req, res) {
-  let input;
-  try {
-    input = JSON.parse(await readBody(req));
-  } catch (error) {
-    return sendJson(res, 400, { error: error.message || 'Corps de requête illisible.' });
-  }
-  const { status, body } = await runScan(input);
-  return sendJson(res, status, body);
 }
 
 async function handleRoom(req, res) {
@@ -166,21 +157,27 @@ async function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const requested = decodeURIComponent(url.pathname);
   const relative = normalize(requested === '/' ? '/index.html' : requested).replace(/^(\.\.[/\\])+/, '');
-  let filePath = join(ROOT, relative);
 
-  if (!filePath.startsWith(ROOT)) {
+  // Le même découpage qu'en production, et c'est le point : `build-web.mjs`
+  // publie `web/site/` à la racine du domaine et le jeu en dessous. Servir
+  // `web/` tel quel donnerait ici une arborescence qui n'existe nulle part
+  // ailleurs — un 404 sur `/` en développement, ou pire, une page qui marche en
+  // local et pas en ligne.
+  const racine = requested.startsWith('/quiz') ? ROOT : SITE;
+  let filePath = join(racine, relative);
+
+  if (!filePath.startsWith(racine)) {
     res.writeHead(403).end('Interdit');
     return;
   }
 
   try {
     let info = await stat(filePath);
-    // `/quiz` doit ouvrir `/quiz/index.html` : l'appli n'est plus seule à la
-    // racine depuis que Quiz entre amis vit dans son propre dossier.
+    // `/quiz` doit ouvrir `/quiz/index.html` : le jeu vit dans son dossier, et
+    // `web/site/` porte la page d'accueil publiée à la racine du domaine.
     if (info.isDirectory()) {
       // La barre finale n'est pas cosmétique : sans elle, le navigateur résout
-      // `js/app.js` en `/js/app.js` et charge le compteur de points à la place
-      // de Quiz entre amis.
+      // `js/app.js` en `/js/app.js`, un cran trop haut, et ne trouve rien.
       if (!requested.endsWith('/')) {
         res.writeHead(301, { location: `${requested}/${url.search}` }).end();
         return;
@@ -220,10 +217,6 @@ createServer((req, res) => {
     }
   }
 
-  if (req.url?.startsWith('/api/scan')) {
-    if (req.method !== 'POST') return sendJson(res, 405, { error: 'Méthode non autorisée.' });
-    return handleScan(req, res);
-  }
   if (req.url?.startsWith('/api/room')) {
     return handleRoom(req, res);
   }
@@ -249,8 +242,5 @@ createServer((req, res) => {
     // La barre finale compte : tapée telle quelle sur un téléphone, une adresse
     // sans elle passe par une redirection qu'on peut s'épargner.
     console.log(`  Quiz entre amis, depuis les téléphones : http://${address}:${PORT}/quiz/`);
-  }
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn('ANTHROPIC_API_KEY non définie : /api/scan échouera tant qu\'aucune clé n\'est configurée.');
   }
 });

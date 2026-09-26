@@ -28,10 +28,11 @@ indigo, vert, or, rouge, les couleurs de l'interface. Elle est en place :
 | `web/quiz/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | le site et l'écran d'accueil |
 | `web/quiz/icons/icon-maskable-512.png` | motif à 72 %, pour le rognage d'Android |
 
-`web/icons/` appartient au **compteur de points**, pas au quiz. Les deux
-applications vivent sous le même toit, et le quiz y empruntait ses icônes : y
-déposer les siennes changeait celle du compteur sur tous les écrans d'accueil
-où il était installé. Un test compare désormais les deux dossiers.
+Les icônes ont longtemps été empruntées au compteur de points, qui partageait
+ce dépôt : elles vivaient dans un `web/icons/` commun, et y déposer celles du
+quiz changeait l'icône du compteur sur tous les écrans d'accueil où il était
+installé. Chacun a désormais les siennes, et un test vérifie que le quiz ne va
+plus les chercher d'un cran plus haut.
 
 Deux corrections ont été apportées à l'image d'origine, et elles valent pour
 toute image qu'un modèle rendra plus tard :

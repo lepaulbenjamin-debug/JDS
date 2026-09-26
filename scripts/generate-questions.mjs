@@ -13,7 +13,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import Anthropic from '@anthropic-ai/sdk';
-import { MODEL } from '../web/js/vision-prompt.js';
+
+// Le modèle, écrit ici plutôt qu'importé : cette constante venait du compteur
+// de points, parti dans son propre dépôt. Deux outils sans rapport n'ont pas
+// à partager le choix d'un modèle.
+const MODEL = 'claude-opus-5';
 import { THEMES, QUESTIONS } from '../web/quiz/js/questions.js';
 
 const SORTIE = join(dirname(fileURLToPath(import.meta.url)), 'questions-brouillon.json');

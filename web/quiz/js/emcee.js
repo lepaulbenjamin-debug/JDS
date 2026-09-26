@@ -15,7 +15,7 @@
 // gabarits sont donc tournés pour rester neutres — « {nom}, et personne
 // d'autre » plutôt que « la seule à avoir trouvé ».
 
-import { speech, frenchVoices } from '../../js/speech.js';
+import { speech, frenchVoices } from './speech.js';
 import * as audio from './audio.js';
 
 export {

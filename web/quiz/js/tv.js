@@ -18,7 +18,7 @@
 // explique lequel.
 
 import * as net from './net.js';
-import { el, clear } from '../../js/ui.js';
+import { el, clear } from './ui.js';
 import { typeDeManche } from './manches/index.js';
 import { THEMES } from './questions.js';
 

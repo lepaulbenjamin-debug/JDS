@@ -5,7 +5,7 @@
 // il publie l'état, les autres le lisent. Personne n'a de rôle d'animateur à
 // tenir, tout le monde joue.
 
-import { $, $$, el, clear, toast, confirmDialog } from '../../js/ui.js';
+import { $, $$, el, clear, toast, confirmDialog } from './ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
 import { vueDe } from './vues.js';

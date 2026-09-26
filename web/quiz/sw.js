@@ -31,8 +31,8 @@ const SHELL = [
   'js/engine.js',
   'js/emcee.js',
   'js/questions.js',
-  '../js/ui.js',
-  '../js/speech.js',
+  'js/ui.js',
+  'js/speech.js',
   'icons/icon-192.png',
 ];
 
