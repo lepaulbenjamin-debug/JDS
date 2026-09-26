@@ -1,9 +1,8 @@
 # Archive l'application iOS et la dépose sur App Store Connect.
 #
-# Ce que ce workflow ne peut pas remplacer : la configuration Xcode. Elle se
-# fait une fois, à la main, sur un Mac — les fichiers Swift dans la cible, la
-# capacité « Sign in with Apple », le schéma d'URL de Google — puis le dossier
-# `ios/` est versionné. À partir de là, tout est reproductible ici.
+# Ce que ce workflow ne peut pas remplacer : la configuration du projet natif.
+# Elle se fait une fois — `npm run ios:add` puis `npm run ios:preparer` — et le
+# dossier `ios/` est versionné. À partir de là, tout est reproductible ici.
 #
 # Un build qui échoue parce qu'un fichier n'est pas dans la cible échoue en
 # vingt secondes, avant de signer quoi que ce soit : c'est le rôle de l'étape

@@ -12,11 +12,14 @@ ces défauts sont muets. La configuration ne se rejoue donc pas à chaque build,
 elle se construit une fois et se versionne.
 
 1. `npm run ios:add`
-2. les trois choses d'`apple/README.md` › « Les trois choses à faire dans
-   Xcode » : les quatre `.swift` et `PrivacyInfo.xcprivacy` dans la cible, la
-   capacité *Sign in with Apple*, le schéma d'URL de Google ;
-3. `npm run ios:verifier` — il dit ce qui manque, et rien d'autre ne le dira ;
-4. `git add ios && git commit`.
+2. `npm run ios:preparer` — il fait tout le travail qui se faisait à la souris :
+   les cinq fichiers dans la cible, la ligne de session audio, les droits
+   *Sign in with Apple*, le schéma d'URL de Google, iPhone et portrait ;
+3. activer la capacité **Sign in with Apple** sur l'identifiant
+   `fr.quizentreamis.app` dans le portail développeur — la seule chose qui ne
+   vit pas dans le projet, et que rien ici ne peut faire ;
+4. `npm run ios:verifier` — il dit ce qui manque, et rien d'autre ne le dira ;
+5. `git add ios && git commit`.
 
 Le workflow refait cette vérification avant de signer quoi que ce soit : un
 fichier oublié coûte vingt secondes, pas une version publiée muette.

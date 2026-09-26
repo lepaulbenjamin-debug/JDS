@@ -72,11 +72,26 @@ node -v                    # doit afficher 22 ou plus (exigence de Capacitor 8)
 npm install
 rm -rf ios                 # seulement si un essai précédent en a laissé un
 npm run ios:add            # c'est cette commande qui crée ios/
-cp apple/*.swift apple/PrivacyInfo.xcprivacy ios/App/App/
-rm ios/App/App/AppDelegate-exemple.swift   # un modèle à lire, pas à compiler
+npm run ios:preparer       # fait les trois choses ci-dessous, sans Xcode
+npm run ios:verifier       # dit ce qui manquerait encore
 npm run ios:sync           # rebâtit le paquet web, puis le synchronise
 npm run ios:open
 ```
+
+**`npm run ios:preparer` remplace tout le travail à la souris décrit plus bas.**
+Il copie les sources, ajoute la ligne de session audio, déclare les cinq
+fichiers dans la cible, écrit les droits « Sign in with Apple », pose le schéma
+d'URL de Google et passe la cible en iPhone/portrait. Il est rejouable : une
+deuxième exécution ne double rien, et `cap sync` ne défait rien.
+
+Une seule chose lui échappe, parce qu'elle ne vit pas dans le projet :
+**activer la capacité « Sign in with Apple » sur l'identifiant
+`fr.quizentreamis.app`** dans le portail développeur Apple. Sans elle, la
+signature échoue — avec un message qui la nomme, au moins.
+
+Les sections qui suivent décrivent ce que le script fait, et comment le faire à
+la main si l'on préfère. Elles restent utiles pour comprendre *pourquoi* chaque
+étape compte : les trois défauts qu'elles évitent sont muets.
 
 **Pourquoi pas `npx cap` :** il existe sur npm un paquet nommé `cap`, sans
 rapport, et **sans aucun exécutable**. Quand `@capacitor/cli` n'est pas installé

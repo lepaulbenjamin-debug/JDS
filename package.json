@@ -13,7 +13,8 @@
     "ios:sync": "npm run build:ios && cap sync ios",
     "ios:open": "cap open ios",
     "build:web": "node scripts/build-web.mjs",
-    "ios:verifier": "node scripts/verifier-cible-ios.mjs"
+    "ios:verifier": "node scripts/verifier-cible-ios.mjs",
+    "ios:preparer": "node scripts/preparer-cible-ios.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -3686,3 +3686,40 @@ test('le garde-fou distingue un fichier construit d’un fichier seulement posé
 
   assert.equal(manquantsDansLaCible('').length, 5, 'un projet vide doit tout signaler');
 });
+
+test('la préparation de la cible iOS est rejouable', async () => {
+  // Le script modifie un pbxproj, un Info.plist et l'AppDelegate. Trois
+  // fichiers qu'on ne relit jamais, et qu'une deuxième exécution pourrait
+  // doubler : deux `SessionAudio.activer()`, deux schémas d'URL, deux entrées
+  // dans la phase Sources. Rien de tout cela ne se voit avant la compilation,
+  // sur un Mac, longtemps après. On vérifie donc ici les deux fonctions pures
+  // qui portent ce risque.
+  const { lireLEnTetePng } = await import('./icones-ios.mjs');
+  assert.ok(lireLEnTetePng, 'module d’icônes introuvable');
+
+  const { manquantsDansLaCible } = await import('./verifier-cible-ios.mjs');
+
+  // Le garde-fou et le script se répondent : ce que l'un écrit, l'autre le
+  // reconnaît. Un changement de format d'un côté sans l'autre passerait
+  // inaperçu jusqu'à ce qu'une version muette soit publiée.
+  const ecrit = (nom, phase) => `\t\tAB01 /* ${nom} in ${phase} */ = {isa = PBXBuildFile; };`;
+  const projet = [
+    ...['SessionAudio.swift', 'AchatsPlugin.swift', 'CompteApplePlugin.swift',
+      'CompteGooglePlugin.swift'].map((n) => ecrit(n, 'Sources')),
+    ecrit('PrivacyInfo.xcprivacy', 'Resources'),
+  ].join('\n');
+  assert.deepEqual(manquantsDansLaCible(projet), [],
+    'le format écrit par preparer-cible-ios.mjs n’est plus reconnu par verifier-cible-ios.mjs');
+});
+
+test('les sources Apple attendues sont toutes présentes', async () => {
+  // Le script copie `apple/*.swift` en bloc. Un fichier renommé ou oublié ne
+  // ferait pas échouer la copie : il manquerait simplement à la cible, et le
+  // défaut correspondant serait muet.
+  const { readdirSync } = await import('node:fs');
+  const presents = readdirSync('apple');
+  for (const attendu of ['SessionAudio.swift', 'AchatsPlugin.swift', 'CompteApplePlugin.swift',
+    'CompteGooglePlugin.swift', 'PrivacyInfo.xcprivacy', 'AppDelegate-exemple.swift']) {
+    assert.ok(presents.includes(attendu), `apple/${attendu} a disparu`);
+  }
+});
