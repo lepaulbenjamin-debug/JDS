@@ -131,6 +131,8 @@ const ordre = {
         rafraichir();
         // Quatre taps et c'est parti : demander une validation en plus alors
         // que le classement est complet ne ferait que coûter une seconde.
+        // L'envoi n'enferme personne — « Recommencer » reste là, et la régie
+        // retient la dernière réponse reçue.
         if (choix.length === manche.elements.length) ctx.repondre(choix);
       },
     }, [
@@ -150,7 +152,11 @@ const ordre = {
         bouton.classList.toggle('est-place', rang >= 0);
         bouton.querySelector('.element-rang').textContent = rang >= 0 ? String(rang + 1) : '';
       });
-      recommencer.hidden = choix.length === 0 || choix.length === manche.elements.length;
+      // Visible dès le premier élément posé, et surtout : elle le RESTE une
+      // fois les quatre placés. Elle disparaissait à ce moment précis, donc un
+      // ordre complet mais raté ne se rattrapait plus — alors que le chrono
+      // tournait encore et que la régie accepte très bien qu'on change d'avis.
+      recommencer.hidden = choix.length === 0;
     }
     rafraichir();
 
@@ -167,6 +173,9 @@ const ordre = {
 
   peindre(vue, { manche, ouvert, revele }) {
     for (const bouton of vue.boutons) bouton.disabled = !ouvert;
+    // Le chrono fermé, on ne recommence plus rien : laisser le bouton actif
+    // laisserait croire qu'il reste un geste à faire.
+    vue.recommencer.disabled = !ouvert;
     if (!revele) return;
 
     vue.recommencer.hidden = true;

@@ -35,10 +35,16 @@ const BANQUE = {
     plusProche: [
       'Le plus proche, c’est {nom}. La réponse exacte : {reponse}.',
       'C’est {nom} qui s’en approche le plus. C’était {reponse}.',
+      'Au plus près : {nom}. La réponse exacte était {reponse}.',
+      'Personne n’est tombé pile. Au plus près, {nom} — c’était {reponse}.',
+      'C’est {nom} qui limite l’écart. La réponse : {reponse}.',
     ],
     partiel: [
       'Personne n’a tout juste, mais il y a des points à ramasser.',
       'Pas de sans-faute. Des points quand même pour les plus proches.',
+      'Pas de sans-faute, mais la table marque quand même.',
+      'Aucun parcours parfait. Il y a tout de même des points à prendre.',
+      'Personne n’a tout, personne n’a rien. C’est déjà ça.',
     ],
     filTrouve: ['Le fil rouge est tombé ! {nom} l’a démasqué.'],
     filManque: ['Et personne n’a vu le fil rouge de la soirée.'],
@@ -60,6 +66,9 @@ const BANQUE = {
       'Manche {manche} sur {total}.',
       'On enchaîne. Question {manche}.',
       'Question {manche} sur {total}. Concentration.',
+      'Manche {manche}. On écoute.',
+      'Question {manche} sur {total}.',
+      'On continue. Manche {manche} sur {total}.',
     ],
     derniereManche: [
       'Dernière manche, et elle vaut double. Tout peut encore basculer.',
@@ -88,26 +97,44 @@ const BANQUE = {
     personne: [
       'Personne. Pas un seul. La réponse était {reponse}.',
       'Aucune bonne réponse. C’était {reponse}.',
+      'Rien du tout. La réponse était {reponse}.',
+      'Pas une seule bonne réponse. C’était {reponse}.',
+      'La table entière est passée à côté. C’était {reponse}.',
     ],
     tous: [
       'Tout le monde a trouvé. {reponse}, évidemment.',
       'Sans faute pour tout le monde : {reponse}.',
+      'Personne ne s’est fait piéger : {reponse}.',
+      'Carton plein pour la table. C’était {reponse}.',
+      'Tout le monde y était. {reponse}, donc.',
     ],
     unSeul: [
       '{nom} a trouvé, et personne d’autre. Bravo.',
       'Une seule bonne réponse, celle de {nom}. Chapeau.',
+      'Une seule bonne réponse ce coup-ci, et elle est signée {nom}.',
+      'Seule bonne réponse : {nom}. Joli.',
+      '{nom} passe, le reste de la table reste. Bravo.',
     ],
     plusieurs: [
       '{nb} bonnes réponses. C’était bien {reponse}.',
       '{nb} d’entre vous ont trouvé : {reponse}.',
+      'On compte {nb} bonnes réponses : {reponse}.',
+      '{nb} au tableau. La réponse était {reponse}.',
+      '{nb} bonnes réponses, ni plus ni moins. C’était {reponse}.',
     ],
     rapide: [
       'Réponse la plus rapide : {nom}, en {secondes} secondes.',
       '{nom} a dégainé le plus vite : {secondes} secondes.',
+      'Le doigt le plus rapide : {nom}, {secondes} secondes.',
+      'Premier sur l’écran : {nom}, en {secondes} secondes.',
+      '{nom} n’a pas hésité : {secondes} secondes.',
     ],
     leader: [
       'En tête, {nom}, avec {points} points.',
       '{nom} prend la tête avec {points} points.',
+      'Toujours {nom} devant, avec {points} points.',
+      'En haut du tableau : {nom}, {points} points.',
+      '{nom} garde la première place avec {points} points.',
     ],
     vol: [
       '{nom} sort le vol, et repart avec les points de {cible} !',
@@ -129,10 +156,15 @@ const BANQUE = {
     plusProche: [
       '{nom} est le plus proche. C’était {reponse}, pour les autres.',
       'Le moins mauvais, c’est {nom}. La vraie réponse : {reponse}.',
+      'Au plus près, {nom}. Ce qui ne veut pas dire près. C’était {reponse}.',
+      'Le moins loin : {nom}. La vraie réponse, {reponse}.',
     ],
     partiel: [
       'Aucun sans-faute. On prend ce qu’il y a.',
       'Personne n’a tout bon. J’ai vu pire. Rarement.',
+      'Pas de sans-faute. On va dire que c’est l’intention qui compte.',
+      'Aucun parcours parfait. Vous avez au moins essayé.',
+      'Personne n’a tout bon. Je ne suis même pas surpris.',
     ],
     filTrouve: ['Et voilà, {nom} a trouvé le fil rouge. Les autres cherchent encore.'],
     filManque: ['Le fil rouge vous est passé sous le nez toute la soirée.'],
@@ -148,6 +180,9 @@ const BANQUE = {
       'Question {manche}. Allez, on se réveille.',
       'Manche {manche} sur {total}. Essayez de lire jusqu’au bout cette fois.',
       'Question {manche}. Celle-là, elle est cadeau. Enfin, normalement.',
+      'Question {manche}. Concentrez-vous, pour une fois.',
+      'Manche {manche} sur {total}. On y croit encore.',
+      'Question {manche}. Pas de panique, ce ne sont que des points.',
     ],
     derniereManche: [
       'Dernière question, elle vaut double, et là c’est chacun pour soi.',
@@ -176,26 +211,44 @@ const BANQUE = {
     personne: [
       'Alors là, rien. Zéro. Le néant. C’était {reponse}, bande de touristes.',
       'Personne n’a trouvé. {reponse}. Vous me faites de la peine.',
+      'Rien. Pas un. C’était {reponse}, au cas où ça intéresse quelqu’un.',
+      'Zéro pointé pour toute la table. C’était {reponse}.',
+      'Personne. {reponse}. On va dire que la question était piégeuse.',
     ],
     tous: [
       'Tout le monde a bon. Trop facile, je vais corser ça.',
       'Sans faute pour tout le monde. Bravo, vous savez lire.',
+      'Tout le monde a bon. C’est louche.',
+      'Sans faute général. Quelqu’un a triché, je le sens.',
+      'Toute la table a trouvé. Je vais durcir le ton.',
     ],
     unSeul: [
       '{nom} a trouvé. Les autres, vous étiez où ?',
       '{nom}, et personne d’autre. Le reste de la table a joué au hasard.',
+      'Bravo {nom}. Les autres, on fait comme si de rien n’était.',
+      'Une seule bonne réponse : {nom}. Le reste, c’était de la décoration.',
+      '{nom} sauve la table. Encore.',
     ],
     plusieurs: [
       '{nb} bonnes réponses. C’était {reponse}, pour ceux qui suivaient.',
       'On en a {nb}. Les autres, ce n’est pas grave, enfin si.',
+      '{nb} bonnes réponses. C’était {reponse}, et c’était écrit en gros.',
+      'On monte à {nb}. Un progrès, presque.',
+      '{nb} d’entre vous ont trouvé {reponse}. Les autres improvisaient.',
     ],
     rapide: [
       '{nom} a dégainé en {secondes} secondes. Même pas le temps de lire la question.',
       'Plus rapide : {nom}, {secondes} secondes. Suspect.',
+      '{nom} en {secondes} secondes. Soit avant d’avoir lu, j’imagine.',
+      'Plus rapide : {nom}, {secondes} secondes. On vérifiera les caméras.',
+      '{secondes} secondes pour {nom}. Les autres relisaient l’énoncé.',
     ],
     leader: [
       '{nom} est en tête avec {points} points, et commence à être insupportable.',
       'Toujours {nom} devant, {points} points. Quelqu’un fait quelque chose ?',
+      '{nom} caracole en tête, {points} points. Ça commence à bien faire.',
+      'En tête : {nom}, {points} points. Quelqu’un veut réagir, ou pas ?',
+      '{nom} devant avec {points} points. Le suspense en prend un coup.',
     ],
     vol: [
       'Oh ! {nom} braque {cible} en pleine lumière ! Aucune pitié.',
@@ -214,8 +267,18 @@ const BANQUE = {
   },
 
   pincesansrire: {
-    plusProche: ['{nom} s’en approche le plus. C’était {reponse}.'],
-    partiel: ['Aucun sans-faute. Nous ferons avec.'],
+    plusProche: [
+      '{nom} s’en approche le plus. C’était {reponse}.',
+      'Au plus près : {nom}. La réponse exacte, {reponse}.',
+      'Personne n’est tombé juste. {nom} s’en rapproche. C’était {reponse}.',
+      'L’écart le plus faible est celui de {nom}. C’était {reponse}.',
+    ],
+    partiel: [
+      'Aucun sans-faute. Nous ferons avec.',
+      'Aucun sans-faute. Des points tout de même.',
+      'Pas de parcours parfait. Nous nous en contenterons.',
+      'Personne n’a tout. Personne n’a rien non plus.',
+    ],
     filTrouve: ['{nom} a trouvé le fil rouge. Il fallait bien quelqu’un.'],
     filManque: ['Le fil rouge n’a été trouvé par personne. Dommage.'],
     ouverture: [
@@ -229,6 +292,9 @@ const BANQUE = {
     avantManche: [
       'Question {manche}.',
       'Manche {manche} sur {total}. Prenez votre temps. Enfin, non.',
+      'Manche {manche} sur {total}.',
+      'Question {manche}. Quand vous voudrez.',
+      'Question {manche} sur {total}. Nous vous écoutons.',
     ],
     derniereManche: [
       'Dernière question. Elle vaut double, ce qui devrait suffire à réveiller le fond de la salle.',
@@ -242,12 +308,43 @@ const BANQUE = {
     personne: [
       'Aucune bonne réponse. C’était {reponse}. Je note.',
       'Rien. La réponse était {reponse}. Nous poursuivons.',
+      'Aucune bonne réponse. C’était {reponse}. Nous avancerons.',
+      'Rien. C’était {reponse}. Je m’y attendais un peu.',
+      'Pas une seule. La réponse : {reponse}. Continuons.',
     ],
-    tous: ['Tout le monde a trouvé. J’ajusterai la difficulté.'],
-    unSeul: ['{nom}, et personne d’autre. Intéressant.'],
-    plusieurs: ['{nb} bonnes réponses. C’était {reponse}.'],
-    rapide: ['{nom}, en {secondes} secondes. Nous sommes tous impressionnés.'],
-    leader: ['{nom} mène avec {points} points. Provisoirement.'],
+    tous: [
+      'Tout le monde a trouvé. J’ajusterai la difficulté.',
+      'Tout le monde a bon. C’était {reponse}. La difficulté sera revue.',
+      'Sans faute général. Je prends note, et je m’adapte.',
+      'Toute la table a trouvé {reponse}. Cela arrive.',
+      'Personne ne s’est trompé. Savourez, c’est rare.',
+    ],
+    unSeul: [
+      '{nom}, et personne d’autre. Intéressant.',
+      'Une seule bonne réponse, celle de {nom}. Notable.',
+      '{nom} a trouvé. Le reste de la table, non.',
+      'Seule bonne réponse : {nom}. Nous poursuivons.',
+      '{nom}, et personne d’autre. C’est peu, mais c’est quelque chose.',
+    ],
+    plusieurs: [
+      '{nb} bonnes réponses. C’était {reponse}.',
+      '{nb} bonnes réponses. C’était {reponse}. Honorable.',
+      'On compte {nb} réussites. La réponse était {reponse}.',
+      '{nb} d’entre vous ont trouvé. C’était {reponse}.',
+      '{nb} bonnes réponses. Ni triomphe, ni désastre.',
+    ],
+    rapide: [
+      '{nom}, en {secondes} secondes. Nous sommes tous impressionnés.',
+      '{nom}, {secondes} secondes. Rapide, en effet.',
+      'Le plus vif : {nom}, {secondes} secondes. Notons-le.',
+      '{secondes} secondes pour {nom}. C’est court.',
+    ],
+    leader: [
+      '{nom} mène avec {points} points. Provisoirement.',
+      'En tête : {nom}, {points} points. Pour l’instant.',
+      '{nom} occupe la première place, {points} points. Cela peut changer.',
+      'Premier au tableau : {nom}, avec {points} points.',
+    ],
     vol: ['{nom} dérobe les points de {cible}. C’est permis, je le rappelle.'],
     sabotage: ['{nom} bloque {cible}. Le règlement l’autorise. La morale, moins.'],
     doubleReussi: ['{nom} avait doublé. Bien vu.'],
@@ -269,10 +366,16 @@ const BANQUE = {
     plusProche: [
       'Le moins catastrophique, c’est {nom}. La vraie réponse : {reponse}.',
       '{nom} s’en approche. De très loin, mais s’en approche. C’était {reponse}.',
+      'Le moins loin, c’est {nom}. Ce qui en dit long. C’était {reponse}.',
+      'Au plus près : {nom}. « Près » étant un grand mot. C’était {reponse}.',
+      'Personne n’est tombé juste. {nom} limite la casse. C’était {reponse}.',
     ],
     partiel: [
       'Personne n’a tout bon. J’ai connu des tables pires. Une fois.',
       'Aucun sans-faute. On va faire semblant que c’était difficile.',
+      'Pas de sans-faute. On va appeler ça un effort.',
+      'Aucun parcours parfait. Le mot « parfait » était optimiste.',
+      'Personne n’a tout bon. Je ne m’attendais pas à un miracle.',
     ],
     filTrouve: ['{nom} a trouvé le fil rouge pendant que les autres regardaient le plafond.'],
     filManque: ['Le fil rouge est passé devant vous toute la soirée. Vous avez regardé ailleurs.'],
@@ -288,6 +391,9 @@ const BANQUE = {
       'Question {manche}. Essayez de viser la bonne case.',
       'Manche {manche} sur {total}. On verra bien qui suit encore.',
       'Question {manche}. Celle-là va faire du dégât.',
+      'Question {manche}. Tâchez de suivre.',
+      'Manche {manche} sur {total}. Au point où vous en êtes.',
+      'Question {manche}. Celle-là ne pardonne pas.',
     ],
     derniereManche: [
       'Dernière question, points doublés. Dernière chance de sauver l’honneur.',
@@ -316,26 +422,44 @@ const BANQUE = {
     personne: [
       'Rien. Le néant complet. C’était {reponse}, et ce n’était pas si dur.',
       'Personne. Pas le tiroir le mieux garni en couteaux, cette table. C’était {reponse}.',
+      'Rien. Pas une. C’était {reponse}, et c’était écrit noir sur blanc.',
+      'Zéro. La table au complet est passée à côté de {reponse}.',
+      'Personne. {reponse}. Il va falloir réviser, et vite.',
     ],
     tous: [
       'Tout le monde a bon. Voilà, c’est fait, je peux corser la suite.',
       'Sans faute général. Je note la date, ça ne se reproduira pas.',
+      'Tout le monde a bon. J’ai dû viser trop bas.',
+      'Sans faute général. Ne vous emballez pas, ça ne durera pas.',
+      'Toute la table a trouvé. Profitez, la suite pique.',
     ],
     unSeul: [
       '{nom} a trouvé. Un sur toute la table. La lumière était allumée chez une seule personne.',
       'Une seule bonne réponse : {nom}. Les autres, la question était pourtant écrite en français.',
+      '{nom} a trouvé. Un. Sur toute la table.',
+      'Une seule bonne réponse, et c’est celle de {nom}.',
+      '{nom} sauve les meubles. Les autres ont bien travaillé le vide.',
     ],
     plusieurs: [
       '{nb} bonnes réponses. C’était {reponse}, pour ceux qui étaient réveillés.',
       'On en a {nb}. Les autres ont visé à côté de la plaque, et de la table.',
+      '{nb} bonnes réponses. Les autres visaient une autre question, visiblement.',
+      'On en compte {nb}. C’était {reponse}. Pour les autres, c’était pourtant marqué.',
+      '{nb} au tableau. Le reste, on n’en parle pas.',
     ],
     rapide: [
       '{nom}, {secondes} secondes. Soit le temps qu’il a fallu aux autres pour finir de lire.',
       'Plus rapide : {nom} en {secondes} secondes. Le reste de la table rame encore.',
+      '{nom}, {secondes} secondes. Les autres cherchent encore le bouton.',
+      'Plus rapide : {nom} en {secondes} secondes. Le reste dormait.',
+      '{secondes} secondes pour {nom}. Un record local, ne nous emballons pas.',
     ],
     leader: [
       '{nom} mène avec {points} points, et va devenir invivable.',
       'Toujours {nom} en tête, {points} points. Quelqu’un compte réagir ?',
+      '{nom} écrase le tableau avec {points} points. Personne ne bouge ?',
+      'En tête : {nom}, {points} points. Et un silence gêné.',
+      '{nom} mène, {points} points. Le reste du classement est décoratif.',
     ],
     vol: [
       '{nom} braque {cible} en plein jour. Aucun remords, aucun témoin utile.',
@@ -369,8 +493,18 @@ const BANQUE = {
  */
 const DIT = {
   classique: {
-    plusProche: ['Voici la réponse exacte.'],
-    partiel: ['Aucun sans-faute, mais des points tout de même.'],
+    plusProche: [
+      'Voici la réponse exacte.',
+      'Personne n’est tombé pile. Voici la réponse.',
+      'L’écart le plus faible l’emporte. Voici le nombre exact.',
+      'Voici ce qu’il fallait dire.',
+    ],
+    partiel: [
+      'Aucun sans-faute, mais des points tout de même.',
+      'Pas de parcours parfait, mais la table marque.',
+      'Personne n’a tout. Il y a des points quand même.',
+      'Aucun sans-faute. Des points à ramasser malgré tout.',
+    ],
     filTrouve: ['Le fil rouge est tombé !'],
     filManque: ['Et personne n’a vu le fil rouge de la soirée.'],
     ouverture: ['Bonsoir à tous, et bienvenue. Dans un quart d’heure, il n’en restera qu’un.'],
@@ -394,20 +528,56 @@ const DIT = {
     ttmcTrouve: ['Chacun avait sa question. Regardez vos écrans.'],
     ttmcGrosPari: ['Quelqu’un a joué gros et l’a emporté. Chapeau.'],
     ttmcPersonne: ['Personne. Vous vous êtes tous surestimés.'],
-    personne: ['Personne. Pas un seul.', 'Aucune bonne réponse.'],
-    tous: ['Tout le monde a trouvé.', 'Sans faute pour tout le monde.'],
-    unSeul: ['Une seule bonne réponse. Chapeau.'],
-    plusieurs: ['Plusieurs d’entre vous ont trouvé.'],
-    vol: ['Vol réussi ! Le leader vient de perdre la moitié de ses points.'],
-    sabotage: ['Sabotage ! Le leader ne marquera rien cette manche.'],
+    personne: [
+      'Personne. Pas un seul.', 'Aucune bonne réponse.',
+      'Rien du tout, cette fois.',
+      'La table entière est passée à côté.',
+    ],
+    tous: [
+      'Tout le monde a trouvé.', 'Sans faute pour tout le monde.',
+      'Personne ne s’est fait piéger.',
+      'Carton plein pour la table.',
+    ],
+    unSeul: [
+      'Une seule bonne réponse. Chapeau.',
+      'Une seule bonne réponse sur toute la table.',
+      'Seule bonne réponse de la manche. Joli.',
+      'Une réponse juste, et une seule.',
+    ],
+    plusieurs: [
+      'Plusieurs d’entre vous ont trouvé.',
+      'Plusieurs bonnes réponses au tableau.',
+      'Vous êtes plusieurs à avoir vu juste.',
+      'Il y a du monde sur la bonne réponse.',
+    ],
+    vol: [
+      'Vol réussi ! Le leader vient de perdre la moitié de ses points.',
+      'Vol réussi ! Une partie des points change de camp.',
+      'Le vol passe. Les points ont changé de propriétaire.',
+    ],
+    sabotage: [
+      'Sabotage ! Le leader ne marquera rien cette manche.',
+      'Sabotage réussi. Cette manche ne rapportera rien.',
+      'Le sabotage passe. Les points s’envolent.',
+    ],
     doubleReussi: ['Quitte ou double, et ça paie.'],
     doubleRate: ['Quitte ou double, et ça coûte cher.'],
     podium: ['Voilà, c’est terminé. Le classement final est à l’écran. Bravo à tous !'],
   },
 
   chambreur: {
-    plusProche: ['Le moins mauvais l’emporte. Voici la vraie réponse.'],
-    partiel: ['Aucun sans-faute. On prend ce qu’il y a.'],
+    plusProche: [
+      'Le moins mauvais l’emporte. Voici la vraie réponse.',
+      'Au plus près. Ce qui ne veut pas dire près.',
+      'Le moins loin l’emporte. Voici la vraie réponse.',
+      'Personne n’est tombé pile. Loin de là.',
+    ],
+    partiel: [
+      'Aucun sans-faute. On prend ce qu’il y a.',
+      'Pas de sans-faute. C’est l’intention qui compte.',
+      'Aucun parcours parfait. Vous avez au moins essayé.',
+      'Personne n’a tout bon. Je ne suis même pas surpris.',
+    ],
     filTrouve: ['Et voilà, le fil rouge est démasqué. Les autres cherchent encore.'],
     filManque: ['Le fil rouge vous est passé sous le nez toute la soirée.'],
     ouverture: ['Bon. Statistiquement, il y en a au moins deux qui vont le regretter.'],
@@ -431,20 +601,57 @@ const DIT = {
     ttmcTrouve: ['Quelques rescapés. Les autres, vous vous connaissez mal.'],
     ttmcGrosPari: ['Gros pari, gros gain. Insupportable.'],
     ttmcPersonne: ['Rien. Vous vous êtes tous mis trop haut, et ça se voit.'],
-    personne: ['Alors là, rien. Zéro. Le néant.', 'Personne n’a trouvé. Vous me faites de la peine.'],
-    tous: ['Tout le monde a bon. Trop facile, je vais corser ça.'],
-    unSeul: ['Une seule bonne réponse. Les autres, vous étiez où ?'],
-    plusieurs: ['Quelques bonnes réponses. Les autres, ce n’est pas grave. Enfin si.'],
-    vol: ['Oh ! Braquage en pleine lumière ! Aucune pitié.'],
-    sabotage: ['Sabotage en règle. Ambiance à table tout à l’heure.'],
+    personne: [
+      'Alors là, rien. Zéro. Le néant.', 'Personne n’a trouvé. Vous me faites de la peine.',
+      'Rien. Pas un. On va dire que la question était piégeuse.',
+      'Zéro pointé pour toute la table.',
+    ],
+    tous: [
+      'Tout le monde a bon. Trop facile, je vais corser ça.',
+      'Tout le monde a bon. C’est louche.',
+      'Sans faute général. Quelqu’un a triché, je le sens.',
+      'Toute la table a trouvé. Je vais durcir le ton.',
+    ],
+    unSeul: [
+      'Une seule bonne réponse. Les autres, vous étiez où ?',
+      'Une seule bonne réponse. Le reste, c’était de la décoration.',
+      'Une seule. Les autres, on fait comme si de rien n’était.',
+      'Une bonne réponse sur toute la table. Ça sauve l’honneur.',
+    ],
+    plusieurs: [
+      'Quelques bonnes réponses. Les autres, ce n’est pas grave. Enfin si.',
+      'Quelques bonnes réponses. Un progrès, presque.',
+      'Il y a du monde sur la bonne case, pour une fois.',
+      'Plusieurs ont trouvé. Les autres improvisaient.',
+    ],
+    vol: [
+      'Oh ! Braquage en pleine lumière ! Aucune pitié.',
+      'Braquage réussi. L’amitié, c’était bien.',
+      'Et hop, les points changent de poche. Aucun remords.',
+    ],
+    sabotage: [
+      'Sabotage en règle. Ambiance à table tout à l’heure.',
+      'Sabotage réussi. On en reparlera au dessert.',
+      'Et voilà, sabotage. Ça va être tendu tout à l’heure.',
+    ],
     doubleReussi: ['Doublé, et ça passe. Insolent.'],
     doubleRate: ['Doublé, et planté. C’était magnifique.'],
     podium: ['C’est fini. Le classement est à l’écran, et quelqu’un va en parler pendant des mois.'],
   },
 
   pincesansrire: {
-    plusProche: ['Voici la réponse exacte.'],
-    partiel: ['Aucun sans-faute. Nous ferons avec.'],
+    plusProche: [
+      'Voici la réponse exacte.',
+      'Personne n’est tombé juste. Voici la réponse exacte.',
+      'L’écart le plus faible l’emporte. Voici le nombre.',
+      'Voici ce qu’il fallait dire. Approximativement, pour certains.',
+    ],
+    partiel: [
+      'Aucun sans-faute. Nous ferons avec.',
+      'Aucun sans-faute. Des points tout de même.',
+      'Pas de parcours parfait. Nous nous en contenterons.',
+      'Personne n’a tout. Personne n’a rien non plus.',
+    ],
     filTrouve: ['Le fil rouge a été trouvé. Il fallait bien quelqu’un.'],
     filManque: ['Le fil rouge n’a été trouvé par personne. Dommage.'],
     ouverture: ['Bonsoir. Nous verrons bien.'],
@@ -468,12 +675,40 @@ const DIT = {
     ttmcTrouve: ['Autant de questions que de joueurs. Les corrections sont à l’écran.'],
     ttmcGrosPari: ['Un pari haut, tenu. C’est notable.'],
     ttmcPersonne: ['Aucune bonne réponse. L’auto-évaluation est un art difficile.'],
-    personne: ['Aucune bonne réponse. Je note.'],
-    tous: ['Tout le monde a trouvé. J’ajusterai la difficulté.'],
-    unSeul: ['Une seule bonne réponse. Intéressant.'],
-    plusieurs: ['Quelques bonnes réponses.'],
-    vol: ['Un vol. C’est permis, je le rappelle.'],
-    sabotage: ['Un sabotage. Le règlement l’autorise. La morale, moins.'],
+    personne: [
+      'Aucune bonne réponse. Je note.',
+      'Aucune bonne réponse. Nous avancerons.',
+      'Rien. Je m’y attendais un peu.',
+      'Pas une seule. Continuons.',
+    ],
+    tous: [
+      'Tout le monde a trouvé. J’ajusterai la difficulté.',
+      'Tout le monde a bon. La difficulté sera revue.',
+      'Sans faute général. Je prends note.',
+      'Personne ne s’est trompé. Savourez, c’est rare.',
+    ],
+    unSeul: [
+      'Une seule bonne réponse. Intéressant.',
+      'Une seule bonne réponse. Notable.',
+      'Une réponse juste, et une seule. Nous poursuivons.',
+      'Une seule bonne réponse sur toute la table. C’est peu.',
+    ],
+    plusieurs: [
+      'Quelques bonnes réponses.',
+      'Plusieurs bonnes réponses. Honorable.',
+      'Quelques réussites. Ni triomphe, ni désastre.',
+      'Plusieurs d’entre vous ont trouvé. C’est déjà cela.',
+    ],
+    vol: [
+      'Un vol. C’est permis, je le rappelle.',
+      'Un vol aboutit. C’est permis, je le rappelle.',
+      'Les points ont changé de mains. Le règlement l’autorise.',
+    ],
+    sabotage: [
+      'Un sabotage. Le règlement l’autorise. La morale, moins.',
+      'Un sabotage aboutit. Le règlement l’autorise. La morale, moins.',
+      'Sabotage effectif. Cette manche ne rapportera rien.',
+    ],
     doubleReussi: ['Doublé. Bien vu.'],
     doubleRate: ['Doublé. C’était audacieux.'],
     podium: ['Voilà. Le classement final est à l’écran. Merci d’être venus.'],
@@ -483,10 +718,14 @@ const DIT = {
     plusProche: [
       'Le moins catastrophique l’emporte. Voici la vraie réponse.',
       'Quelqu’un s’en est approché. De très loin. La réponse exacte, la voici.',
+      'Le moins loin l’emporte. Ce qui en dit long.',
+      'Personne n’est tombé juste. Très loin du compte, même.',
     ],
     partiel: [
       'Personne n’a tout bon. On va faire semblant que c’était difficile.',
       'Aucun sans-faute. J’ai connu des tables pires. Une fois.',
+      'Pas de sans-faute. On va appeler ça un effort.',
+      'Aucun parcours parfait. Le mot « parfait » était optimiste.',
     ],
     filTrouve: ['Le fil rouge est tombé, pendant que les autres regardaient le plafond.'],
     filManque: ['Le fil rouge est passé devant vous toute la soirée. Vous avez regardé ailleurs.'],
@@ -517,21 +756,37 @@ const DIT = {
     personne: [
       'Rien. Le néant complet. Et ce n’était pas si dur.',
       'Personne. Pas le tiroir le mieux garni en couteaux, cette table.',
+      'Rien. Le néant complet. Et ce n’était pas si dur.',
+      'Zéro. La table au complet est passée à côté.',
     ],
     tous: [
       'Tout le monde a bon. Voilà, c’est fait. Je corse la suite.',
       'Sans faute général. Je note la date, ça ne se reproduira pas.',
+      'Tout le monde a bon. J’ai dû viser trop bas.',
+      'Sans faute général. Ne vous emballez pas, ça ne durera pas.',
     ],
     unSeul: [
       'Une seule bonne réponse. La lumière était allumée chez une seule personne.',
       'Un sur toute la table. La question était pourtant écrite en français.',
+      'Une seule bonne réponse. Une. Sur toute la table.',
+      'Une seule bonne réponse. Les autres ont bien travaillé le vide.',
     ],
     plusieurs: [
       'Quelques bonnes réponses, pour ceux qui étaient réveillés.',
       'Quelques-uns ont trouvé. Les autres ont visé à côté de la plaque.',
+      'Quelques bonnes réponses. Les autres visaient ailleurs.',
+      'Il y a du monde sur la bonne case. Le reste, on n’en parle pas.',
     ],
-    vol: ['Braquage en plein jour. Aucun remords, aucun témoin utile.'],
-    sabotage: ['Sabotage en règle. Ça va se régler dehors, apparemment.'],
+    vol: [
+      'Braquage en plein jour. Aucun remords, aucun témoin utile.',
+      'Braquage en plein jour. Aucun remords.',
+      'Les points changent de camp. L’amitié aura duré une manche.',
+    ],
+    sabotage: [
+      'Sabotage en règle. Ça va se régler dehors, apparemment.',
+      'Sabotage en règle. Ça va se régler dehors, apparemment.',
+      'Sabotage réussi. Cette manche ne rapportera rien du tout.',
+    ],
     doubleReussi: ['Doublé, et ça passe. Insupportable, mais mérité.'],
     doubleRate: ['Doublé, et écrasé en beauté. C’était magnifique à voir.'],
     // « C'est fini » s'entend « ces filles » quand c'est dit vite : à éviter dans
@@ -623,8 +878,10 @@ export function clipsDAnnonce(persona) {
 export function paroleDe(persona, cle) {
   const liste = DIT[persona]?.[cle] ?? DIT.classique[cle];
   if (!liste?.length) return null;
-  const index = Math.floor(Math.random() * liste.length);
   const nom = DIT[persona]?.[cle] ? persona : 'classique';
+  // Même mémoire que pour le texte, et pour la même raison : c'est à la voix
+  // que la répétition s'entend le plus.
+  const index = tirerUneVariante(`clip:${nom}:${cle}`, liste.length);
   return { id: `emcee/${nom}/${cle}/${index}`, texte: liste[index] };
 }
 
@@ -665,6 +922,32 @@ function remplir(gabarit, vars) {
 }
 
 /**
+ * Le tirage d'une variante, avec une mémoire d'un cran.
+ *
+ * Un tirage purement au sort sur deux variantes en répète une fois sur deux —
+ * et « personne n'a trouvé » revient à presque toutes les manches. La table
+ * n'entend alors pas un animateur, elle entend une boucle. On écarte donc la
+ * dernière servie, ce qui suffit à faire disparaître l'effet de répétition :
+ * sur deux variantes elles alternent, sur cinq on ne repasse jamais sur la
+ * précédente.
+ *
+ * La mémoire est tenue par clé ET par personnage : changer d'animateur en
+ * cours de soirée ne doit pas hériter des tirages de l'autre.
+ */
+const derniereVariante = new Map();
+
+function tirerUneVariante(memoire, taille) {
+  if (taille <= 1) return 0;
+  const precedent = derniereVariante.get(memoire);
+  let index = Math.floor(Math.random() * taille);
+  // Un seul rattrapage, et non une boucle : on décale d'un cran plutôt que de
+  // retirer au sort, pour que le coût reste constant.
+  if (index === precedent) index = (index + 1 + Math.floor(Math.random() * (taille - 1))) % taille;
+  derniereVariante.set(memoire, index);
+  return index;
+}
+
+/**
  * Une réplique. On tire au sort dans la liste du personnage, avec un repli sur
  * le ton classique : une personnalité incomplète doit rester jouable plutôt que
  * de rendre l'animateur muet au milieu d'une manche.
@@ -672,7 +955,7 @@ function remplir(gabarit, vars) {
 export function repliqueDe(persona, cle, vars = {}) {
   const liste = BANQUE[persona]?.[cle] ?? BANQUE.classique[cle];
   if (!liste?.length) return '';
-  return remplir(liste[Math.floor(Math.random() * liste.length)], vars);
+  return remplir(liste[tirerUneVariante(`texte:${persona}:${cle}`, liste.length)], vars);
 }
 
 /* --- Voix ---------------------------------------------------------------- */

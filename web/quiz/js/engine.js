@@ -15,41 +15,12 @@
 import { repliqueDe, dureeDeLaReplique, annonceDeManche, paroleDe } from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
+import { JOKERS, jokersPossibles } from './jokers.js';
 
-export const JOKERS = [
-  {
-    id: 'double', nom: 'Quitte ou double', emoji: '🎲',
-    court: 'Le double, ou la moitié en moins',
-    desc: 'Sans faute : points doublés. Sinon tu perds la moitié de la mise, au prorata de ce que tu as raté — une rafale à quatre sur cinq ne coûte presque rien.',
-  },
-  {
-    id: 'vol', nom: 'Vol', emoji: '🥷',
-    court: 'Prend la moitié des points du leader',
-    desc: 'Si tu as bon, tu prends la moitié des points que le leader gagne sur cette manche.',
-  },
-  {
-    id: 'sabotage', nom: 'Sabotage', emoji: '🧨',
-    court: 'Le leader ne marque rien',
-    desc: 'Si tu as bon, le leader ne marque rien du tout sur cette manche.',
-  },
-  {
-    id: 'sangfroid', nom: 'Sang-froid', emoji: '🧊',
-    court: 'Le maximum, sans courir',
-    desc: 'Prends tout ton temps : tu marques le maximum de points, comme si tu avais répondu du tac au tac.',
-  },
-  {
-    id: 'cinquante', nom: '50/50', emoji: '✂️',
-    court: 'Deux réponses en moins, points divisés',
-    desc: 'Deux mauvaises réponses disparaissent — mais tes points de la manche sont divisés par deux.',
-  },
-];
-
-/** Les jokers qu'un type de manche peut accueillir. */
-export function jokersPossibles(type) {
-  // Le 50/50 n'a rien à retirer ailleurs que sur un QCM : sur une estimation ou
-  // une rafale, il n'y a pas de mauvaises réponses à masquer.
-  return JOKERS.filter((j) => j.id !== 'cinquante' || type === 'qcm').map((j) => j.id);
-}
+// Les jokers vivent dans `jokers.js`, sans dépendances : l'écran commun a
+// besoin de leurs emojis sans vouloir de l'animateur. On les réexporte ici,
+// où tout le monde a l'habitude d'aller les chercher.
+export { JOKERS, jokersPossibles } from './jokers.js';
 
 // Le 50/50 se calcule sur le pupitre, pas ici : la banque de questions est
 // embarquée dans la PWA, donc chaque appareil connaît déjà la bonne réponse et
@@ -267,6 +238,12 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
     evenements.push({
       type: 'vol',
       cle: 'vol',
+      // Les prénoms en clair, et pas seulement fondus dans la phrase : c'est ce
+      // qui permet de les réafficher tels quels même quand la voix enregistrée,
+      // elle, ne peut nommer personne.
+      auteur: nomDe(id),
+      victime: nomDe(victime),
+      points: pris,
       texte: repliqueDe(persona, 'vol', { nom: nomDe(id), cible: nomDe(victime), points: pris }),
     });
   }
@@ -278,6 +255,8 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
     evenements.push({
       type: 'sabotage',
       cle: 'sabotage',
+      auteur: nomDe(id),
+      victime: nomDe(victime),
       texte: repliqueDe(persona, 'sabotage', { nom: nomDe(id), cible: nomDe(victime) }),
     });
   }
@@ -304,6 +283,16 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
     const gain = gains[joueur.id] ?? 0;
     detail[joueur.id].points = gain;
     nouveauxScores[joueur.id] = Math.max(0, (scores[joueur.id] ?? 0) + gain);
+  }
+
+  // Les jokers à cible qui n'ont pas abouti gardent quand même leur victime
+  // visée. Un joker dépensé pour rien — mauvaise réponse, ou quelqu'un de plus
+  // rapide sur la même personne — disparaissait sans laisser de trace, alors
+  // que « il me visait, moi » est exactement ce que la table veut savoir.
+  for (const [id, r] of Object.entries(detail)) {
+    if (!['vol', 'sabotage'].includes(r.joker) || r.cible) continue;
+    const visee = viseePar(id);
+    if (visee) r.cibleVisee = visee;
   }
 
   return { detail, scores: nouveauxScores, evenements, leaderAvant: leader };

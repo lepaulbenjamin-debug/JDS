@@ -29,6 +29,7 @@ const SHELL = [
   'js/app.js',
   'js/net.js',
   'js/engine.js',
+  'js/jokers.js',
   'js/emcee.js',
   'js/questions.js',
   'js/ui.js',

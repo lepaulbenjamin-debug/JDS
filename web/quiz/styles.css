@@ -671,6 +671,15 @@ body {
    même ligne : on coupe plutôt que de pousser la pastille hors de l'écran. */
 .dit-texte { font-weight: 600; overflow-wrap: anywhere; }
 .dit-marque { font-variant-numeric: tabular-nums; font-size: 13px; }
+/* Sur toute la largeur, en dessous : « a saboté Bob » est une phrase, pas une
+   pastille, et la ligne du dessus est déjà pleine. */
+.dit-joker {
+  grid-column: 1 / -1;
+  font-size: 13px; font-weight: 600;
+  color: var(--gold);
+}
+/* Un joker dépensé pour rien se lit, mais ne se pavane pas. */
+.dit-joker.est-rate { color: var(--muted); font-weight: 500; }
 
 /* --- Classement et podium ------------------------------------------------ */
 
@@ -925,6 +934,10 @@ body {
 .tv-dit.est-partiel { background: color-mix(in srgb, var(--gold) 16%, var(--surface)); }
 .tv-dit-nom { color: var(--muted); font-weight: 600; }
 .tv-dit-texte { font-weight: 700; }
+/* Le coup de joker, dans la pastille : c'est la ligne que toute la table
+   cherche à la révélation — qui m'a fait ça. */
+.tv-dit-joker { color: var(--gold); font-weight: 700; }
+.tv-dit-joker.est-rate { color: var(--muted); font-weight: 600; }
 
 .tv-scores {
   display: flex; flex-wrap: wrap; gap: 1.2vmin;

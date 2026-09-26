@@ -8,6 +8,7 @@
 import { $, $$, el, clear, toast, confirmDialog } from './ui.js';
 import * as net from './net.js';
 import { creerRegie, JOKERS, jokersPossibles } from './engine.js';
+import { coupDeJoker } from './jokers.js';
 import { vueDe } from './vues.js';
 import { typeDeManche } from './manches/index.js';
 import { NIVEAU_MIN, NIVEAU_MAX, NIVEAU_DEFAUT } from './manches/ttmc.js';
@@ -848,7 +849,13 @@ function rendreEtatManche() {
     // texte écrit. Rien ne se perd sur le fil rouge : le bandeau 🧵 affiche à
     // côté le prénom, le mot trouvé et la prime, en permanence.
     (etat.resultat?.evenements ?? []).forEach((evenement, rang) => {
-      const texte = rang === 0
+      // Un joker à victime garde TOUJOURS son texte écrit, clips ou pas. Les
+      // répliques enregistrées ne peuvent nommer personne — elles disent « le
+      // leader ne marquera rien » — et c'est justement ce qu'on veut savoir :
+      // qui a saboté qui. Afficher l'enregistré effaçait les deux prénoms du
+      // seul moment de la manche où l'on se retourne vers quelqu'un.
+      const nomme = Boolean(evenement.victime);
+      const texte = rang === 0 && !nomme
         ? ditOuEcrit(etat.resultat.evenementDit, evenement.texte)
         : evenement.texte;
       hote.append(el('p', { class: 'evenement', text: texte }));
@@ -947,6 +954,7 @@ function rendreLesDits() {
       partiel: !r.correct && (r.fraction ?? 0) > 0,
       marque: marqueDuDit(r, type),
       texte: r.absent ? '' : (type.resume?.(etat.question, r) ?? ''),
+      joker: coupDeJoker(r, nomDe),
     }));
 
   // Seul autour de la table, il n'y a personne dont on puisse rire.
@@ -964,6 +972,13 @@ function rendreLesDits() {
         text: ligne.absent ? 'n’a rien répondu' : (ligne.texte || '—'),
       }),
       el('span', { class: 'dit-marque', text: ligne.marque }),
+      // Le joker prend sa propre ligne, sous la réponse : c'est le registre de
+      // la manche, on y lit qui a dégainé quoi et sur qui. En bout de la
+      // première ligne, il aurait écrasé la pastille de score.
+      ligne.joker && el('span', {
+        class: `dit-joker${ligne.joker.abouti ? '' : ' est-rate'}`,
+        text: `${ligne.joker.emoji} ${ligne.joker.texte}`,
+      }),
     ])),
   ]);
 }

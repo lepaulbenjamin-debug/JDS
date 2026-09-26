@@ -21,6 +21,7 @@ import * as net from './net.js';
 import { el, clear } from './ui.js';
 import { typeDeManche } from './manches/index.js';
 import { THEMES } from './questions.js';
+import { coupDeJoker } from './jokers.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -328,11 +329,18 @@ function rendreLesDits(question, revele) {
   for (const [id, r] of lignes) {
     const texte = r.absent ? 'rien' : (type.resume?.(question, r) || '—');
     const partiel = !r.correct && (r.fraction ?? 0) > 0;
+    // Qui a dégainé quoi, et sur qui. C'est ici que ça doit se lire : la voix
+    // enregistrée dit « le leader » et ne nomme jamais personne.
+    const coup = coupDeJoker(r, nomDe);
     zone.append(el('div', {
       class: `tv-dit${r.correct ? ' est-juste' : partiel ? ' est-partiel' : ''}`,
     }, [
       el('span', { class: 'tv-dit-nom', text: nomDe(id) }),
       el('span', { class: 'tv-dit-texte', text: texte }),
+      coup && el('span', {
+        class: `tv-dit-joker${coup.abouti ? '' : ' est-rate'}`,
+        text: `${coup.emoji} ${coup.texte}`,
+      }),
     ]));
   }
 }
