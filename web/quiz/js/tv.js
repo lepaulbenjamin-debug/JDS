@@ -29,12 +29,90 @@ const $ = (sel) => document.querySelector(sel);
 // table.
 const BATTEMENT_MS = 900;
 
+/**
+ * Ce que cet écran montre pendant la manche.
+ *
+ * Le défaut qui a mené à ce réglage : la télé affichait l'énoncé et les quatre
+ * réponses dès le début de la manche, alors que les pupitres attendent la fin
+ * de la lecture pour ouvrir les leurs. Toute la table lisait donc la question
+ * sur la télé pendant que l'animateur la lisait encore — plus personne
+ * n'écoutait, et les plus rapides à lever les yeux avaient une avance qui
+ * n'appartenait pas au jeu.
+ *
+ * Deux corrections, et elles ne se remplacent pas : l'énoncé n'apparaît plus
+ * avant l'ouverture des réponses, ET on peut choisir de ne rien montrer du
+ * tout. Certaines tables veulent la question en grand, d'autres veulent que
+ * chacun reste sur son téléphone.
+ */
+const MODES = [
+  {
+    id: 'revelation',
+    nom: 'Classement et révélation',
+    note: 'Rien pendant qu’on cherche : chacun lit sur son téléphone. À la '
+      + 'révélation, la bonne réponse, l’explication et ce que toute la table a '
+      + 'répondu — le moment où l’on rit.',
+  },
+  {
+    id: 'classement',
+    nom: 'Classement seul',
+    note: 'Le numéro de manche, le chrono et les scores. Jamais la question, '
+      + 'jamais les réponses. L’écran ne devance rien et ne révèle rien.',
+  },
+  {
+    id: 'tout',
+    nom: 'Tout, question comprise',
+    note: 'L’énoncé et les réponses en grand, mais seulement une fois que les '
+      + 'téléphones les affichent — jamais pendant que l’animateur lit.',
+  },
+];
+
+const CLE_MODE = 'quizroom.tv.mode';
+
+const lireLeMode = () => {
+  try {
+    const garde = localStorage.getItem(CLE_MODE);
+    if (MODES.some((m) => m.id === garde)) return garde;
+  } catch { /* navigation privée : on garde le défaut */ }
+  return MODES[0].id;
+};
+
+let mode = lireLeMode();
+
+function choisirLeMode(id) {
+  mode = id;
+  try { localStorage.setItem(CLE_MODE, id); } catch { /* sans conséquence */ }
+  rendreLesModes();
+  rendre();
+}
+
+function rendreLesModes() {
+  const hote = $('#tv-choix-mode');
+  if (hote) {
+    clear(hote);
+    for (const m of MODES) {
+      hote.append(el('button', {
+        class: `tv-mode${m.id === mode ? ' est-actif' : ''}`,
+        type: 'button',
+        onclick: () => choisirLeMode(m.id),
+      }, m.nom));
+    }
+    $('#tv-mode-note').textContent = MODES.find((m) => m.id === mode)?.note ?? '';
+  }
+  // La bascule de l'écran de jeu : le bon réglage ne se trouve qu'une fois la
+  // première manche passée, et personne ne va rouvrir la page pour ça.
+  const bascule = $('#tv-mode');
+  if (bascule) bascule.textContent = MODES.find((m) => m.id === mode)?.nom ?? '';
+}
+
 let code = null;
 let version = -1;
 let etat = null;
 let joueurs = [];
 let erreurs = 0;
 let boucle = null;
+let image = null;
+// Le dernier état d'ouverture affiché, pour ne repeindre qu'au franchissement.
+let reponsesOuvertes = false;
 
 function montrer(nom) {
   for (const section of document.querySelectorAll('[data-tv]')) {
@@ -67,6 +145,7 @@ async function battre() {
     if (erreur?.status === 404) {
       clearTimeout(boucle);
       boucle = null;
+      cesserLHorloge();
       montrer('code');
       alerter('Ce salon n’existe plus.');
       return;
@@ -89,9 +168,53 @@ function demarrer(nouveau) {
     boucle = setTimeout(tour, BATTEMENT_MS);
   };
   tour();
+  horloger();
   montrer('lobby');
   $('#tv-code-affiche').textContent = code;
   $('#tv-lobby-note').textContent = 'En attente du lancement…';
+}
+
+/**
+ * L'horloge locale de cet écran.
+ *
+ * Elle manquait, et c'est ce qui rendait l'affichage à l'heure impossible : la
+ * régie ne republie que lorsque quelque chose a bougé, donc pendant qu'une
+ * question est ouverte le relais ne renvoie rien de neuf et `rendre()` n'est
+ * jamais appelé. La jauge du chrono restait figée là où le dernier changement
+ * l'avait laissée — et un énoncé qui doit apparaître en cours de manche ne
+ * serait jamais apparu.
+ *
+ * Le temps qui passe est donc une affaire locale. L'état vient du relais,
+ * l'instant vient d'ici — recalé sur l'horloge du serveur, sans quoi deux
+ * écrans ne s'ouvriraient pas ensemble.
+ */
+function horloger() {
+  cesserLHorloge();
+  const battement = () => {
+    image = requestAnimationFrame(battement);
+    if (!etat) return;
+    rendreChrono();
+    // Le reste de l'écran ne se refait qu'au franchissement : repeindre tout à
+    // soixante images par seconde reconstruirait les scores et les réponses
+    // dites pour rien, et ferait clignoter la sélection du texte.
+    const ouvert = lesReponsesSontOuvertes();
+    if (ouvert !== reponsesOuvertes) {
+      reponsesOuvertes = ouvert;
+      rendre();
+    }
+  };
+  battement();
+}
+
+function cesserLHorloge() {
+  if (image !== null) cancelAnimationFrame(image);
+  image = null;
+}
+
+/** Les réponses sont-elles ouvertes sur les téléphones, à cet instant ? */
+function lesReponsesSontOuvertes() {
+  if (!etat || etat.phase !== 'manche') return false;
+  return !etat.reponsesAt || net.serverNow() >= etat.reponsesAt;
 }
 
 /* --- Le rendu ------------------------------------------------------------- */
@@ -120,6 +243,25 @@ function rendreJeu() {
   const question = etat.question;
   const revele = etat.phase === 'revelation';
 
+  // Le mode passe en attribut : quand le classement est seul à l'écran, il doit
+  // prendre la place laissée libre. Une pastille de deux centimètres perdue au
+  // milieu d'une télé ne se lit pas du fond de la pièce — or c'est justement
+  // tout ce que ce mode-là donne à lire.
+  $('#tv').dataset.mode = mode;
+
+  // Le décalage qui rendait cet écran injouable : les pupitres n'ouvrent leurs
+  // réponses qu'à `reponsesAt`, après la lecture de l'énoncé. La télé, elle,
+  // affichait tout dès la publication de l'état — donc pendant que l'animateur
+  // lisait encore, et pendant la fenêtre des jokers, qui se joue justement
+  // AVANT d'avoir vu la question. On s'aligne sur les téléphones.
+  const ouvert = lesReponsesSontOuvertes();
+  // La lecture : la manche a commencé, mais les réponses ne sont pas encore
+  // ouvertes. C'est le seul moment où l'écran doit se taire — l'intro et le
+  // vote ont chacun leur texte, et n'attendent personne.
+  const enLecture = etat.phase === 'manche' && !ouvert;
+  const montrerLaQuestion = mode === 'tout' && (ouvert || revele);
+  const montrerLaRevelation = mode !== 'classement' && revele;
+
   $('#tv-manche').textContent = etat.phase === 'intro'
     ? `${etat.total} manches`
     : etat.finale ? 'Dernière manche — points doublés'
@@ -132,24 +274,32 @@ function rendreJeu() {
   $('#tv-annonce').textContent = etat.phase === 'vote'
     ? 'À la table de trancher — regardez vos téléphones.'
     : revele ? (etat.resultat?.commentaireDit || etat.resultat?.commentaire || '')
-      : (etat.annonceDite || etat.annonce || '');
+      // Pendant la lecture et la fenêtre des jokers, l'écran dit ce qui se
+      // passe plutôt que de rester vide : sinon on croit qu'il a planté.
+      : enLecture ? 'L’animateur lit la question…'
+        : (etat.annonceDite || etat.annonce || '');
 
   // Sur un TTMC, chacun a sa propre question : il n'y en a pas à montrer en
   // grand. Le thème, lui, est ce dont la table parle pendant que chacun mise —
   // et c'est l'écran commun qui doit le porter.
-  $('#tv-question').textContent = question?.type === 'ttmc'
-    ? (THEMES.find((t) => t.id === question.theme)?.nom ?? '')
-    : (question?.texte ?? '');
-  $('#tv-question').hidden = !question || etat.phase === 'intro';
+  // À la révélation, l'énoncé revient quel que soit le mode « révélation » :
+  // sans lui, la bonne réponse et l'explication flottent sans rien à quoi se
+  // rattacher, et personne ne se souvient de la question dix secondes après.
+  const enonce = montrerLaQuestion || montrerLaRevelation;
+  $('#tv-question').textContent = !enonce ? ''
+    : question?.type === 'ttmc'
+      ? (THEMES.find((t) => t.id === question.theme)?.nom ?? '')
+      : (question?.texte ?? '');
+  $('#tv-question').hidden = !enonce || !question || etat.phase === 'intro';
 
-  rendreReponses(question, revele);
+  rendreReponses(question, revele, montrerLaQuestion || montrerLaRevelation);
 
   // L'explication est le meilleur moment de la manche, et c'est celui qu'on
   // rate quand on lit sur un téléphone posé sur la table.
-  $('#tv-note').textContent = revele ? (question?.note ?? '') : '';
-  $('#tv-note').hidden = !revele || !question?.note;
+  $('#tv-note').textContent = montrerLaRevelation ? (question?.note ?? '') : '';
+  $('#tv-note').hidden = !montrerLaRevelation || !question?.note;
 
-  rendreLesDits(question, revele);
+  rendreLesDits(question, montrerLaRevelation);
   rendreChrono();
   rendreScores();
 }
@@ -193,10 +343,10 @@ function rendreLesDits(question, revele) {
  * Toutes les formes n'en ont pas : une estimation se tape, un mix aussi. On
  * n'affiche donc que ce qui existe, plutôt que de fabriquer un cadre vide.
  */
-function rendreReponses(question, revele) {
+function rendreReponses(question, revele, autorise) {
   const zone = clear($('#tv-reponses'));
   zone.hidden = true;
-  if (!question || etat.phase === 'intro') return;
+  if (!autorise || !question || etat.phase === 'intro') return;
 
   if (Array.isArray(question.reponses) && question.reponses.length) {
     zone.hidden = false;
@@ -304,6 +454,15 @@ function rendreFin() {
 $('#tv-code').addEventListener('input', (event) => {
   event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
 });
+
+// La bascule de l'écran de jeu : elle fait défiler les modes dans l'ordre. Un
+// seul bouton plutôt que trois, parce qu'à trois mètres on n'en visera qu'un.
+$('#tv-mode').addEventListener('click', () => {
+  const rang = MODES.findIndex((m) => m.id === mode);
+  choisirLeMode(MODES[(rang + 1) % MODES.length].id);
+});
+
+rendreLesModes();
 
 $('#tv-form').addEventListener('submit', (event) => {
   event.preventDefault();

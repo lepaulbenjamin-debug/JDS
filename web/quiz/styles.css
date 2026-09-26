@@ -801,6 +801,33 @@ body {
 .tv-titre { margin: 0 0 3vmin; font-size: 6vmin; }
 .tv-note { color: var(--muted); font-size: 2.2vmin; margin: 3vmin 0 0; }
 
+/* Le choix de ce que la télé montre pendant la manche. Posé sur l'écran du
+   code, avant la partie : c'est le seul moment où quelqu'un est debout près de
+   l'écran, télécommande ou souris en main. */
+.tv-sous-titre { margin: 5vmin 0 2vmin; font-size: 3vmin; color: var(--muted); font-weight: 600; }
+.tv-modes { display: flex; flex-wrap: wrap; gap: 1.5vmin; }
+.tv-mode {
+  padding: 1.6vmin 2.4vmin;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text);
+  font-size: 2.4vmin; font-weight: 600; cursor: pointer;
+}
+.tv-mode.est-actif { border-color: var(--gold); color: var(--gold); }
+.tv-modes + .tv-note { margin-top: 2vmin; }
+
+/* La même bascule pendant la partie, mais effacée : le bon réglage ne se
+   trouve qu'une fois la première manche passée, et personne ne rouvrira la
+   page pour ça. Elle ne doit pour autant rien voler à la question. */
+.tv-mode-bascule {
+  position: fixed; right: 2vmin; bottom: 2vmin;
+  padding: 1vmin 1.6vmin;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: transparent; color: var(--muted);
+  font-size: 1.8vmin; cursor: pointer;
+  opacity: 0.35; transition: opacity 0.2s;
+}
+.tv-mode-bascule:hover, .tv-mode-bascule:focus-visible { opacity: 1; }
+
 .tv-form { display: flex; gap: 2vmin; align-items: center; }
 .tv-champ {
   flex: 1; min-width: 0;
@@ -916,6 +943,21 @@ body {
 .tv-score-gain { font-size: 2vmin; font-weight: 700; }
 .tv-score-gain.est-plus { color: var(--ok); }
 .tv-score-gain.est-moins { color: var(--danger); }
+
+/* Le classement seul : plus rien ne se dispute l'écran, alors il s'étale. Une
+   ligne par joueur plutôt qu'une file de pastilles — c'est la seule chose que
+   ce mode donne à lire, elle doit se lire du fond de la pièce. */
+.tv[data-mode="classement"] .tv-scores {
+  display: grid; gap: 1.6vmin;
+  margin-top: 4vmin; padding-top: 3vmin;
+}
+.tv[data-mode="classement"] .tv-score {
+  justify-content: space-between;
+  border-radius: var(--radius);
+  padding: 2vmin 3vmin;
+  font-size: 4vmin;
+}
+.tv[data-mode="classement"] .tv-score-gain { font-size: 3vmin; }
 
 .tv-podium { display: grid; gap: 2vmin; }
 .tv-podium-ligne {
