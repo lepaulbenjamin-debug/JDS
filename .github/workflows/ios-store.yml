@@ -82,9 +82,8 @@ jobs:
           npm run build:ios
           npx cap sync ios
 
-      # Le numéro de build doit être unique et croissant pour App Store Connect,
-      # sans quoi le téléversement est refusé après coup. `run_number` ne
-      # redescend jamais. La version affichée, elle, vient du tag.
+      # La version affichée vient du tag. Le numéro de build, lui, se décide
+      # plus bas : il dépend de ce qu'Apple a déjà reçu.
       - name: Numéroter
         run: |
           VERSION="${{ inputs.version }}"
@@ -92,9 +91,8 @@ jobs:
           case "${GITHUB_REF_NAME}" in
             v*) [ -z "$VERSION" ] && [ "$GITHUB_REF_TYPE" = tag ] && VERSION="${GITHUB_REF_NAME#v}" ;;
           esac
-          echo "BUILD=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          echo "Build ${GITHUB_RUN_NUMBER}${VERSION:+, version $VERSION}"
+          echo "Version affichée : ${VERSION:-celle du projet}"
 
       # Le certificat de distribution, dans un trousseau jetable créé pour ce
       # seul build. Le trousseau par défaut du runner n'est pas touché, et
@@ -143,6 +141,20 @@ jobs:
           echo "$CLE_P8" | base64 --decode > "$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8"
           chmod 600 "$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8"
           echo "CLE_CHEMIN=$RUNNER_TEMP/cles/AuthKey_${CLE_ID}.p8" >> "$GITHUB_ENV"
+
+      # App Store Connect refuse un numéro de build déjà vu, et le refuse APRÈS
+      # le téléversement. `run_number` repart de 1 sur un workflow neuf : une
+      # application qui a déjà des builds en TestFlight verrait donc son premier
+      # dépôt automatisé échouer. On demande à Apple ce qu'il a, et on prend le
+      # suivant — avec un horodatage en repli si l'appel échoue.
+      - name: Choisir le numéro de build
+        env:
+          APPLE_ASC_CLE_ID: ${{ secrets.APPLE_ASC_CLE_ID }}
+          APPLE_ASC_EMETTEUR: ${{ secrets.APPLE_ASC_EMETTEUR }}
+        run: |
+          BUILD=$(node scripts/prochain-build-ios.mjs "$GITHUB_RUN_NUMBER")
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          echo "Numéro de build retenu : $BUILD"
 
       - name: Archiver
         env:

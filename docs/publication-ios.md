@@ -79,9 +79,13 @@ engager de numéro de build auprès d'Apple, qu'on ne peut pas reprendre.
 git tag v1.0.0 && git push origin v1.0.0
 ```
 
-La version affichée vient du tag (`v1.0.0` → `1.0.0`), et le numéro de build du
-compteur d'exécutions GitHub, qui ne redescend jamais — App Store Connect refuse
-un numéro déjà vu, et le refus arrive après le téléversement.
+La version affichée vient du tag (`v1.0.0` → `1.0.0`). Le numéro de build, lui,
+est **demandé à App Store Connect** juste avant l'archive : on prend le plus
+haut déjà déposé, plus un. C'est ce qui permet de brancher ce workflow sur une
+application qui a déjà des builds en TestFlight — le compteur d'exécutions de
+GitHub, lui, repart de 1, et le refus d'un numéro déjà vu arrive *après* le
+téléversement. Si l'appel échoue, un horodatage `AAAAMMJJhhmm` prend le relais :
+illisible, mais strictement croissant.
 
 Une exécution manuelle avec « Téléverser » coché fait la même chose sans tag.
 
@@ -99,5 +103,5 @@ textes sont écrits dans `docs/fiche-app-store.md`.
 | `Ces fichiers ne sont PAS construits par la cible App` | La configuration Xcode n'a pas été commitée, ou un fichier en est sorti. `apple/README.md` § 1 bis. |
 | `No signing certificate "iOS Distribution" found` | Le `.p12` ne contient pas la clé privée, ou le mot de passe est faux. Réexporter depuis le Mac d'origine. |
 | `Provisioning profile ... doesn't support the Sign in with Apple capability` | La capacité n'est pas activée sur l'identifiant d'app dans le portail développeur. |
-| `The bundle version must be higher than the previously uploaded version` | Deux builds partis avec le même numéro. Relancer : `run_number` aura avancé. |
+| `The bundle version must be higher than the previously uploaded version` | Ne devrait plus arriver : le numéro est demandé à App Store Connect avant l'archive (`scripts/prochain-build-ios.mjs`), et un horodatage sert de repli si l'appel échoue. Si ça arrive quand même, deux builds sont partis dans la même minute. |
 | `Invalid large app icon` (ITMS-90717) | Ne devrait plus arriver : `npm run build:ios` refuse d'écrire une icône transparente ou hors format, et un test le vérifie. Si ça arrive quand même, c'est qu'une icône a été changée dans Xcode — elle doit l'être dans `assets/icon.png`. |

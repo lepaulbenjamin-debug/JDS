@@ -3723,3 +3723,35 @@ test('les sources Apple attendues sont toutes présentes', async () => {
     assert.ok(presents.includes(attendu), `apple/${attendu} a disparu`);
   }
 });
+
+test('le jeton App Store Connect est signé au format que JWT attend', async () => {
+  // Le piège : Node signe en DER par défaut, et JWT veut du P-1363 brut. La
+  // signature serait parfaitement valide, et Apple répondrait 401 — l'erreur la
+  // plus difficile à lire de toute la chaîne de publication, puisque rien n'y
+  // parle de format.
+  const { jetonAsc } = await import('./prochain-build-ios.mjs');
+  const { generateKeyPairSync, createPublicKey, verify } = await import('node:crypto');
+
+  const { privateKey } = generateKeyPairSync('ec', {
+    namedCurve: 'prime256v1',
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+  });
+
+  const jeton = jetonAsc({ cle: privateKey, cleId: 'ABCD123456', emetteur: 'un-emetteur' });
+  const [entete, corps, signature] = jeton.split('.');
+  assert.ok(signature, 'le jeton n’a pas trois segments');
+
+  assert.deepEqual(JSON.parse(Buffer.from(entete, 'base64url')),
+    { alg: 'ES256', kid: 'ABCD123456', typ: 'JWT' });
+
+  const charge = JSON.parse(Buffer.from(corps, 'base64url'));
+  assert.equal(charge.aud, 'appstoreconnect-v1', 'Apple refuse toute autre audience');
+  assert.equal(charge.iss, 'un-emetteur');
+  assert.ok(charge.exp - charge.iat <= 1200, 'Apple refuse un jeton valable plus de vingt minutes');
+
+  const brute = Buffer.from(signature, 'base64url');
+  assert.equal(brute.length, 64, 'signature en DER : Apple répondrait 401');
+  assert.ok(verify('sha256', Buffer.from(`${entete}.${corps}`),
+    { key: createPublicKey(privateKey), dsaEncoding: 'ieee-p1363' }, brute), 'signature invalide');
+});
