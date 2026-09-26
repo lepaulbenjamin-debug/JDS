@@ -11,9 +11,17 @@
 
 name: iOS — archive et dépôt sur l’App Store
 
+# Deux familles de tags, et c'est volontaire : le bouton « Run workflow » de
+# l'onglet Actions n'apparaît que si ce fichier est sur la branche PAR DÉFAUT du
+# dépôt. Un tag, lui, déclenche le workflow depuis n'importe quelle branche.
+# L'essai à blanc reste donc atteignable même quand la branche par défaut est
+# ailleurs — et c'est le cas ici, où le dépôt héberge deux applications.
+#
+#   essai-1, essai-2…  → archive, signe, exporte un ipa. N'envoie RIEN à Apple.
+#   v1.0.0, v1.1.0…    → archive et dépose sur App Store Connect.
 on:
   push:
-    tags: ['v*']            # v1.0.0, v1.1.0… : la version part du tag
+    tags: ['v*', 'essai-*']
   workflow_dispatch:
     inputs:
       televerser:
@@ -81,9 +89,10 @@ jobs:
       - name: Numéroter
         run: |
           VERSION="${{ inputs.version }}"
-          if [ -z "$VERSION" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
+          # Un tag d'essai ne porte pas de version : on garde celle du projet.
+          case "${GITHUB_REF_NAME}" in
+            v*) [ -z "$VERSION" ] && [ "$GITHUB_REF_TYPE" = tag ] && VERSION="${GITHUB_REF_NAME#v}" ;;
+          esac
           echo "BUILD=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
           echo "Build ${GITHUB_RUN_NUMBER}${VERSION:+, version $VERSION}"
@@ -166,10 +175,11 @@ jobs:
       # envoyer à Apple, ce qui est le bon premier essai.
       - name: Options d’export
         run: |
+          # Seul un tag de version dépose. Un tag d'essai s'arrête à l'ipa :
+          # un numéro de build envoyé à Apple ne se reprend pas.
           DESTINATION=export
-          if [ "${{ inputs.televerser }}" = "true" ] || [ "$GITHUB_REF_TYPE" = "tag" ]; then
-            DESTINATION=upload
-          fi
+          case "$GITHUB_REF_NAME" in v*) [ "$GITHUB_REF_TYPE" = tag ] && DESTINATION=upload ;; esac
+          [ "${{ inputs.televerser }}" = "true" ] && DESTINATION=upload
           echo "Destination : $DESTINATION"
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>

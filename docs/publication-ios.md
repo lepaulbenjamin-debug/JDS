@@ -53,11 +53,22 @@ renouveler chaque année, et une panne d'expiration en moins.
 
 ## Déclencher un build
 
-**Le premier essai, sans rien envoyer à Apple.** Onglet *Actions* › le
-workflow › *Run workflow*, en laissant « Téléverser » décoché. Il archive,
-signe et exporte un `.ipa` récupérable en pièce jointe du build. C'est là qu'on
-vérifie la signature, la taille du paquet et l'icône — sans engager de numéro de
-build auprès d'Apple, qu'on ne peut pas reprendre.
+**Le premier essai, sans rien envoyer à Apple.** Poser un tag `essai-*` :
+
+```sh
+git tag essai-1 && git push origin essai-1
+```
+
+Il archive, signe et exporte un `.ipa` récupérable en pièce jointe du build.
+C'est là qu'on vérifie la signature, la taille du paquet et l'icône — sans
+engager de numéro de build auprès d'Apple, qu'on ne peut pas reprendre.
+
+> Pourquoi un tag et pas le bouton *Run workflow* : ce bouton n'apparaît dans
+> l'onglet *Actions* que si le fichier du workflow est sur la **branche par
+> défaut** du dépôt. Ici elle pointe sur `claude/board-game-score-app-mw917g`,
+> l'autre application. Un tag, lui, déclenche depuis n'importe quelle branche.
+> Le jour où la branche du quiz devient la branche par défaut, le bouton
+> apparaît et fait la même chose.
 
 **Un vrai dépôt.** Poser un tag :
 
