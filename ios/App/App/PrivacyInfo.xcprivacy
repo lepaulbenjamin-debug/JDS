@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Le manifeste de confidentialité, exigé par Apple depuis le printemps 2024.
+
+  À copier tel quel dans ios/App/App/, puis à ajouter à la cible App. Sans lui,
+  l'envoi est refusé au dépôt, avant même la revue.
+
+  Il dit trois choses, et elles sont vraies :
+
+    NSPrivacyTracking            l'application ne suit personne, et ne relie
+                                 rien à des données d'un autre éditeur.
+    NSPrivacyCollectedDataTypes  elle ne collecte rien. Les prénoms et les
+                                 scores ne quittent pas le relais, qui les
+                                 oublie à la fin de la partie ; ils ne sont
+                                 rattachés à aucune identité.
+    NSPrivacyAccessedAPITypes    les API « à raison requise » qu'elle emploie.
+
+  La seule de la troisième liste vient de Capacitor, qui range ses préférences
+  dans UserDefaults. CA92.1 est la raison prévue pour ça : lire et écrire les
+  préférences de l'application elle-même, et rien d'autre.
+
+  Ces déclarations doivent dire la même chose que le questionnaire de
+  confidentialité d'App Store Connect. Une divergence entre les deux est un
+  motif de rejet — et si une dépendance ajoute demain une API à raison requise,
+  c'est ici qu'il faudra l'inscrire.
+-->
+<plist version="1.0">
+<dict>
+  <key>NSPrivacyTracking</key>
+  <false/>
+  <key>NSPrivacyTrackingDomains</key>
+  <array/>
+  <key>NSPrivacyCollectedDataTypes</key>
+  <array/>
+  <key>NSPrivacyAccessedAPITypes</key>
+  <array>
+    <dict>
+      <key>NSPrivacyAccessedAPIType</key>
+      <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+      <key>NSPrivacyAccessedAPITypeReasons</key>
+      <array>
+        <string>CA92.1</string>
+      </array>
+    </dict>
+  </array>
+</dict>
+</plist>
