@@ -148,10 +148,16 @@ courriel, ou avec Apple ou Google. Il se supprime depuis l'application :
 « Mon compte » → « Supprimer mon compte et mes données », et la même fonction
 existe sur le web, sans installer l'application.
 
-Achats intégrés : des packs de questions non consommables, plus une offre qui
-les réunit, à restaurer par
-« Restaurer les achats » dans les réglages de la partie. Ils ne débloquent
-aucune mécanique de jeu, seulement du contenu supplémentaire.
+Achats intégrés : huit produits non consommables — sept packs de questions et
+une offre qui les réunit. Pour les voir : écran d'accueil → un prénom →
+« Créer une partie » → faire défiler jusqu'à « Packs de questions ». Ils ne
+débloquent aucune mécanique de jeu, seulement du contenu supplémentaire :
+l'application est entièrement jouable sans eux, avec 409 questions et 19
+thèmes inclus. « Restaurer les achats » est au bas de cette même page.
+
+Dans une partie à plusieurs, un seul joueur a besoin d'avoir acheté un pack :
+ses questions sont posées à toute la table. C'est le modèle de l'application,
+et il explique pourquoi les invités n'ont ni compte ni achat à faire.
 
 L'audio est pré-enregistré et embarqué : l'application n'a besoin du réseau que
 pour faire communiquer les téléphones d'une même partie.
@@ -210,9 +216,11 @@ prix.
 | `fr.quizentreamis.pack.geek` | Pack Geek | 3,99 € | 30 questions de science-fiction, de jeux vidéo, de super-héros et d'histoire de l'informatique. Pour celui qui corrige tout le monde depuis le début de la soirée. |
 | `fr.quizentreamis.pack.jeuxsociete` | Pack Jeux de société modernes | 3,99 € | 30 questions sur Catane, Dixit, Pandemic, Wingspan et les autres. Le pack qui départage celui qui possède l'étagère et celui qui lit les règles. |
 
-La capture de revue peut être celle de la boutique dans les réglages de la
-partie — Apple veut voir où le produit est proposé, et la même capture sert
-pour les huit.
+**Les captures de revue sont prêtes, une par produit**, dans
+`docs/captures-achats/` : le nom du fichier reprend la fin de l'identifiant, et
+le README du dossier donne les notes de revue à coller dans chaque produit.
+Apple veut voir *où* le produit est proposé — une capture générique vaut pour
+un produit, pas pour huit.
 
 Les identifiants n'ont ni tiret ni accent : App Store Connect les refuse, et le
 refus tombe au moment de créer le produit, pas à l'écriture du pack. Un test
