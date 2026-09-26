@@ -124,13 +124,35 @@ serveur : `npm start` suffit pour tester le parcours entier.
 Obligatoire dès lors qu'un autre service de connexion est proposé — et Google
 en est un. Ce n'est pas une préférence, c'est la règle 4.8 de l'App Store.
 
-1. developer.apple.com › Identifiers › `fr.quizentreamis.app` › cocher
-   **Sign in with Apple** ;
-2. dans Xcode : cible App › Signing & Capabilities › + › **Sign in with Apple** ;
-3. déposer `apple/CompteApplePlugin.swift` dans `ios/App/App/`, puis l'ajouter
-   à Build Phases › Compile Sources. Copier le fichier ne suffit pas, et son
-   absence ne provoque aucune erreur — le bouton ne s'affiche simplement pas ;
-4. `QUIZROOM_APPLE_AUD=fr.quizentreamis.app`.
+1. developer.apple.com › Certificates, Identifiers & Profiles › **Identifiers**
+   › `fr.quizentreamis.app` › cocher **Sign in with Apple**. Le bouton *Edit*
+   qui apparaît à côté sert à grouper plusieurs apps sous un même compte :
+   laisser **« Enable as a primary App ID »**, qui est le défaut. *Save*, puis
+   confirmer l'avertissement sur les profils d'approvisionnement — ils se
+   régénèrent tout seuls en signature automatique ;
+2. `npm run ios:preparer` fait le reste : les droits, leur rattachement aux deux
+   configurations, et le plugin dans la cible ;
+3. `QUIZROOM_APPLE_AUD=fr.quizentreamis.app`.
+
+**Trois choses dont on n'a PAS besoin**, et que le portail propose pourtant au
+même endroit :
+
+- un **Services ID** — il sert à « Se connecter avec Apple » sur le web ou sur
+  Android. Ici le bouton n'existe que dans l'application native (`pontApple()`
+  rend `null` sans Capacitor), et l'audience vérifiée est l'identifiant
+  d'application, pas un Services ID ;
+- une **clé Sign in with Apple** (`.p8`) — elle sert à l'API serveur à serveur,
+  pour révoquer un jeton ou fabriquer un `client_secret`. On vérifie la
+  signature contre les clés publiques d'Apple (`appleid.apple.com/auth/keys`) :
+  aucun secret ne nous est nécessaire ;
+- la **vérification d'un domaine d'envoi** — elle va avec le Services ID et le
+  relais d'adresses privées.
+
+Ce dernier point deviendra vrai le jour où l'on écrira aux titulaires de compte :
+quelqu'un qui choisit « Masquer mon adresse » a une adresse
+`@privaterelay.appleid.com`, et le courrier rebondit tant que le domaine
+d'envoi n'est pas déclaré chez Apple. Aujourd'hui, rien ne part vers ces
+adresses — le code à six chiffres ne concerne que la connexion par courriel.
 
 ## 4. Se connecter avec Google
 
