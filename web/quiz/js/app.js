@@ -307,6 +307,10 @@ function appliquer(nouvel) {
       partieDeclaree = '';
     }
 
+    // L'extrait du DJ est fini — il a coupé, ou le chrono l'a fait : le jeu
+    // reprend la main sur le son, ce qui arrête la musique dans Safari.
+    if (estDJ() && phaseAvant === 'manche' && etat.phase !== 'manche') couperLaMusique();
+
     // Nouvelle manche : l'écho local d'une réponse précédente n'a plus cours.
     if (etat.phase === 'manche') {
       monChoix = null;
@@ -1932,25 +1936,35 @@ const MODES_DE_JEU = [
 /* --- Le pupitre du DJ ----------------------------------------------------- */
 
 /**
- * Le son du jeu se mêle-t-il à celui des autres applis ?
+ * Le son du jeu et la musique du DJ, qui tournent sur le même téléphone.
  *
- * Dans Safari, la page qui émet un son prend la main sur l'audio du téléphone :
- * iOS met alors Spotify ou Deezer en pause. Sans conséquence pour un quiz —
- * mais en blind test, la musique tourne justement dans une autre appli, sur le
- * téléphone du DJ, et le simple bip du « Top » l'arrêtait à l'instant où elle
- * partait. En « ambient », le son du jeu se superpose au lieu d'interrompre.
+ * Dans Safari, une page qui émet un son prend la main sur l'audio du
+ * téléphone, et iOS met Spotify ou Deezer en pause. On s'en sert dans les deux
+ * sens, selon le moment :
  *
- * Le prix : ce mode obéit au bouton silencieux. Un DJ en mode silencieux
- * n'entendra pas l'animateur — mais sa musique, elle, continue, et c'est elle
- * qui compte à ce moment-là. Hors blind test, on rend la main au navigateur.
+ *   - pendant que la musique tourne, la page se met en retrait (« ambient ») et
+ *     n'émet rien : le morceau continue ;
+ *   - quand l'extrait se termine — bouton « Couper » ou fin du chrono — elle
+ *     reprend la main (« playback ») et joue un son : iOS met la musique en
+ *     pause, et l'animateur redevient audible, même en mode silencieux.
  *
- * L'appli native n'en a pas besoin : sa session audio est déjà réglée pour se
- * mêler aux autres (voir apple/SessionAudio.swift).
+ * Tenir « ambient » toute la partie, comme d'abord, coupait l'animateur dès
+ * que le téléphone était en mode silencieux, et laissait la musique tourner
+ * par-dessus la révélation.
+ *
+ * Sans effet dans l'appli native, dont la session se mêle toujours aux autres
+ * (apple/SessionAudio.swift) : le DJ y met la musique en pause lui-même.
  */
-function partagerLeSon(oui) {
+function sessionAudio(type) {
   try {
-    if (navigator.audioSession) navigator.audioSession.type = oui ? 'ambient' : 'auto';
+    if (navigator.audioSession) navigator.audioSession.type = type;
   } catch { /* navigateur sans réglage de session : rien à faire */ }
+}
+
+/** L'extrait est fini : on rend la main au jeu, et la musique s'arrête. */
+function couperLaMusique() {
+  sessionAudio('playback');
+  sons.top();
 }
 
 let djRendu = '';              // la manche et le moment dont le pupitre est à l'écran
@@ -1994,7 +2008,7 @@ function construirePupitre(zone, moment, coulisses) {
     text: moment === 'attente'
       ? 'Lance le morceau sur ton enceinte, et appuie sur Top au moment où il démarre.'
       : moment === 'musique'
-        ? 'Ça tourne. Coupe quand tout le monde a trouvé, ou quand l’extrait est fini.'
+        ? 'Ça tourne. Coupe quand tout le monde a trouvé — sinon le chrono le fera. La musique s’arrête avec.'
         : 'Coche ce qui est juste. Le jeu a pré-coché ce qu’il a reconnu.',
   }));
 
@@ -2023,7 +2037,10 @@ function construirePupitre(zone, moment, coulisses) {
     zone.append(el('button', {
       class: 'btn btn-primary btn-block btn-lg dj-top',
       type: 'button',
-      onclick: () => { sons.bip(); actionDuDJ((r) => r.topDepart(net.serverNow())); },
+      // Aucun son ici, pas même le bip : c'est lui qui arrêtait la musique à
+      // l'instant où elle partait. La page se met en retrait jusqu'à la fin de
+      // l'extrait.
+      onclick: () => { sessionAudio('ambient'); actionDuDJ((r) => r.topDepart(net.serverNow())); },
     }, '▶ Top ! La musique part'));
   }
   if (moment === 'musique') {
@@ -2336,7 +2353,7 @@ async function ouvrirSalon() {
     moi.id = arrivee.playerId;
     enregistrerMoi();
     regie = construireRegie(questions, fil, reglages.mode === 'dj' ? moi.id : null);
-    partagerLeSon(reglages.mode === 'dj');
+
     voix.appliquerDefaut(true);           // la régie est la voix de la pièce
     majBoutonSon();
     joueurs = arrivee.players ?? [{ id: moi.id, name: moi.name }];
@@ -2484,7 +2501,7 @@ async function quitter() {
     if (!sur) return;
   }
   arreterBoucle();
-  partagerLeSon(false);
+  sessionAudio('auto');
   voix.taire();
   salon = null;
   fileSolo = [];
@@ -2657,7 +2674,7 @@ function brancher() {
   $('#btn-rejouer').addEventListener('click', () => {
     const encoreSeul = estSolo();
     arreterBoucle();
-    partagerLeSon(false);
+    sessionAudio('auto');
     salon = null;
     regie = null;
     etat = null;
