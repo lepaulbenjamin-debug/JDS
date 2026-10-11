@@ -642,6 +642,10 @@ const DIT = {
     themeCrimes: ['Une question sur les grandes affaires criminelles.'],
     themeGeopolitique: ['Une question de géopolitique.'],
     themeTelerealite: ['Direction la télé-réalité.'],
+    typeDj: [
+      'Place au blind test : écoutez, puis donnez le titre et l’artiste.',
+      'Un morceau va passer. Le titre, l’artiste, et vite.',
+    ],
   },
 
   chambreur: {
@@ -795,6 +799,10 @@ const DIT = {
     themeCrimes: ['Les grandes affaires criminelles. Fermez bien la porte.'],
     themeGeopolitique: ['Géopolitique. Ceux qui lisent les journaux, à vous.'],
     themeTelerealite: ['Télé-réalité ! Ne faites pas semblant de ne pas regarder.'],
+    typeDj: [
+      'Blind test ! Ouvrez les oreilles, fermez la bouche.',
+      'Un morceau arrive. Interdit de chanter faux pour gagner du temps.',
+    ],
   },
 
   pincesansrire: {
@@ -949,6 +957,10 @@ const DIT = {
     themeCrimes: ['Affaires criminelles. Restons calmes.'],
     themeGeopolitique: ['Géopolitique. Sujet léger, comme toujours.'],
     themeTelerealite: ['Télé-réalité. Personne ne regarde, évidemment.'],
+    typeDj: [
+      'Un morceau, choisi par le DJ. Je décline toute responsabilité.',
+      'Blind test. Le titre et l’artiste, si vous les connaissez.',
+    ],
   },
 
   clasheur: {
@@ -1108,6 +1120,10 @@ const DIT = {
     themeCrimes: ['Affaires criminelles. Ne prenez pas de notes, ça m’inquiéterait.'],
     themeGeopolitique: ['Géopolitique. Le journal de vingt heures ne suffira pas.'],
     themeTelerealite: ['Télé-réalité. Enfin votre spécialité.'],
+    typeDj: [
+      'Blind test. On va voir qui a vraiment de la culture musicale.',
+      'Un morceau. Fredonner ne compte pas comme une réponse.',
+    ],
   },
 };
 
@@ -1302,8 +1318,13 @@ function remplir(gabarit, vars) {
  * Un dé, même en écartant la dernière sortie, ressert vite la même phrase :
  * douze annonces tirées parmi vingt-quatre formules en répètent au moins une
  * presque à coup sûr. Le sac, lui, épuise toutes les variantes avant d'en
- * reprendre une — et quand on le remplit, celle qui vient d'être dite ne
- * repart pas en premier.
+ * reprendre une.
+ *
+ * Reste la couture entre deux sacs : le sac se vide en milieu de partie, le
+ * suivant est mélangé, et ce qui vient d'être dit pouvait ressortir aussitôt.
+ * Les dernières servies — la moitié du sac — partent donc au fond du sac neuf.
+ * Aucune variante ne revient avant que la moitié des autres soit passée, d'un
+ * sac à l'autre comme d'une partie à l'autre.
  *
  * Un sac par clé ET par personnage : changer d'animateur en cours de soirée ne
  * doit pas hériter des tirages de l'autre. Et il se refait quand la liste des
@@ -1316,19 +1337,24 @@ function tirerUneVariante(memoire, candidates) {
   if (candidates.length <= 1) return candidates[0] ?? 0;
   const empreinte = candidates.join(',');
   let sac = sacs.get(memoire);
+  const recentes = sac?.recentes ?? [];
   if (!sac || sac.empreinte !== empreinte || !sac.reste.length) {
-    const reste = [...candidates];
-    for (let i = reste.length - 1; i > 0; i -= 1) {
+    const melange = [...candidates];
+    for (let i = melange.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
-      [reste[i], reste[j]] = [reste[j], reste[i]];
+      [melange[i], melange[j]] = [melange[j], melange[i]];
     }
-    // On pioche par la fin : celle qui vient d'être dite part au fond du sac.
-    if (reste.at(-1) === sac?.dernier) [reste[0], reste[reste.length - 1]] = [reste.at(-1), reste[0]];
-    sac = { empreinte, reste, dernier: sac?.dernier };
+    // On pioche par la fin : les récentes vont au début, c'est-à-dire au fond.
+    const reste = [
+      ...melange.filter((i) => recentes.includes(i)),
+      ...melange.filter((i) => !recentes.includes(i)),
+    ];
+    sac = { empreinte, reste, recentes };
     sacs.set(memoire, sac);
   }
-  sac.dernier = sac.reste.pop();
-  return sac.dernier;
+  const tiree = sac.reste.pop();
+  sac.recentes = [...recentes, tiree].slice(-Math.floor(candidates.length / 2));
+  return tiree;
 }
 
 const tous = (liste) => liste.map((_, i) => i);

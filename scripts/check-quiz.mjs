@@ -3984,7 +3984,9 @@ test('une partie ne ressert pas deux fois la même formule d’annonce', () => {
   // C'est le reproche d'origine : « on entend toujours la même chose ». Avec
   // un sac plutôt qu'un dé, douze annonces tirées parmi vingt-quatre formules
   // sont toutes différentes.
-  for (const { id: persona } of PERSONAS) {
+  // Plusieurs parties de suite : la couture entre deux sacs tombe forcément
+  // au milieu de l'une d'elles, et c'est là que la répétition se cachait.
+  for (const { id: persona } of PERSONAS) for (let partie = 0; partie < 5; partie += 1) {
     const dites = [];
     for (let i = 0; i < 12; i += 1) dites.push(paroleDe(persona, 'avantManche').id);
     assert.equal(new Set(dites).size, dites.length, `${persona} se répète : ${dites.join(', ')}`);
@@ -4025,4 +4027,121 @@ test('avec des enregistrements en service, l’animateur ne tire que ce qui est 
   } finally {
     audio.ajouterDesClips({});
   }
+});
+
+/* --- Le mode DJ ------------------------------------------------------------ */
+
+const DJ_TABLE = [{ id: 'dj', name: 'Lou' }, { id: 'a', name: 'Ana' }, { id: 'b', name: 'Bo' }];
+
+function regieDJ(nombre = 2) {
+  const type = typeDeManche('dj');
+  const questions = Array.from({ length: nombre }, (_, i) => type.preparer({ id: `dj-${i + 1}` }));
+  const regie = creerRegie({ questions, dj: 'dj', jokers: [] });
+  let t = 1_000_000;
+  regie.lancer(t, DJ_TABLE);
+  // Jusqu'à la première manche : l'intro dure le temps de l'ouverture.
+  while (regie.phase !== 'manche') { t += 100; regie.avancer(t, DJ_TABLE); }
+  return { regie, horloge: () => t, pas: (ms) => { t += ms; return regie.avancer(t, DJ_TABLE); } };
+}
+
+test('le DJ ne joue pas : il n’est ni au classement ni attendu', () => {
+  const { regie } = regieDJ();
+  const e = regie.etatPublic(DJ_TABLE);
+  assert.deepEqual(e.classement.map((j) => j.id).sort(), ['a', 'b']);
+  assert.equal(e.dj.name, 'Lou');
+  // Une réponse du DJ à sa propre question est ignorée.
+  regie.topDepart(2_000_000);
+  regie.encaisser([{ playerId: 'dj', round: 1, reponse: ['x', ''], elapsedMs: 10 }]);
+  assert.equal(regie.etatPublic(DJ_TABLE).ontRepondu.length, 0);
+});
+
+test('la manche du DJ attend son top, et rien ne s’ouvre avant', () => {
+  const { regie, pas } = regieDJ();
+  // Une heure plus tard, toujours rien : c'est le DJ qui donne le départ.
+  for (let i = 0; i < 36; i += 1) pas(100_000);
+  let e = regie.etatPublic(DJ_TABLE);
+  assert.equal(e.phase, 'manche');
+  assert.equal(e.attenteDJ, true);
+  regie.encaisser([{ playerId: 'a', round: 1, reponse: ['Trop tôt', ''], elapsedMs: 0 }]);
+  assert.equal(e.ontRepondu.length, 0, 'une réponse avant le top est passée');
+
+  assert.equal(regie.topDepart(5_000_000), true);
+  e = regie.etatPublic(DJ_TABLE);
+  assert.equal(e.attenteDJ, false);
+  assert.equal(e.reponsesAt, 5_000_000, 'pas d’énoncé à lire : les réponses s’ouvrent au top');
+});
+
+test('le verdict du DJ : pré-coché sur sa solution, corrigé à la main, puis compté', () => {
+  const { regie } = regieDJ();
+  let t = 5_000_000;
+  regie.poserLeMorceau({ titre: 'Bohemian Rhapsody', artiste: 'Queen' });
+  regie.topDepart(t);
+  regie.encaisser([
+    { playerId: 'a', round: 1, reponse: ['bohemian rhapsody', 'Queen'], elapsedMs: 3000 },
+    { playerId: 'b', round: 1, reponse: ['We Will Rock You', 'Freddie Mercury'], elapsedMs: 9000 },
+  ]);
+  // Rien ne fuit avant la révélation : ni la solution, ni les réponses.
+  assert.ok(!JSON.stringify(regie.etatPublic(DJ_TABLE)).includes('Bohemian'));
+
+  regie.arreterLeMorceau(t += 10_000);
+  regie.avancer(t += 100, DJ_TABLE);
+  assert.equal(regie.phase, 'verdict');
+  const { verdicts } = regie.coulisses();
+  assert.deepEqual([verdicts.a.titre, verdicts.a.artiste], [true, true]);
+  assert.deepEqual([verdicts.b.titre, verdicts.b.artiste], [false, false]);
+  // Le DJ, bon prince, accepte « Freddie Mercury » pour Queen.
+  regie.juger('b', 'artiste', true);
+  // Le verdict attend le DJ, aussi longtemps qu'il faut.
+  for (let i = 0; i < 20; i += 1) regie.avancer(t += 100_000, DJ_TABLE);
+  assert.equal(regie.phase, 'verdict');
+
+  regie.validerLeVerdict(t, DJ_TABLE);
+  const e = regie.etatPublic(DJ_TABLE);
+  assert.equal(e.phase, 'revelation');
+  assert.deepEqual(e.question.solution, { titre: 'Bohemian Rhapsody', artiste: 'Queen' });
+  const { a, b } = e.resultat.detail;
+  assert.equal(a.correct, true);
+  assert.equal(b.correct, false);
+  assert.equal(b.titreJuste, false);
+  assert.equal(b.artisteJuste, true);
+  assert.ok(a.points > b.points && b.points > 0, `points : ${a.points} / ${b.points}`);
+  // Aucun clip de réponse réclamé : il n'y en a pas, et la révélation se tairait.
+  assert.ok(!e.resultat.clips.some((id) => id.includes('dj-1')), e.resultat.clips.join(', '));
+});
+
+test('corriger le morceau pendant le verdict ne défait pas ce que le DJ a tranché', () => {
+  const { regie } = regieDJ();
+  let t = 5_000_000;
+  regie.topDepart(t);
+  regie.encaisser([
+    { playerId: 'a', round: 1, reponse: ['Billie Jean', ''], elapsedMs: 2000 },
+    { playerId: 'b', round: 1, reponse: ['Thriller', ''], elapsedMs: 2000 },
+  ]);
+  regie.arreterLeMorceau(t += 5000);
+  regie.avancer(t += 100, DJ_TABLE);
+  regie.juger('b', 'titre', true);                   // le DJ a tranché à la main
+  regie.poserLeMorceau({ titre: 'Billie Jean', artiste: 'Michael Jackson' });
+  const { verdicts } = regie.coulisses();
+  assert.equal(verdicts.a.titre, true, 'le pré-cochage suit la solution tapée après coup');
+  assert.equal(verdicts.b.titre, true, 'la décision du DJ a été écrasée');
+});
+
+test('personne n’a répondu : pas de verdict à rendre, on révèle', () => {
+  const { regie } = regieDJ();
+  let t = 5_000_000;
+  regie.topDepart(t);
+  regie.arreterLeMorceau(t += 1000);
+  regie.avancer(t += 100, DJ_TABLE);
+  assert.equal(regie.phase, 'revelation');
+});
+
+test('une réponse de blind test traverse le relais intacte', async () => {
+  // Le relais ne laisse passer que des formes simples. La réponse du DJ y
+  // arrivait vidée quand elle était un objet : elle part donc en tableau.
+  const { code, hostToken } = (await appel('POST', {}, {})).body;
+  await appel('POST', { code, action: 'answer' },
+    { playerId: 'a', round: 1, reponse: ['Bohemian Rhapsody', 'Queen'], elapsedMs: 1200 });
+  const { answers } = (await appel('POST', { code }, { hostToken })).body;
+  const lu = typeDeManche('dj').lire(answers.at(-1).reponse);
+  assert.deepEqual(lu, { titre: 'Bohemian Rhapsody', artiste: 'Queen' });
 });

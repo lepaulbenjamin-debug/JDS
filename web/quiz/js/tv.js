@@ -286,8 +286,10 @@ function rendreJeu() {
 
   // Pendant le vote, l'écran commun est le seul endroit où toute la table voit
   // la même chose : c'est là que la question se règle, à voix haute.
+  const leDJ = etat.dj?.name ?? 'Le DJ';
   $('#tv-annonce').textContent = etat.phase === 'vote'
     ? 'À la table de trancher — regardez vos téléphones.'
+    : etat.phase === 'verdict' ? `🎧 ${leDJ} vérifie les réponses…`
     : revele ? (etat.resultat?.commentaireDit || etat.resultat?.commentaire || '')
       // Pendant la lecture et la fenêtre des jokers, l'écran dit ce qui se
       // passe plutôt que de rester vide : sinon on croit qu'il a planté.
@@ -301,11 +303,18 @@ function rendreJeu() {
   // sans lui, la bonne réponse et l'explication flottent sans rien à quoi se
   // rattacher, et personne ne se souvient de la question dix secondes après.
   const enonce = montrerLaQuestion || montrerLaRevelation;
-  $('#tv-question').textContent = !enonce ? ''
-    : question?.type === 'ttmc'
-      ? (THEMES.find((t) => t.id === question.theme)?.nom ?? '')
-      : (question?.texte ?? '');
-  $('#tv-question').hidden = !enonce || !question || etat.phase === 'intro';
+  // Le DJ cherche son morceau : c'est la seule chose à dire en grand, et elle
+  // ne dévoile rien.
+  if (etat.attenteDJ) {
+    $('#tv-question').textContent = `🎧 ${leDJ} choisit le morceau…`;
+    $('#tv-question').hidden = false;
+  } else {
+    $('#tv-question').textContent = !enonce ? ''
+      : question?.type === 'ttmc'
+        ? (THEMES.find((t) => t.id === question.theme)?.nom ?? '')
+        : (question?.texte ?? '');
+    $('#tv-question').hidden = !enonce || !question || etat.phase === 'intro';
+  }
 
   rendreReponses(question, revele, montrerLaQuestion || montrerLaRevelation);
 
@@ -412,6 +421,13 @@ function rendreChrono() {
 
   if (etat.phase === 'manche') {
     cadre.hidden = false;
+    // En attendant le top du DJ, pas de compte à rebours : il ne finirait pas.
+    if (etat.attenteDJ) {
+      delete cadre.dataset.compte;
+      jauge.style.width = '100%';
+      jauge.classList.remove('est-urgent');
+      return;
+    }
     const avantDepart = maintenant < etat.startAt;
     // Le décompte avant le top, puis la jauge pleine le temps que l'énoncé se
     // lise : le chrono ne part qu'avec les réponses.

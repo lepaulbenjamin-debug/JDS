@@ -29,6 +29,12 @@
 //                              aux autres — au plus proche, par exemple
 //   solutionTexte(manche)      la bonne réponse en clair, pour l'écran et pour
 //                              l'annonce de l'animateur
+//   lu                         facultatif, `false` quand la manche n'a ni énoncé
+//                              à lire ni réponse enregistrée : le moteur ne doit
+//                              alors ni attendre une lecture, ni réclamer de clip
+//   departManuel               facultatif : le top est donné par quelqu'un, pas
+//                              par l'horloge (le DJ, qui seul sait quand la
+//                              musique part)
 //   resume(manche, detail)     ce QU'UN JOUEUR a répondu, en clair et en court.
 //                              Sert la révélation, où l'on affiche les réponses
 //                              de toute la table : c'est le moment où l'on rit,
@@ -41,8 +47,12 @@ import ordre from './ordre.js';
 import rafale from './rafale.js';
 import mix from './mix.js';
 import ttmc from './ttmc.js';
+import dj from './dj.js';
 
-export const TYPES = [qcm, estimation, ordre, rafale, mix, ttmc];
+// Le DJ figure ici comme les autres, mais n'apparaîtra jamais dans les types à
+// cocher : ceux-là sont filtrés sur la banque, et aucune question de banque
+// n'est de ce type. Il se choisit comme un mode de partie à part entière.
+export const TYPES = [qcm, estimation, ordre, rafale, mix, ttmc, dj];
 
 const PAR_ID = Object.fromEntries(TYPES.map((t) => [t.id, t]));
 

@@ -422,6 +422,31 @@ body {
 .mix-titre { font-weight: 700; }
 .mix-artiste { color: var(--muted); }
 
+/* --- Le blind test du DJ -------------------------------------------------- */
+
+.dj-saisie { display: grid; gap: 12px; }
+.dj-resultat { display: grid; gap: 8px; }
+.dj-solution { margin: 0; font-size: 18px; }
+.dj-solution strong { color: var(--ok); }
+
+/* Le pupitre du DJ : il se lit d'un coup d'œil entre deux morceaux, téléphone
+   dans une main et télécommande de l'enceinte dans l'autre. */
+.dj { display: grid; gap: 12px; margin-bottom: 16px; }
+.dj-consigne { margin: 0; font-weight: 600; }
+.dj-morceau { display: grid; gap: 8px; }
+.dj-top { font-size: 20px; }
+.dj-verdicts { display: grid; gap: 10px; }
+.dj-ligne {
+  display: grid; gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.dj-propose { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.dj-bascules { display: flex; gap: 8px; }
+.dj-bascule { flex: 1; justify-content: center; }
+.dj-bascule.est-actif { border-color: var(--ok); color: var(--ok); }
+
 /* --- Tu te mets combien ? ------------------------------------------------ */
 
 .pari { display: grid; gap: 10px; margin: 4px 0 14px; }

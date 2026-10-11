@@ -96,7 +96,13 @@ const estimation = {
     vue.champ.disabled = !ouvert;
     vue.valider.disabled = !ouvert;
     vue.valider.hidden = revele;
-    if (monChoix != null) vue.champ.value = String(monChoix);
+    // Seulement quand la proposition change : cette peinture repasse dix fois
+    // par seconde, et réécrire le champ à chaque fois effaçait la proposition
+    // suivante pendant qu'on la tapait.
+    if (monChoix != null && monChoix !== vue.dernierEnvoi) {
+      vue.champ.value = String(monChoix);
+      vue.dernierEnvoi = monChoix;
+    }
 
     clear(vue.resultat);
     if (!revele) return;
@@ -307,6 +313,80 @@ const mix = {
 };
 
 
+/* --- Le blind test du DJ --------------------------------------------------- */
+
+const dj = {
+  construire(manche, ctx) {
+    const champ = (placeholder, label) => el('input', {
+      class: 'mix-champ',
+      type: 'text',
+      autocomplete: 'off',
+      autocapitalize: 'none',
+      spellcheck: 'false',
+      placeholder,
+      'aria-label': label,
+    });
+    const titre = champ('Le titre…', 'Le titre du morceau');
+    const artiste = champ('L’artiste…', 'L’artiste du morceau');
+    titre.enterKeyHint = 'next';
+    artiste.enterKeyHint = 'send';
+
+    const envoyer = el('button', {
+      class: 'btn btn-primary btn-block',
+      type: 'button',
+      onclick: () => {
+        // Un tableau, comme la manche l'attend : voir `lire` dans manches/dj.js.
+        const valeur = [titre.value.trim(), artiste.value.trim()];
+        if (valeur[0] || valeur[1]) ctx.repondre(valeur);
+      },
+    }, 'Envoyer');
+
+    // Entrée sur le titre passe à l'artiste : on tape les deux d'un trait,
+    // sans lâcher le clavier pendant que le morceau tourne.
+    titre.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') artiste.focus();
+    });
+    artiste.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') envoyer.click();
+    });
+
+    const resultat = el('div', { class: 'dj-resultat' });
+    return {
+      racine: el('div', { class: 'dj-saisie' }, [titre, artiste, envoyer, resultat]),
+      titre,
+      artiste,
+      envoyer,
+      resultat,
+      dernierEnvoi: null,
+    };
+  },
+
+  peindre(vue, { manche, monChoix, ouvert, revele }) {
+    vue.titre.disabled = !ouvert;
+    vue.artiste.disabled = !ouvert;
+    vue.envoyer.disabled = !ouvert;
+    vue.envoyer.hidden = revele;
+    vue.envoyer.textContent = monChoix ? 'Changer ma réponse' : 'Envoyer';
+    // Même garde que pour le mix : on ne réécrit les champs que quand la
+    // réponse envoyée change, pas à chaque peinture.
+    if (monChoix && monChoix !== vue.dernierEnvoi) {
+      [vue.titre.value, vue.artiste.value] = monChoix;
+      vue.dernierEnvoi = monChoix;
+    }
+
+    clear(vue.resultat);
+    if (!revele) return;
+    const solution = manche.solution;
+    vue.resultat.append(solution
+      ? el('p', { class: 'dj-solution' }, [
+          el('span', { class: 'muted small', text: 'C’était ' }),
+          el('strong', { text: solution.titre || '?' }),
+          solution.artiste ? el('span', { text: ` — ${solution.artiste}` }) : null,
+        ])
+      : el('p', { class: 'muted small', text: 'Le DJ n’a pas dit ce qu’il passait : demande-lui !' }));
+  },
+};
+
 /* --- Tu te mets combien ? -------------------------------------------------- */
 
 const ttmc = {
@@ -368,7 +448,7 @@ const ttmc = {
   },
 };
 
-const VUES = { qcm, estimation, ordre, rafale, mix, ttmc };
+const VUES = { qcm, estimation, ordre, rafale, mix, ttmc, dj };
 
 export function vueDe(type) {
   return VUES[type] ?? qcm;

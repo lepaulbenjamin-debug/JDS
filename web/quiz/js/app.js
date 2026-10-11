@@ -99,6 +99,7 @@ let boucle = null;
 let erreurs = 0;
 
 let reglages = {
+  mode: 'quiz',                // 'quiz', ou 'dj' : un blind test dont l'hôte passe les morceaux
   sources: [],                 // vide = le jeu de base et tous les packs
   themes: [],
   types: [],                   // vide = tous les types de manche
@@ -137,6 +138,8 @@ let partieDeclaree = '';
 const estSolo = () => Boolean(salon?.solo);
 // Solo ou hôte, c'est le même rôle : cet appareil fait tourner la régie.
 const estRegie = () => Boolean(salon?.hostToken) || estSolo();
+// Le DJ d'un blind test : c'est la régie, et elle ne joue pas.
+const estDJ = () => Boolean(etat?.dj && etat.dj.id === moi.id && regie);
 
 /* --- Navigation ---------------------------------------------------------- */
 
@@ -165,6 +168,7 @@ const ECRAN_DE_PHASE = {
   intro: 'jeu',
   manche: 'jeu',
   vote: 'jeu',
+  verdict: 'jeu',
   revelation: 'jeu',
   podium: 'fin',
 };
@@ -253,8 +257,13 @@ async function battementRegie() {
     return;
   }
 
-  const reponse = await net.publishState(salon.code, salon.hostToken, aPublier);
-  aPublier = undefined;
+  const envoye = aPublier;
+  const reponse = await net.publishState(salon.code, salon.hostToken, envoye);
+  // Une action du DJ a pu poser un nouvel état pendant l'aller-retour — son top,
+  // typiquement. L'effacer ici le perdait : rien d'autre ne bouge pendant
+  // qu'on attend la musique, et les pupitres n'auraient jamais vu les réponses
+  // s'ouvrir.
+  if (aPublier === envoye) aPublier = undefined;
 
   const avant = joueurs.map((j) => j.id).join(',');
   joueurs = reponse.players ?? [];
@@ -321,7 +330,7 @@ function appliquer(nouvel) {
     // À la révélation, et non au tirage : une partie lancée pour montrer
     // l'appli et abandonnée à la deuxième manche ne doit pas brûler douze
     // questions que personne n'a entendues.
-    if (etat.phase === 'revelation' && estRegie() && etat.question?.id) {
+    if (etat.phase === 'revelation' && estRegie() && etat.question?.id && etat.question.type !== 'dj') {
       historique.marquer(etat.question.id);
     }
 
@@ -362,7 +371,8 @@ function parler() {
   // Le vote n'a rien à annoncer, et `annonceCle` porte encore celle de la
   // manche : sans ce garde, l'animateur redirait « troisième question » au
   // moment où la table s'apprête à juger une réponse.
-  if (etat.phase === 'vote') return;
+  // Le verdict non plus : c'est le DJ qui délibère, en silence.
+  if (etat.phase === 'vote' || etat.phase === 'verdict') return;
   const clips = [];
   const repli = [];
   const qid = etat.question?.id;
@@ -407,6 +417,9 @@ function parler() {
 function lireEnonce() {
   const qid = etat?.question?.id;
   if (!qid) return;
+  // Une manche sans énoncé enregistré — celle du DJ : au top, c'est la musique
+  // qu'on doit entendre, pas un clip manquant qui la couvrirait d'un silence.
+  if (typeDeManche(etat.question.type).lu === false) return;
   voix.enoncer({ clips: [`question/${qid}`], repli: [] });
 }
 
@@ -450,6 +463,7 @@ function rendreLobby() {
   for (const joueur of joueurs) {
     liste.append(el('div', { class: 'ligne-joueur' }, [
       el('span', { class: 'pastille-nom', text: joueur.name }),
+      joueur.id === etat?.dj?.id ? el('span', { class: 'muted small', text: '🎧 DJ' }) : null,
       joueur.id === moi.id ? el('span', { class: 'muted small', text: 'toi' }) : null,
     ]));
   }
@@ -457,12 +471,14 @@ function rendreLobby() {
     liste.append(el('p', { class: 'muted small', text: 'Personne pour l’instant.' }));
   }
 
-  const lancable = estRegie() && joueurs.length >= 1;
+  // Un blind test sans personne pour deviner n'est qu'une playlist.
+  const devinent = joueurs.filter((j) => j.id !== etat?.dj?.id).length;
+  const lancable = estRegie() && (etat?.dj ? devinent >= 1 : joueurs.length >= 1);
   $('#btn-lancer').hidden = !estRegie();
   $('#btn-lancer').disabled = !lancable;
-  $('#lobby-note').textContent = estRegie()
-    ? 'Tu peux lancer dès que tout le monde est là. Les retardataires pourront quand même entrer.'
-    : 'En attente du lancement…';
+  $('#lobby-note').textContent = !estRegie() ? 'En attente du lancement…'
+    : etat?.dj && !devinent ? 'Il faut au moins une personne pour deviner : c’est toi qui passes la musique.'
+      : 'Tu peux lancer dès que tout le monde est là. Les retardataires pourront quand même entrer.';
 }
 
 /**
@@ -509,7 +525,8 @@ function rendreJeu() {
   $('#jeu-theme').hidden = !question;
 
   $('#jeu-consigne').textContent = question?.consigne ?? '';
-  $('#jeu-consigne').hidden = !question || etat.phase === 'revelation';
+  // La consigne s'adresse à ceux qui répondent : le DJ a la sienne, au pupitre.
+  $('#jeu-consigne').hidden = !question || etat.phase === 'revelation' || estDJ();
 
   // Hors du garde ci-dessous, et volontairement : la banque de clips arrive de
   // façon asynchrone, donc la phrase à afficher peut changer après le premier
@@ -543,6 +560,7 @@ function rendreJeu() {
 
   rendrePari();
   peindreReponses();
+  rendreDJ();
   rendreVote();
   rendreJokers();
   rendreEtatManche();
@@ -628,7 +646,8 @@ async function annoncerLeNiveau(niveau) {
 function construireSaisie(manche) {
   const hote = clear($('#jeu-reponses'));
   vueManche = null;
-  if (!manche) return;
+  // Le DJ ne répond pas : son écran, c'est le pupitre.
+  if (!manche || estDJ()) return;
   const vue = vueDe(manche.type);
   vueManche = { type: manche.type, ...vue.construire(manche, { repondre }) };
   hote.append(vueManche.racine);
@@ -650,6 +669,12 @@ function peindreReponses() {
 
 function rendreJokers() {
   const hote = clear($('#jeu-jokers'));
+  if (estDJ()) {
+    for (const id of ['#titre-jokers', '#jeu-jokers', '#joker-cible', '#joker-legende']) $(id).hidden = true;
+    $('#joker-note').textContent = '';
+    return;
+  }
+  $('#jeu-jokers').hidden = false;
   // Une partie peut se jouer sans jokers, ou avec seulement quelques-uns : la
   // section disparaît alors au lieu d'afficher une rangée de boutons morts.
   const actifs = etat.jokersActifs ?? JOKERS.map((j) => j.id);
@@ -810,9 +835,23 @@ function rendreVote() {
 function rendreEtatManche() {
   const hote = clear($('#jeu-etat'));
 
+  // Le verdict du DJ : la table attend, et voit au moins ce qu'elle a répondu.
+  if (etat.phase === 'verdict') {
+    if (estDJ()) return;
+    hote.append(el('p', { class: 'atteinte', text: `🎧 ${etat.dj?.name ?? 'Le DJ'} vérifie les réponses…` }));
+    return;
+  }
+
   if (etat.phase === 'revelation') {
     const mien = etat.resultat?.detail?.[moi.id];
     const gain = mien?.points ?? 0;
+    // Le DJ n'a pas joué : ni gain, ni « trop tard » — seulement la table.
+    if (estDJ()) {
+      const dits = rendreLesDits();
+      if (dits) hote.append(dits);
+      hote.append(rendreClassement());
+      return;
+    }
     hote.append(el('p', {
       class: `gain ${gain > 0 ? 'gain-plus' : gain < 0 ? 'gain-moins' : 'gain-zero'}`,
       text: mien?.absent
@@ -873,6 +912,15 @@ function rendreEtatManche() {
   }
 
   if (etat.phase === 'manche') {
+    if (estDJ()) return;
+    // Le DJ cherche son morceau : sans un mot, l'attente ressemble à une panne.
+    if (etat.attenteDJ) {
+      hote.append(el('p', {
+        class: 'atteinte',
+        text: `🎧 ${etat.dj?.name ?? 'Le DJ'} choisit le morceau. Un joker, en attendant ?`,
+      }));
+      return;
+    }
     // Le temps que l'énoncé se lise, l'écran n'a ni réponses ni chrono qui
     // bouge : sans un mot, quelques secondes de rien ressemblent à une panne.
     const maintenant = net.serverNow();
@@ -909,6 +957,9 @@ function detailDeLaManche(mien) {
     return mien.correct
       ? `Niveau ${mien.niveau} annoncé, et trouvé.`
       : `Niveau ${mien.niveau} annoncé, et raté.`;
+  }
+  if (type === 'dj') {
+    return `Titre ${mien.titreJuste ? '✔' : '✘'} · artiste ${mien.artisteJuste ? '✔' : '✘'}.`;
   }
   if (type === 'mix') {
     // Trois issues, et la troisième est la plus frustrante des trois : c'est
@@ -988,7 +1039,8 @@ function marqueDuDit(r, type) {
   if (r.absent) return '';
   const sur = type.id === 'rafale' ? etat.question.affirmations?.length
     : type.id === 'ordre' ? etat.question.elements?.length
-      : null;
+      : type.id === 'dj' ? 2
+        : null;
   if (sur && r.justes != null) return `${r.justes}/${sur}`;
   if (type.id === 'estimation') return r.correct ? '✔' : '';
   return r.correct ? '✔' : '✘';
@@ -1367,13 +1419,24 @@ function rafraichirChrono() {
   // la phrase — et la voix de l'animateur ne servait plus à rien.
   const enLecture = !avantDepart && maintenant < etat.reponsesAt;
   $('#jeu-question').hidden = avantDepart;
-  $('#jeu-reponses').hidden = avantDepart || enLecture;
+  $('#jeu-reponses').hidden = avantDepart || enLecture || estDJ();
   // Pendant qu'on répond, la phrase de l'animateur ne fait que repousser la
   // question vers le bas de l'écran : elle a déjà été dite, et lue, au décompte.
   $('#jeu-annonce').hidden = !avantDepart;
-  // « 0 sur 4 ont répondu » n'a aucun sens avant que la question existe.
-  $('#jeu-etat').hidden = avantDepart;
-  $('#titre-jokers').textContent = avantDepart ? 'Un joker, avant de voir la question ?' : 'Jokers';
+  // « 0 sur 4 ont répondu » n'a aucun sens avant que la question existe. Sauf
+  // chez le DJ, où c'est justement l'attente qu'il faut dire.
+  $('#jeu-etat').hidden = avantDepart && !etat.attenteDJ;
+  $('#titre-jokers').textContent = !avantDepart ? 'Jokers'
+    : etat.attenteDJ ? 'Un joker, avant d’entendre le morceau ?' : 'Un joker, avant de voir la question ?';
+
+  // Le DJ n'a pas encore donné le top : pas de compte à rebours, il ne
+  // finirait jamais. La jauge pleine dit « pas commencé ».
+  if (etat.attenteDJ) {
+    delete cadre.dataset.compte;
+    jauge.style.width = '100%';
+    jauge.classList.remove('est-urgent');
+    return;
+  }
 
   if (avantDepart) {
     cadre.dataset.compte = String(Math.max(1, Math.ceil((etat.startAt - maintenant) / 1000)));
@@ -1678,6 +1741,19 @@ function rendreReglages() {
       : 'Cocher un pack seul donne une soirée entièrement consacrée à ce pack.';
   }
 
+  const modes = clear($('#choix-mode'));
+  for (const option of MODES_DE_JEU) {
+    modes.append(el('button', {
+      class: `chip${reglages.mode === option.id ? ' est-actif' : ''}`,
+      type: 'button',
+      onclick: () => { reglages.mode = option.id; rendreReglages(); },
+    }, option.nom));
+  }
+  const enDJ = reglages.mode === 'dj';
+  $('#note-mode').textContent = MODES_DE_JEU.find((m) => m.id === reglages.mode)?.note ?? '';
+  $('#reglages-quiz').hidden = enDJ;
+  $('#titre-nombre').textContent = enDJ ? 'Nombre de morceaux' : 'Nombre de questions';
+
   const themes = clear($('#choix-themes'));
   for (const theme of themesDisponibles(reglages.sources)) {
     const actif = reglages.themes.includes(theme.id);
@@ -1715,7 +1791,9 @@ function rendreReglages() {
   // Décocher un thème peut faire passer le pool sous le nombre demandé : on
   // rabote avant d'afficher les pastilles, sinon celle qui paraît active ne
   // correspond plus à ce qui sera joué.
-  const dispo = tailleDuPool(reglages.themes, reglages.types, reglages.niveau, reglages.sources);
+  // En blind test, le DJ fournit les morceaux : rien ne limite leur nombre.
+  const dispo = enDJ ? Infinity
+    : tailleDuPool(reglages.themes, reglages.types, reglages.niveau, reglages.sources);
   reglages.nombre = Math.min(reglages.nombre, dispo);
 
   const nombres = clear($('#choix-nombre'));
@@ -1725,18 +1803,23 @@ function rendreReglages() {
       class: `chip${reglages.nombre === n ? ' est-actif' : ''}`,
       type: 'button',
       onclick: () => { reglages.nombre = n; rendreReglages(); },
-    }, `${n} questions`));
+    }, `${n} ${enDJ ? 'morceaux' : 'questions'}`));
   }
-  $('#note-nombre').textContent = `${dispo} questions disponibles sur ces thèmes. `
-    + 'Comptez une trentaine de secondes par manche.';
+  $('#note-nombre').textContent = enDJ
+    ? 'Prépare ta playlist avant : autant de morceaux que de manches, et quelques-uns de rechange.'
+    : `${dispo} questions disponibles sur ces thèmes. Comptez une trentaine de secondes par manche.`;
 
   const durees = clear($('#choix-duree'));
-  for (const [ms, libelle] of [[10000, 'Nerveux — 10 s'], [15000, 'Normal — 15 s'], [22000, 'Tranquille — 22 s']]) {
+  // Le libellé dit le temps réellement laissé : un extrait s'écoute plus
+  // longtemps qu'une question ne se lit, et « 15 s » pour trente secondes de
+  // musique mentirait.
+  const facteur = enDJ ? typeDeManche('dj').facteurDuree : 1;
+  for (const [ms, nom] of [[10000, 'Nerveux'], [15000, 'Normal'], [22000, 'Tranquille']]) {
     durees.append(el('button', {
       class: `chip${reglages.dureeMs === ms ? ' est-actif' : ''}`,
       type: 'button',
       onclick: () => { reglages.dureeMs = ms; rendreReglages(); },
-    }, libelle));
+    }, `${nom} — ${Math.round((ms * facteur) / 1000)} s`));
   }
 
   rendrePacks();
@@ -1789,7 +1872,10 @@ function rendreReglages() {
     : 'Aucune énigme de fond : on enchaîne les manches, c’est tout.';
 
   const jokers = clear($('#choix-jokers'));
-  for (const joker of JOKERS) {
+  // En blind test, seulement ceux qui ont un sens : pas de 50/50 sans
+  // réponses à retirer.
+  const proposables = enDJ ? JOKERS.filter((j) => jokersPossibles('dj').includes(j.id)) : JOKERS;
+  for (const joker of proposables) {
     const actif = reglages.jokers.includes(joker.id);
     jokers.append(el('button', {
       class: `chip${actif ? ' est-actif' : ''}`,
@@ -1816,6 +1902,158 @@ function rendreReglages() {
     }, [
       el('span', { class: 'persona-nom', text: persona.nom }),
       el('span', { class: 'persona-desc', text: persona.desc }),
+    ]));
+  }
+}
+
+/**
+ * Les deux façons de jouer.
+ *
+ * Le blind test est un mode et non un type de manche à cocher parmi les
+ * autres : il change qui joue. L'hôte devient DJ, passe la musique depuis son
+ * appli à lui et rend le verdict — il ne peut donc pas répondre, et une partie
+ * mêlée lui ferait jouer certaines manches et en arbitrer d'autres.
+ */
+const MODES_DE_JEU = [
+  {
+    id: 'quiz',
+    nom: '🧠 Quiz',
+    note: 'Les questions de l’appli, l’animateur, et tout le monde joue.',
+  },
+  {
+    id: 'dj',
+    nom: '🎧 Blind test (tu es le DJ)',
+    note: 'Tu passes la musique depuis ton appli — Spotify, Deezer, Apple Music — sur une enceinte, '
+      + 'les autres trouvent le titre et l’artiste sur leur téléphone. Tu ne joues pas : tu donnes '
+      + 'le top et tu valides les réponses.',
+  },
+];
+
+/* --- Le pupitre du DJ ----------------------------------------------------- */
+
+let djRendu = '';              // la manche et le moment dont le pupitre est à l'écran
+
+/**
+ * Une action du DJ qui change ce que la table voit : on republie tout de suite,
+ * sans attendre que le moteur trouve lui-même quelque chose à dire.
+ */
+function actionDuDJ(faire) {
+  if (!regie || !faire(regie)) return;
+  aPublier = regie.etatPublic(joueurs);
+  appliquer(aPublier);
+}
+
+/**
+ * Le pupitre : le morceau, le top, puis le verdict.
+ *
+ * Construit une fois par moment de la manche, et seulement mis à jour ensuite :
+ * l'écran de la régie se redessine à chaque battement, et refaire les champs à
+ * chaque fois effacerait le titre sous les doigts du DJ.
+ */
+function rendreDJ() {
+  const zone = $('#jeu-dj');
+  const coulisses = estDJ() && ['manche', 'verdict'].includes(etat.phase) ? regie.coulisses() : null;
+  zone.hidden = !coulisses;
+  if (!coulisses) { djRendu = ''; return; }
+
+  const moment = etat.phase === 'verdict' ? 'verdict' : etat.attenteDJ ? 'attente' : 'musique';
+  const cle = `${etat.manche}:${moment}`;
+  if (cle !== djRendu) {
+    djRendu = cle;
+    construirePupitre(zone, moment, coulisses);
+  }
+  majPupitre(zone, moment, regie.coulisses());
+}
+
+function construirePupitre(zone, moment, coulisses) {
+  clear(zone);
+  zone.append(el('p', {
+    class: 'dj-consigne',
+    text: moment === 'attente'
+      ? 'Lance le morceau sur ton enceinte, et appuie sur Top au moment où il démarre.'
+      : moment === 'musique'
+        ? 'Ça tourne. Coupe quand tout le monde a trouvé, ou quand l’extrait est fini.'
+        : 'Coche ce qui est juste. Le jeu a pré-coché ce qu’il a reconnu.',
+  }));
+
+  // Ce que le DJ passe. Facultatif, mais c'est ce qui fait pré-cocher les
+  // bonnes réponses — et ce que la table lira à la révélation.
+  const titre = el('input', {
+    class: 'mix-champ', type: 'text', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false',
+    placeholder: 'Titre du morceau', 'aria-label': 'Titre du morceau que tu passes',
+    value: coulisses.solution?.titre ?? '',
+  });
+  const artiste = el('input', {
+    class: 'mix-champ', type: 'text', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false',
+    placeholder: 'Artiste', 'aria-label': 'Artiste du morceau que tu passes',
+    value: coulisses.solution?.artiste ?? '',
+  });
+  const poser = () => {
+    regie.poserLeMorceau({ titre: titre.value, artiste: artiste.value });
+    majPupitre(zone, moment, regie.coulisses());
+  };
+  titre.addEventListener('input', poser);
+  artiste.addEventListener('input', poser);
+  zone.append(el('div', { class: 'dj-morceau' }, [titre, artiste]));
+  zone.append(el('p', { class: 'muted small', text: 'Personne d’autre ne voit ce que tu tapes ici.' }));
+
+  if (moment === 'attente') {
+    zone.append(el('button', {
+      class: 'btn btn-primary btn-block btn-lg dj-top',
+      type: 'button',
+      onclick: () => { sons.bip(); actionDuDJ((r) => r.topDepart(net.serverNow())); },
+    }, '▶ Top ! La musique part'));
+  }
+  if (moment === 'musique') {
+    zone.append(el('p', { class: 'muted small dj-compte' }));
+    zone.append(el('button', {
+      class: 'btn btn-block',
+      type: 'button',
+      onclick: () => actionDuDJ((r) => r.arreterLeMorceau(net.serverNow())),
+    }, '⏹ Couper l’extrait'));
+  }
+  if (moment === 'verdict') {
+    zone.append(el('div', { class: 'dj-verdicts' }));
+    zone.append(el('button', {
+      class: 'btn btn-primary btn-block btn-lg',
+      type: 'button',
+      onclick: () => actionDuDJ((r) => r.validerLeVerdict(net.serverNow(), joueurs)),
+    }, '✅ Valider le verdict'));
+  }
+}
+
+function majPupitre(zone, moment, coulisses) {
+  if (moment === 'musique') {
+    const attendus = joueurs.filter((j) => j.id !== moi.id).length;
+    zone.querySelector('.dj-compte').textContent = `${coulisses.reponses.length} sur ${attendus} ont répondu.`;
+  }
+  if (moment !== 'verdict') return;
+
+  const liste = clear(zone.querySelector('.dj-verdicts'));
+  const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
+  const bascule = (playerId, champ, propose, juste) => el('button', {
+    class: `chip dj-bascule${juste ? ' est-actif' : ''}`,
+    type: 'button',
+    disabled: !propose,
+    'aria-pressed': juste ? 'true' : 'false',
+    onclick: () => {
+      regie.juger(playerId, champ, !juste);
+      majPupitre(zone, moment, regie.coulisses());
+    },
+  }, `${juste ? '✔' : '✘'} ${champ === 'titre' ? 'Titre' : 'Artiste'}`);
+
+  for (const r of [...coulisses.reponses].sort((a, b) => a.elapsedMs - b.elapsedMs)) {
+    const verdict = coulisses.verdicts[r.playerId] ?? {};
+    liste.append(el('div', { class: 'dj-ligne' }, [
+      el('div', { class: 'dj-qui' }, [
+        el('strong', { text: nomDe(r.playerId) }),
+        el('span', { class: 'muted small', text: ` — ${(r.elapsedMs / 1000).toFixed(1).replace('.', ',')} s` }),
+      ]),
+      el('p', { class: 'dj-propose', text: [r.titre || '(pas de titre)', r.artiste || '(pas d’artiste)'].join(' — ') }),
+      el('div', { class: 'dj-bascules' }, [
+        bascule(r.playerId, 'titre', Boolean(r.titre), verdict.titre),
+        bascule(r.playerId, 'artiste', Boolean(r.artiste), verdict.artiste),
+      ]),
     ]));
   }
 }
@@ -1995,9 +2233,10 @@ async function rendrePacks() {
  * Identique en solo et à plusieurs : le moteur ne sait pas combien de pupitres
  * l'écoutent, et c'est ce qui rend le mode solo possible sans le dupliquer.
  */
-function construireRegie(questions, fil) {
+function construireRegie(questions, fil, dj = null) {
   return creerRegie({
       questions,
+      dj,
       dureeMs: reglages.dureeMs,
       persona: reglages.persona,
       themes: reglages.themes,
@@ -2028,7 +2267,16 @@ function construireRegie(questions, fil) {
 }
 
 /** Le tirage tombe à chaque nouvelle partie, y compris derrière « Une autre ! ». */
-function tirerLaPartie() {
+function tirerLaPartie(mode = reglages.mode) {
+  // Le blind test n'a pas de banque : ses manches sont des cases vides que le
+  // DJ remplira, morceau après morceau.
+  if (mode === 'dj') {
+    const type = typeDeManche('dj');
+    return {
+      fil: null,
+      questions: Array.from({ length: reglages.nombre }, (_, i) => type.preparer({ id: `dj-${i + 1}` })),
+    };
+  }
   const fil = reglages.avecFil
     ? FILS_ROUGES[Math.floor(Math.random() * FILS_ROUGES.length)] ?? null
     : null;
@@ -2060,14 +2308,17 @@ async function ouvrirSalon() {
   try {
     const { code, hostToken } = await net.createRoom();
     salon = { code, hostToken };
-    regie = construireRegie(questions, fil);
+    // La régie après l'arrivée, et non avant : c'est le relais qui fixe mon
+    // identifiant, et en blind test c'est lui qui désigne le DJ.
     const arrivee = await net.joinRoom(code, moi);
     moi.id = arrivee.playerId;
     enregistrerMoi();
+    regie = construireRegie(questions, fil, reglages.mode === 'dj' ? moi.id : null);
     voix.appliquerDefaut(true);           // la régie est la voix de la pièce
     majBoutonSon();
     joueurs = arrivee.players ?? [{ id: moi.id, name: moi.name }];
     aPublier = regie.etatPublic(joueurs);
+    etat = aPublier;
     retenirLeSalon(code, true);
     location.hash = code;
     montrer('lobby');
@@ -2095,7 +2346,8 @@ async function ouvrirSalon() {
  * examinateur d'App Store est seul avec un appareil.
  */
 function jouerSeul() {
-  const { fil, questions } = tirerLaPartie();
+  // Toujours un quiz : un blind test seul, c'est écouter sa propre playlist.
+  const { fil, questions } = tirerLaPartie('quiz');
   if (!questions.length) {
     toast('Aucune question sur ces thèmes.', 'warn');
     return;

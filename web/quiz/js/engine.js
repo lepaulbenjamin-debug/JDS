@@ -17,6 +17,7 @@ import {
 } from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
+import { precocher } from './manches/dj.js';
 import { JOKERS, jokersPossibles } from './jokers.js';
 
 // Les jokers vivent dans `jokers.js`, sans dépendances : l'écran commun a
@@ -46,6 +47,10 @@ export const DUREE_JOKERS_MS = 10000;
 export const DUREE_SURSIS_MS = 4000;
 // Le blanc gardé entre la fin de l'annonce et le début de l'énoncé.
 const MARGE_AVANT_ENONCE_MS = 1500;
+// L'attente du DJ : son top, puis son verdict. Pas de limite réelle — on ne
+// coupe pas un DJ qui cherche son morceau — mais une date, pour que tout ce qui
+// compare des heures continue de fonctionner.
+const ATTENTE_DJ_MS = 6 * 60 * 60 * 1000;
 // Le temps de lire l'énoncé à voix haute, entre le top et l'ouverture des
 // réponses. Les réponses apparaissaient en même temps que la question : on
 // lisait la première case avant d'avoir entendu la fin de la phrase, et la
@@ -189,6 +194,9 @@ export function resoudreManche({ manche, reponses, scores, joueurs, dureeMs, fin
       // dit pas avec `correct: false` tout seul.
       titre: note.titre,
       dejaCite: note.dejaCite,
+      // Propres au DJ : ce qu'il a validé, champ par champ.
+      titreJuste: note.titreJuste,
+      artisteJuste: note.artisteJuste,
       niveau: note.niveau,
       elapsedMs: reponse.elapsedMs,
       joker: reponse.joker ?? null,
@@ -345,9 +353,15 @@ function commentaire({ detail, joueurs, manche, persona }) {
  */
 export function creerRegie({
   questions, dureeMs = 15000, persona = 'classique', themes = [], dureeRevelation,
-  dureeLecture, jokers = JOKERS.map((j) => j.id), fil = null,
+  dureeLecture, jokers = JOKERS.map((j) => j.id), fil = null, dj = null,
 }) {
   const total = questions.length;
+
+  // Le DJ, s'il y en a un : il passe la musique et rend le verdict, il ne joue
+  // pas. Il est donc retiré de la table partout où le moteur la regarde — sinon
+  // il figurerait au classement avec zéro point, et la manche l'attendrait
+  // comme un joueur qui ne répond pas.
+  const enJeu = (joueurs) => (dj ? (joueurs ?? []).filter((j) => j.id !== dj) : joueurs);
 
   // Les jokers retenus pour cette partie, dans l'ordre canonique. Une liste
   // vide est un mode à part entière — pas de filet, c'est le plus rapide qui
@@ -370,7 +384,7 @@ export function creerRegie({
    * en même temps, l'animateur n'en lit aucun. Rien à attendre, donc.
    */
   const tempsDeLecture = (manche) => {
-    if (manche.type === 'ttmc') return 0;
+    if (manche.type === 'ttmc' || typeDeManche(manche.type).lu === false) return 0;
     const clip = dureeLecture?.(manche) ?? 0;
     const secondes = clip || (manche.texte ?? '').length / CARACTERES_PAR_SECONDE;
     return Math.max(PLANCHER_LECTURE_MS, Math.round((secondes + RESPIRATION_LECTURE_S) * 1000));
@@ -613,7 +627,13 @@ export function creerRegie({
     etat.phase = 'manche';
     // La fenêtre d'avant-question appartient au type : le TTMC y fait annoncer
     // un niveau, ce qui demande plus que le temps de sortir un joker.
-    etat.startAt = now + (typeDeManche(etat.question.type).avantQuestionMs ?? DUREE_JOKERS_MS);
+    const fenetre = typeDeManche(etat.question.type).avantQuestionMs ?? DUREE_JOKERS_MS;
+    // Au top manuel, l'heure de départ n'est pas connue : on la pose très loin,
+    // et c'est `topDepart` qui la ramènera à l'instant où le DJ appuie. Une
+    // date lointaine plutôt que rien : tout le reste du jeu — jokers ouverts,
+    // réponses fermées — se déduit déjà de « on est avant le départ ».
+    etat.attenteDJ = Boolean(typeDeManche(etat.question.type).departManuel);
+    etat.startAt = now + (etat.attenteDJ ? ATTENTE_DJ_MS : fenetre);
     etat.reponsesAt = etat.startAt + tempsDeLecture(etat.question);
     etat.deadline = etat.reponsesAt + tempsDeReponse(etat.question);
     etat.finPhase = etat.deadline;
@@ -623,7 +643,7 @@ export function creerRegie({
       contextes: contextesDeLaManche(numero, joueurs),
       // La fenêtre d'avant-question, moins une marge : l'annonce doit être
       // finie quand l'énoncé démarre, pas en même temps.
-      budgetMs: etat.startAt - now - MARGE_AVANT_ENONCE_MS,
+      budgetMs: fenetre - MARGE_AVANT_ENONCE_MS,
     });
   }
 
@@ -654,7 +674,7 @@ export function creerRegie({
     if (ditMarquant) clips.push(ditMarquant.id);
 
     const type = typeDeManche(etat.question.type);
-    if (etat.question.id && type.solutionTexte(etat.question)) {
+    if (etat.question.id && type.lu !== false && type.solutionTexte(etat.question)) {
       clips.push(`reponse/${etat.question.id}`, `note/${etat.question.id}`);
     }
 
@@ -743,6 +763,22 @@ export function creerRegie({
   }
 
   function cloreManche(joueurs, now) {
+    // Le DJ tranche, la table attend. S'il n'y a rien à juger, on passe
+    // directement : un écran de verdict vide ne ferait que ralentir la soirée.
+    if (typeDeManche(etat.question.type).departManuel) {
+      const repondus = Object.entries(etat.reponses);
+      if (repondus.length) {
+        etat.phase = 'verdict';
+        etat.question.verdicts = Object.fromEntries(repondus.map(([id, r]) => [
+          id, { ...precocher(etat.question.solution, r.valeur), manuel: false },
+        ]));
+        etat.finPhase = now + ATTENTE_DJ_MS;
+        return;
+      }
+      resoudreLaManche(joueurs, now);
+      return;
+    }
+
     const candidats = aSoumettreAuVote(joueurs);
     // Personne d'autre que les auteurs autour de la table : il n'y a personne
     // pour juger, et se voter soi-même n'aurait aucun sens. On tranche comme
@@ -831,8 +867,9 @@ export function creerRegie({
     },
 
     /** Le lobby se ferme, l'animateur ouvre la soirée. */
-    lancer(now, joueurs) {
+    lancer(now, tous) {
       if (etat.phase !== 'lobby') return false;
+      const joueurs = enJeu(tous);
       etat.phase = 'intro';
       // Retenu pour pouvoir recalculer la fin : voir `avancer`.
       etat.introAt = now;
@@ -866,6 +903,89 @@ export function creerRegie({
       return true;
     },
 
+    /* --- Le DJ ------------------------------------------------------------ */
+
+    /**
+     * Le top : la musique vient de partir. Les réponses s'ouvrent à l'instant,
+     * et les jokers se ferment — on ne mise plus une fois qu'on a entendu.
+     */
+    topDepart(now) {
+      if (etat.phase !== 'manche' || !etat.attenteDJ) return false;
+      etat.attenteDJ = false;
+      etat.startAt = now;
+      etat.reponsesAt = now + tempsDeLecture(etat.question);
+      etat.deadline = etat.reponsesAt + tempsDeReponse(etat.question);
+      etat.finPhase = etat.deadline;
+      return true;
+    },
+
+    /**
+     * Couper avant la fin : tout le monde a trouvé, ou l'extrait est fini. Le
+     * battement suivant clôt la manche par le chemin ordinaire.
+     */
+    arreterLeMorceau(now) {
+      if (etat.phase !== 'manche' || etat.attenteDJ || etat.deadline <= now) return false;
+      etat.deadline = now;
+      etat.finPhase = now;
+      return true;
+    },
+
+    /**
+     * Ce que le DJ passe. Facultatif, mais c'est ce qui permet au jeu de
+     * pré-cocher les bonnes réponses, et à la table de lire le titre à la
+     * révélation. Se corrige jusqu'au verdict : on tape parfois le titre de
+     * mémoire, et on le vérifie pendant que le morceau tourne.
+     */
+    poserLeMorceau({ titre = '', artiste = '' } = {}) {
+      if (!['manche', 'verdict'].includes(etat.phase) || !etat.question) return false;
+      if (!typeDeManche(etat.question.type).departManuel) return false;
+      const solution = { titre: String(titre).trim().slice(0, 80), artiste: String(artiste).trim().slice(0, 80) };
+      etat.question.solution = solution.titre || solution.artiste ? solution : null;
+      // Pendant le verdict, ce que le DJ n'a pas encore touché suit la nouvelle
+      // solution ; ce qu'il a tranché à la main, non.
+      if (etat.phase === 'verdict') {
+        for (const [id, verdict] of Object.entries(etat.question.verdicts)) {
+          if (!verdict.manuel) {
+            Object.assign(verdict, precocher(etat.question.solution, etat.reponses[id]?.valeur));
+          }
+        }
+      }
+      return true;
+    },
+
+    /** Le DJ coche ou décoche le titre, ou l'artiste, d'un joueur. */
+    juger(playerId, champ, juste) {
+      if (etat.phase !== 'verdict' || !['titre', 'artiste'].includes(champ)) return false;
+      const verdict = etat.question.verdicts?.[playerId];
+      if (!verdict) return false;
+      verdict[champ] = Boolean(juste);
+      verdict.manuel = true;
+      return true;
+    },
+
+    /** Le verdict est rendu : on compte les points. */
+    validerLeVerdict(now, tous) {
+      if (etat.phase !== 'verdict') return false;
+      resoudreLaManche(enJeu(tous), now);
+      return true;
+    },
+
+    /**
+     * Ce que seul le DJ doit voir : les réponses en clair avant la révélation,
+     * et sa propre solution. Jamais publié — c'est l'écran de la régie qui le lit
+     * directement ici.
+     */
+    coulisses() {
+      if (!etat.question || !typeDeManche(etat.question.type).departManuel) return null;
+      return {
+        solution: etat.question.solution,
+        verdicts: etat.question.verdicts ?? {},
+        reponses: Object.entries(etat.reponses).map(([playerId, r]) => ({
+          playerId, ...r.valeur, elapsedMs: r.elapsedMs,
+        })),
+      };
+    },
+
     /**
      * Range ce qui arrive du relais : les réponses de la manche en cours, et les
      * tentatives sur le fil rouge, qui elles ne dépendent d'aucune manche.
@@ -894,6 +1014,9 @@ export function creerRegie({
         }
 
         if (etat.phase !== 'manche' || entree.round !== etat.manche) continue;
+        // Le DJ ne répond pas à sa propre question — et avant le top, personne.
+        if (dj && entree.playerId === dj) continue;
+        if (etat.attenteDJ) continue;
 
         const valeur = typeDeManche(etat.question.type).lire(entree.reponse);
         if (valeur == null) continue;
@@ -923,8 +1046,9 @@ export function creerRegie({
     },
 
     /** Fait avancer l'horloge. Renvoie `true` si l'état publié doit changer. */
-    avancer(now, joueurs) {
+    avancer(now, tous) {
       if (etat.phase === 'lobby' || etat.phase === 'podium') return false;
+      const joueurs = enJeu(tous);
 
       if (etat.phase === 'intro') {
         // Recalculée à chaque battement, et pas seulement au lancement : en
@@ -1006,7 +1130,8 @@ export function creerRegie({
      * figurent qu'à partir de la révélation : tant que le chrono tourne, elles
      * ne sont sur aucun autre appareil que celui-ci.
      */
-    etatPublic(joueurs) {
+    etatPublic(tous) {
+      const joueurs = enJeu(tous);
       const revele = etat.phase === 'revelation';
       const type = etat.question && typeDeManche(etat.question.type);
       const question = etat.question && {
@@ -1041,6 +1166,11 @@ export function creerRegie({
         // seule fois, ici, pour que toute la table entende la même chose.
         annonceCle: etat.annonceCle,
         annonceClips: etat.annonceClips ?? [],
+        // Le DJ, s'il y en a un, et si l'on attend son top : les pupitres
+        // affichent alors « le DJ choisit le morceau » plutôt qu'un compte à
+        // rebours qui ne finirait jamais.
+        dj: dj ? { id: dj, name: (tous ?? []).find((j) => j.id === dj)?.name ?? 'DJ' } : null,
+        attenteDJ: etat.phase === 'manche' && Boolean(etat.attenteDJ),
         finale: etat.manche === total,
         question,
         // `annonceDite` est le mot pour mot des clips — c'est lui qui s'affiche

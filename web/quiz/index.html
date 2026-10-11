@@ -73,6 +73,14 @@
   <section class="screen" data-screen="reglages" hidden>
     <h2 class="screen-title">La partie</h2>
 
+    <h3 class="section-title">Le jeu</h3>
+    <div id="choix-mode" class="chip-row"></div>
+    <p id="note-mode" class="muted small"></p>
+
+    <!-- Tout ce qui sert à tirer des questions : sans objet quand c'est le DJ
+         qui choisit les morceaux. -->
+    <div id="reglages-quiz">
+
     <!-- N'apparaît qu'une fois un pack installé : une seule ligne « Jeu de
          base » n'apprendrait rien à personne. -->
     <section id="bloc-packs" hidden>
@@ -114,7 +122,9 @@
     <div id="choix-fil" class="chip-row"></div>
     <p id="note-fil" class="muted small"></p>
 
-    <h3 class="section-title">Nombre de questions</h3>
+    </div>
+
+    <h3 id="titre-nombre" class="section-title">Nombre de questions</h3>
     <div id="choix-nombre" class="chip-row"></div>
     <p id="note-nombre" class="muted small"></p>
 
@@ -165,6 +175,10 @@
     <p id="jeu-consigne" class="consigne"></p>
 
     <div id="jeu-pari" class="pari" hidden></div>
+
+    <!-- Le pupitre du DJ : le morceau, le top, le verdict. Seul l'appareil du
+         DJ l'affiche, et il est le seul à connaître ce qui s'y tape. -->
+    <div id="jeu-dj" class="dj" hidden></div>
 
     <div id="jeu-reponses"></div>
 
