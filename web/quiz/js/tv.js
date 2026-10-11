@@ -112,8 +112,8 @@ let joueurs = [];
 let erreurs = 0;
 let boucle = null;
 let image = null;
-// Le dernier état d'ouverture affiché, pour ne repeindre qu'au franchissement.
-let reponsesOuvertes = false;
+// Le dernier moment de la manche affiché, pour ne repeindre qu'au franchissement.
+let momentAffiche = null;
 
 function montrer(nom) {
   for (const section of document.querySelectorAll('[data-tv]')) {
@@ -198,9 +198,9 @@ function horloger() {
     // Le reste de l'écran ne se refait qu'au franchissement : repeindre tout à
     // soixante images par seconde reconstruirait les scores et les réponses
     // dites pour rien, et ferait clignoter la sélection du texte.
-    const ouvert = lesReponsesSontOuvertes();
-    if (ouvert !== reponsesOuvertes) {
-      reponsesOuvertes = ouvert;
+    const moment = momentDeLaManche();
+    if (moment !== momentAffiche) {
+      momentAffiche = moment;
       rendre();
     }
   };
@@ -214,9 +214,23 @@ function cesserLHorloge() {
 
 /** Les réponses sont-elles ouvertes sur les téléphones, à cet instant ? */
 function lesReponsesSontOuvertes() {
-  if (!etat || etat.phase !== 'manche') return false;
-  return !etat.reponsesAt || net.serverNow() >= etat.reponsesAt;
+  return momentDeLaManche() === 'ouvert';
 }
+
+/**
+ * Où en est la manche : la fenêtre des jokers, pendant laquelle l'animateur
+ * annonce ; la lecture de l'énoncé ; puis les réponses ouvertes. Les deux
+ * premiers se ressemblent — la question reste cachée — mais pas ce que dit
+ * l'écran : pendant les jokers, c'est l'annonce qu'on entend, pas l'énoncé.
+ */
+function momentDeLaManche() {
+  if (!etat || etat.phase !== 'manche') return etat?.phase ?? null;
+  const maintenant = net.serverNow();
+  if (etat.startAt && maintenant < etat.startAt) return 'jokers';
+  if (etat.reponsesAt && maintenant < etat.reponsesAt) return 'lecture';
+  return 'ouvert';
+}
+
 
 /* --- Le rendu ------------------------------------------------------------- */
 
@@ -259,7 +273,7 @@ function rendreJeu() {
   // La lecture : la manche a commencé, mais les réponses ne sont pas encore
   // ouvertes. C'est le seul moment où l'écran doit se taire — l'intro et le
   // vote ont chacun leur texte, et n'attendent personne.
-  const enLecture = etat.phase === 'manche' && !ouvert;
+  const enLecture = momentDeLaManche() === 'lecture';
   const montrerLaQuestion = mode === 'tout' && (ouvert || revele);
   const montrerLaRevelation = mode !== 'classement' && revele;
 

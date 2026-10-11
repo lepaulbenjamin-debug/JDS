@@ -517,11 +517,30 @@ const DIT = {
       'Silence dans la salle.',
       'Prêts ? C’est parti.',
       'Écoutez jusqu’au bout.',
+      'Ouvrez grand les oreilles.',
+      'Voici la suivante.',
+      'Une nouvelle question pour vous.',
+      'Restez concentrés.',
+      'Pas de précipitation.',
+      'Gardez votre sang-froid.',
+      'On ne relâche rien.',
+      'Chaque point compte.',
+      'Tout le monde est prêt ?',
+      'Question suivante, je vous prie.',
+      'Attention, celle-ci est subtile.',
+      'Prenez le temps de bien écouter.',
+      'Voyons si vous suivez toujours.',
+      'Le classement peut encore bouger.',
+      'Bonne chance à tous.',
+      'Et on reprend.',
     ],
     derniereManche: [
       'Dernière manche, et elle vaut double. Tout peut encore basculer.',
       'Voici la dernière question. Points doublés : accrochez-vous.',
       'On y est. Dernière question, points doublés.',
+      'Nous y voilà : l’ultime question. Elle compte double.',
+      'Dernière ligne droite, dernière question, et des points doublés.',
+      'C’est la dernière. Points doublés, et rien n’est encore joué.',
     ],
     mixTrouve: ['Voici tout ce que j’acceptais.'],
     mixPersonne: ['Aucun titre trouvé. Pourtant, regardez la liste.'],
@@ -563,6 +582,66 @@ const DIT = {
     doubleReussi: ['Quitte ou double, et ça paie.'],
     doubleRate: ['Quitte ou double, et ça coûte cher.'],
     podium: ['Voilà, c’est terminé. Le classement final est à l’écran. Bravo à tous !'],
+    typeQcm: [
+      'Retour au classique : quatre réponses, une seule bonne.',
+      'Quatre propositions, une seule est juste.',
+    ],
+    typeEstimation: [
+      'Place à l’estimation : un nombre, le plus près possible.',
+      'Une estimation, maintenant. Personne n’a besoin d’être exact.',
+    ],
+    typeOrdre: [
+      'Une manche de classement : remettez tout dans l’ordre.',
+      'Quatre éléments à ranger, dans le bon ordre.',
+    ],
+    typeRafale: [
+      'Rafale ! Vrai ou faux, et il faut aller vite.',
+      'Une série de vrai ou faux. Enchaînez.',
+    ],
+    typeMix: [
+      'Une réponse à taper, et plusieurs sont acceptées.',
+      'Réponse libre : à vous de l’écrire.',
+    ],
+    typeTtmc: [
+      'Tu te mets combien ? Choisissez votre niveau avant la question.',
+      'À vous de parier sur votre niveau. Plus haut, plus de points.',
+    ],
+    miParcours: [
+      'Nous passons la moitié de la partie.',
+      'Mi-parcours. Tout reste possible.',
+    ],
+    ligneDroite: [
+      'Nous entrons dans la dernière ligne droite.',
+      'Plus que quelques questions. C’est maintenant que tout se joue.',
+    ],
+    coudeACoude: [
+      'En tête, l’écart est minuscule.',
+      'Le haut du classement se joue à un cheveu.',
+    ],
+    echappee: [
+      'La tête du classement a pris le large. Il est temps de réagir.',
+      'Un bel écart en tête. La poursuite est lancée.',
+    ],
+    themeCulture: ['Une question de culture générale.'],
+    themeMusique: ['On parle musique.'],
+    themeCinema: ['Direction le cinéma et les séries.'],
+    themeAnnees2000: ['Retour dans les années deux mille.'],
+    themeBouffe: ['Une question qui se mange.'],
+    themeInsolite: ['Une question insolite.'],
+    themeSport: ['Une question de sport.'],
+    themeMonde: ['Un petit tour du monde.'],
+    themeMarques: ['On parle marques et publicités.'],
+    themeMots: ['Une question de mots et d’expressions.'],
+    themeDisney: ['Un détour par Disney et Pixar.'],
+    themeRegions: ['Cap sur les régions de France.'],
+    themeNature: ['Une question de nature.'],
+    themeHistoire: ['Un peu d’histoire.'],
+    themeFake: ['Fake news, ou pas ? À vous de démêler.'],
+    themePotter: ['Une question pour les sorciers : Harry Potter.'],
+    themePokemon: ['Attention, dresseurs : une question Pokémon.'],
+    themeCrimes: ['Une question sur les grandes affaires criminelles.'],
+    themeGeopolitique: ['Une question de géopolitique.'],
+    themeTelerealite: ['Direction la télé-réalité.'],
   },
 
   chambreur: {
@@ -590,11 +669,30 @@ const DIT = {
       'Celle-ci va faire des dégâts.',
       'Concentrez-vous. Ça changerait.',
       'Pas de panique. Enfin, un peu.',
+      'Rangez vos téléphones. Ah non, gardez-les.',
+      'Celle-là, vous allez la rater avec style.',
+      'On se concentre, je vois des yeux dans le vague.',
+      'Allez, un petit effort collectif.',
+      'Je sens que ça va être beau.',
+      'Respirez. Ça va bien se passer. Peut-être.',
+      'Ne regardez pas le voisin, il ne sait pas non plus.',
+      'Celle-ci, je l’ai choisie pour vous.',
+      'On arrête de bavarder.',
+      'Allez, on montre ce qu’on sait faire.',
+      'Je ne dis rien, mais je n’en pense pas moins.',
+      'Que les meilleurs gagnent. Les autres aussi, un peu.',
+      'Doigts sur l’écran, cerveau allumé si possible.',
+      'Je sens comme une odeur de bonnet d’âne.',
+      'Qui va encore se ridiculiser ?',
+      'C’est reparti pour un tour.',
     ],
     derniereManche: [
       'Dernière question, elle vaut double. C’est le moment de trahir vos amis.',
       'Dernière manche, points doublés. Tout se joue là, et vous le savez.',
       'La dernière. Elle vaut double. Aucune excuse après ça.',
+      'Dernière question, points doublés. Les excuses, c’est après.',
+      'La dernière ! Elle vaut double, alors pas de bêtise.',
+      'On termine en beauté, ou en catastrophe. Points doublés.',
     ],
     mixTrouve: ['Et maintenant, la liste de tout ce que vous avez raté.'],
     mixPersonne: ['Rien. Le vide. Et il y avait toute cette liste.'],
@@ -637,6 +735,66 @@ const DIT = {
     doubleReussi: ['Doublé, et ça passe. Insolent.'],
     doubleRate: ['Doublé, et planté. C’était magnifique.'],
     podium: ['C’est fini. Le classement est à l’écran, et quelqu’un va en parler pendant des mois.'],
+    typeQcm: [
+      'Retour aux quatre cases. Une chance sur quatre, même pour vous.',
+      'Un bon vieux QCM. Pas d’excuse.',
+    ],
+    typeEstimation: [
+      'Une estimation. Visez à peu près, c’est votre spécialité.',
+      'Un nombre à deviner. Personne ne tombera pile, rassurez-vous.',
+    ],
+    typeOrdre: [
+      'Remettez-moi tout ça dans l’ordre. Si vous y arrivez.',
+      'Un classement à faire. Pas de panique, il n’y a que quatre cases.',
+    ],
+    typeRafale: [
+      'Rafale ! Vrai ou faux, sans réfléchir. Vous savez faire.',
+      'Une rafale. Ça va vite, ne vous perdez pas.',
+    ],
+    typeMix: [
+      'Réponse libre. Attention à l’orthographe, je regarde.',
+      'À vous de taper la réponse. Sans faute, si possible.',
+    ],
+    typeTtmc: [
+      'Tu te mets combien ? Soyez honnêtes avec vous-mêmes.',
+      'Pariez sur votre niveau. Les vantards, je vous attends.',
+    ],
+    miParcours: [
+      'Mi-temps ! Et certains n’ont toujours pas commencé.',
+      'La moitié de la partie. Il est encore temps de se réveiller.',
+    ],
+    ligneDroite: [
+      'Dernière ligne droite. C’est maintenant ou jamais.',
+      'On approche de la fin. Sortez le grand jeu.',
+    ],
+    coudeACoude: [
+      'En tête, ça se tient à rien. Ça va crier.',
+      'Coude à coude en haut du classement. J’adore.',
+    ],
+    echappee: [
+      'Quelqu’un s’envole en tête. Les autres, vous faites quoi ?',
+      'La tête du classement file. Le reste regarde passer le train.',
+    ],
+    themeCulture: ['Culture générale. Ça va trier.'],
+    themeMusique: ['Musique ! Pas besoin de chanter, merci.'],
+    themeCinema: ['Cinéma et séries. Les accros aux plateformes, à vous.'],
+    themeAnnees2000: ['Les années deux mille. Ça ne nous rajeunit pas.'],
+    themeBouffe: ['On parle bouffe. Ne bavez pas sur l’écran.'],
+    themeInsolite: ['Une question insolite. Préparez-vous à douter.'],
+    themeSport: ['Sport ! Les sportifs de canapé, c’est votre moment.'],
+    themeMonde: ['Un tour du monde. Sans bouger du canapé.'],
+    themeMarques: ['Marques et pubs. Vous en avez avalé assez pour savoir.'],
+    themeMots: ['Des mots et des expressions. Sortez le dictionnaire mental.'],
+    themeDisney: ['Disney et Pixar. Pas de larmes, s’il vous plaît.'],
+    themeRegions: ['Les régions de France. Le chauvinisme est autorisé.'],
+    themeNature: ['La nature. Les citadins, accrochez-vous.'],
+    themeHistoire: ['Un peu d’histoire. Réveillez vos souvenirs de cours.'],
+    themeFake: ['Fake news ou pas ? Ne croyez pas tout ce que je dis.'],
+    themePotter: ['Harry Potter. Les moldus, bon courage.'],
+    themePokemon: ['Pokémon ! Attrapez la bonne réponse.'],
+    themeCrimes: ['Les grandes affaires criminelles. Fermez bien la porte.'],
+    themeGeopolitique: ['Géopolitique. Ceux qui lisent les journaux, à vous.'],
+    themeTelerealite: ['Télé-réalité ! Ne faites pas semblant de ne pas regarder.'],
   },
 
   pincesansrire: {
@@ -664,11 +822,30 @@ const DIT = {
       'Voyons cela.',
       'Rien d’insurmontable. En principe.',
       'Bonne chance. Vous en aurez besoin.',
+      'Nous poursuivons.',
+      'Une autre, puisque vous insistez.',
+      'Écoutez, si ce n’est pas trop demander.',
+      'Je reste optimiste. Modérément.',
+      'Faites de votre mieux. C’est tout ce que je demande.',
+      'Gardons notre calme.',
+      'Concentrez-vous, pour la forme.',
+      'Voici de quoi vous occuper.',
+      'Une question, simplement.',
+      'J’ai confiance. Plus ou moins.',
+      'Tâchons de rester dignes.',
+      'Ceci devrait être à votre portée.',
+      'Continuons, voulez-vous.',
+      'Je ne vous retiens pas.',
+      'Je vous laisse la parole. Façon de parler.',
+      'Allons-y, sans enthousiasme excessif.',
     ],
     derniereManche: [
       'Dernière manche, points doublés. Rien n’est joué, hélas.',
       'La dernière. Points doublés. Faites au mieux.',
       'Dernière question. Elle vaut double, ce qui ne changera peut-être rien.',
+      'Dernière question. Elle compte double. Je suis aussi soulagé que vous.',
+      'Nous arrivons au terme. Points doublés, pour le principe.',
+      'L’ultime question. Elle vaut double. Faites-en bon usage.',
     ],
     mixTrouve: ['La liste complète suit.'],
     mixPersonne: ['Aucune proposition recevable. La liste, elle, était fournie.'],
@@ -712,6 +889,66 @@ const DIT = {
     doubleReussi: ['Doublé. Bien vu.'],
     doubleRate: ['Doublé. C’était audacieux.'],
     podium: ['Voilà. Le classement final est à l’écran. Merci d’être venus.'],
+    typeQcm: [
+      'Quatre réponses. Une seule est juste. Je précise.',
+      'Retour aux propositions. C’est plus confortable pour tout le monde.',
+    ],
+    typeEstimation: [
+      'Une estimation. L’exactitude n’est pas exigée, ce qui vous arrange.',
+      'Un nombre à approcher. Approcher suffira.',
+    ],
+    typeOrdre: [
+      'Un classement. Il y a un ordre, et ce n’est pas le vôtre.',
+      'Quatre éléments à ordonner. Calmement.',
+    ],
+    typeRafale: [
+      'Une rafale. Vrai ou faux. Rapidement, si possible.',
+      'Plusieurs affirmations. Tranchez.',
+    ],
+    typeMix: [
+      'Réponse libre. Je lirai tout, hélas.',
+      'Une réponse à écrire. L’orthographe sera indulgente.',
+    ],
+    typeTtmc: [
+      'Tu te mets combien. Évaluez-vous avec lucidité.',
+      'Choisissez votre niveau. Votre estime de vous m’intéresse.',
+    ],
+    miParcours: [
+      'Nous avons fait la moitié. Il en reste autant.',
+      'Mi-parcours. Le temps passe, les points moins.',
+    ],
+    ligneDroite: [
+      'La fin approche. Je le dis sans regret.',
+      'Dernière ligne droite. Ne gâchez rien.',
+    ],
+    coudeACoude: [
+      'En tête, l’écart est négligeable. Intéressant.',
+      'Le haut du classement est très serré. Je n’en attendais pas tant.',
+    ],
+    echappee: [
+      'La tête du classement s’est détachée. Les autres sont priés de réagir.',
+      'Un écart important en tête. Je le constate.',
+    ],
+    themeCulture: ['Culture générale. Vaste programme.'],
+    themeMusique: ['Musique. Je vous épargne le chant.'],
+    themeCinema: ['Cinéma et séries. Vous avez dû en voir quelques-uns.'],
+    themeAnnees2000: ['Les années deux mille. Une époque.'],
+    themeBouffe: ['Gastronomie. Au sens large.'],
+    themeInsolite: ['Une question insolite. Comme souvent ici.'],
+    themeSport: ['Sport. Vous n’êtes pas obligés de vous lever.'],
+    themeMonde: ['Le vaste monde. Voyons ce que vous en savez.'],
+    themeMarques: ['Marques et publicités. Vous les connaissez mieux que vous ne le pensez.'],
+    themeMots: ['La langue française. Prenez-en soin.'],
+    themeDisney: ['Disney et Pixar. Retenez vos émotions.'],
+    themeRegions: ['Les régions de France. Sans querelle de clocher, je vous prie.'],
+    themeNature: ['La nature. Elle ne vous a rien fait.'],
+    themeHistoire: ['L’histoire. Elle se répète, paraît-il.'],
+    themeFake: ['Vrai ou faux. Méfiez-vous de tout, y compris de moi.'],
+    themePotter: ['Harry Potter. Je suppose que certains attendaient cela.'],
+    themePokemon: ['Pokémon. Je n’ai pas d’avis.'],
+    themeCrimes: ['Affaires criminelles. Restons calmes.'],
+    themeGeopolitique: ['Géopolitique. Sujet léger, comme toujours.'],
+    themeTelerealite: ['Télé-réalité. Personne ne regarde, évidemment.'],
   },
 
   clasheur: {
@@ -739,11 +976,30 @@ const DIT = {
       'Réveillez-vous.',
       'Concentration. Ça aiderait.',
       'Celle-là, on l’écoute en entier.',
+      'Essayez de ne pas nous faire honte.',
+      'Allez, réveillez le neurone de garde.',
+      'Même un poisson rouge y arriverait. Peut-être.',
+      'Ce n’est pas un test de QI, heureusement.',
+      'Lisez lentement, ça évitera des dégâts.',
+      'Concentrez-vous. Ça ne fait pas mal.',
+      'Encore une occasion de briller. Ou pas.',
+      'Faites semblant de savoir, ça rassure.',
+      'On va encore rire, je le sens.',
+      'Allumez la lumière, quelqu’un est peut-être à la maison.',
+      'Respirez, ce n’est qu’une question.',
+      'Prêts à vous planter ?',
+      'Je mise sur un nouveau naufrage.',
+      'Ne cherchez pas la réponse au plafond.',
+      'Celle-là, même vous, vous pouvez.',
+      'Préparez vos excuses à l’avance.',
     ],
     derniereManche: [
       'Dernière question, points doublés. Dernière chance de sauver l’honneur.',
       'Dernière manche, elle vaut double. Autant finir en beauté.',
       'La dernière, et elle vaut double. Il était temps.',
+      'La dernière. Elle vaut double. Ne gâchez pas tout maintenant.',
+      'Points doublés pour finir. Le ridicule compte double aussi.',
+      'Dernière question, et elle vaut double. Prenez une grande inspiration.',
     ],
     mixTrouve: ['Voici la vraie liste. Regardez tout ce qui vous est passé au-dessus.'],
     mixPersonne: ['Zéro titre. Vous écoutez quoi, au juste ? Voici la liste.'],
@@ -792,6 +1048,66 @@ const DIT = {
     // « C'est fini » s'entend « ces filles » quand c'est dit vite : à éviter dans
     // une banque qui se garde de tout accord sur les joueurs.
     podium: ['Terminé. Le classement est à l’écran, et il y a de la marge. Beaucoup de marge.'],
+    typeQcm: [
+      'Quatre réponses. Même au hasard, vous avez vos chances.',
+      'Un QCM. Le niveau minimum, pile pour vous.',
+    ],
+    typeEstimation: [
+      'Une estimation. Visez large, c’est ce que vous faites de mieux.',
+      'Un nombre à deviner. J’attends des réponses délirantes.',
+    ],
+    typeOrdre: [
+      'Un classement. Remettez de l’ordre, ça vous changera.',
+      'Quatre trucs à ranger. Comme une chambre, mais en plus dur.',
+    ],
+    typeRafale: [
+      'Rafale. Vrai ou faux, et ne réfléchissez pas trop.',
+      'Une série de vrai ou faux. Ça va piquer.',
+    ],
+    typeMix: [
+      'Réponse libre. Je vais lire des horreurs, je le sens.',
+      'À vous de taper. Les fautes seront relevées.',
+    ],
+    typeTtmc: [
+      'Tu te mets combien ? Indice : moins que vous ne pensez.',
+      'Pariez sur votre niveau. Je prévois des chutes.',
+    ],
+    miParcours: [
+      'Mi-parcours. Certains n’ont toujours pas démarré.',
+      'La moitié est faite. L’autre ne sera pas plus glorieuse.',
+    ],
+    ligneDroite: [
+      'Dernière ligne droite. C’est maintenant qu’on voit qui craque.',
+      'La fin approche, et le niveau ne remonte pas.',
+    ],
+    coudeACoude: [
+      'En tête, ça se joue à rien. Enfin un peu de suspense.',
+      'Coude à coude en haut. Le reste regarde le match.',
+    ],
+    echappee: [
+      'La tête s’est envolée. Le peloton fait de la figuration.',
+      'Un fossé en tête du classement. Le reste se bat pour l’honneur.',
+    ],
+    themeCulture: ['Culture générale. Votre point faible, je crois.'],
+    themeMusique: ['Musique. Les oreilles, ça sert aussi à ça.'],
+    themeCinema: ['Cinéma et séries. Enfin un sujet que vous avez travaillé.'],
+    themeAnnees2000: ['Les années deux mille. Les souvenirs vont faire mal.'],
+    themeBouffe: ['Bouffe. Le seul domaine où certains sont experts.'],
+    themeInsolite: ['Insolite. Comme vos réponses, en général.'],
+    themeSport: ['Sport. La télécommande ne compte pas comme une discipline.'],
+    themeMonde: ['Le monde. Il est plus grand que votre quartier, vous allez voir.'],
+    themeMarques: ['Marques et pubs. Tout ce temps d’écran va enfin servir.'],
+    themeMots: ['Des mots. Ceux qu’on trouve dans les livres, oui.'],
+    themeDisney: ['Disney et Pixar. Retour en enfance, votre niveau naturel.'],
+    themeRegions: ['Les régions. Non, le canapé n’en est pas une.'],
+    themeNature: ['La nature. Ce truc vert derrière la fenêtre.'],
+    themeHistoire: ['Histoire. Ceux qui dormaient en cours, ça va se voir.'],
+    themeFake: ['Fake news ou pas ? Vous qui croyez tout, régalez-vous.'],
+    themePotter: ['Harry Potter. Même avec une baguette, ça ne suffira pas.'],
+    themePokemon: ['Pokémon. Enfin une matière que vous avez révisée.'],
+    themeCrimes: ['Affaires criminelles. Ne prenez pas de notes, ça m’inquiéterait.'],
+    themeGeopolitique: ['Géopolitique. Le journal de vingt heures ne suffira pas.'],
+    themeTelerealite: ['Télé-réalité. Enfin votre spécialité.'],
   },
 };
 
@@ -819,10 +1135,15 @@ const numeroDeManche = (persona, n) => ({
 });
 
 /**
- * Ce que l'animateur enchaîne pour lancer une manche : le numéro, puis une
- * formule tirée au sort. Les deux clips bout à bout tiennent largement dans la
- * fenêtre de jokers — c'est elle qui borne l'annonce, puisque l'énoncé part au
- * top et n'attend pas.
+ * Ce que l'animateur enchaîne pour lancer une manche : le numéro, ce qui
+ * distingue cette manche-ci, puis une formule tirée du sac.
+ *
+ * Le milieu est ce qui empêchait l'annonce de sonner toujours pareil. Le numéro
+ * change mais ne dit rien, et une formule, même tirée parmi beaucoup, finit
+ * par revenir. Ce qui ne revient pas, c'est la situation : on change de type de
+ * manche, la partie bascule dans sa seconde moitié, deux joueurs se tiennent à
+ * un cheveu en tête, la question porte sur Harry Potter. La régie propose ces
+ * contextes par ordre de priorité ; on garde le premier qu'on sait dire.
  *
  * Rend les clips ET ce qu'ils disent, d'un seul tirage. C'est le point de la
  * fonction, et il vient d'un défaut : l'écran affichait une phrase tirée d'une
@@ -831,27 +1152,76 @@ const numeroDeManche = (persona, n) => ({
  * entendait « troisième question, prêts ? c'est parti ». Pire, chaque appareil
  * tirait le sien : deux téléphones dont la voix est activée ne disaient pas la
  * même chose. Un seul tirage, décidé par la régie et publié, règle les deux.
+ *
+ * `contexte` rend aussi, à part, ce qui a été retenu : la régie s'en sert pour
+ * ne pas annoncer deux fois le même thème dans la soirée.
  */
-export function annonceDeManche(persona, cle, numero) {
-  if (cle !== 'avantManche') {
-    const seul = paroleDe(persona, cle);
-    return { clips: seul ? [seul.id] : [], texte: seul?.texte ?? '' };
-  }
+export function annonceDeManche(persona, cle, numero, contextes = [], budgetMs = Infinity) {
   const nom = DIT[persona] ? persona : 'classique';
   const clips = [];
   const morceaux = [];
-  if (Number.isInteger(numero) && numero >= 1 && numero <= MANCHES_MAX) {
-    const compte = numeroDeManche(nom, numero);
-    clips.push(compte.id);
-    morceaux.push(compte.texte);
+  const ajouter = (dit) => {
+    if (!dit) return;
+    clips.push(dit.id);
+    morceaux.push(dit.texte);
+  };
+
+  if (cle === 'avantManche' && Number.isInteger(numero) && numero >= 1 && numero <= MANCHES_MAX) {
+    ajouter(numeroDeManche(nom, numero));
   }
-  const fioriture = paroleDe(persona, 'avantManche');
-  if (fioriture) {
-    clips.push(fioriture.id);
-    morceaux.push(fioriture.texte);
+  // La dernière manche a sa propre phrase, qui ouvre ; le contexte vient après.
+  if (cle !== 'avantManche') ajouter(paroleDe(persona, cle));
+
+  const contexte = contextes.find((c) => contexteDicible(nom, c)) ?? null;
+  const ditDuContexte = contexte ? paroleDe(nom, contexte) : null;
+  ajouter(ditDuContexte);
+
+  // La formule ferme l'annonce, et c'est elle qui saute si le temps manque :
+  // l'énoncé part au top sans attendre, et une annonce trop longue se fait
+  // couper par sa propre question. Le contexte, lui, dit quelque chose.
+  if (cle === 'avantManche') {
+    const formule = paroleDe(persona, 'avantManche');
+    const deja = clips.reduce((t, id, i) => t + dureeEstimee(id, morceaux[i]), 0);
+    if (formule && deja + dureeEstimee(formule.id, formule.texte) <= budgetMs) ajouter(formule);
   }
-  return { clips, texte: morceaux.join(' ') };
+  return { clips, texte: morceaux.join(' '), contexte, texteDuContexte: ditDuContexte?.texte ?? '' };
 }
+
+/**
+ * La durée d'un morceau d'annonce, en millisecondes : celle du clip quand on
+ * l'a, sinon une estimation au mot — un peu large, pour ne jamais couper. Les
+ * deux tiennent compte du blanc entre deux clips.
+ */
+const BLANC_ENTRE_CLIPS_MS = 250;
+const MS_PAR_MOT = 380;
+
+export function dureeEstimee(id, texte) {
+  const mesuree = audio.duree(id);
+  const mots = String(texte ?? '').split(/\s+/).filter(Boolean).length;
+  return (mesuree ? mesuree * 1000 : mots * MS_PAR_MOT) + BLANC_ENTRE_CLIPS_MS;
+}
+
+/**
+ * Un contexte se dit s'il existe pour ce personnage et, quand les
+ * enregistrements sont en service, s'il est enregistré. Sinon on passe au
+ * suivant, puis à rien : une annonce sans contexte reste une annonce, une
+ * annonce muette n'en est plus une.
+ */
+function contexteDicible(nom, cle) {
+  const liste = DIT[nom]?.[cle];
+  if (!liste?.length) return false;
+  if (!audio.enService()) return true;
+  return liste.some((_, i) => audio.existe(`emcee/${nom}/${cle}/${i}`));
+}
+
+/** La clé de contexte d'un type de manche : `typeEstimation`, `typeTtmc`… */
+export const cleDuType = (type) => `type${type[0].toUpperCase()}${type.slice(1)}`;
+
+/** La clé de contexte d'un thème : `themeCinema`, `themeTelerealite`… */
+export const cleDuTheme = (theme) => `theme${theme[0].toUpperCase()}${theme.slice(1)}`;
+
+/** Les contextes de situation, dans l'ordre où la régie les considère. */
+export const SITUATIONS = ['miParcours', 'ligneDroite', 'coudeACoude', 'echappee'];
 
 /**
  * Tous les clips d'annonce d'un personnage, à mettre en cache au lancement.
@@ -865,8 +1235,13 @@ export function clipsDAnnonce(persona) {
   const nom = DIT[persona] ? persona : 'classique';
   const ids = [];
   for (let n = 1; n <= MANCHES_MAX; n += 1) ids.push(`emcee/${nom}/manche/${n}`);
-  DIT[nom].avantManche.forEach((_, i) => ids.push(`emcee/${nom}/avantManche/${i}`));
-  DIT[nom].derniereManche.forEach((_, i) => ids.push(`emcee/${nom}/derniereManche/${i}`));
+  // Les formules, et tous les contextes : une annonce en compte jusqu'à trois
+  // bout à bout, et le troisième ne doit pas arriver après le top.
+  for (const [cle, variantes] of Object.entries(DIT[nom])) {
+    const dAnnonce = cle === 'avantManche' || cle === 'derniereManche'
+      || cle.startsWith('type') || cle.startsWith('theme') || SITUATIONS.includes(cle);
+    if (dAnnonce) variantes.forEach((_, i) => ids.push(`emcee/${nom}/${cle}/${i}`));
+  }
   return ids;
 }
 
@@ -881,7 +1256,7 @@ export function paroleDe(persona, cle) {
   const nom = DIT[persona]?.[cle] ? persona : 'classique';
   // Même mémoire que pour le texte, et pour la même raison : c'est à la voix
   // que la répétition s'entend le plus.
-  const index = tirerUneVariante(`clip:${nom}:${cle}`, liste.length);
+  const index = tirerUneVariante(`clip:${nom}:${cle}`, variantesDicibles(nom, cle, liste));
   return { id: `emcee/${nom}/${cle}/${index}`, texte: liste[index] };
 }
 
@@ -922,29 +1297,54 @@ function remplir(gabarit, vars) {
 }
 
 /**
- * Le tirage d'une variante, avec une mémoire d'un cran.
+ * Le tirage d'une variante : un sac qu'on vide, pas un dé qu'on relance.
  *
- * Un tirage purement au sort sur deux variantes en répète une fois sur deux —
- * et « personne n'a trouvé » revient à presque toutes les manches. La table
- * n'entend alors pas un animateur, elle entend une boucle. On écarte donc la
- * dernière servie, ce qui suffit à faire disparaître l'effet de répétition :
- * sur deux variantes elles alternent, sur cinq on ne repasse jamais sur la
- * précédente.
+ * Un dé, même en écartant la dernière sortie, ressert vite la même phrase :
+ * douze annonces tirées parmi vingt-quatre formules en répètent au moins une
+ * presque à coup sûr. Le sac, lui, épuise toutes les variantes avant d'en
+ * reprendre une — et quand on le remplit, celle qui vient d'être dite ne
+ * repart pas en premier.
  *
- * La mémoire est tenue par clé ET par personnage : changer d'animateur en
- * cours de soirée ne doit pas hériter des tirages de l'autre.
+ * Un sac par clé ET par personnage : changer d'animateur en cours de soirée ne
+ * doit pas hériter des tirages de l'autre. Et il se refait quand la liste des
+ * candidates change — un clip qui vient d'arriver entre dans le jeu tout de
+ * suite.
  */
-const derniereVariante = new Map();
+const sacs = new Map();
 
-function tirerUneVariante(memoire, taille) {
-  if (taille <= 1) return 0;
-  const precedent = derniereVariante.get(memoire);
-  let index = Math.floor(Math.random() * taille);
-  // Un seul rattrapage, et non une boucle : on décale d'un cran plutôt que de
-  // retirer au sort, pour que le coût reste constant.
-  if (index === precedent) index = (index + 1 + Math.floor(Math.random() * (taille - 1))) % taille;
-  derniereVariante.set(memoire, index);
-  return index;
+function tirerUneVariante(memoire, candidates) {
+  if (candidates.length <= 1) return candidates[0] ?? 0;
+  const empreinte = candidates.join(',');
+  let sac = sacs.get(memoire);
+  if (!sac || sac.empreinte !== empreinte || !sac.reste.length) {
+    const reste = [...candidates];
+    for (let i = reste.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [reste[i], reste[j]] = [reste[j], reste[i]];
+    }
+    // On pioche par la fin : celle qui vient d'être dite part au fond du sac.
+    if (reste.at(-1) === sac?.dernier) [reste[0], reste[reste.length - 1]] = [reste.at(-1), reste[0]];
+    sac = { empreinte, reste, dernier: sac?.dernier };
+    sacs.set(memoire, sac);
+  }
+  sac.dernier = sac.reste.pop();
+  return sac.dernier;
+}
+
+const tous = (liste) => liste.map((_, i) => i);
+
+/**
+ * Les variantes qu'on peut réellement dire.
+ *
+ * Avec des enregistrements en service, seulement celles qui ont leur clip : une
+ * phrase écrite mais pas encore générée laisserait le silence, et avec lui tout
+ * le passage. Sans enregistrements, toutes — c'est la synthèse qui parle, et
+ * elle sait tout lire.
+ */
+function variantesDicibles(nom, cle, liste) {
+  if (!audio.enService()) return tous(liste);
+  const enregistrees = tous(liste).filter((i) => audio.existe(`emcee/${nom}/${cle}/${i}`));
+  return enregistrees.length ? enregistrees : tous(liste);
 }
 
 /**
@@ -955,7 +1355,7 @@ function tirerUneVariante(memoire, taille) {
 export function repliqueDe(persona, cle, vars = {}) {
   const liste = BANQUE[persona]?.[cle] ?? BANQUE.classique[cle];
   if (!liste?.length) return '';
-  return remplir(liste[tirerUneVariante(`texte:${persona}:${cle}`, liste.length)], vars);
+  return remplir(liste[tirerUneVariante(`texte:${persona}:${cle}`, tous(liste))], vars);
 }
 
 /* --- Voix ---------------------------------------------------------------- */

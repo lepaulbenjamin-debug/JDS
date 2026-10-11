@@ -193,6 +193,19 @@ async function source(id) {
   }
 }
 
+/**
+ * Des enregistrements sont-ils en service, ceux de la base ou ceux des packs ?
+ *
+ * C'est la question que se pose l'animateur avant de tirer une réplique : si
+ * oui, il ne tire QUE parmi les variantes enregistrées. Une phrase ajoutée au
+ * texte mais pas encore passée par la génération se tait sinon — et avec elle
+ * tout le passage, puisqu'une partie n'a qu'une voix.
+ */
+export function enService() {
+  if (cassee) return false;
+  return Boolean(Object.keys(manifeste?.clips ?? {}).length || Object.keys(extras.durees).length);
+}
+
 /** Ce clip existe-t-il ? */
 export function existe(id) {
   if (cassee || !id) return false;

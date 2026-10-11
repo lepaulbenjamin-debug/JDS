@@ -12,7 +12,9 @@
 // Aucun accès au réseau ni au DOM ici : on entre du temps et des réponses, on
 // sort un état. `app.js` s'occupe de faire tourner la boucle.
 
-import { repliqueDe, dureeDeLaReplique, annonceDeManche, paroleDe } from './emcee.js';
+import {
+  repliqueDe, dureeDeLaReplique, annonceDeManche, paroleDe, cleDuType, cleDuTheme, SITUATIONS,
+} from './emcee.js';
 import { typeDeManche } from './manches/index.js';
 import { filRougeTrouve } from './questions.js';
 import { JOKERS, jokersPossibles } from './jokers.js';
@@ -42,6 +44,8 @@ export const DUREE_JOKERS_MS = 10000;
 // temps laissé au dernier pour se raviser — et à celui qui a répondu trop vite
 // pour rattraper son tap. Court : passé quelques secondes, la table attend.
 export const DUREE_SURSIS_MS = 4000;
+// Le blanc gardé entre la fin de l'annonce et le début de l'énoncé.
+const MARGE_AVANT_ENONCE_MS = 1500;
 // Le temps de lire l'énoncé à voix haute, entre le top et l'ouverture des
 // réponses. Les réponses apparaissaient en même temps que la question : on
 // lisait la première case avant d'avoir entendu la fin de la phrase, et la
@@ -382,6 +386,21 @@ export function creerRegie({
    */
   const tempsDIntro = () => budgetDIntro(dureeDeLaReplique(persona, 'ouverture'));
 
+  // Les thèmes déjà annoncés ce soir. Une seule fois chacun : « une question
+  // de sport » dite à la troisième manche informe, redite à la neuvième elle
+  // radote.
+  const themesAnnonces = new Set();
+  // Et les situations, avec la manche où elles ont été dites : « la tête du
+  // classement a pris le large » répété trois manches de suite ne raconte plus
+  // rien, ça constate.
+  const situationsDites = new Map();
+  const situationPossible = (cle, numero) => {
+    const dite = situationsDites.get(cle);
+    if (dite == null) return true;
+    // Le haut du classement bouge, on peut y revenir — mais pas tout de suite.
+    return (cle === 'coudeACoude' || cle === 'echappee') && numero - dite >= 4;
+  };
+
   /**
    * L'annonce, tirée une fois pour toute la table.
    *
@@ -401,9 +420,12 @@ export function creerRegie({
    * deux versions écrites selon qu'on joue seul ou à plusieurs.
    */
   function poserLAnnonce(cle, {
-    numero = 0, variables = {}, cleTexte = cle, complementaire = false,
+    numero = 0, variables = {}, cleTexte = cle, complementaire = false, contextes = [],
+    budgetMs = Infinity,
   } = {}) {
-    const dite = annonceDeManche(persona, cle, numero);
+    const dite = annonceDeManche(persona, cle, numero, contextes, budgetMs);
+    if (dite.contexte?.startsWith('theme')) themesAnnonces.add(dite.contexte);
+    if (SITUATIONS.includes(dite.contexte)) situationsDites.set(dite.contexte, numero);
     etat.annonceCle = cle;
     etat.annonceClips = dite.clips;
     // Laissé vide quand l'écrit COMPLÈTE l'enregistrement au lieu de le
@@ -413,7 +435,57 @@ export function creerRegie({
     // répondent. Partout ailleurs, l'écrit doit être le mot pour mot de ce
     // qu'on entend.
     etat.annonceDite = complementaire ? '' : dite.texte;
-    etat.annonce = repliqueDe(persona, cleTexte, variables);
+    // L'écrit reprend le contexte retenu : c'est lui que la synthèse lit
+    // quand il n'y a pas d'enregistrements, et sans lui elle redirait une
+    // annonce sans relief à chaque manche.
+    etat.annonce = [repliqueDe(persona, cleTexte, variables), dite.texteDuContexte]
+      .filter(Boolean).join(' ');
+  }
+
+  /**
+   * Ce qui distingue cette manche-ci, par ordre de priorité. L'animateur
+   * gardera le premier qu'il sait dire, et rien s'il n'en sait dire aucun.
+   *
+   * Le changement de type d'abord : passer d'un QCM à une estimation change la
+   * façon de jouer, et c'est le seul de ces contextes qui soit une consigne.
+   * Puis la situation de la partie, qui ne se présente qu'une ou deux fois par
+   * soirée. Le thème enfin — sauf au TTMC, où il passe devant : c'est sur lui
+   * qu'on parie, avant même d'avoir vu une question.
+   */
+  function contextesDeLaManche(numero, joueurs) {
+    const question = questions[numero - 1];
+    const type = question.type ?? 'qcm';
+    const precedent = numero > 1 ? (questions[numero - 2].type ?? 'qcm') : 'qcm';
+    const contextes = [];
+
+    const changeDeType = type !== precedent ? cleDuType(type) : null;
+    const theme = question.theme && !(themes.length === 1 && themes[0] === question.theme)
+      ? cleDuTheme(question.theme) : null;
+    const themeNeuf = theme && !themesAnnonces.has(theme) ? theme : null;
+
+    if (type === 'ttmc' && themeNeuf) contextes.push(themeNeuf);
+    if (changeDeType) contextes.push(changeDeType);
+
+    // Jamais de situation à la dernière manche : elle a déjà sa phrase, et
+    // c'est la plus dramatique de la soirée.
+    if (numero < total) {
+      // Le déroulé, pour une partie d'une certaine longueur.
+      if (total >= 8 && numero === Math.floor(total / 2) + 1) contextes.push('miParcours');
+      if (total >= 8 && numero === total - 2) contextes.push('ligneDroite');
+      // Le haut du classement, seulement à plusieurs et une fois la partie lancée.
+      const scores = (joueurs ?? []).map((j) => etat.scores[j.id] ?? 0).sort((x, y) => y - x);
+      if (scores.length >= 2 && numero >= 3) {
+        const [premier, second] = scores;
+        if (premier >= 1000 && premier - second <= 150) contextes.push('coudeACoude');
+        else if (premier - second >= 1500) contextes.push('echappee');
+      }
+    }
+    for (let i = contextes.length - 1; i >= 0; i -= 1) {
+      if (SITUATIONS.includes(contextes[i]) && !situationPossible(contextes[i], numero)) contextes.splice(i, 1);
+    }
+
+    if (themeNeuf && type !== 'ttmc') contextes.push(themeNeuf);
+    return contextes;
   }
 
   /**
@@ -532,7 +604,7 @@ export function creerRegie({
     return true;
   }
 
-  function prepareManche(numero, now) {
+  function prepareManche(numero, now, joueurs) {
     etat.manche = numero;
     etat.question = questions[numero - 1];
     etat.reponses = {};
@@ -548,6 +620,10 @@ export function creerRegie({
     poserLAnnonce(numero === total ? 'derniereManche' : 'avantManche', {
       numero,
       variables: { manche: numero, total },
+      contextes: contextesDeLaManche(numero, joueurs),
+      // La fenêtre d'avant-question, moins une marge : l'annonce doit être
+      // finie quand l'énoncé démarre, pas en même temps.
+      budgetMs: etat.startAt - now - MARGE_AVANT_ENONCE_MS,
     });
   }
 
@@ -858,7 +934,7 @@ export function creerRegie({
         // une fois la banque connue, elle ne change plus.
         etat.finPhase = etat.introAt + tempsDIntro();
         if (now >= etat.finPhase) {
-          prepareManche(1, now);
+          prepareManche(1, now, joueurs);
           return true;
         }
         return false;
@@ -906,7 +982,7 @@ export function creerRegie({
 
       if (etat.phase === 'revelation' && now >= etat.finPhase) {
         if (etat.manche < total) {
-          prepareManche(etat.manche + 1, now);
+          prepareManche(etat.manche + 1, now, joueurs);
         } else {
           const podium = classement(joueurs);
           etat.phase = 'podium';

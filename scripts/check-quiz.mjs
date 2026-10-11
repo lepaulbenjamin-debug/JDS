@@ -14,8 +14,11 @@ import {
   PLAFOND_REVELATION_MS, budgetDIntro,
 } from '../web/quiz/js/engine.js';
 import {
-  dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS,
+  dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS, paroleDe,
+  cleDuType, cleDuTheme, SITUATIONS, dureeEstimee,
 } from '../web/quiz/js/emcee.js';
+import * as audio from '../web/quiz/js/audio.js';
+import { TYPES } from '../web/quiz/js/manches/index.js';
 import {
   QUESTIONS, THEMES, NIVEAUX, FILS_ROUGES, tirerQuestions, tailleDuPool, filRougeTrouve,
   ajouterQuestions, oublierLesPacks, toutesLesQuestions,
@@ -460,7 +463,16 @@ test('tout clip que la régie demande existe vraiment', async () => {
     .map((entree) => typeDeManche(entree.type).preparer(entree, (l) => l));
   assert.ok(questions.length >= 5, 'la banque ne couvre pas assez de types');
 
-  const { vues } = jouerUnePartie({ questions });
+  // Les clips enregistrés sont déclarés à l'animateur, comme sur un appareil :
+  // c'est ce qui l'autorise à écarter les phrases écrites mais pas encore
+  // générées. Sans ça, ce test vérifiait une partie que personne ne joue.
+  audio.ajouterDesClips({ durees: manifeste.clips });
+  let vues;
+  try {
+    ({ vues } = jouerUnePartie({ questions }));
+  } finally {
+    audio.ajouterDesClips({});
+  }
   const demandes = new Set();
   for (const vue of vues) {
     for (const id of vue.annonceClips ?? []) demandes.add(id);
@@ -3922,4 +3934,95 @@ test('aucun clip ne lit un texte périmé', async () => {
   }
 
   assert.deepEqual(perimes, [], `${perimes.length} clip(s) lisent un texte qui a changé depuis`);
+});
+
+
+/* --- Les annonces d'avant-question ---------------------------------------- */
+
+test('chaque personnage sait annoncer chaque type et chaque thème', () => {
+  // Un thème ou un type ajouté sans sa phrase d'annonce passerait inaperçu :
+  // l'animateur se tairait simplement sur ce contexte. On le veut bruyant.
+  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+  for (const { id: persona } of PERSONAS) {
+    const cles = [
+      ...TYPES.map((t) => cleDuType(t.id)),
+      ...THEMES.map((t) => cleDuTheme(t.id)),
+      ...SITUATIONS,
+    ];
+    for (const cle of cles) {
+      assert.ok(textes.has(`emcee/${persona}/${cle}/0`), `${persona} ne sait pas dire « ${cle} »`);
+    }
+  }
+});
+
+test('une annonce tient toujours dans la fenêtre des jokers', () => {
+  // L'énoncé part au top sans attendre : une annonce qui déborde se fait couper
+  // par sa propre question. On essaie le pire — le plus long contexte de
+  // chaque personnage — de nombreuses fois, pour passer sur toutes les formules.
+  const budget = DUREE_JOKERS_MS - 1500;
+  const contextes = [...TYPES.map((t) => cleDuType(t.id)), ...THEMES.map((t) => cleDuTheme(t.id)), ...SITUATIONS];
+  for (const { id: persona } of PERSONAS) {
+    for (const contexte of contextes) {
+      for (let essai = 0; essai < 30; essai += 1) {
+        const dite = annonceDeManche(persona, 'avantManche', 20, [contexte], budget);
+        const duree = estimationTotale(dite);
+        assert.ok(dite.clips.length >= 2, `${persona}/${contexte} : l’annonce a perdu son contexte`);
+        assert.ok(duree <= budget,
+          `${persona}/${contexte} : ${Math.round(duree)} ms pour ${budget} ms de fenêtre — « ${dite.texte} »`);
+      }
+    }
+  }
+});
+
+/** La durée estimée d'une annonce, morceau par morceau, à partir de l'inventaire. */
+function estimationTotale(dite) {
+  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+  return dite.clips.reduce((t, id) => t + dureeEstimee(id, textes.get(id)), 0);
+}
+
+test('une partie ne ressert pas deux fois la même formule d’annonce', () => {
+  // C'est le reproche d'origine : « on entend toujours la même chose ». Avec
+  // un sac plutôt qu'un dé, douze annonces tirées parmi vingt-quatre formules
+  // sont toutes différentes.
+  for (const { id: persona } of PERSONAS) {
+    const dites = [];
+    for (let i = 0; i < 12; i += 1) dites.push(paroleDe(persona, 'avantManche').id);
+    assert.equal(new Set(dites).size, dites.length, `${persona} se répète : ${dites.join(', ')}`);
+  }
+});
+
+test('un thème ne s’annonce qu’une fois, une situation ne se rabâche pas', () => {
+  // Une partie entière sur deux thèmes : sans mémoire, l'animateur dirait
+  // « une question de sport » à chaque manche de sport.
+  const questions = Array.from({ length: 12 }, (_, i) => ({
+    ...QUESTION, id: `q${i}`, theme: i % 2 ? 'sport' : 'histoire',
+  }));
+  const { vues } = jouerUnePartie({ questions });
+  const contextes = vues
+    .filter((v) => v.phase === 'manche')
+    .map((v) => v.annonceClips.find((id) => /\/(theme|type)[A-Z]|\/(miParcours|ligneDroite|coudeACoude|echappee)\//.test(id)))
+    .filter(Boolean)
+    .map((id) => id.split('/')[2]);
+  const themes = contextes.filter((c) => c.startsWith('theme'));
+  assert.deepEqual([...new Set(themes)].sort(), ['themeHistoire', 'themeSport']);
+  assert.equal(themes.length, 2, `thèmes annoncés : ${themes.join(', ')}`);
+  for (let i = 1; i < contextes.length; i += 1) {
+    assert.notEqual(contextes[i], contextes[i - 1], `« ${contextes[i]} » dit deux manches de suite`);
+  }
+});
+
+test('avec des enregistrements en service, l’animateur ne tire que ce qui est enregistré', () => {
+  // Une phrase écrite mais pas encore générée laissait le silence — et avec
+  // lui tout le passage, puisqu'une partie n'a qu'une voix.
+  audio.ajouterDesClips({ durees: { 'emcee/classique/avantManche/0': 1.2, 'emcee/classique/avantManche/3': 1.4 } });
+  try {
+    const vus = new Set();
+    for (let i = 0; i < 40; i += 1) vus.add(paroleDe('classique', 'avantManche').id);
+    assert.deepEqual([...vus].sort(), ['emcee/classique/avantManche/0', 'emcee/classique/avantManche/3']);
+    // Un contexte non enregistré est sauté plutôt que dit dans le vide.
+    const dite = annonceDeManche('classique', 'avantManche', 3, ['typeEstimation']);
+    assert.ok(!dite.clips.some((id) => id.includes('typeEstimation')), dite.clips.join(', '));
+  } finally {
+    audio.ajouterDesClips({});
+  }
 });
