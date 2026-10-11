@@ -1931,6 +1931,28 @@ const MODES_DE_JEU = [
 
 /* --- Le pupitre du DJ ----------------------------------------------------- */
 
+/**
+ * Le son du jeu se mêle-t-il à celui des autres applis ?
+ *
+ * Dans Safari, la page qui émet un son prend la main sur l'audio du téléphone :
+ * iOS met alors Spotify ou Deezer en pause. Sans conséquence pour un quiz —
+ * mais en blind test, la musique tourne justement dans une autre appli, sur le
+ * téléphone du DJ, et le simple bip du « Top » l'arrêtait à l'instant où elle
+ * partait. En « ambient », le son du jeu se superpose au lieu d'interrompre.
+ *
+ * Le prix : ce mode obéit au bouton silencieux. Un DJ en mode silencieux
+ * n'entendra pas l'animateur — mais sa musique, elle, continue, et c'est elle
+ * qui compte à ce moment-là. Hors blind test, on rend la main au navigateur.
+ *
+ * L'appli native n'en a pas besoin : sa session audio est déjà réglée pour se
+ * mêler aux autres (voir apple/SessionAudio.swift).
+ */
+function partagerLeSon(oui) {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = oui ? 'ambient' : 'auto';
+  } catch { /* navigateur sans réglage de session : rien à faire */ }
+}
+
 let djRendu = '';              // la manche et le moment dont le pupitre est à l'écran
 
 /**
@@ -2314,6 +2336,7 @@ async function ouvrirSalon() {
     moi.id = arrivee.playerId;
     enregistrerMoi();
     regie = construireRegie(questions, fil, reglages.mode === 'dj' ? moi.id : null);
+    partagerLeSon(reglages.mode === 'dj');
     voix.appliquerDefaut(true);           // la régie est la voix de la pièce
     majBoutonSon();
     joueurs = arrivee.players ?? [{ id: moi.id, name: moi.name }];
@@ -2461,6 +2484,7 @@ async function quitter() {
     if (!sur) return;
   }
   arreterBoucle();
+  partagerLeSon(false);
   voix.taire();
   salon = null;
   fileSolo = [];
@@ -2633,6 +2657,7 @@ function brancher() {
   $('#btn-rejouer').addEventListener('click', () => {
     const encoreSeul = estSolo();
     arreterBoucle();
+    partagerLeSon(false);
     salon = null;
     regie = null;
     etat = null;
