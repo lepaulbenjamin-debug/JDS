@@ -437,15 +437,25 @@ body {
 .dj-top { font-size: 20px; }
 .dj-verdicts { display: grid; gap: 10px; }
 .dj-ligne {
-  display: grid; gap: 6px;
-  padding: 10px 12px;
+  display: grid; gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  color: var(--text);
+  font: inherit; text-align: left;
+  cursor: pointer;
 }
-.dj-propose { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
-.dj-bascules { display: flex; gap: 8px; }
-.dj-bascule { flex: 1; justify-content: center; }
-.dj-bascule.est-actif { border-color: var(--ok); color: var(--ok); }
+.dj-ligne.est-juste { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--surface)); }
+.dj-ligne.est-partiel { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); }
+.dj-propose { font-size: 16px; overflow-wrap: anywhere; }
+/* L'état, en bout de ligne et en gras : c'est lui qu'on regarde en tapant. */
+.dj-etat { justify-self: end; font-weight: 700; font-size: 15px; }
+.dj-ligne.est-juste .dj-etat { color: var(--ok); }
+.dj-ligne.est-partiel .dj-etat { color: var(--gold); }
+.dj-note summary { cursor: pointer; color: var(--muted); font-size: 14px; padding: 4px 0; }
+.dj-note[open] summary { margin-bottom: 8px; }
 
 /* --- Tu te mets combien ? ------------------------------------------------ */
 

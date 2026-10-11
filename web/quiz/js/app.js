@@ -2006,14 +2006,45 @@ function construirePupitre(zone, moment, coulisses) {
   zone.append(el('p', {
     class: 'dj-consigne',
     text: moment === 'attente'
-      ? 'Lance le morceau sur ton enceinte, et appuie sur Top au moment où il démarre.'
+      ? 'Lance le morceau, puis appuie sur Top.'
       : moment === 'musique'
-        ? 'Ça tourne. Coupe quand tout le monde a trouvé — sinon le chrono le fera. La musique s’arrête avec.'
-        : 'Coche ce qui est juste. Le jeu a pré-coché ce qu’il a reconnu.',
+        ? 'Ça tourne. Le chrono coupe tout seul, et la musique s’arrête avec.'
+        : 'Touche une réponse pour la corriger, puis valide.',
   }));
 
-  // Ce que le DJ passe. Facultatif, mais c'est ce qui fait pré-cocher les
-  // bonnes réponses — et ce que la table lira à la révélation.
+  // Le gros bouton du moment, en tête : c'est le seul geste obligatoire.
+  if (moment === 'attente') {
+    zone.append(el('button', {
+      class: 'btn btn-primary btn-block btn-lg dj-top',
+      type: 'button',
+      // Aucun son ici, pas même le bip : c'est lui qui arrêtait la musique à
+      // l'instant où elle partait. La page se met en retrait jusqu'à la fin de
+      // l'extrait.
+      onclick: () => { sessionAudio('ambient'); actionDuDJ((r) => r.topDepart(net.serverNow())); },
+    }, '▶ Top !'));
+  }
+  if (moment === 'musique') {
+    zone.append(el('p', { class: 'muted small dj-compte' }));
+    // Facultatif : le chrono le fait de toute façon. On ne s'en sert que si
+    // tout le monde a déjà trouvé.
+    zone.append(el('button', {
+      class: 'btn btn-ghost btn-petit',
+      type: 'button',
+      onclick: () => actionDuDJ((r) => r.arreterLeMorceau(net.serverNow())),
+    }, '⏹ Couper maintenant'));
+  }
+  if (moment === 'verdict') {
+    zone.append(el('div', { class: 'dj-verdicts' }));
+    zone.append(el('button', {
+      class: 'btn btn-primary btn-block btn-lg',
+      type: 'button',
+      onclick: () => actionDuDJ((r) => r.validerLeVerdict(net.serverNow(), joueurs)),
+    }, '✅ Valider'));
+  }
+
+  // Ce que le DJ passe : replié, parce que facultatif. Le taper fait pré-cocher
+  // les bonnes réponses au verdict, et la table le lit à la révélation — mais
+  // on joue très bien sans, en tranchant soi-même.
   const titre = el('input', {
     class: 'mix-champ', type: 'text', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false',
     placeholder: 'Titre du morceau', 'aria-label': 'Titre du morceau que tu passes',
@@ -2030,35 +2061,51 @@ function construirePupitre(zone, moment, coulisses) {
   };
   titre.addEventListener('input', poser);
   artiste.addEventListener('input', poser);
-  zone.append(el('div', { class: 'dj-morceau' }, [titre, artiste]));
-  zone.append(el('p', { class: 'muted small', text: 'Personne d’autre ne voit ce que tu tapes ici.' }));
+  const note = el('details', { class: 'dj-note' }, [
+    el('summary', { text: '📝 Noter le morceau (facultatif)' }),
+    el('div', { class: 'dj-morceau' }, [titre, artiste]),
+    el('p', { class: 'muted small', text: 'Le jeu pré-cochera les bonnes réponses. Personne d’autre ne voit ce que tu tapes.' }),
+  ]);
+  // Déjà noté : on le laisse visible, pour qu'il se corrige d'un coup d'œil.
+  if (coulisses.solution) note.open = true;
+  zone.append(note);
+}
 
-  if (moment === 'attente') {
-    zone.append(el('button', {
-      class: 'btn btn-primary btn-block btn-lg dj-top',
-      type: 'button',
-      // Aucun son ici, pas même le bip : c'est lui qui arrêtait la musique à
-      // l'instant où elle partait. La page se met en retrait jusqu'à la fin de
-      // l'extrait.
-      onclick: () => { sessionAudio('ambient'); actionDuDJ((r) => r.topDepart(net.serverNow())); },
-    }, '▶ Top ! La musique part'));
+/**
+ * Le verdict d'un joueur, en un seul bouton qui tourne : rien, à moitié, juste.
+ *
+ * Deux cases à cocher par joueur, c'était deux décisions par ligne pour une
+ * seule question — « il a trouvé ou pas ? ». La moitié va au champ qu'il a
+ * réellement trouvé, ou à défaut à celui qu'il a rempli : les points sont les
+ * mêmes, mais la révélation dit honnêtement « titre ✔, artiste ✘ ».
+ */
+function niveauDuVerdict(verdict) {
+  return (verdict.titre ? 1 : 0) + (verdict.artiste ? 1 : 0);
+}
+
+function avancerLeVerdict(reponse, verdict) {
+  // On ne donne pas un point pour un champ laissé vide.
+  const plafond = (reponse.titre ? 1 : 0) + (reponse.artiste ? 1 : 0);
+  const suivant = (niveauDuVerdict(verdict) + 1) % (plafond + 1);
+  let titre = false;
+  let artiste = false;
+  if (suivant === 2) {
+    titre = true;
+    artiste = true;
+  } else if (suivant === 1) {
+    const surLeTitre = verdict.titre || (!verdict.artiste && Boolean(reponse.titre));
+    titre = surLeTitre;
+    artiste = !surLeTitre;
   }
-  if (moment === 'musique') {
-    zone.append(el('p', { class: 'muted small dj-compte' }));
-    zone.append(el('button', {
-      class: 'btn btn-block',
-      type: 'button',
-      onclick: () => actionDuDJ((r) => r.arreterLeMorceau(net.serverNow())),
-    }, '⏹ Couper l’extrait'));
-  }
-  if (moment === 'verdict') {
-    zone.append(el('div', { class: 'dj-verdicts' }));
-    zone.append(el('button', {
-      class: 'btn btn-primary btn-block btn-lg',
-      type: 'button',
-      onclick: () => actionDuDJ((r) => r.validerLeVerdict(net.serverNow(), joueurs)),
-    }, '✅ Valider le verdict'));
-  }
+  regie.juger(reponse.playerId, 'titre', titre);
+  regie.juger(reponse.playerId, 'artiste', artiste);
+}
+
+function libelleDuVerdict(verdict) {
+  if (verdict.titre && verdict.artiste) return '✔ Juste';
+  if (verdict.titre) return '½ Titre';
+  if (verdict.artiste) return '½ Artiste';
+  return '✘ Faux';
 }
 
 function majPupitre(zone, moment, coulisses) {
@@ -2070,29 +2117,26 @@ function majPupitre(zone, moment, coulisses) {
 
   const liste = clear(zone.querySelector('.dj-verdicts'));
   const nomDe = (id) => joueurs.find((j) => j.id === id)?.name ?? '—';
-  const bascule = (playerId, champ, propose, juste) => el('button', {
-    class: `chip dj-bascule${juste ? ' est-actif' : ''}`,
-    type: 'button',
-    disabled: !propose,
-    'aria-pressed': juste ? 'true' : 'false',
-    onclick: () => {
-      regie.juger(playerId, champ, !juste);
-      majPupitre(zone, moment, regie.coulisses());
-    },
-  }, `${juste ? '✔' : '✘'} ${champ === 'titre' ? 'Titre' : 'Artiste'}`);
 
   for (const r of [...coulisses.reponses].sort((a, b) => a.elapsedMs - b.elapsedMs)) {
     const verdict = coulisses.verdicts[r.playerId] ?? {};
-    liste.append(el('div', { class: 'dj-ligne' }, [
-      el('div', { class: 'dj-qui' }, [
+    const niveau = niveauDuVerdict(verdict);
+    // Toute la ligne est le bouton : le pouce n'a pas à viser une case.
+    liste.append(el('button', {
+      class: `dj-ligne${niveau === 2 ? ' est-juste' : niveau === 1 ? ' est-partiel' : ''}`,
+      type: 'button',
+      'aria-label': `${nomDe(r.playerId)} : ${libelleDuVerdict(verdict)}. Toucher pour changer.`,
+      onclick: () => {
+        avancerLeVerdict(r, verdict);
+        majPupitre(zone, moment, regie.coulisses());
+      },
+    }, [
+      el('span', { class: 'dj-qui' }, [
         el('strong', { text: nomDe(r.playerId) }),
         el('span', { class: 'muted small', text: ` — ${(r.elapsedMs / 1000).toFixed(1).replace('.', ',')} s` }),
       ]),
-      el('p', { class: 'dj-propose', text: [r.titre || '(pas de titre)', r.artiste || '(pas d’artiste)'].join(' — ') }),
-      el('div', { class: 'dj-bascules' }, [
-        bascule(r.playerId, 'titre', Boolean(r.titre), verdict.titre),
-        bascule(r.playerId, 'artiste', Boolean(r.artiste), verdict.artiste),
-      ]),
+      el('span', { class: 'dj-propose', text: [r.titre || '(pas de titre)', r.artiste || '(pas d’artiste)'].join(' — ') }),
+      el('span', { class: 'dj-etat', text: libelleDuVerdict(verdict) }),
     ]));
   }
 }
