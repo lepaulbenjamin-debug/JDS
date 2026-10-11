@@ -2,6 +2,7 @@
 //
 //   node scripts/generate-audio.mjs --blanc            # clips muets, pour tester la chaîne
 //   OPENAI_API_KEY=sk-... node scripts/generate-audio.mjs --voix=onyx
+//   node scripts/generate-audio.mjs --mesurer          # remesure les durées des clips déjà là
 //
 // Pourquoi pré-générer plutôt que lire en direct : `speechSynthesis` ne donne
 // accès qu'aux voix installées sur l'appareil, et un Mac, un iPhone et un
@@ -23,6 +24,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { QUESTIONS, nomDuTheme } from '../web/quiz/js/questions.js';
+import { dureeMp3 } from './duree-mp3.mjs';
 import { typeDeManche } from '../web/quiz/js/manches/index.js';
 import { inventaireDesParoles } from '../web/quiz/js/emcee.js';
 import { direLesNombres } from './nombres.mjs';
@@ -260,9 +262,14 @@ function fournisseurOpenAI(voixDemandee) {
             throw Object.assign(new Error(detail), { passager: true });
           }
           const donnees = Buffer.from(await res.arrayBuffer());
-          // La durée exacte demanderait de décoder le MP3 ; l'estimation suffit,
-          // elle ne sert qu'à régler le rythme, jamais à synchroniser quoi que ce soit.
-          return { donnees, secondes: Number(Math.max(1, texte.length / 14).toFixed(2)) };
+          // La durée MESURÉE, et plus une estimation à la longueur du texte : elle
+          // règle la lecture, la révélation et l'annonce, et l'estimation se
+          // trompait de trente pour cent. Voir `duree-mp3.mjs`.
+          const mesuree = dureeMp3(donnees);
+          return {
+            donnees,
+            secondes: Number((mesuree || Math.max(1, texte.length / 14)).toFixed(2)),
+          };
         } catch (erreur) {
           // Une coupure réseau n'a pas de statut : `fetch` lève, et c'est tout
           // ce qu'on sait. On la traite comme passagère, faute de mieux.
@@ -458,8 +465,50 @@ export async function produire({ racine, clips, fournisseur, tout, blanc }) {
   return { manifeste, produits, reutilises, refaits, panne };
 }
 
+/**
+ * Remesurer les durées de toutes les banques déjà générées, sans rien demander
+ * au fournisseur : les fichiers sont là, il suffit de les lire. Sert une fois
+ * pour corriger les manifestes écrits du temps des estimations, et de nouveau
+ * si l'on remplace des clips à la main.
+ */
+export async function mesurerLesBanques() {
+  const { readdir } = await import('node:fs/promises');
+  const racines = [];
+  for (const voix of await readdir(BANQUES, { withFileTypes: true }).catch(() => [])) {
+    if (voix.isDirectory()) racines.push(join(BANQUES, voix.name));
+  }
+  const PACKS = join(BANQUES, '..', '..', '..', 'packs', 'audio');
+  for (const voix of await readdir(PACKS, { withFileTypes: true }).catch(() => [])) {
+    if (!voix.isDirectory()) continue;
+    for (const pack of await readdir(join(PACKS, voix.name), { withFileTypes: true })) {
+      if (pack.isDirectory()) racines.push(join(PACKS, voix.name, pack.name));
+    }
+  }
+
+  let corriges = 0;
+  for (const racine of racines) {
+    const manifeste = await manifestePrecedent(racine);
+    if (!manifeste?.clips) continue;
+    for (const id of Object.keys(manifeste.clips)) {
+      const octets = await readFile(join(racine, `${id}.${manifeste.format ?? 'mp3'}`)).catch(() => null);
+      const mesuree = octets && dureeMp3(octets);
+      if (!mesuree) continue;
+      const juste = Number(mesuree.toFixed(2));
+      if (juste !== manifeste.clips[id]) corriges += 1;
+      manifeste.clips[id] = juste;
+    }
+    await writeFile(join(racine, 'manifeste.json'), `${JSON.stringify(manifeste, null, 2)}\n`, 'utf8');
+  }
+  return { banques: racines.length, corriges };
+}
+
 async function main() {
   const args = process.argv.slice(2);
+  if (args.includes('--mesurer')) {
+    const { banques, corriges } = await mesurerLesBanques();
+    console.log(`${corriges} durées corrigées dans ${banques} manifestes.`);
+    return;
+  }
   const blanc = args.includes('--blanc');
   const tout = args.includes('--tout');
   const packs = args.includes('--packs');

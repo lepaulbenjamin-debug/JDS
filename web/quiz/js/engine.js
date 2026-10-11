@@ -45,8 +45,10 @@ export const DUREE_JOKERS_MS = 10000;
 // temps laissé au dernier pour se raviser — et à celui qui a répondu trop vite
 // pour rattraper son tap. Court : passé quelques secondes, la table attend.
 export const DUREE_SURSIS_MS = 4000;
-// Le blanc gardé entre la fin de l'annonce et le début de l'énoncé.
-const MARGE_AVANT_ENONCE_MS = 1500;
+// Le blanc gardé entre la fin de l'annonce et le début de l'énoncé. Court :
+// les blancs entre les clips de l'annonce sont désormais comptés à leur vraie
+// durée, il ne s'agit plus de rattraper une estimation optimiste.
+export const MARGE_AVANT_ENONCE_MS = 500;
 // L'attente du DJ : son top, puis son verdict. Pas de limite réelle — on ne
 // coupe pas un DJ qui cherche son morceau — mais une date, pour que tout ce qui
 // compare des heures continue de fonctionner.
@@ -89,10 +91,11 @@ const DUREE_REVELATION_MS = 9500;
 const DUREE_REVELATION_FINALE_MS = 11000;
 // Un garde-fou contre un pack tiers aux explications interminables, pas une
 // coupure de confort : il doit rester au-dessus de la plus longue révélation de
-// la banque (≈ 34 s : commentaire + joker + réponse + explication). Le fixer en
-// dessous, c'est couper l'animateur en pleine phrase — précisément ce qu'on
-// cherche à éviter.
-export const PLAFOND_REVELATION_MS = 40000;
+// la banque (≈ 41 s : commentaire + joker + réponse + explication, depuis que
+// les commentaires ont gagné des variantes plus longues). Le fixer en dessous,
+// c'est couper l'animateur en pleine phrase — précisément ce qu'on cherche à
+// éviter. Un test le vérifie sur les vraies durées des clips.
+export const PLAFOND_REVELATION_MS = 45000;
 const ABSENCES_AVANT_SOMMEIL = 2;      // au-delà, on n'attend plus ce pupitre
 
 // La prime du fil rouge fond au fil de la partie : trouver à la deuxième manche

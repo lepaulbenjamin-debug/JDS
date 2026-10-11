@@ -1188,33 +1188,54 @@ export function annonceDeManche(persona, cle, numero, contextes = [], budgetMs =
   // La dernière manche a sa propre phrase, qui ouvre ; le contexte vient après.
   if (cle !== 'avantManche') ajouter(paroleDe(persona, cle));
 
-  const contexte = contextes.find((c) => contexteDicible(nom, c)) ?? null;
-  const ditDuContexte = contexte ? paroleDe(nom, contexte) : null;
+  // Ce qui suit n'entre que s'il tient : l'énoncé part au top sans attendre, et
+  // une annonce trop longue se fait couper par sa propre question. Le contexte
+  // passe avant la formule — il dit quelque chose, elle meuble. S'il ne tient
+  // pas, on essaie le suivant : un thème court vaut mieux que rien.
+  const tient = (dit) => dureeDeLAnnonce([...clips, dit.id], [...morceaux, dit.texte]) <= budgetMs;
+  let contexte = null;
+  let ditDuContexte = null;
+  for (const candidat of contextes) {
+    if (!contexteDicible(nom, candidat)) continue;
+    const dit = paroleDe(nom, candidat);
+    if (dit && tient(dit)) {
+      contexte = candidat;
+      ditDuContexte = dit;
+      break;
+    }
+  }
   ajouter(ditDuContexte);
 
-  // La formule ferme l'annonce, et c'est elle qui saute si le temps manque :
-  // l'énoncé part au top sans attendre, et une annonce trop longue se fait
-  // couper par sa propre question. Le contexte, lui, dit quelque chose.
   if (cle === 'avantManche') {
     const formule = paroleDe(persona, 'avantManche');
-    const deja = clips.reduce((t, id, i) => t + dureeEstimee(id, morceaux[i]), 0);
-    if (formule && deja + dureeEstimee(formule.id, formule.texte) <= budgetMs) ajouter(formule);
+    if (formule && tient(formule)) ajouter(formule);
   }
   return { clips, texte: morceaux.join(' '), contexte, texteDuContexte: ditDuContexte?.texte ?? '' };
 }
 
 /**
- * La durée d'un morceau d'annonce, en millisecondes : celle du clip quand on
- * l'a, sinon une estimation au mot — un peu large, pour ne jamais couper. Les
- * deux tiennent compte du blanc entre deux clips.
+ * Le blanc entre deux clips, tel qu'on l'entend : le temps que met le lecteur à
+ * enchaîner, mesuré en pilotant une vraie partie. Il compte autant qu'un mot
+ * de plus — trois morceaux bout à bout, c'est près de trois secondes de blanc,
+ * et les ignorer faisait déborder l'annonce sur l'énoncé.
  */
-const BLANC_ENTRE_CLIPS_MS = 250;
+export const BLANC_ENTRE_CLIPS_MS = 1400;
 const MS_PAR_MOT = 380;
 
+/**
+ * La durée d'un morceau, en millisecondes : celle du clip quand on l'a, sinon
+ * une estimation au mot — un peu large, pour ne jamais couper.
+ */
 export function dureeEstimee(id, texte) {
   const mesuree = audio.duree(id);
   const mots = String(texte ?? '').split(/\s+/).filter(Boolean).length;
-  return (mesuree ? mesuree * 1000 : mots * MS_PAR_MOT) + BLANC_ENTRE_CLIPS_MS;
+  return mesuree ? mesuree * 1000 : mots * MS_PAR_MOT;
+}
+
+/** La durée d'une annonce entière : ses morceaux, et les blancs entre eux. */
+export function dureeDeLAnnonce(clips, textes) {
+  const sons = clips.reduce((t, id, i) => t + dureeEstimee(id, textes[i]), 0);
+  return sons + Math.max(0, clips.length - 1) * BLANC_ENTRE_CLIPS_MS;
 }
 
 /**

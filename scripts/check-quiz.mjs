@@ -11,11 +11,11 @@ import assert from 'node:assert/strict';
 
 import {
   resoudreManche, pointsDeRapidite, creerRegie, JOKERS, DUREE_JOKERS_MS, DUREE_SURSIS_MS,
-  PLAFOND_REVELATION_MS, budgetDIntro,
+  PLAFOND_REVELATION_MS, budgetDIntro, MARGE_AVANT_ENONCE_MS,
 } from '../web/quiz/js/engine.js';
 import {
   dureeDeLaReplique, annonceDeManche, inventaireDesParoles, PERSONAS, paroleDe,
-  cleDuType, cleDuTheme, SITUATIONS, dureeEstimee,
+  cleDuType, cleDuTheme, SITUATIONS, dureeDeLAnnonce, BLANC_ENTRE_CLIPS_MS,
 } from '../web/quiz/js/emcee.js';
 import * as audio from '../web/quiz/js/audio.js';
 import { TYPES } from '../web/quiz/js/manches/index.js';
@@ -2522,35 +2522,6 @@ test('les ordinaux gardent le s de trois, six et dix', () => {
   assert.equal(ordinalEnLettres(200), 'deux centième');
 });
 
-test('l’annonce tient dans la fenêtre de jokers', async () => {
-  // L'énoncé part au top et n'attend personne : une annonce plus longue que la
-  // fenêtre se ferait couper par sa propre question.
-  const { readFileSync } = await import('node:fs');
-  let manifeste;
-  try {
-    manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
-  } catch {
-    return;                                  // clips non générés : rien à vérifier
-  }
-  const duree = (id) => manifeste.clips[id] ?? 0;
-  const maxSous = (prefixe) => {
-    const ids = Object.keys(manifeste.clips).filter((i) => i.startsWith(prefixe));
-    return ids.length ? Math.max(...ids.map(duree)) : 0;
-  };
-  // Le temps que met le lecteur à enchaîner deux clips, mesuré en pilotant une
-  // vraie partie. Le compter change tout : sans lui, l'annonce paraît tenir
-  // alors qu'elle se fait couper par son propre énoncé.
-  const ENCHAINEMENT_S = 1.4;
-  for (const { id: persona } of PERSONAS) {
-    const numero = maxSous(`emcee/${persona}/manche/`);
-    const formule = maxSous(`emcee/${persona}/avantManche/`);
-    if (!numero || !formule) continue;       // clips pas encore régénérés
-    const pire = numero + ENCHAINEMENT_S + formule;
-    assert.ok(pire * 1000 <= DUREE_JOKERS_MS,
-      `${persona} : annonce de ${pire.toFixed(1)} s pour une fenêtre de ${DUREE_JOKERS_MS / 1000} s`);
-  }
-});
-
 test('l’ouverture tient dans la fenêtre d’intro', async () => {
   // Le jumeau du test ci-dessus, pour la toute première phrase de la soirée —
   // et il manquait. L'ouverture de l'animateur classique dure 5,36 s pour une
@@ -3955,30 +3926,54 @@ test('chaque personnage sait annoncer chaque type et chaque thème', () => {
   }
 });
 
-test('une annonce tient toujours dans la fenêtre des jokers', () => {
+test('une annonce tient toujours dans la fenêtre des jokers', async () => {
   // L'énoncé part au top sans attendre : une annonce qui déborde se fait couper
-  // par sa propre question. On essaie le pire — le plus long contexte de
-  // chaque personnage — de nombreuses fois, pour passer sur toutes les formules.
-  const budget = DUREE_JOKERS_MS - 1500;
-  const contextes = [...TYPES.map((t) => cleDuType(t.id)), ...THEMES.map((t) => cleDuTheme(t.id)), ...SITUATIONS];
-  for (const { id: persona } of PERSONAS) {
-    for (const contexte of contextes) {
-      for (let essai = 0; essai < 30; essai += 1) {
-        const dite = annonceDeManche(persona, 'avantManche', 20, [contexte], budget);
-        const duree = estimationTotale(dite);
-        assert.ok(dite.clips.length >= 2, `${persona}/${contexte} : l’annonce a perdu son contexte`);
-        assert.ok(duree <= budget,
-          `${persona}/${contexte} : ${Math.round(duree)} ms pour ${budget} ms de fenêtre — « ${dite.texte} »`);
+  // par sa propre question. On la construit comme la régie — numéro, contexte,
+  // formule — avec les VRAIES durées des clips et le vrai blanc entre deux, et
+  // on essaie chaque contexte de chaque personnage, de nombreuses fois.
+  //
+  // Les durées comptent : tant qu'elles étaient estimées à la longueur du
+  // texte, ce test passait sur des annonces qui débordaient en vrai.
+  const { readFileSync } = await import('node:fs');
+  try {
+    const manifeste = JSON.parse(readFileSync(`web/quiz/audio/${banqueParDefaut()}/manifeste.json`, 'utf8'));
+    audio.ajouterDesClips({ durees: manifeste.clips });
+  } catch { /* clips absents : les estimations au mot font foi */ }
+
+  // Le blanc entre deux clips, mesuré en pilotant une vraie partie : 1,4 s. Le
+  // compter plus court rendrait ce test complaisant — il passerait sur des
+  // annonces qui débordent.
+  assert.ok(BLANC_ENTRE_CLIPS_MS >= 1400, `blanc de ${BLANC_ENTRE_CLIPS_MS} ms, mesuré à 1400`);
+
+  const budget = DUREE_JOKERS_MS - MARGE_AVANT_ENONCE_MS;
+  const contextes = [null, ...TYPES.map((t) => cleDuType(t.id)), ...THEMES.map((t) => cleDuTheme(t.id)), ...SITUATIONS];
+  try {
+    for (const { id: persona } of PERSONAS) {
+      let sansContexte = 0;
+      let avecFormule = 0;
+      for (const cle of ['avantManche', 'derniereManche']) {
+        for (const contexte of contextes) {
+          for (let essai = 0; essai < 30; essai += 1) {
+            const dite = annonceDeManche(persona, cle, 20, contexte ? [contexte] : [], budget);
+            const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
+            const duree = dureeDeLAnnonce(dite.clips, dite.clips.map((id) => textes.get(id)));
+            assert.ok(duree <= budget,
+              `${persona}/${cle}/${contexte} : ${Math.round(duree)} ms pour ${budget} ms — « ${dite.texte} »`);
+            if (cle === 'avantManche' && !contexte) {
+              sansContexte += 1;
+              if (dite.clips.length === 2) avecFormule += 1;
+            }
+          }
+        }
       }
+      // Le budget ne doit pas tout raboter : sans contexte, la formule passe.
+      assert.ok(avecFormule / sansContexte > 0.8,
+        `${persona} : formule dite dans ${avecFormule} annonces sur ${sansContexte} seulement`);
     }
+  } finally {
+    audio.ajouterDesClips({});
   }
 });
-
-/** La durée estimée d'une annonce, morceau par morceau, à partir de l'inventaire. */
-function estimationTotale(dite) {
-  const textes = new Map(inventaireDesParoles().map((c) => [c.id, c.texte]));
-  return dite.clips.reduce((t, id) => t + dureeEstimee(id, textes.get(id)), 0);
-}
 
 test('une partie ne ressert pas deux fois la même formule d’annonce', () => {
   // C'est le reproche d'origine : « on entend toujours la même chose ». Avec
