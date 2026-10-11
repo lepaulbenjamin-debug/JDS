@@ -4145,3 +4145,41 @@ test('une réponse de blind test traverse le relais intacte', async () => {
   const lu = typeDeManche('dj').lire(answers.at(-1).reponse);
   assert.deepEqual(lu, { titre: 'Bohemian Rhapsody', artiste: 'Queen' });
 });
+
+test('une génération coupée en route ne fait rien perdre de ce qui était payé', async () => {
+  // Le cas vécu : une clé refusée dès la première requête. Le manifeste était
+  // réécrit avec les seuls clips vus avant la panne, et les centaines déjà
+  // générés en sortaient — le jeu ne les trouvait plus.
+  const { produire } = await import('./generate-audio.mjs');
+  const { mkdtemp, readFile: lire } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const racine = await mkdtemp(`${tmpdir()}/banque-`);
+
+  let pannes = 0;
+  const fournisseur = (echoueSur = null) => ({
+    nom: 'essai', id: 'essai', extension: 'mp3',
+    rendre: async (texte) => {
+      if (texte === echoueSur) { pannes += 1; throw new Error('TTS 401'); }
+      return { donnees: Buffer.from(texte), secondes: texte.length / 10 };
+    },
+  });
+
+  const avant = [{ id: 'a', texte: 'Alpha' }, { id: 'b', texte: 'Bravo' }, { id: 'c', texte: 'Charlie' }];
+  await produire({ racine, clips: avant, fournisseur: fournisseur(), tout: false, blanc: true });
+  const premier = JSON.parse(await lire(`${racine}/manifeste.json`, 'utf8'));
+
+  // « b » est reformulé, et sa régénération échoue.
+  const apres = [{ id: 'a', texte: 'Alpha' }, { id: 'b', texte: 'Bravo, reformulé' }, { id: 'c', texte: 'Charlie' }];
+  const { panne } = await produire({
+    racine, clips: apres, fournisseur: fournisseur('Bravo, reformulé'), tout: false, blanc: true,
+  });
+  assert.ok(panne && pannes === 1);
+  const second = JSON.parse(await lire(`${racine}/manifeste.json`, 'utf8'));
+
+  assert.deepEqual(Object.keys(second.clips).sort(), ['a', 'b', 'c'], 'des clips payés ont disparu du manifeste');
+  // « b » garde son ANCIENNE empreinte : la relance saura qu'il est à refaire.
+  assert.equal(second.empreintes.b, premier.empreintes.b);
+
+  const { produits } = await produire({ racine, clips: apres, fournisseur: fournisseur(), tout: false, blanc: true });
+  assert.equal(produits, 1, 'la relance ne devait refaire que le clip reformulé');
+});

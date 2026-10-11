@@ -367,11 +367,23 @@ const EN_VOL = 6;
  * seconde boucle écrite à côté aurait fini par diverger, et la couture
  * s'entendrait au milieu de la soirée.
  */
-async function produire({ racine, clips, fournisseur, tout, blanc }) {
+export async function produire({ racine, clips, fournisseur, tout, blanc }) {
   const ancien = await manifestePrecedent(racine);
+  // On part de l'ancien manifeste, restreint à ce qui existe encore, et pas
+  // d'une page blanche. Une campagne coupée en route — clé refusée, réseau
+  // tombé — réécrivait sinon le manifeste avec les seuls clips vus avant la
+  // panne : les centaines déjà payés en disparaissaient, le jeu ne les trouvait
+  // plus, et la relance les refaisait tous. Ce qui n'a pas été revu garde
+  // simplement ce qu'il avait.
+  const encore = new Set(clips.map((c) => c.id));
+  const garder = (table) => Object.fromEntries(
+    Object.entries(table ?? {}).filter(([id]) => encore.has(id)),
+  );
   const manifeste = {
     voix: fournisseur.nom, id: fournisseur.id,
-    format: fournisseur.extension, clips: {}, empreintes: {},
+    format: fournisseur.extension,
+    clips: tout ? {} : garder(ancien?.clips),
+    empreintes: tout ? {} : garder(ancien?.empreintes),
   };
   let produits = 0;
   let reutilises = 0;
@@ -381,27 +393,41 @@ async function produire({ racine, clips, fournisseur, tout, blanc }) {
   // qu'il a fini le sien, plutôt que de découper la liste en tranches — une
   // tranche d'explications longues finirait bien après les autres.
   let curseur = 0;
+  // Au premier échec, plus personne ne prend de nouveau clip : une clé refusée
+  // l'est pour toutes les requêtes, inutile d'en envoyer cinq de plus.
+  let arret = false;
   const ouvrier = async () => {
-    while (curseur < clips.length) {
+    while (!arret && curseur < clips.length) {
       const clip = clips[curseur];
       curseur += 1;
 
       const chemin = join(racine, `${clip.id}.${fournisseur.extension}`);
       await mkdir(dirname(chemin), { recursive: true });
-      manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
 
       if (!tout && await dejaFait(chemin, clip, fournisseur, ancien?.empreintes)) {
         manifeste.clips[clip.id] = ancien?.clips?.[clip.id]
           ?? Number(Math.max(1, clip.texte.length / 14).toFixed(2));
+        manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
         reutilises += 1;
         continue;
       }
       // Un clip déjà là mais dont le texte a bougé : c'est une reformulation.
       if (ancien?.clips?.[clip.id] !== undefined) refaits += 1;
 
-      const { donnees, secondes } = await fournisseur.rendre(clip.texte, clip.id);
-      await writeFile(chemin, donnees);
-      manifeste.clips[clip.id] = secondes;
+      let rendu;
+      try {
+        rendu = await fournisseur.rendre(clip.texte, clip.id);
+      } catch (erreur) {
+        arret = true;
+        throw erreur;
+      }
+      await writeFile(chemin, rendu.donnees);
+      manifeste.clips[clip.id] = rendu.secondes;
+      // L'empreinte seulement APRÈS le fichier. Posée avant, comme jusqu'ici,
+      // un clip dont la régénération échouait gardait son ancien enregistrement
+      // sous la nouvelle empreinte : la relance le croyait à jour, et
+      // l'animateur lisait l'ancien texte pour toujours.
+      manifeste.empreintes[clip.id] = empreinteDe(fournisseur, clip);
       produits += 1;
 
       if ((produits + reutilises) % 25 === 0) {
