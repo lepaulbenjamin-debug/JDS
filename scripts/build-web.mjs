@@ -57,7 +57,7 @@ async function batir() {
   console.log('\nSite prêt dans dist/web/');
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
   console.log(`  /          la page d’accueil — ${seo.questions} questions, ${seo.themes} thèmes`);
-  console.log(`  /quiz-…/    ${seo.pages} pages de thème, /blind-test/, sitemap.xml`);
+  console.log(`  /quiz-…/    ${seo.pages} pages de thème, sitemap.xml`);
   console.log(`  /jouer/    le jeu — ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo, voix : ${voix}`);
   console.log('');
 }
