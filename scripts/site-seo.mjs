@@ -150,7 +150,6 @@ const ENTETE = `<header class="entete">
     <nav>
       <a class="lien-menu" href="/#comment">Comment ça marche</a>
       <a class="lien-menu" href="/#themes">Les thèmes</a>
-      <a class="lien-menu" href="/blind-test/">Blind test</a>
       <a class="bouton bouton-primaire bouton-petit" href="/jouer/">Jouer</a>
     </nav>
   </div>
@@ -160,7 +159,6 @@ const PIED = `<footer>
   <div class="enveloppe">
     <span>© Quiz entre amis</span>
     <a href="/jouer/">Jouer</a>
-    <a href="/blind-test/">Blind test</a>
     <a href="/assistance">Assistance</a>
     <a href="/confidentialite">Confidentialité</a>
     <a href="/contact">Nous écrire</a>
@@ -314,7 +312,7 @@ export function themesPublies() {
 /** Les adresses du site, pour le sitemap. */
 export function adressesDuSite() {
   return [
-    '/', '/jouer/', '/blind-test/',
+    '/', '/jouer/',
     ...themesPublies().map(([, p]) => `/${p.adresse}/`),
     '/assistance', '/contact', '/confidentialite',
   ];
@@ -346,7 +344,7 @@ export async function publierLeReferencement(sortie) {
     .replaceAll('{{questions}}', valeurs.questions).replaceAll('{{themes}}', valeurs.themes);
 
   // Les autres pages qui citent les chiffres.
-  for (const fichier of ['assistance.html', join('blind-test', 'index.html')]) {
+  for (const fichier of ['assistance.html']) {
     const chemin = join(sortie, fichier);
     await writeFile(chemin, remplir(await readFile(chemin, 'utf8')), 'utf8');
   }

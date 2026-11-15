@@ -3,7 +3,7 @@
 Tout ce qu'App Store Connect demande, écrit d'avance. Les chiffres sont relus
 dans le code : 448 questions offertes, 20 thèmes, 6 formes de manches, 16
 joueurs, 5 jokers, 4 fils rouges, 4 animateurs, 7 packs à 3,99 € — ou 9,99 €
-l'ensemble, et le blind test. Si la banque grossit, ces nombres changent ici aussi : une fiche qui
+l'ensemble. Si la banque grossit, ces nombres changent ici aussi : une fiche qui
 gonfle ses chiffres se fait rattraper à la première partie.
 
 ---
@@ -25,7 +25,7 @@ gonfle ses chiffres se fait rattraper à la première partie.
 
 | Champ | Valeur | Limite |
 |---|---|---|
-| Nom | `Quiz entre amis : Blind test` | 30 |
+| Nom | `Quiz entre amis` | 30 |
 | Sous-titre | `Jeu de soirée, apéro & famille` | 30 |
 | Catégorie principale | Jeux › Quiz | |
 | Catégorie secondaire | Jeux › Famille | |
@@ -39,12 +39,13 @@ questions,culture,générale,multijoueur,quizz,buzzer,musique,trivia,cinéma,dis
 
 95 caractères sur 100. Pourquoi ce découpage :
 
-- **Le nom pèse le plus lourd**, puis le sous-titre, puis les mots-clés. « Blind
-  test » monte donc dans le nom : c'est la recherche la plus tapée de la
-  catégorie après « quiz », et « Chaque téléphone, un pupitre » ne contenait
-  aucun mot que quelqu'un cherche.
+- **Le nom pèse le plus lourd**, puis le sous-titre, puis les mots-clés. Le
+  sous-titre porte donc des mots qu'on cherche : « Chaque téléphone, un
+  pupitre » n'en contenait aucun.
 - **Rien n'est répété** : ce qui est dans le nom et le sous-titre (quiz, entre,
-  amis, blind, test, jeu, soirée, apéro, famille) est déjà indexé.
+  amis, jeu, soirée, apéro, famille) est déjà indexé.
+- **Le blind test est en brouillon** : son nom, ses textes et ses mots-clés
+  attendent dans `brouillons/blind-test/README.md`.
 - **Des mots seuls, sans espace** : Apple recombine les mots entre eux et avec
   ceux du nom — « culture » + « générale » couvre « quiz culture générale »,
   « potter » couvre « quiz harry potter ».
@@ -57,9 +58,8 @@ questions,culture,générale,multijoueur,quizz,buzzer,musique,trivia,cinéma,dis
 soirée à thème.*
 
 ```
-Nouveau : le blind test ! Passez la musique depuis votre appli habituelle, vos
-amis trouvent le titre et l'artiste sur leur téléphone. Et toujours 448
-questions offertes, avec l'appli qui fait l'animateur.
+Nouveau : le thème Télé-réalité et vingt questions Disney de plus. 448
+questions offertes, et toujours l'appli qui fait l'animateur.
 ```
 
 ## Description
@@ -83,12 +83,6 @@ SIX FAÇONS DE JOUER
 • La rafale — cinq affirmations, vrai ou faux, d'affilée
 • Le mix — « une chanson avec une couleur dans le titre », réponse libre
 • Tu te mets combien ? — chacun annonce sa difficulté avant de voir SA question
-
-LE BLIND TEST, OÙ C'EST VOUS LE DJ
-Passez la musique depuis Spotify, Deezer, Apple Music ou YouTube, sur
-l'enceinte du salon. Vos amis tapent le titre et l'artiste sur leur téléphone,
-l'appli donne le top, ramasse les réponses et tient les scores. Toute votre
-bibliothèque musicale devient un blind test.
 
 DES JOKERS POUR RENVERSER LA TABLE
 Doubler la mise, voler des points au leader, le saboter, garder son sang-froid,
@@ -126,9 +120,6 @@ la table a besoin de les acheter : ses questions sont posées à tout le monde.
 ## Nouveautés de cette version
 
 ```
-• Le blind test : l'hôte devient DJ et passe sa propre musique, les autres
-  trouvent le titre et l'artiste. Le jeu pré-coche les bonnes réponses, le DJ
-  valide d'un geste.
 • Le thème Télé-réalité, et vingt nouvelles questions Disney.
 • L'écran commun peut n'afficher que le classement.
 • Les jokers disent qui a visé qui.
@@ -159,11 +150,6 @@ nécessaire pour la tester.
 
 Pour tester seul : écran d'accueil → « Jouer seul ». Une partie complète se
 déroule, avec toutes les formes de manches et l'animateur vocal.
-
-Le mode blind test (« Créer une partie » → « Blind test ») ne diffuse aucune
-musique : l'hôte passe la sienne depuis son application de streaming, sur son
-propre abonnement, et l'application se contente de chronométrer et de compter
-les points. Aucun extrait audio protégé n'est embarqué ni téléchargé.
 
 Pour tester le multijoueur, il faut deux appareils (ou deux onglets) :
 1. Appareil A : saisir un prénom → « Créer une partie » → « Ouvrir le salon ».

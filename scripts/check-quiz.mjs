@@ -4205,7 +4205,7 @@ test('le site généré : chiffres justes, liens qui mènent quelque part, sitem
     await cp(join(import.meta.dirname, '..', 'web', 'site'), sortie, { recursive: true });
     const { questions, themes } = await publierLeReferencement(sortie);
 
-    for (const fichier of ['index.html', 'assistance.html', join('blind-test', 'index.html')]) {
+    for (const fichier of ['index.html', 'assistance.html']) {
       const html = await lire(join(sortie, fichier), 'utf8');
       assert.ok(!html.includes('{{'), `jeton oublié dans ${fichier}`);
       for (const [, cle, valeur] of html.matchAll(/data-compte="([a-z]+)"[^>]*>([^<]*)</g)) {
@@ -4215,8 +4215,10 @@ test('le site généré : chiffres justes, liens qui mènent quelque part, sitem
       for (const [, bloc] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
         JSON.parse(bloc);
       }
-      // Chaque lien interne vers une page de thème ou le blind test existe.
-      for (const [, dossier] of html.matchAll(/href="\/((?:quiz-[a-z0-9-]+|blind-test))\/"/g)) {
+      // Chaque lien interne vers un dossier du site existe : une page mise de
+      // côté (le blind test, en brouillon) ne doit plus être visée nulle part.
+      for (const [, dossier] of html.matchAll(/href="\/([a-z0-9-]+)\/"/g)) {
+        if (dossier === 'jouer') continue;
         assert.ok(nodeFs.existsSync(join(sortie, dossier, 'index.html')), `lien mort : /${dossier}/`);
       }
     }
