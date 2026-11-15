@@ -2832,6 +2832,15 @@ function brancher() {
   // Un lien partagé porte le code dans son ancre : autant le pré-remplir.
   const code = location.hash.replace('#', '').toUpperCase();
   if (code.length === 4) $('#code-salon').value = code;
+
+  // Les pages du site ouvrent le jeu déjà réglé : « Jouer ce thème » depuis la
+  // page Harry Potter, « Lancer un blind test » depuis celle du blind test.
+  // Arriver d'une recherche sur un thème et retomber sur des réglages
+  // génériques, c'est perdre la personne au premier écran.
+  const demande = new URLSearchParams(location.search);
+  const theme = demande.get('theme');
+  if (THEMES.some((t) => t.id === theme)) reglages.themes = [theme];
+  if (demande.get('mode') === 'dj') reglages.mode = 'dj';
 }
 
 /**

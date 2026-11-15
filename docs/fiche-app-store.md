@@ -1,9 +1,9 @@
 # La fiche App Store, prête à coller
 
 Tout ce qu'App Store Connect demande, écrit d'avance. Les chiffres sont relus
-dans le code : 409 questions offertes, 19 thèmes, 6 formes de manches, 16
+dans le code : 448 questions offertes, 20 thèmes, 6 formes de manches, 16
 joueurs, 5 jokers, 4 fils rouges, 4 animateurs, 7 packs à 3,99 € — ou 9,99 €
-l'ensemble. Si la banque grossit, ces nombres changent ici aussi : une fiche qui
+l'ensemble, et le blind test. Si la banque grossit, ces nombres changent ici aussi : une fiche qui
 gonfle ses chiffres se fait rattraper à la première partie.
 
 ---
@@ -25,8 +25,8 @@ gonfle ses chiffres se fait rattraper à la première partie.
 
 | Champ | Valeur | Limite |
 |---|---|---|
-| Nom | `Quiz entre amis` | 30 |
-| Sous-titre | `Chaque téléphone, un pupitre` | 30 |
+| Nom | `Quiz entre amis : Blind test` | 30 |
+| Sous-titre | `Jeu de soirée, apéro & famille` | 30 |
 | Catégorie principale | Jeux › Quiz | |
 | Catégorie secondaire | Jeux › Famille | |
 | Langue principale | Français (France) | |
@@ -34,11 +34,22 @@ gonfle ses chiffres se fait rattraper à la première partie.
 ## Mots-clés
 
 ```
-soirée,apéro,jeu,amis,famille,questions,culture générale,blind test,buzzer,multijoueur,quizz
+questions,culture,générale,multijoueur,quizz,buzzer,musique,trivia,cinéma,disney,potter,pokémon
 ```
 
-93 caractères sur 100. Ne pas y remettre « quiz » ni « pupitre » : ce qui est
-dans le nom et le sous-titre est déjà indexé, et la place vaut cher.
+95 caractères sur 100. Pourquoi ce découpage :
+
+- **Le nom pèse le plus lourd**, puis le sous-titre, puis les mots-clés. « Blind
+  test » monte donc dans le nom : c'est la recherche la plus tapée de la
+  catégorie après « quiz », et « Chaque téléphone, un pupitre » ne contenait
+  aucun mot que quelqu'un cherche.
+- **Rien n'est répété** : ce qui est dans le nom et le sous-titre (quiz, entre,
+  amis, blind, test, jeu, soirée, apéro, famille) est déjà indexé.
+- **Des mots seuls, sans espace** : Apple recombine les mots entre eux et avec
+  ceux du nom — « culture » + « générale » couvre « quiz culture générale »,
+  « potter » couvre « quiz harry potter ».
+- Changer le nom demande une nouvelle version ; les mots-clés aussi. Les deux
+  partent donc avec la prochaine soumission.
 
 ## Texte promotionnel
 
@@ -46,9 +57,9 @@ dans le nom et le sous-titre est déjà indexé, et la place vaut cher.
 soirée à thème.*
 
 ```
-Cinq nouveaux packs : Génération 2000-2010, En famille, Manga & anime, Geek et
-Jeux de société modernes. Toujours 409 questions offertes, et toujours
-l'appli qui fait l'animateur.
+Nouveau : le blind test ! Passez la musique depuis votre appli habituelle, vos
+amis trouvent le titre et l'artiste sur leur téléphone. Et toujours 448
+questions offertes, avec l'appli qui fait l'animateur.
 ```
 
 ## Description
@@ -73,6 +84,12 @@ SIX FAÇONS DE JOUER
 • Le mix — « une chanson avec une couleur dans le titre », réponse libre
 • Tu te mets combien ? — chacun annonce sa difficulté avant de voir SA question
 
+LE BLIND TEST, OÙ C'EST VOUS LE DJ
+Passez la musique depuis Spotify, Deezer, Apple Music ou YouTube, sur
+l'enceinte du salon. Vos amis tapent le titre et l'artiste sur leur téléphone,
+l'appli donne le top, ramasse les réponses et tient les scores. Toute votre
+bibliothèque musicale devient un blind test.
+
 DES JOKERS POUR RENVERSER LA TABLE
 Doubler la mise, voler des points au leader, le saboter, garder son sang-froid,
 couper deux mauvaises réponses. À jouer avant de voir la question : c'est un
@@ -83,16 +100,16 @@ Un même mot se cache dans les bonnes réponses de plusieurs manches. Le nommer
 rapporte une grosse prime — qui fond à chaque manche, alors mieux vaut être tôt
 que sûr.
 
-19 THÈMES, 409 QUESTIONS
+20 THÈMES, 448 QUESTIONS
 Culture générale, musique, cinéma et séries, années 2000, bouffe, insolite,
 sport, le monde, marques et pubs, mots et expressions, Disney et Pixar, les
 régions de France, nature, histoire, fake news ou pas ?, Harry Potter, Pokémon,
-serial killers, géopolitique.
+serial killers, géopolitique, télé-réalité.
 
 UN ÉCRAN COMMUN, SI VOUS VOULEZ
-Une télé ou un vidéoprojecteur affiche la question, le chrono et le classement
-en grand — et surtout, à la révélation, ce que chacun a répondu. C'est là qu'on
-rit.
+Une télé ou un vidéoprojecteur affiche le classement en grand — et surtout, à
+la révélation, ce que chacun a répondu. C'est là qu'on rit. La question n'y
+apparaît jamais avant d'arriver sur les téléphones.
 
 CE QU'IL N'Y A PAS
 Pas de publicité. Pas de pistage. Pas d'inscription obligatoire. Pas
@@ -101,7 +118,7 @@ questions déjà jouées et vos packs d'un appareil à l'autre, et se supprime e
 deux taps.
 
 GRATUIT, ET HONNÊTE
-Les 409 questions et les 19 thèmes sont inclus. Des packs de questions
+Les 448 questions et les 20 thèmes sont inclus. Des packs de questions
 s'achètent à l'unité ou tous ensemble, sans abonnement — et un seul joueur de
 la table a besoin de les acheter : ses questions sont posées à tout le monde.
 ```
@@ -109,8 +126,16 @@ la table a besoin de les acheter : ses questions sont posées à tout le monde.
 ## Nouveautés de cette version
 
 ```
-Première version.
+• Le blind test : l'hôte devient DJ et passe sa propre musique, les autres
+  trouvent le titre et l'artiste. Le jeu pré-coche les bonnes réponses, le DJ
+  valide d'un geste.
+• Le thème Télé-réalité, et vingt nouvelles questions Disney.
+• L'écran commun peut n'afficher que le classement.
+• Les jokers disent qui a visé qui.
+• Beaucoup plus de phrases de l'animateur entre les questions.
 ```
+
+*Si l'application n'est pas encore publiée, garder « Première version. »*
 
 ## URL
 
@@ -135,6 +160,11 @@ nécessaire pour la tester.
 Pour tester seul : écran d'accueil → « Jouer seul ». Une partie complète se
 déroule, avec toutes les formes de manches et l'animateur vocal.
 
+Le mode blind test (« Créer une partie » → « Blind test ») ne diffuse aucune
+musique : l'hôte passe la sienne depuis son application de streaming, sur son
+propre abonnement, et l'application se contente de chronométrer et de compter
+les points. Aucun extrait audio protégé n'est embarqué ni téléchargé.
+
 Pour tester le multijoueur, il faut deux appareils (ou deux onglets) :
 1. Appareil A : saisir un prénom → « Créer une partie » → « Ouvrir le salon ».
    Un code à quatre lettres s'affiche.
@@ -152,7 +182,7 @@ Achats intégrés : huit produits non consommables — sept packs de questions e
 une offre qui les réunit. Pour les voir : écran d'accueil → un prénom →
 « Créer une partie » → faire défiler jusqu'à « Packs de questions ». Ils ne
 débloquent aucune mécanique de jeu, seulement du contenu supplémentaire :
-l'application est entièrement jouable sans eux, avec 409 questions et 19
+l'application est entièrement jouable sans eux, avec 448 questions et 20
 thèmes inclus. « Restaurer les achats » est au bas de cette même page.
 
 Dans une partie à plusieurs, un seul joueur a besoin d'avoir acheté un pack :

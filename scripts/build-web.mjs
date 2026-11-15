@@ -28,6 +28,7 @@ import { cp, readFile, rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { RACINE, WEB, assemblerLeQuiz, poids, remplacer } from './paquet-quiz.mjs';
+import { publierLeReferencement } from './site-seo.mjs';
 
 const SORTIE = join(RACINE, 'dist', 'web');
 const SITE = join(WEB, 'site');
@@ -44,6 +45,10 @@ async function batir() {
   // de partage — par-dessus, à la racine.
   await cp(SITE, SORTIE, { recursive: true });
 
+  // Les pages de thème, les chiffres de l'accueil et le sitemap, tirés de la
+  // banque de questions : écrits à la main, ils mentent au premier ajout.
+  const seo = await publierLeReferencement(SORTIE);
+
   const { octets, fichiers } = await poids(SORTIE);
   const audio = await poids(join(SORTIE, 'jouer', 'audio'));
   const voix = JSON.parse(await readFile(join(SORTIE, 'jouer', 'audio', 'voix.json'), 'utf8'))
@@ -51,7 +56,8 @@ async function batir() {
 
   console.log('\nSite prêt dans dist/web/');
   console.log(`  ${fichiers} fichiers, ${(octets / 1e6).toFixed(1)} Mo`);
-  console.log(`  /          la page d’accueil`);
+  console.log(`  /          la page d’accueil — ${seo.questions} questions, ${seo.themes} thèmes`);
+  console.log(`  /quiz-…/    ${seo.pages} pages de thème, /blind-test/, sitemap.xml`);
   console.log(`  /jouer/    le jeu — ${audio.fichiers} clips, ${(audio.octets / 1e6).toFixed(1)} Mo, voix : ${voix}`);
   console.log('');
 }

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f1116">
 
-<title>Quiz entre amis — le quiz de soirée où chaque téléphone devient un pupitre</title>
-<meta name="description" content="Un quiz à jouer chez soi, sans animateur et sans inscription : chacun répond sur son téléphone, l’appli pose les questions à voix haute. 409 questions, 19 thèmes, jusqu’à 16 joueurs.">
+<title>Quiz entre amis — jeu de quiz gratuit pour vos soirées, sur téléphone</title>
+<meta name="description" content="Le quiz de soirée sur téléphone : l’appli anime, chacun répond sur le sien. {{questions}} questions, {{themes}} thèmes, un blind test. Gratuit, sans inscription.">
 <link rel="canonical" href="https://www.quizentreamis.fr/">
 
 <meta property="og:type" content="website">
@@ -43,7 +43,7 @@
       "operatingSystem": "iOS, Android, Web",
       "inLanguage": "fr-FR",
       "url": "https://www.quizentreamis.fr/",
-      "description": "Quiz de soirée multijoueur : chaque téléphone devient un pupitre, l’application pose les questions à voix haute et compte les points. Sans inscription, jusqu’à 16 joueurs.",
+      "description": "Quiz de soirée multijoueur : chaque téléphone devient un pupitre, l’application pose les questions à voix haute et compte les points. {{questions}} questions, {{themes}} thèmes, un mode blind test. Sans inscription, jusqu’à 16 joueurs.",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
     },
     {
@@ -67,7 +67,12 @@
         {
           "@type": "Question",
           "name": "Le jeu est-il gratuit ?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Oui. Quatre cent neuf questions et dix-neuf thèmes sont inclus, sans publicité. Des packs de questions supplémentaires sont vendus à l’unité, et un seul joueur de la table a besoin de les acheter." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui. {{questions}} questions et {{themes}} thèmes sont inclus, sans publicité. Des packs de questions supplémentaires sont vendus à l’unité, et un seul joueur de la table a besoin de les acheter." }
+        },
+        {
+          "@type": "Question",
+          "name": "Peut-on faire un blind test ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui. En mode blind test, l’hôte devient DJ : il passe la musique depuis son application habituelle, les autres tapent le titre et l’artiste sur leur téléphone, et le jeu compte les points." }
         },
         {
           "@type": "Question",
@@ -91,8 +96,8 @@
     </a>
     <nav>
       <a class="lien-menu" href="#comment">Comment ça marche</a>
-      <a class="lien-menu" href="#manches">Les manches</a>
-      <a class="lien-menu" href="#questions">Questions</a>
+      <a class="lien-menu" href="#themes">Les thèmes</a>
+      <a class="lien-menu" href="/blind-test/">Blind test</a>
       <a class="bouton bouton-primaire bouton-petit" href="/jouer/">Jouer</a>
     </nav>
   </div>
@@ -113,8 +118,8 @@
     </div>
 
     <ul class="chiffres">
-      <li><b>409</b><span>questions écrites à la main</span></li>
-      <li><b>19</b><span>thèmes, du cinéma aux fake news</span></li>
+      <li><b data-compte="questions">448</b><span>questions écrites à la main</span></li>
+      <li><b data-compte="themes">20</b><span>thèmes, du cinéma à la télé-réalité</span></li>
       <li><b>6</b><span>formes de manches</span></li>
       <li><b>16</b><span>joueurs au maximum</span></li>
     </ul>
@@ -220,9 +225,9 @@
 
   <section id="themes">
     <div class="enveloppe">
-      <h2>Dix-neuf thèmes, et de quoi tenir des soirées</h2>
-      <p class="chapo">Choisissez-en un, trois ou tous. L’appli retient les questions déjà posées et sert d’abord celles que vous n’avez jamais vues.</p>
-      <ul class="themes">
+      <h2>Des thèmes pour des soirées entières</h2>
+      <p class="chapo"><span data-compte="themes">20</span> thèmes, à choisir à un, à trois ou tous ensemble. L’appli retient les questions déjà posées et sert d’abord celles que vous n’avez jamais vues.</p>
+      <ul class="themes" data-liste="themes">
         <li>🧠 Culture générale</li>
         <li>🎧 Musique</li>
         <li>🍿 Cinéma &amp; séries</li>
@@ -242,7 +247,16 @@
         <li>⚡ Pokémon</li>
         <li>🔎 Serial killers</li>
         <li>🌐 Géopolitique</li>
+        <li>📺 Télé-réalité</li>
       </ul>
+    </div>
+  </section>
+
+  <section id="blind-test">
+    <div class="enveloppe">
+      <h2>Et un blind test, où c’est vous le DJ</h2>
+      <p class="chapo">L’hôte passe la musique depuis son appli habituelle — Spotify, Deezer, Apple Music — et les autres tapent le titre et l’artiste sur leur téléphone. Le jeu donne le top, ramasse les réponses et compte les points.</p>
+      <a class="bouton" href="/blind-test/">Le blind test entre amis</a>
     </div>
   </section>
 
@@ -255,9 +269,9 @@
           <p class="montant">Gratuit</p>
           <p style="color:var(--muted);margin:6px 0 0">Le jeu entier, pour tout le monde.</p>
           <ul>
-            <li>409 questions, 19 thèmes</li>
+            <li><span data-compte="questions">448</span> questions, <span data-compte="themes">20</span> thèmes</li>
             <li>Les six formes de manches, les jokers, le fil rouge</li>
-            <li>L’écran commun et le mode solo</li>
+            <li>Le blind test, l’écran commun et le mode solo</li>
             <li>Aucune publicité, aucun compte obligatoire</li>
           </ul>
         </article>
@@ -266,8 +280,9 @@
           <p style="color:var(--muted);margin:6px 0 0">Par pack de questions, à l’unité.</p>
           <ul>
             <li>Trente questions écrites autour d’un thème</li>
-            <li>Années 80-90, Spécial Noël, et d’autres à venir</li>
-            <li>Un seul joueur de la table a besoin de l’acheter</li>
+            <li>Années 80-90, Génération 2000-2010, En famille, Manga, Geek, Jeux de société, Spécial Noël</li>
+            <li>Tous les packs d’un coup pour 9,99 €</li>
+            <li>Un seul joueur de la table a besoin de les acheter</li>
             <li>Aucun abonnement, jamais</li>
           </ul>
         </article>
@@ -292,6 +307,16 @@
       <details class="question">
         <summary>Faut-il une télévision&nbsp;?</summary>
         <p>Non, tout tient sur les téléphones. Une page d’écran commun existe pour afficher la question, le chrono et les scores en grand sur une télé ou un vidéoprojecteur — elle ne joue pas, elle regarde.</p>
+      </details>
+
+      <details class="question">
+        <summary>Le jeu est-il gratuit&nbsp;?</summary>
+        <p>Oui. <span data-compte="questions">448</span> questions et <span data-compte="themes">20</span> thèmes sont inclus, sans publicité. Des packs de questions supplémentaires sont vendus à l’unité, et un seul joueur de la table a besoin de les acheter.</p>
+      </details>
+
+      <details class="question">
+        <summary>Peut-on faire un blind test&nbsp;?</summary>
+        <p>Oui. En mode blind test, l’hôte devient DJ : il passe la musique depuis son application habituelle, les autres tapent le titre et l’artiste sur leur téléphone, et le jeu compte les points. <a href="/blind-test/">Tout sur le blind test</a>.</p>
       </details>
 
       <details class="question">
@@ -325,6 +350,7 @@
   <div class="enveloppe">
     <span>© Quiz entre amis</span>
     <a href="/jouer/">Jouer</a>
+    <a href="/blind-test/">Blind test</a>
     <a href="/assistance">Assistance</a>
     <a href="/confidentialite">Confidentialité</a>
     <a href="/contact">Nous écrire</a>

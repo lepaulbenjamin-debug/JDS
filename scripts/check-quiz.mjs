@@ -42,6 +42,9 @@ import { enTetesCors, estPreflight } from '../lib/cors.js';
 import { entierEnLettres, ordinalEnLettres, direLesNombres } from './nombres.mjs';
 import * as nodeFs from 'node:fs';
 import { join } from 'node:path';
+import {
+  chiffres, themesPublies, adressesDuSite, exemplesDuTheme, publierLeReferencement,
+} from './site-seo.mjs';
 import { inventaire } from './generate-audio.mjs';
 import { lireLeCatalogue } from './echantillons-voix.mjs';
 
@@ -4177,4 +4180,60 @@ test('une génération coupée en route ne fait rien perdre de ce qui était pay
 
   const { produits } = await produire({ racine, clips: apres, fournisseur: fournisseur(), tout: false, blanc: true });
   assert.equal(produits, 1, 'la relance ne devait refaire que le clip reformulé');
+});
+
+/* --- Le référencement -------------------------------------------------------- */
+
+test('chaque thème du jeu de base a sa page, avec trois questions de vitrine', () => {
+  const publies = themesPublies();
+  assert.equal(publies.length, chiffres().themes, 'un thème sans page de référencement');
+  const adresses = publies.map(([, p]) => p.adresse);
+  assert.equal(new Set(adresses).size, adresses.length, 'deux thèmes sur la même adresse');
+  for (const [theme, page] of publies) {
+    assert.match(page.adresse, /^quiz-[a-z0-9-]+$/, `adresse de ${theme.id}`);
+    // `/quiz` est redirigé vers le jeu : une adresse exactement « quiz » serait avalée.
+    assert.notEqual(page.adresse, 'quiz');
+    assert.equal(exemplesDuTheme(theme.id).length, 3, `pas trois exemples pour ${theme.id}`);
+  }
+});
+
+test('le site généré : chiffres justes, liens qui mènent quelque part, sitemap complet', async () => {
+  const { mkdtemp, cp, readFile: lire, rm } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const sortie = await mkdtemp(join(tmpdir(), 'site-'));
+  try {
+    await cp(join(import.meta.dirname, '..', 'web', 'site'), sortie, { recursive: true });
+    const { questions, themes } = await publierLeReferencement(sortie);
+
+    for (const fichier of ['index.html', 'assistance.html', join('blind-test', 'index.html')]) {
+      const html = await lire(join(sortie, fichier), 'utf8');
+      assert.ok(!html.includes('{{'), `jeton oublié dans ${fichier}`);
+      for (const [, cle, valeur] of html.matchAll(/data-compte="([a-z]+)"[^>]*>([^<]*)</g)) {
+        assert.equal(valeur, String(cle === 'questions' ? questions : themes), `${cle} dans ${fichier}`);
+      }
+      // Les données structurées doivent rester du JSON valide.
+      for (const [, bloc] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+        JSON.parse(bloc);
+      }
+      // Chaque lien interne vers une page de thème ou le blind test existe.
+      for (const [, dossier] of html.matchAll(/href="\/((?:quiz-[a-z0-9-]+|blind-test))\/"/g)) {
+        assert.ok(nodeFs.existsSync(join(sortie, dossier, 'index.html')), `lien mort : /${dossier}/`);
+      }
+    }
+
+    const accueil = await lire(join(sortie, 'index.html'), 'utf8');
+    const liste = accueil.match(/<ul class="themes" data-liste="themes">([\s\S]*?)<\/ul>/)[1];
+    assert.equal([...liste.matchAll(/<li><a href=/g)].length, themes);
+
+    const sitemap = await lire(join(sortie, 'sitemap.xml'), 'utf8');
+    const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    assert.equal(urls.length, adressesDuSite().length);
+    for (const [, page] of themesPublies()) {
+      assert.ok(urls.includes(`https://www.quizentreamis.fr/${page.adresse}/`));
+      const html = await lire(join(sortie, page.adresse, 'index.html'), 'utf8');
+      assert.match(html, new RegExp(`<link rel="canonical" href="https://www.quizentreamis.fr/${page.adresse}/">`));
+    }
+  } finally {
+    await rm(sortie, { recursive: true, force: true });
+  }
 });
